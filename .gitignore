@@ -1,0 +1,6 @@
+/talkieai-server/.env
+/talkieai-uniapp/package-lock.json
+/talkieai-uniapp/node_modules/
+*.pyc
+/talkieai-uniapp/dist/
+/*/.idea/

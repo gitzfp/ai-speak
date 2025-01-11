@@ -1,0 +1,139 @@
+view.data-v-83a5a03c {
+  margin: 0;
+  padding: 0;
+}
+.common-button.data-v-83a5a03c {
+  width: 590rpx;
+  height: 120rpx;
+  background: #6236FF;
+  color: #fff;
+  font-size: 14px;
+  border-radius: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+button.data-v-83a5a03c:active {
+  opacity: 0.8;
+}
+view.data-v-83a5a03c {
+  box-sizing: border-box;
+}
+.row-bc.data-v-83a5a03c {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+.row-sc.data-v-83a5a03c {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+.common-button.data-v-83a5a03c {
+  width: 590rpx;
+  height: 120rpx;
+  background: #6236FF;
+  color: #fff;
+  font-size: 14px;
+  border-radius: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.atk-btn-box.data-v-83a5a03c {
+  padding: 28rpx 0;
+  background: #6236FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border-radius: 60rpx;
+  color: #fff;
+}
+.atk-btn-box .atk-btn.data-v-83a5a03c {
+  letter-spacing: 4rpx;
+}
+.atk-btn-box.gray.data-v-83a5a03c {
+  background: #999;
+}
+.bottom-box.data-v-83a5a03c {
+  margin: 32rpx;
+  width: calc(100vw - 64rpx);
+  position: fixed;
+  bottom: 0;
+  padding-bottom: calc(env(safe-area-inset-bottom) / 2);
+}
+.icon.data-v-83a5a03c {
+  width: 32rpx;
+  height: 32rpx;
+}
+.container.data-v-83a5a03c {
+  background: #f5f7fa;
+  min-height: 100vh;
+  padding: 20rpx;
+}
+.role-grid.data-v-83a5a03c {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+  padding: 20rpx;
+}
+.role-card.data-v-83a5a03c {
+  background: #ffffff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s;
+}
+.role-card.data-v-83a5a03c:active {
+  transform: scale(0.98);
+}
+.role-image-wrapper.data-v-83a5a03c {
+  width: 100%;
+  padding-top: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #f0f2f5;
+}
+.role-image.data-v-83a5a03c {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.role-info.data-v-83a5a03c {
+  padding: 20rpx;
+}
+.role-name.data-v-83a5a03c {
+  font-size: 32rpx;
+  color: #333333;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+.style-tags.data-v-83a5a03c {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+.style-tag.data-v-83a5a03c {
+  background: #f0f2f5;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  color: #666666;
+}
+.preview-audio.data-v-83a5a03c {
+  margin-top: 16rpx;
+}
+.audio-player.data-v-83a5a03c {
+  width: 100%;
+}
+.topic-component.data-v-83a5a03c {
+  margin-bottom: 20rpx;
+}

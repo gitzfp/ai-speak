@@ -1,0 +1,7 @@
+{
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "common-header": "../../components/CommonHeader",
+    "statement": "../practice/components/Statement"
+  }
+}

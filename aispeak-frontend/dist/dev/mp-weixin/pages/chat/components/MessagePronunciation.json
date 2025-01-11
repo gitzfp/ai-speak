@@ -1,0 +1,10 @@
+{
+  "component": true,
+  "usingComponents": {
+    "audio-player": "../../../components/AudioPlayer",
+    "loading-round": "../../../components/LoadingRound",
+    "speech": "../../../components/Speech",
+    "rate": "../../../components/Rate",
+    "text-pronunciation": "./TextPronunciation"
+  }
+}

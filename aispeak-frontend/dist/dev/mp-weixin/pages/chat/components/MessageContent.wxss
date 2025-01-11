@@ -1,0 +1,89 @@
+.speech-box.data-v-30e39fae {
+  display: flex;
+  align-items: center;
+  height: 22px;
+}
+.message-container.data-v-30e39fae {
+  display: flex;
+  flex-direction: column;
+}
+.message-container .message-box.data-v-30e39fae {
+  max-width: 80%;
+}
+.message-container .message-box .message-text-box.data-v-30e39fae {
+  padding: 28rpx 36rpx;
+  border-radius: 8rpx 30rpx 30rpx;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+}
+.message-container .message-box .message-text-box.own-text-box.data-v-30e39fae {
+  border-radius: 30rpx 8rpx 30rpx 30rpx;
+}
+.message-container .message-box .message-text-box .text-shadow.data-v-30e39fae {
+  filter: blur(5px);
+}
+.message-container .divider.data-v-30e39fae {
+  margin: 14px 0 8px;
+  width: 100%;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.08);
+}
+.message-container.right-content.data-v-30e39fae {
+  align-items: flex-end;
+}
+.message-container.right-content .message-text-box.data-v-30e39fae {
+  background-color: #ede8ff;
+}
+.message-container.right-content .account-text-container .account-text-box.data-v-30e39fae {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 16rpx;
+}
+.message-container.right-content .grammar-outter-box.data-v-30e39fae {
+  display: flex;
+  flex-direction: row-reverse;
+}
+.message-container.right-content .grammar-outter-box .grammar-box.data-v-30e39fae {
+  margin-top: 12rpx;
+  display: flex;
+  border: #979797 1rpx solid;
+  padding: 12rpx 28rpx;
+  align-items: center;
+  border-radius: 10rpx;
+}
+.message-container.right-content .grammar-outter-box .grammar-box .grammar-icon.data-v-30e39fae {
+  width: 28rpx;
+  height: 28rpx;
+  margin-right: 14rpx;
+}
+.message-container.right-content .grammar-outter-box .grammar-box .grammar-score.data-v-30e39fae {
+  color: #11a581;
+}
+.message-container.left-content.data-v-30e39fae {
+  align-items: flex-start;
+}
+.message-container.left-content .message-text-box.data-v-30e39fae {
+  background-color: #f1f1f3;
+}
+.message-container.left-content .action-container.data-v-30e39fae {
+  display: flex;
+}
+.message-container.left-content .action-container .btn-box.data-v-30e39fae {
+  margin-left: 16rpx;
+  height: 48rpx;
+  width: 48rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.message-container.left-content .action-container .btn-box.active.data-v-30e39fae {
+  background-color: #fff;
+}
+.message-container.left-content .action-container .btn-box.data-v-30e39fae:first-child {
+  margin-left: 0;
+}
+.message-container.left-content .action-icon.data-v-30e39fae {
+  width: 32rpx;
+  height: 32rpx;
+}

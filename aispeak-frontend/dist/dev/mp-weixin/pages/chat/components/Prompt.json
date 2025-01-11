@@ -1,0 +1,7 @@
+{
+  "component": true,
+  "usingComponents": {
+    "prompt-popup": "./PromptPopup",
+    "translation-popup": "./TranslationPopup"
+  }
+}

@@ -1,0 +1,17 @@
+.checkbox-box {
+  width: 76rpx;
+  height: 40rpx;
+  position: relative;
+}
+.checkbox-box .checkbox-box-ico {
+  width: 76rpx;
+  height: 40rpx;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: all 0.5 linear;
+}
+.checkbox-box .un-checkbox-box-ico {
+  width: 0;
+  opacity: 0;
+}

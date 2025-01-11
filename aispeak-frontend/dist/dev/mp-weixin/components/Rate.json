@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "seek-bar": "./Rare2"
+  }
+}

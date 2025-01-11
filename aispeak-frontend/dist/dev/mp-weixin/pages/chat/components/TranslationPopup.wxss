@@ -1,0 +1,175 @@
+view.data-v-b772b10a {
+  margin: 0;
+  padding: 0;
+}
+.common-button.data-v-b772b10a {
+  width: 590rpx;
+  height: 120rpx;
+  background: #6236FF;
+  color: #fff;
+  font-size: 14px;
+  border-radius: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+button.data-v-b772b10a:active {
+  opacity: 0.8;
+}
+view.data-v-b772b10a {
+  box-sizing: border-box;
+}
+.row-bc.data-v-b772b10a {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+.row-sc.data-v-b772b10a {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+.common-button.data-v-b772b10a {
+  width: 590rpx;
+  height: 120rpx;
+  background: #6236FF;
+  color: #fff;
+  font-size: 14px;
+  border-radius: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.atk-btn-box.data-v-b772b10a {
+  padding: 28rpx 0;
+  background: #6236FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border-radius: 60rpx;
+  color: #fff;
+}
+.atk-btn-box .atk-btn.data-v-b772b10a {
+  letter-spacing: 4rpx;
+}
+.atk-btn-box.gray.data-v-b772b10a {
+  background: #999;
+}
+.bottom-box.data-v-b772b10a {
+  margin: 32rpx;
+  width: calc(100vw - 64rpx);
+  position: fixed;
+  bottom: 0;
+  padding-bottom: calc(env(safe-area-inset-bottom) / 2);
+}
+.icon.data-v-b772b10a {
+  width: 32rpx;
+  height: 32rpx;
+}
+.translation-container.data-v-b772b10a {
+  background-color: #fff;
+  padding: 32rpx 32rpx 32rpx 32rpx;
+  border-radius: 30rpx 30rpx 0px 0px;
+  position: relative;
+}
+.translation-container .close-icon-box.data-v-b772b10a {
+  position: absolute;
+  padding: 32rpx;
+  top: 0;
+  right: 0;
+  z-index: 99;
+  line-height: 20rpx;
+}
+.translation-container .close-icon-box .close-icon.data-v-b772b10a {
+  width: 20rpx;
+  height: 20rpx;
+}
+.translation-container .content.data-v-b772b10a {
+  margin-top: 16rpx;
+  background-color: #fff;
+}
+.translation-container .content .title-box .title-text.data-v-b772b10a {
+  width: 174rpx;
+  height: 59rpx;
+  font-size: 42rpx;
+  font-weight: 500;
+  color: #000000;
+  line-height: 59rpx;
+  letter-spacing: 1px;
+}
+.translation-container .content .textarea-box.data-v-b772b10a {
+  margin-top: 50rpx;
+  position: relative;
+}
+.translation-container .content .textarea-box .textarea.data-v-b772b10a {
+  width: calc(100% - 64rpx);
+  height: 350rpx;
+  border: 1rpx solid #979797;
+  padding: 28rpx;
+}
+.translation-container .content .textarea-box .translate-btn-box.data-v-b772b10a {
+  z-index: 100;
+  position: absolute;
+  bottom: 20rpx;
+  right: 20rpx;
+  width: 114rpx;
+  height: 64rpx;
+  border-radius: 10rpx;
+  border: 1rpx solid #979797;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #979797;
+}
+.translation-container .content .textarea-box .translate-btn-box.active.data-v-b772b10a {
+  border: 1rpx solid #6236ff;
+  color: #6236ff;
+}
+.translation-container .content .textarea-box .translate-btn-box .translate-btn.data-v-b772b10a {
+  width: 58rpx;
+  height: 40rpx;
+  font-size: 28rpx;
+  font-weight: 400;
+  line-height: 40rpx;
+}
+.translation-container .content .translation-box.data-v-b772b10a {
+  padding-top: 32rpx;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+.translation-container .content .translation-box .translation-text.data-v-b772b10a {
+  font-size: 28rpx;
+  font-weight: 400;
+  color: #000000;
+  line-height: 40rpx;
+  letter-spacing: 1px;
+}
+.translation-container .content .translation-box .playing-box.data-v-b772b10a {
+  margin-left: 32rpx;
+  width: 32rpx;
+  height: 32rpx;
+}
+.send-box.data-v-b772b10a {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 36rpx;
+}
+.send-box .send-btn-box .send-btn.data-v-b772b10a {
+  color: #6236ff;
+}
+.loading-box.data-v-b772b10a {
+  min-height: 100rpx;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.speech-container.data-v-b772b10a {
+  background-color: #fff;
+  margin-top: 32rpx;
+}
