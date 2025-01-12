@@ -1,6 +1,6 @@
-/talkieai-server/.env
-/talkieai-uniapp/package-lock.json
-/talkieai-uniapp/node_modules/
+/aispeak-server/.env
+/aispeak-frontend/package-lock.json
+/aispeak-frontend/node_modules/*
 *.pyc
-/talkieai-uniapp/dist/
+/aispeak-uniapp/dist/
 /*/.idea/

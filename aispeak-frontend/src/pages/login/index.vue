@@ -52,8 +52,9 @@ onMounted(() => {
   });
 
   // 判断是否为微信环境
-  
-  isWeixin.value = uni.getSystemSetting().platform === 'wechat' || uni.getSystemInfoSync().platform === 'devtools';
+  if(uni.getSystemSetting){
+     isWeixin.value = uni.getSystemSetting().platform === 'wechat' || uni.getSystemInfoSync().platform === 'devtools';
+  } 
  
   // 是否有保存登录的token
   let storageToken = uni.getStorageSync(X_TOKEN);
