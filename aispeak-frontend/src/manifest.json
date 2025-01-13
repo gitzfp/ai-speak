@@ -1,6 +1,6 @@
 {
     "name" : "AISPeak",
-    "appid" : "__UNI__1EE8DB0",
+    "appid" : "__UNI__5A376D0",
     "description" : "",
     "versionName" : "1.0.0",
     "versionCode" : "100",
@@ -90,6 +90,7 @@
     "quickapp" : {},
     "mp-weixin" : {
         "appid" : "wx553ddbc4589aaaa9",
+        "uploadKey" : "3a64d34ebbf6e3c12de02e7450bf58ab", // 你的上传密钥
         "setting" : {
             "urlCheck" : false
         },
