@@ -15,7 +15,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       common_vendor.index.setNavigationBarTitle({
         title: "AISPeak"
       });
-      isWeixin.value = common_vendor.index.getSystemSetting().platform === "wechat" || common_vendor.index.getSystemInfoSync().platform === "devtools";
+      if (common_vendor.index.getSystemInfoSync) {
+        console.log("当前平台：", common_vendor.index.getSystemInfoSync().platform);
+        isWeixin.value = common_vendor.index.getSystemInfoSync().platform === "wechat" || common_vendor.index.getSystemInfoSync().platform === "devtools";
+      }
       let storageToken = common_vendor.index.getStorageSync(X_TOKEN);
       if (storageToken) {
         loginSucessByToken(storageToken);

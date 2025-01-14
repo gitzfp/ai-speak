@@ -1,0 +1,1 @@
+"use strict";const e=require("../config/env.js"),i={isWechat:()=>-1!==navigator.userAgent.toLowerCase().indexOf("micromessenger"),removeDecimal:e=>Math.floor(e),getVoiceFileUrl:i=>`${e.__config.basePath}/voices/${i}`};exports.utils=i;

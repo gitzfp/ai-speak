@@ -1,0 +1,1 @@
+<view class="rate-container data-v-6f5b2b03"><view wx:if="{{a}}" class="data-v-6f5b2b03"><seek-bar wx:if="{{b}}" class="data-v-6f5b2b03" u-i="6f5b2b03-0" bind:__l="__l" u-p="{{b}}"></seek-bar></view></view>

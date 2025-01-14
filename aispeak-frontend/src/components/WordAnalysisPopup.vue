@@ -2,7 +2,7 @@
     <uni-popup ref="wordAnalysisPopup" type="bottom" :background-color="popupBackgoundColor">
         <view class="word-analysis-container">
             <view class="close-icon-box">
-                <image @tap="handleClose" class="close-icon" src="/static/icon_close.png"></image>
+                <image @tap="handleClose" class="close-icon" src="https://zfpai.top/static/icon_close.png"></image>
             </view>
             <LoadingRound v-if="wordDetailLoading" :min-height="200"></LoadingRound>
             <view v-else-if="wordPhoneticSymbol" class="content">

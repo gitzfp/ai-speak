@@ -9,11 +9,11 @@
 			<!-- profile -->
 			<view class="profile-box">
 				<view v-if="accountInfo.account_id.indexOf('visitor') === 0" class="profile" @tap="hangleLogin">
-					<image class="profile-avatar" src="/static/default-account-avatar.png" />
+					<image class="profile-avatar" src="https://zfpai.top/static/default-account-avatar.png" />
 					<text class="profile-name">请登录</text>
 				</view>
 				<view v-else class="profile">
-					<image class="profile-avatar" src="/static/default-account-avatar.png" />
+					<image class="profile-avatar" src="https://zfpai.top/static/default-account-avatar.png" />
 					<text class="profile-name">{{ accountInfo.account_id }}</text>
 				</view>
 			</view>
@@ -31,25 +31,25 @@
 			</view>
 			<view class="setting">
 				<!-- <view class="setting-card" @tap="goSetting">
-					<image class="setting-card-logo" src="/static/setting.png" />
+					<image class="setting-card-logo" src="https://zfpai.top/static/setting.png" />
 					<text class="setting-card-title">设置</text>
 				</view> -->
 				<view class="setting-card" @tap="goLearningLanguage">
-					<image class="setting-card-logo" src="/static/setting.png" />
+					<image class="setting-card-logo" src="https://zfpai.top/static/setting.png" />
 					<text class="setting-card-title">学习语言</text>
 					<text class="setting-card-value" style="margin-right: 50rpx;">{{ accountInfo.target_language_label }}</text>
 				</view>
 				<view class="setting-card" @tap="goFeedback">
-					<image class="setting-card-logo" src="/static/feedback.png" />
+					<image class="setting-card-logo" src="https://zfpai.top/static/feedback.png" />
 					<text class="setting-card-title">反馈</text>
 				</view>
 				<view class="setting-card" @tap="goContact">
-					<image class="setting-card-logo" src="/static/concat.png" />
+					<image class="setting-card-logo" src="https://zfpai.top/static/concat.png" />
 					<text class="setting-card-title">联系我们</text>
 				</view>
 				<!-- 如果是小程序登录 -->
 				<view v-if="accountInfo.account_id.indexOf('visitor') < 0" class="logout-box" @tap="hangleLogout">
-					<!-- <image class="setting-card-logo" src="/static/default-account-avatar.png" /> -->
+					<!-- <image class="setting-card-logo" src="https://zfpai.top/static/default-account-avatar.png" /> -->
 					<text class="setting-card-title logout-text">退出登录</text>
 				</view>
 			</view>

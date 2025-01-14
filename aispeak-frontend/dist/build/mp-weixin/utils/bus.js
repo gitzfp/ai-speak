@@ -1,0 +1,1 @@
+"use strict";exports.EventBus=class{constructor(){this.events={}}emit(t,s){this.events[t]&&this.events[t].forEach((function(t){t(s)}))}on(t,s){this.events[t]=this.events[t]||[],this.events[t].push(s)}off(t,s){if(this.events[t])for(let e=0;e<this.events[t].length;e++)if(this.events[t][e]===s){this.events[t].splice(e,1);break}}};

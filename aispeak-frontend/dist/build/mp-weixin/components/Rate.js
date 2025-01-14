@@ -1,0 +1,1 @@
+"use strict";const e=require("../common/vendor.js");Math||t();const t=()=>"./Rare2.js",a=e.defineComponent({__name:"Rate",props:{rate:null},setup:t=>(e.onMounted((()=>{})),(a,o)=>e.e({a:t.rate&&t.rate>0},t.rate&&t.rate>0?{b:e.p({width:140,processVal:t.rate})}:{}))}),o=e._export_sfc(a,[["__scopeId","data-v-6f5b2b03"]]);wx.createComponent(o);

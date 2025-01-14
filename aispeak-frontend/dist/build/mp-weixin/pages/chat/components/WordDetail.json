@@ -1,0 +1,11 @@
+{
+  "component": true,
+  "usingComponents": {
+    "audio-player": "../../../components/AudioPlayer",
+    "loading-round": "../../../components/LoadingRound",
+    "speech": "../../../components/Speech",
+    "collect": "../../../components/Collect",
+    "rate": "../../../components/Rate",
+    "phoneme-box": "./PhonemeBox"
+  }
+}

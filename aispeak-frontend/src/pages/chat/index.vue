@@ -22,14 +22,14 @@
       <!-- 键盘输入 -->
       <view v-if="!inputTypeVoice" class="input-bottom-container" :style="'bottom:' + inputBottom + 'px;'">
         <view @tap="handleSwitchInputType" class="voice-icon-box">
-          <image class="voice-icon" src="/static/icon_voice_fixed.png"></image>
+          <image class="voice-icon" src="https://zfpai.top/static/icon_voice_fixed.png"></image>
         </view>
         <view class="input-box">
           <input class="textarea" @focus="inputFocus" confirm-type="send" @confirm="handleSendText"
             style="padding-left: 30rpx" v-model="inputText" @input="handleInput" placeholder="在这里输入文字" />
         </view>
         <view @tap="handleSendText" class="send-icon-box" :class="{ active: inputHasText }">
-          <image class="send-icon" src="/static/icon_send.png"> </image>
+          <image class="send-icon" src="https://zfpai.top/static/icon_send.png"> </image>
         </view>
       </view>
 
@@ -41,10 +41,10 @@
         <view class="speech-box">
           <Speech :session-id="session.id">
             <template v-slot:leftMenu>
-              <image @tap="handleSwitchInputType" class="keybord-icon" src="/static/icon_keybord.png"></image>
+              <image @tap="handleSwitchInputType" class="keybord-icon" src="https://zfpai.top/static/icon_keybord.png"></image>
             </template>
             <template v-slot:rightMenu>
-              <image @tap="handleSwitchMenu" class="input-type-switch-btn" src="/static/icon_settings.png"></image>
+              <image @tap="handleSwitchMenu" class="input-type-switch-btn" src="https://zfpai.top/static/icon_settings.png"></image>
             </template>
           </Speech>
         </view>
@@ -58,7 +58,7 @@
 
     <!-- 悬浮按钮 -->
     <view class="floating-button" @tap="handleShowModal">
-      <image src="/static/img/note.png" mode="aspectFit" />
+      <image src="https://zfpai.top/static/img/note.png" mode="aspectFit" />
     </view>
 
     <!-- 模态框 -->
@@ -83,7 +83,7 @@
                   <text class="text-cn">{{ target.info_cn }}</text>
                   <text class="text-en">{{ target.info_en }}</text>
                   <view class="audio-icon" @tap="playAudio(target.info_en)">
-                    <image src="/static/icon_audio.png" mode="aspectFit"></image>
+                    <image src="https://zfpai.top/static/icon_audio.png" mode="aspectFit"></image>
                   </view>
                 </view>
               </view>

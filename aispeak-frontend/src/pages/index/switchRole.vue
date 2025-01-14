@@ -2,7 +2,7 @@
     <view class="container">
         <CommonHeader :left-icon="true" style="background-color: none; color: #fff" :back-fn="handleBackPage" title="聊天">
             <template v-slot:left>
-                <image @tap="handleBackPage" class="back-icon" src="/static/icon_home.png"></image>
+                <image @tap="handleBackPage" class="back-icon" src="https://zfpai.top/static/icon_home.png"></image>
             </template>
             <template v-slot:content>
                 <view>选择角色</view>

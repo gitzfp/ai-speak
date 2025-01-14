@@ -1,0 +1,9 @@
+{
+  "component": true,
+  "usingComponents": {
+    "uni-popup": "../../../uni_modules/uni-popup/components/uni-popup/uni-popup",
+    "audio-player": "../../../components/AudioPlayer",
+    "speech": "./MessageSpeech",
+    "loading-round": "../../../components/LoadingRound"
+  }
+}

@@ -8,12 +8,12 @@
       </view>
       <template v-else>
         <view class="tips-box">
-          <image class="grammar-icon-tips" src="/static/icon_incorrect.png"></image>
+          <image class="grammar-icon-tips" src="https://zfpai.top/static/icon_incorrect.png"></image>
           <view class="grammar-result-content red">{{ grammarAnalysisResult.original }}</view>
         </view>
         <view class="line"><!----></view>
         <view class="tips-box">
-          <image class="grammar-icon-tips" src="/static/icon_correct.png"></image>
+          <image class="grammar-icon-tips" src="https://zfpai.top/static/icon_correct.png"></image>
           <view class="grammar-result-content green">
             {{ grammarAnalysisResult.correct_content }}
           </view>
@@ -37,14 +37,14 @@
         <view class="action-box">
           <view class="translate-icon-box icon-box">
             <image class="translate-icon icon" @tap="handleTranlate(grammarAnalysisResult.better)"
-              src="/static/icon_translate.png"></image>
+              src="https://zfpai.top/static/icon_translate.png"></image>
           </view>
           <view class="collect-icon-box icon-box">
             <collect type="SENTENCE" :content="grammarAnalysisResult.better"></collect>
           </view>
           <view class="copy-icon-box icon-box">
             <image @tap="handleCopy(grammarAnalysisResult.better)" class="copy-icon icon"
-              src="/static/icon_copy_text.png"></image>
+              src="https://zfpai.top/static/icon_copy_text.png"></image>
           </view>
         </view>
       </view>

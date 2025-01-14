@@ -33,7 +33,7 @@
                                 </view>
                             </view>
                             <view @click="handleDelete(history)" class="delete-btn-box">
-                                <image class="delete-btn" src="/static/deleted.png" mode="heightFix" />
+                                <image class="delete-btn" src="https://zfpai.top/static/deleted.png" mode="heightFix" />
                             </view>
                         </view>
                         <view class="line"></view>

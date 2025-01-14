@@ -2,7 +2,7 @@
   <uni-popup class="popup-container" ref="promotPopup" type="bottom" :background-color="popupBackgoundColor">
     <view class="promot-popup-container">
       <view @tap="handleClose" class="close-icon-box">
-        <image class="close-icon" src="/static/icon_close.png"></image>
+        <image class="close-icon" src="https://zfpai.top/static/icon_close.png"></image>
       </view>
 
       <view class="title-box">
@@ -22,7 +22,7 @@
             class="prompt-text-box"></functional-text>
           <view class="action-box">
             <view class="translate-icon-box left-box" :class="{ 'active': prompt.translateShow }">
-              <image @tap="handleTranslatePrompt(prompt)" class="icon-tanslate" src="/static/icon_translate.png">
+              <image @tap="handleTranslatePrompt(prompt)" class="icon-tanslate" src="https://zfpai.top/static/icon_translate.png">
               </image>
             </view>
             <view @tap="sendMessage(prompt)" class="right-box"> 发送文本 </view>

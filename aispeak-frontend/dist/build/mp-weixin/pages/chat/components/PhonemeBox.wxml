@@ -1,0 +1,1 @@
+<view class="phoneme-box data-v-137fd6cc"><view wx:for="{{a}}" wx:for-item="phoneme" wx:key="b" bindtap="{{phoneme.c}}" class="{{['phoneme-text', 'data-v-137fd6cc', phoneme.d && 'incorrect', phoneme.e && 'good']}}">{{phoneme.a}}</view></view>

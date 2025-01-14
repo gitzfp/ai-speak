@@ -1,6 +1,6 @@
 <template>
   <view class="container">
-    <image class="logo" src="/static/logo.png"></image>
+    <image class="logo" src="https://zfpai.top/static/logo.png"></image>
     <text class="title">
       欢迎使用AISPeak
     </text>
@@ -50,10 +50,11 @@ onMounted(() => {
   uni.setNavigationBarTitle({
     title: 'AISPeak',
   });
-
+ 
   // 判断是否为微信环境
-  if(uni.getSystemSetting){
-     isWeixin.value = uni.getSystemSetting().platform === 'wechat' || uni.getSystemInfoSync().platform === 'devtools';
+  if(uni.getSystemInfoSync){
+      console.log("当前平台：", uni.getSystemInfoSync().platform);
+     isWeixin.value = uni.getSystemInfoSync().platform === 'wechat' || uni.getSystemInfoSync().platform === 'devtools';
   } 
  
   // 是否有保存登录的token

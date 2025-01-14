@@ -8,7 +8,7 @@
         <view class="content">
             <template v-if="topicHistory">
                 <view class="completion-title-box">
-                    <image class="completion-icon" src="/static/topic-result-pass.png" mode="heightFix" />
+                    <image class="completion-icon" src="https://zfpai.top/static/topic-result-pass.png" mode="heightFix" />
                     <view class="completion-title">已完成</view>
                 </view>
                 <view class="completion-container">

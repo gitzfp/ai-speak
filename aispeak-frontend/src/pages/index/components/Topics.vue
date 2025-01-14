@@ -41,7 +41,7 @@
                         <!-- 根据level属性来生成对应星星数量 -->
                         <view class="level-box">
                             <image class="level-icon" v-for="index in topic.level"
-                                :key="'level_icon_' + topic.id + '_' + index" src="/static/img/icons/star.png" />
+                                :key="'level_icon_' + topic.id + '_' + index" src="https://zfpai.top/static/img/icons/star.png" />
                         </view>
                         <!-- 用户是否已经完成此次话题 -->
                         <view class="completed-box" v-if="topic.completed === '1'">

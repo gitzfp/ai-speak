@@ -12,7 +12,7 @@
       <view class="chat-list-action-box">
         <AudioPlayer class="chat-list-action_playing btn-box" :messageId="collect.message_id"
           :content="collect.content" />
-        <image @tap="handleDelete" class="chat-list-action btn-box" src="/static/deleted.png" mode="heightFix" />
+        <image @tap="handleDelete" class="chat-list-action btn-box" src="https://zfpai.top/static/deleted.png" mode="heightFix" />
       </view>
     </view>
   </view>

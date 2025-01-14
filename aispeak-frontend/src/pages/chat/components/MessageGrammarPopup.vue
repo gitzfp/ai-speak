@@ -2,10 +2,10 @@
     <uni-popup @change="handlePopupChange" ref="grammarPopup" type="bottom" :background-color="popupBackgoundColor">
         <view class="message-grammat-container">
             <view @tap="handleClose" class="close-icon-box">
-                <image class="close-icon" src="/static/icon_close.png"></image>
+                <image class="close-icon" src="https://zfpai.top/static/icon_close.png"></image>
             </view>
             <view v-if="wordDetailShow" @tap="handleCloseWordDetail" class="word-back-icon-box">
-                <image class="icon" src="/static/icon_header_back.png"></image>
+                <image class="icon" src="https://zfpai.top/static/icon_header_back.png"></image>
             </view>
             <view v-if="!wordDetailShow" class="tab-box">
                 <view @tap="handleActive('grammar')" class="tab-item" :class="{ 'active': activeView === 'grammar' }">

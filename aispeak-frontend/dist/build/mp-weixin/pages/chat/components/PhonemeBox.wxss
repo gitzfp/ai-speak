@@ -1,0 +1,1 @@
+.phoneme-box.data-v-137fd6cc{display:flex;font-size:28rpx;flex-wrap:wrap}.phoneme-box .phoneme-text.data-v-137fd6cc{margin-left:12rpx}.phoneme-box .phoneme-text.data-v-137fd6cc:first-child{margin-left:0}.phoneme-box .phoneme-text.incorrect.data-v-137fd6cc{color:#fc6262}.phoneme-box .phoneme-text.good.data-v-137fd6cc{color:#87622b}

@@ -1,0 +1,1 @@
+<view class="checkbox-box" bindtap="{{c}}"><image class="{{a}}" src="/static/check.png"/><image class="{{b}}" src="/static/un_check.png"/></view>

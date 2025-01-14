@@ -1,0 +1,1 @@
+<view class="word-box data-v-cc31f7f7"><view wx:for="{{a}}" wx:for-item="word" wx:key="b" bindtap="{{word.c}}" class="{{['word-text', 'data-v-cc31f7f7', word.d && 'incorrect', word.e && 'good']}}">{{word.a}}</view></view>
