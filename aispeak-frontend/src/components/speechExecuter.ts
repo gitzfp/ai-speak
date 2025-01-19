@@ -219,7 +219,7 @@ class Speech {
         self.handleUploadResult({ resData: res });
       },
       fail: (e: any) => {
-        console.error(e, "失败原因");
+        console.error(e, "微信上传失败原因");
         uni.showToast({
           title: "上传失败",
           icon: "none",
@@ -257,7 +257,7 @@ class Speech {
             self.handleUploadResult({ resData: res });
           },
           fail: (e) => {
-            console.error(e, "失败原因");
+            console.error(e, "h5录音上传失败原因");
             uni.showToast({
               title: "上传失败",
               icon: "none",
