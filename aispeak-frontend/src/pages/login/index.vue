@@ -40,6 +40,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import accountReqeust from '@/api/account';
+import utils from '@/utils/utils';
 const X_TOKEN = 'x-token';
 const loginLoading = ref(false);
 const isWeixin = ref(false); // 是否为微信环境
@@ -52,10 +53,8 @@ onMounted(() => {
   });
  
   // 判断是否为微信环境
-  if(uni.getSystemInfoSync){
-      console.log("当前平台：", uni.getSystemInfoSync().platform);
-     isWeixin.value = uni.getSystemInfoSync().platform === 'wechat' || uni.getSystemInfoSync().platform === 'devtools';
-  } 
+  isWeixin.value = utils.isWechat();
+  console.log('isWeixin:', isWeixin.value);
  
   // 是否有保存登录的token
   let storageToken = uni.getStorageSync(X_TOKEN);

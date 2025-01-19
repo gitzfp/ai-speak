@@ -51,7 +51,7 @@
       <view v-if="message.owner" class="grammar-outter-box">
         <LoadingRound v-if="grammarLoading" class="grammar-box" />
         <view v-else-if="message.pronunciation" class="grammar-box" @tap="handleGrammar">
-          <image v-if="message.achieved_target === true" class="grammar-icon" src="https://api.zfpai.top/static/img/start.png" />
+          <image v-if="message.achieved_target === true" class="grammar-icon" src="https://api.zfpai.top/static/img/icons/star.png" />
           <image class="grammar-icon" src="https://api.zfpai.top/static/icon_grammar.png" />
           <text class="grammar-score">{{ utils.removeDecimal(message.pronunciation.pronunciation_score) }}</text>
         </view>

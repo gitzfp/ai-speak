@@ -7,9 +7,11 @@ var __publicField = (obj, key, value) => {
 };
 const common_vendor = require("../common/vendor.js");
 const config_env = require("../config/env.js");
+const utils_utils = require("../utils/utils.js");
 const MAXIMUM_RECORDING_TIME = 60;
 class Speech {
   constructor() {
+    __publicField(this, "utils", utils_utils.utils);
     __publicField(this, "recorder", {
       start: false,
       processing: false,
@@ -44,39 +46,56 @@ class Speech {
   mpWeixinVoiceStart() {
     let self = this;
     let recorderManager = common_vendor.index.getRecorderManager();
-    console.log(recorderManager);
+    if (!recorderManager) {
+      console.error("Failed to get recorder manager");
+      if (self.listener.error) {
+        self.listener.error("Failed to initialize recorder");
+      }
+      return;
+    }
     let format = "wav";
     self.recorder.wxRecorderManager = recorderManager;
-    recorderManager.start({
-      duration: MAXIMUM_RECORDING_TIME * 1e3,
-      sampleRate: 44100,
-      encodeBitRate: 192e3,
-      format
-    });
-    console.log("speech start..");
-    self.recorder.start = true;
-    self.recorder.remainingTime = MAXIMUM_RECORDING_TIME;
-    self.intervalId = setInterval(() => {
-      if (self.recorder.remainingTime === 0) {
-        self.handleEndVoice();
-      } else {
-        if (self.listener.interval) {
-          self.listener.interval(self.recorder.remainingTime);
-        }
-        self.recorder.remainingTime--;
-      }
-    }, 1e3);
-    recorderManager.onStop((res) => {
-      console.log("speech on stop.." + res.tempFilePath);
-      self.handleProcessWxEndVoice({
-        filePath: res.tempFilePath
+    try {
+      recorderManager.start({
+        duration: MAXIMUM_RECORDING_TIME * 1e3,
+        sampleRate: 44100,
+        encodeBitRate: 192e3,
+        format
       });
-    });
-  }
-  clearInterval() {
-    const self = this;
-    if (self.intervalId) {
-      clearInterval(self.intervalId);
+      self.recorder.start = true;
+      self.recorder.remainingTime = MAXIMUM_RECORDING_TIME;
+      self.intervalId = setInterval(() => {
+        if (self.recorder.remainingTime === 0) {
+          self.handleEndVoice();
+        } else {
+          if (self.listener.interval) {
+            self.listener.interval(self.recorder.remainingTime);
+          }
+          self.recorder.remainingTime--;
+        }
+      }, 1e3);
+      recorderManager.onStop((res) => {
+        if (!res || !res.tempFilePath) {
+          console.error("No tempFilePath in stop result", res);
+          return;
+        }
+        console.log("停止微信录音回调。。。", res);
+        self.handleProcessWxEndVoice({
+          filePath: res.tempFilePath
+        });
+        console.log("停止微信录音回调成功", res);
+      });
+      recorderManager.onError((err) => {
+        console.error("Recorder error:", err);
+        if (self.listener.error) {
+          self.listener.error(err);
+        }
+      });
+    } catch (err) {
+      console.error("Error starting recorder:", err);
+      if (self.listener.error) {
+        self.listener.error(err);
+      }
     }
   }
   h5VoiceStart() {
@@ -92,18 +111,18 @@ class Speech {
         self.recorder.rec.start();
         self.recorder.remainingTime = MAXIMUM_RECORDING_TIME;
         self.intervalId = setInterval(() => {
-          if (self.listener.interval) {
-            self.listener.interval(self.recorder.remainingTime);
-          }
           if (self.recorder.remainingTime === 0) {
             clearInterval(self.intervalId);
             self.handleEndVoice();
           } else {
+            if (self.listener.interval) {
+              self.listener.interval(self.recorder.remainingTime);
+            }
             self.recorder.remainingTime--;
           }
         }, 1e3);
       },
-      (msg, isUserNotAllow) => {
+      (msg) => {
         common_vendor.index.showToast({
           title: "请开启录音权限",
           icon: "none"
@@ -114,37 +133,38 @@ class Speech {
       }
     );
   }
-  handleCancleVoice() {
-    let self = this;
-    self.clearInterval();
-    if (self.recorder.wxRecorderManager) {
-      self.recorder.wxRecorderManager.stop();
-      self.recorder.start = false;
-      self.recorder.processing = false;
-      self.recorder.wxRecorderManager = null;
-    }
-    if (self.listener.cancel) {
-      self.listener.cancel();
-    }
-  }
   handleEndVoice() {
     let self = this;
     self.clearInterval();
     if (self.recorder.processing) {
       return;
     }
-    console.log("speech trigger end..");
-    self.handleWxEndVoice();
+    if (self.utils.isWechat()) {
+      self.handleWxEndVoice();
+    } else {
+      self.handleH5EndVoice();
+    }
   }
   handleWxEndVoice() {
+    console.log("停止微信录音：handleWxEndVoice");
     let self = this;
-    console.log("execute stop1");
-    console.log(self.recorder);
-    self.recorder.wxRecorderManager.stop();
-    console.log("execute stop");
+    if (!self.recorder.wxRecorderManager) {
+      console.error("wxRecorderManager is null");
+      if (self.listener.error) {
+        self.listener.error("Recorder manager not initialized");
+      }
+      return;
+    }
+    try {
+      self.recorder.wxRecorderManager.stop();
+    } catch (err) {
+      console.error("Error stopping recorder:", err);
+      if (self.listener.error) {
+        self.listener.error(err);
+      }
+    }
   }
   handleProcessWxEndVoice({ filePath }) {
-    console.log("speech end...");
     let self = this;
     if (self.listener.processing) {
       self.listener.processing();
@@ -157,12 +177,9 @@ class Speech {
       },
       name: "file",
       success: (res) => {
-        var resData = res;
-        self.handleUploadResult({
-          resData
-        });
+        self.handleUploadResult({ resData: res });
       },
-      fail(e) {
+      fail: (e) => {
         console.error(e, "失败原因");
         common_vendor.index.showToast({
           title: "上传失败",
@@ -180,35 +197,26 @@ class Speech {
     });
   }
   handleH5EndVoice() {
+    var _a;
+    console.log("停止h5录音：handleWxEndVoice");
     let self = this;
     if (self.listener.processing) {
       self.listener.processing();
     }
-    self.recorder.rec.stop(
-      (blob, duration) => {
-        self.recorder.processing = true;
-        var reader = new FileReader();
-        reader.addEventListener("load", function() {
-        }, false);
-        reader.readAsDataURL(blob);
-        window.URL.createObjectURL(blob);
+    (_a = self.recorder.rec) == null ? void 0 : _a.stop(
+      (blob) => {
         common_vendor.index.uploadFile({
           file: blob,
           header: {
             "X-Token": common_vendor.index.getStorageSync("x-token")
           },
           name: "file",
-          formData: {
-            file: blob
-          },
+          formData: { file: blob },
           url: config_env.__config.basePath + "/voices/upload",
           success: (res) => {
-            var resData = res;
-            self.handleUploadResult({
-              resData
-            });
+            self.handleUploadResult({ resData: res });
           },
-          fail(e) {
+          fail: (e) => {
             console.error(e, "失败原因");
             common_vendor.index.showToast({
               title: "上传失败",
@@ -222,13 +230,11 @@ class Speech {
           }
         });
       },
-      function(s) {
+      (err) => {
         if (self.listener.error) {
-          self.listener.error(s);
+          self.listener.error(err);
         }
-        console.error("结束出错");
-      },
-      true
+      }
     );
   }
   handleUploadResult({ resData }) {
@@ -245,13 +251,29 @@ class Speech {
         }
         return;
       }
-      let dataJson = resultJson.data;
       if (self.listener.success) {
         self.listener.success({
-          inputValue: dataJson.result,
-          voiceFileName: dataJson.file
+          inputValue: resultJson.data.result,
+          voiceFileName: resultJson.data.file
         });
       }
+    }
+  }
+  clearInterval() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+    }
+  }
+  handleCancleVoice() {
+    this.clearInterval();
+    if (this.recorder.wxRecorderManager) {
+      this.recorder.wxRecorderManager.stop();
+      this.recorder.start = false;
+      this.recorder.processing = false;
+      this.recorder.wxRecorderManager = null;
+    }
+    if (this.listener.cancel) {
+      this.listener.cancel();
     }
   }
 }

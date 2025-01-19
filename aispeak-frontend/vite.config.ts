@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [uni()],
   server: {
     host: "0.0.0.0",
+    port: 5174,
     proxy: {
       "/api/cms-dashboard": {
         target,

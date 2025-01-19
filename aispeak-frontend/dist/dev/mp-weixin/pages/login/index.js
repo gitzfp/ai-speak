@@ -1,6 +1,7 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_account = require("../../api/account.js");
+const utils_utils = require("../../utils/utils.js");
 require("../../axios/api.js");
 require("../../config/env.js");
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
@@ -15,10 +16,8 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       common_vendor.index.setNavigationBarTitle({
         title: "AISPeak"
       });
-      if (common_vendor.index.getSystemInfoSync) {
-        console.log("当前平台：", common_vendor.index.getSystemInfoSync().platform);
-        isWeixin.value = common_vendor.index.getSystemInfoSync().platform === "wechat" || common_vendor.index.getSystemInfoSync().platform === "devtools";
-      }
+      isWeixin.value = utils_utils.utils.isWechat();
+      console.log("isWeixin:", isWeixin.value);
       let storageToken = common_vendor.index.getStorageSync(X_TOKEN);
       if (storageToken) {
         loginSucessByToken(storageToken);
