@@ -9,7 +9,7 @@
 			<view class="contact-text">
 				<text>欢迎随时联系我们反馈产品体验</text>
 			</view>
-			<image class="contact-image" src="https://zfpai.top/static/contact_us.jpeg" />
+			<image class="contact-image" src="https://api.zfpai.top/static/contact_us.jpeg" />
 		</view>
 	</view>
 </template>

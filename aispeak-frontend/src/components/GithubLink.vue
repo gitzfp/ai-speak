@@ -1,6 +1,6 @@
 <template>
     <img class="github-link" @tap="redirectToGithub" target="_blank" style="height: 32rpx; width: 32rpx;"
-        src="https://zfpai.top/static/github/github-mark.png" alt="GitHub Logo" />
+        src="https://api.zfpai.top/static/github/github-mark.png" alt="GitHub Logo" />
 </template>
 <script setup lang="ts">
 const redirectToGithub = () => {

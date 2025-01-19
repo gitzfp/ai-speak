@@ -15,16 +15,16 @@
           <view class="divider"></view>
           <view class="action-container">
             <view class="btn-box" :class="{ active: translateShow }">
-              <image class="action-icon" @tap="handleTranslateText" src="https://zfpai.top/static/icon_translate.png" />
+              <image class="action-icon" @tap="handleTranslateText" src="https://api.zfpai.top/static/icon_translate.png" />
             </view>
             <view class="btn-box collect-btn-box">
               <Collect type="MESSAGE" :messageId="message.id || ''" />
             </view>
             <view class="btn-box">
-              <image class="action-icon" @tap="handleCopyText" src="https://zfpai.top/static/icon_copy_text.png" />
+              <image class="action-icon" @tap="handleCopyText" src="https://api.zfpai.top/static/icon_copy_text.png" />
             </view>
             <view class="btn-box" :class="{ active: textShadow }">
-              <image class="action-icon" @tap="handleHint" src="https://zfpai.top/static/icon_hint.png" />
+              <image class="action-icon" @tap="handleHint" src="https://api.zfpai.top/static/icon_hint.png" />
             </view>
           </view>
         </view>
@@ -51,12 +51,12 @@
       <view v-if="message.owner" class="grammar-outter-box">
         <LoadingRound v-if="grammarLoading" class="grammar-box" />
         <view v-else-if="message.pronunciation" class="grammar-box" @tap="handleGrammar">
-          <image v-if="message.achieved_target === true" class="grammar-icon" src="https://zfpai.top/static/img/start.png" />
-          <image class="grammar-icon" src="https://zfpai.top/static/icon_grammar.png" />
+          <image v-if="message.achieved_target === true" class="grammar-icon" src="https://api.zfpai.top/static/img/start.png" />
+          <image class="grammar-icon" src="https://api.zfpai.top/static/icon_grammar.png" />
           <text class="grammar-score">{{ utils.removeDecimal(message.pronunciation.pronunciation_score) }}</text>
         </view>
         <view v-else class="grammar-box" @tap="handleGrammar">
-          <image class="grammar-icon" src="https://zfpai.top/static/icon_grammar.png" />
+          <image class="grammar-icon" src="https://api.zfpai.top/static/icon_grammar.png" />
           <text>语法</text>
         </view>
       </view>

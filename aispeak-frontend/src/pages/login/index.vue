@@ -1,6 +1,6 @@
 <template>
   <view class="container">
-    <image class="logo" src="https://zfpai.top/static/logo.png"></image>
+    <image class="logo" src="https://api.zfpai.top/static/logo.png"></image>
     <text class="title">
       欢迎使用AISPeak
     </text>

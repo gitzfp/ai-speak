@@ -2,7 +2,7 @@
   <uni-popup ref="translationPopup" type="bottom" :background-color="popupBackgoundColor">
     <view class="translation-container">
       <view @tap="handleClose" class="close-icon-box">
-        <image class="close-icon" src="https://zfpai.top/static/icon_close.png"></image>
+        <image class="close-icon" src="https://api.zfpai.top/static/icon_close.png"></image>
       </view>
       <view class="content">
         <view class="title-box">

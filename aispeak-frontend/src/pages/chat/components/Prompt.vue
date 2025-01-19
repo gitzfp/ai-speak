@@ -1,13 +1,13 @@
 <template>
     <view class="menu-container">
         <view @tap="handlePrompt" class="menu-item">
-            <image class="menu-icon" src="https://zfpai.top/static/icon_prompt.png"></image>
+            <image class="menu-icon" src="https://api.zfpai.top/static/icon_prompt.png"></image>
             <view class="menu-text">
                 提示
             </view>
         </view>
         <view @tap="handleTranslate" class="menu-item">
-            <image class="menu-icon" src="https://zfpai.top/static/icon_translate.png"></image>
+            <image class="menu-icon" src="https://api.zfpai.top/static/icon_translate.png"></image>
             <view class="menu-text">
                 翻译
             </view>

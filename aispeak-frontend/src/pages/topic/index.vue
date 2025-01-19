@@ -12,7 +12,7 @@
                     <image class="profile-image" :src="topicDetail.image_url" mode="aspectFill" />
                     <view class="name-box">
                         {{ topicDetail.name }}
-                        <image @click="goTopicHistory" class="icon" src="https://zfpai.top/static/img/icons/history-records.png" />
+                        <image @click="goTopicHistory" class="icon" src="https://api.zfpai.top/static/img/icons/history-records.png" />
                     </view>
                 </view>
 

@@ -1,1 +1,1 @@
-"use strict";exports.__config={basePath:"https://zfpai.top/api/v1"};
+"use strict";exports.__config={basePath:"https://api.zfpai.top/api/v1"};

@@ -1490,7 +1490,7 @@ function populateParameters(fromRes, toRes) {
   let _SDKVersion = SDKVersion;
   const hostLanguage = language.replace(/_/g, "-");
   const parameters = {
-    appId: "__UNI__5A376D0",
+    appId: "__UNI__1EE8DB0",
     appName: "AISPeak",
     appVersion: "1.0.0",
     appVersionCode: "100",
@@ -1634,7 +1634,7 @@ const getAppBaseInfo = {
       hostName: _hostName,
       hostSDKVersion: SDKVersion,
       hostTheme: theme,
-      appId: "__UNI__5A376D0",
+      appId: "__UNI__1EE8DB0",
       appName: "AISPeak",
       appVersion: "1.0.0",
       appVersionCode: "100",

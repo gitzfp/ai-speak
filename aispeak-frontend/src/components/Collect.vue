@@ -2,9 +2,9 @@
     <view class="collect-icon-box">
         <LoadingRound v-show="collectLoading"></LoadingRound>
         <image @tap="handleCollect" v-show="!collectLoading && !collected" class="collect-icon"
-            src="https://zfpai.top/static/icon_collect.png"></image>
+            src="https://api.zfpai.top/static/icon_collect.png"></image>
         <image @tap="handleCancel" v-show="!collectLoading && collected" class="collect-icon"
-            src="https://zfpai.top/static/icon_collect_actived.png">
+            src="https://api.zfpai.top/static/icon_collect_actived.png">
         </image>
     </view>
 </template>

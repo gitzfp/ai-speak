@@ -4,10 +4,10 @@
       <LoadingRound v-if="transformFileLoading"></LoadingRound>
       <template v-else>
         <image v-if="speechLoading" class="icon message-playing-icon play-ico" style="width: 36rpx;height:36rpx;"
-          :class="{ reverse: direction && direction == 'right' }" src="https://zfpai.top/static/voice_playing.gif" mode="heightFix">
+          :class="{ reverse: direction && direction == 'right' }" src="https://api.zfpai.top/static/voice_playing.gif" mode="heightFix">
         </image>
         <image v-else class="icon message-playing-icon playing-ico" style="width: 36rpx;height:36rpx;"
-          :class="{ reverse: direction && direction == 'right' }" src="https://zfpai.top/static/voice_play.png" mode="heightFix"></image>
+          :class="{ reverse: direction && direction == 'right' }" src="https://api.zfpai.top/static/voice_play.png" mode="heightFix"></image>
       </template>
     </view>
   </view>

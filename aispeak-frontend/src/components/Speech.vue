@@ -7,7 +7,7 @@
       </slot>
       <view @tap="handleSpeech" class="recorder-btn-box">
         <view class="voice-circle">
-          <image class="voice-icon" src="https://zfpai.top/static/icon_voice.png"></image>
+          <image class="voice-icon" src="https://api.zfpai.top/static/icon_voice.png"></image>
         </view>
       </view>
       <slot name="rightMenu">
@@ -26,20 +26,20 @@
     <!-- 录音结束 -->
     <view v-if="recorder.completed" class="recorder-completed-box">
       <view @tap="handleTrash" class="trash-btn-box">
-        <image class="trash-btn" src="https://zfpai.top/static/icon_trash.png"></image>
+        <image class="trash-btn" src="https://api.zfpai.top/static/icon_trash.png"></image>
       </view>
       <view @tap="handlePlaySpeech" class="play-btn-box">
         <image
           v-if="!voicePlaying"
           class="play-btn"
-          src="https://zfpai.top/static/icon_menu_play.png"
+          src="https://api.zfpai.top/static/icon_menu_play.png"
         >
         </image>
         <image
           v-else="voicePlaying"
           class="play-btn"
           style="width: 100%; height: 100%"
-          src="https://zfpai.top/static/menu_voice_playing.gif"
+          src="https://api.zfpai.top/static/menu_voice_playing.gif"
         ></image>
       </view>
       <view @tap="handleSend" class="send-btn-box">
@@ -47,7 +47,7 @@
         <image
           v-if="!recorder.processing"
           class="send-btn"
-          src="https://zfpai.top/static/icon_send.png"
+          src="https://api.zfpai.top/static/icon_send.png"
         ></image>
       </view>
     </view>

@@ -20,7 +20,7 @@
 				</view>
 			</view>
 			<view v-else class="feedback-box">
-				<image class="feedback-ico" src="https://zfpai.top/static/feedback_success.png" />
+				<image class="feedback-ico" src="https://api.zfpai.top/static/feedback_success.png" />
 				<view class="feedback-success">
 					<text>提交成功</text>
 				</view>

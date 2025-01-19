@@ -5,7 +5,7 @@
       <view class="left">
         <slot name="left">
           <view class="left-icon-box" @tap="handleBack">
-            <image v-if="leftIcon" class="back-icon" src="https://zfpai.top/static/icon_header_back.png"></image>
+            <image v-if="leftIcon" class="back-icon" src="https://api.zfpai.top/static/icon_header_back.png"></image>
           </view>
         </slot>
       </view>

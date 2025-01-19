@@ -1,6 +1,6 @@
 <template>
   <view class="loading-round" :style="containerStyle">
-    <image class="loading-round-img" src="https://zfpai.top/static/loading.png"></image>
+    <image class="loading-round-img" src="https://api.zfpai.top/static/loading.png"></image>
   </view>
 </template>
 <script setup lang="ts">
