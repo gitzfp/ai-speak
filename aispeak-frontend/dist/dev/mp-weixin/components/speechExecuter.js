@@ -145,6 +145,13 @@ class Speech {
       self.handleH5EndVoice();
     }
   }
+  clearRecorder() {
+    let self = this;
+    self.recorder.start = false;
+    self.recorder.processing = false;
+    self.recorder.rec = null;
+    self.recorder.remainingTime = 0;
+  }
   handleWxEndVoice() {
     console.log("停止微信录音：handleWxEndVoice");
     let self = this;
@@ -156,7 +163,10 @@ class Speech {
       return;
     }
     try {
-      self.recorder.wxRecorderManager.stop();
+      if (self.recorder.start) {
+        self.recorder.wxRecorderManager.stop();
+        this.clearRecorder();
+      }
     } catch (err) {
       console.error("Error stopping recorder:", err);
       if (self.listener.error) {
@@ -177,6 +187,7 @@ class Speech {
       },
       name: "file",
       success: (res) => {
+        console.log("success，微信录音上传成功", res);
         self.handleUploadResult({ resData: res });
       },
       fail: (e) => {
@@ -190,9 +201,7 @@ class Speech {
         }
       },
       complete: () => {
-        self.recorder.start = false;
-        self.recorder.processing = false;
-        self.recorder.rec = null;
+        console.log("complete，微信录音上传成功");
       }
     });
   }
