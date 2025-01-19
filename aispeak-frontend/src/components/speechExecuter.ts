@@ -91,16 +91,16 @@ class Speech {
       self.recorder.start = true;
       self.recorder.remainingTime = MAXIMUM_RECORDING_TIME;
       
-      self.intervalId = setInterval(() => {
-        if (self.recorder.remainingTime === 0) {
-          self.handleEndVoice();
-        } else {
-          if (self.listener.interval) {
-            self.listener.interval(self.recorder.remainingTime);
-          }
-          self.recorder.remainingTime--;
-        }
-      }, 1000);
+      // self.intervalId = setInterval(() => {
+      //   if (self.recorder.remainingTime === 0) {
+      //     self.handleEndVoice();
+      //   } else {
+      //     if (self.listener.interval) {
+      //       self.listener.interval(self.recorder.remainingTime);
+      //     }
+      //     self.recorder.remainingTime--;
+      //   }
+      // }, 1000);
 
       recorderManager.onStop((res: any) => {
         if (!res || !res.tempFilePath) {

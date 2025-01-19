@@ -64,16 +64,6 @@ class Speech {
       });
       self.recorder.start = true;
       self.recorder.remainingTime = MAXIMUM_RECORDING_TIME;
-      self.intervalId = setInterval(() => {
-        if (self.recorder.remainingTime === 0) {
-          self.handleEndVoice();
-        } else {
-          if (self.listener.interval) {
-            self.listener.interval(self.recorder.remainingTime);
-          }
-          self.recorder.remainingTime--;
-        }
-      }, 1e3);
       recorderManager.onStop((res) => {
         if (!res || !res.tempFilePath) {
           console.error("No tempFilePath in stop result", res);
