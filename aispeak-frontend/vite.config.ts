@@ -8,16 +8,21 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 5174,
     proxy: {
-      "/api/cms-dashboard": {
-        target,
-        rewrite: (path) => {
-          console.log(path);
-          return path.replace("/api/cms-dashboard", "/");
+       '/ap33': {
+        target: 'https://api.mypep.com.cn', // 目标服务器地址
+        changeOrigin: true, // 修改请求的 Origin 为目标服务器的 Origin
+        rewrite: (path) => path.replace(/^\/ap33/, ''), // 重写路径，去掉 /api 前缀
+        headers: {
+          // 添加自定义请求头
+          Origin: 'https://diandu.mypep.cn',
+          Referer: 'https://diandu.mypep.cn/',
         },
-        changeOrigin: true,
-        secure: false,
-        xfwd: false,
       },
+       '/ap22': {
+        target: 'https://diandu.mypep.cn',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ap22/, '')
+      }
     },
   },
 });
