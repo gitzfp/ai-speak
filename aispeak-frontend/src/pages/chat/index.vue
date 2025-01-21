@@ -68,7 +68,7 @@
         <view class="modal-body">
           <view class="section">
             <text class="section-title">情景描述：</text>
-            <text class="section-content">{{ lessonData.detail.theme_desc }}</text>
+            <text class="section-content">{{ lessonData?.detail?.theme_desc }}</text>
           </view>
           <view class="section">
             <text class="section-title">任务描述：</text>

@@ -13,7 +13,10 @@ export default {
     return request(`/topics/${data.topic_id}/session`, "POST", data, true);
   },
   createLessonSession: (data: any) => {
-    return request(`/topics/${data.lesson_id}/lesson_session`, "POST", data, true);
+    return request(`/topics/lesson_session`, "POST", {
+      lesson_id: data.lesson_id,
+      sentences: data.sentences
+    }, true);
   },
   
   getSessionByLessonId: (data: any) => {

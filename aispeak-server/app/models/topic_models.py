@@ -11,3 +11,13 @@ class TopicCreateDTO(BaseModel):
     ai_role: str
     my_role: str
     topic: str
+
+
+class SentenceInfo(BaseModel):
+    info_en: str
+    info_cn: str
+
+
+class LessonSessionCreate(BaseModel):
+    lesson_id: str
+    sentences: List[SentenceInfo]

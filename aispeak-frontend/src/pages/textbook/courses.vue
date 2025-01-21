@@ -70,7 +70,7 @@
       </view>
 
       <!-- 口语练习按钮 -->
-      <view class="speak-button" @tap="goToChatPage">
+      <view v-if="hasValidSentences" class="speak-button" @tap="goToChatPage">
         <image class="speak-icon" src="https://api.zfpai.top/static/icon_voice_fixed.png"></image>
         <text>口语</text>
       </view>
@@ -83,6 +83,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { onLoad } from '@dcloudio/uni-app'; 
 import Hls from 'hls.js';
 import md5 from 'md5';
+import topicRequest from "@/api/topic"; 
 export default {
   setup() {
     // 页面数据
@@ -107,6 +108,11 @@ export default {
     // 侧边目录展开状态
     const isSidebarOpen = ref(false);
 
+     const hasValidSentences = computed(() => {
+      const sentences = getCurrentPageSentence();
+      console.log('当前页面句子:', sentences); // 添加调试日志
+      return sentences && sentences.length > 0;
+    });
     // 切换侧边目录
     const toggleSidebar = () => {
       isSidebarOpen.value = !isSidebarOpen.value;
@@ -364,21 +370,56 @@ export default {
     };
 
     // 获取当前页面所有句子的文本
-    const getCurrentPageTexts = () => {
+    const getCurrentPageSentence = () => {
       if (!currentPageSentences.value) return [];
       return currentPageSentences.value
         .map(sentence => getSentenceText(sentence.res_id))
         .filter(sentence => sentence && sentence.text)
-        .map(sentence => sentence.text);
+        .map(sentence => ({
+          info_en: sentence.text,
+          info_cn: sentence.translate_pc
+        }));
     };
 
     // 修改返回按钮处理方法
-    const goToChatPage = () => {
-      const texts = getCurrentPageTexts();
-      console.log('target texts:', texts)
-      // uni.navigateTo({
-      //   url: `/pages/chat/index?texts=${encodeURIComponent(JSON.stringify(texts))}`
-      // });
+    const goToChatPage = async () => {
+      try {
+        const lessonId = book_id.value + ":" + currentPageIndex.value;
+        const sentences = getCurrentPageSentence();
+        
+        // 先检查是否存在会话
+        const existingSession = await topicRequest.getSessionByLessonId({ lesson_id: lessonId });
+        
+        if (existingSession?.data) {
+          const { id: sessionId, name } = existingSession.data;
+          if (sessionId) {
+            uni.navigateTo({
+              url: `/pages/chat/index?sessionId=${sessionId}&type=LESSON&lessonId=${lessonId}&sessionName=${name}`
+            });
+            return;
+          }
+        }
+    
+        // 创建新会话
+        const response = await topicRequest.createLessonSession({
+          lesson_id: lessonId,
+          sentences: sentences
+        });
+    
+        if (response?.data) {
+          uni.navigateTo({
+            url: `/pages/chat/index?sessionId=${response.data.id}&type=LESSON&lessonId=${lessonId}&sessionName=${response.data.name}`
+          });
+        } else {
+          throw new Error('创建会话失败');
+        }
+      } catch (error) {
+        console.error('创建课程会话失败:', error);
+        uni.showToast({
+          title: '创建会话失败',
+          icon: 'none'
+        });
+      }
     };
 
     // 添加 goToChatPage 到 return 中
@@ -398,6 +439,7 @@ export default {
       goToPage,
       pages,
       goToChatPage,
+      hasValidSentences,  // 添加这一行
     };
   }
 };

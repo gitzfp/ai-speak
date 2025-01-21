@@ -103,16 +103,25 @@ def create_chat_topic_session(
     topic_service = TopicService(db)
     return ApiResponse(data=topic_service.create_topic_session(topic_id, account_id))
 
-# 基于课程创建一个session
-@router.post("/topics/{lesson_id}/lesson_session", name="Create chat lesson session")
+# 在文件顶部添加 Pydantic 模型
+from pydantic import BaseModel
+from typing import List
+
+
+# 修改路由
+@router.post("/topics/lesson_session", name="Create chat lesson session")
 def create_chat_lesson_session(
-    lesson_id: str,
+    request: LessonSessionCreate,
     db: Session = Depends(get_db),
     account_id: str = Depends(get_current_account),
 ):
     """基于课程创建一个session"""
     topic_service = TopicService(db)
-    return ApiResponse(data=topic_service.create_lesson_session(lesson_id, account_id))
+    return ApiResponse(data=topic_service.create_lesson_session(
+        request.lesson_id, 
+        account_id,
+        request.sentences
+    ))
 
 
 # 结束当前会话并进行评分

@@ -71,8 +71,9 @@ class LessonEntity(Base):
     __tablename__ = "lesson"
     
     id = Column("id", Integer, primary_key=True)  # 课程单元ID
-    textbook_id = Column("textbook_id", String(80), nullable=False)  # 所属教材ID
-    category_id = Column("category_id", String(80), nullable=False)  # 所属分类ID
+    textbook_id = Column("textbook_id", String(80), nullable=True)  # 所属教材ID
+    category_id = Column("category_id", String(80), nullable=True)  # 所属分类ID
+    lesson_id = Column("lesson_id", String(80), nullable=False)  #
     title = Column("title", String(200), nullable=False)  # 单元标题
     sub_title = Column("sub_title", String(200), nullable=True)  # 单元副标题
     pic = Column("pic", String(500), nullable=True)  # 单元图片链接
@@ -92,7 +93,7 @@ class LessonExplainEntity(Base):
     __tablename__ = "lesson_explain"
     
     id = Column("id", Integer, primary_key=True)  # 解释ID
-    lesson_id = Column("lesson_id", Integer, nullable=False)  # 所属课程ID
+    lesson_id = Column("lesson_id", String(100), nullable=False)  # 所属课程ID
     teacher_id = Column("teacher_id", Integer, nullable=False)  # 教师ID
     explain_content = Column("explain_content", Text, nullable=False)  # 解释内容
     explain_audio = Column("explain_audio", String(500), nullable=True)  # 解释音频链接
@@ -112,7 +113,7 @@ class ExerciseEntity(Base):
     __tablename__ = "exercise"
     
     id = Column("id", Integer, primary_key=True)  # 练习题ID
-    lesson_id = Column("lesson_id", Integer, nullable=False)  # 所属课程ID
+    lesson_id = Column("lesson_id", String(100), nullable=False)  # 所属课程ID
     title = Column("title", Text, nullable=False)  # 练习题标题
     exercise_type = Column("exercise_type", Integer, nullable=False)  # 练习题类型
     sort = Column("sort", Integer, default=1)  # 排序
@@ -142,9 +143,9 @@ class TaskTargetsEntity(Base):
     __tablename__ = "task_target"
     
     id = Column("id", Integer, primary_key=True)  # 任务目标ID
-    info_cn = Column("info_cn", Text, nullable=False)  # 中文描述
-    info_en = Column("info_en", Text, nullable=True)  # 英文描述
-    lesson_id = Column("lesson_id", Integer, nullable=False)  # 所属课程ID
+    info_cn = Column("info_cn", String(200), nullable=False)  # 中文描述
+    info_en = Column("info_en", String(200), nullable=True)  # 英文描述
+    lesson_id = Column("lesson_id", String(500), nullable=False)  # 所属课程ID
     info_en_audio = Column("info_en_audio", String(500), nullable=True)  # 英文音频链接
     match_type = Column("match_type", Integer, nullable=False)  # 匹配类型
     status = Column("status", Integer, default=1)  # 状态
@@ -157,7 +158,7 @@ class LessonPointEntity(Base):
     __tablename__ = "lesson_point"
     
     id = Column("id", Integer, primary_key=True)  # 知识点ID
-    lesson_id = Column("lesson_id", Integer, nullable=False)  # 所属课程单元ID
+    lesson_id = Column("lesson_id", String(100), nullable=False)  # 所属课程单元ID
     word = Column("word", String(200), nullable=False)  # 单词
     meaning = Column("meaning", Text, nullable=False)  # 含义
     type = Column("type", Integer, nullable=False)  # 类型
@@ -173,7 +174,7 @@ class LessonPartEntity(Base):
     
     id = Column("id", Integer, primary_key=True)  # 部分ID
     textbook_id = Column("textbook_id", String(80))  # 所属教材ID
-    lesson_id = Column("lesson_id", Integer, nullable=False)  # 课程ID
+    lesson_id = Column("lesson_id", String(100), nullable=False)  # 课程ID
     type = Column("type", String(50), nullable=False)  # 类型
     title = Column("title", String(200), nullable=False)  # 标题
     subtitle = Column("subtitle", Text, nullable=True)  # 副标题
@@ -194,7 +195,7 @@ class TeacherEntity(Base):
     name = Column(String(255), nullable=True)  # 教师姓名
     avatar = Column(String(255), nullable=True)  # 教师头像链接
     description = Column(Text, nullable=True)  # 教师描述
-    lesson_id = Column(Integer, nullable=True)  # 所属课程ID
+    lesson_id = Column(String(100), nullable=True)  # 所属课程ID
     role_short_name = Column(String(100), nullable=True)  # 角色简称
     prompt = Column(String(1000), nullable=True)  # 提示语
     language = Column(String(50), nullable=True)  # 语言

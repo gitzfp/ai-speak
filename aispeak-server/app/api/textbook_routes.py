@@ -61,7 +61,7 @@ def get_course_detail(
     
 @router.get("/textbook/lesson/{lesson_id}", response_model=ApiResponse)
 def get_lesson_detail(
-    lesson_id: int,
+    lesson_id: str,
     db: Session = Depends(get_db)
 ) -> ApiResponse:
     """

@@ -141,14 +141,28 @@ class TextbookService:
         return result
 
 
-    def get_lesson_detail(self, lesson_id: int) -> Dict:
+    def get_lesson_detail(self, lesson_id: str) -> Dict:
         # 添加日志
         print(f"Querying lesson with id: {lesson_id}, type: {type(lesson_id)}")
         # 获取课程单元信息
-        lesson = self.db.query(LessonEntity).filter(LessonEntity.id == lesson_id).first()
+        lesson = self.db.query(LessonEntity).filter(LessonEntity.lesson_id == lesson_id).first()
         print(f"Query result: {lesson}")
+        # 获取任务目标
+        task_targets = self.db.query(TaskTargetsEntity).filter(
+            TaskTargetsEntity.lesson_id == lesson_id).all()
+        task_target_list = [{
+            "id": str(target.id),
+            "info_cn": target.info_cn,
+            "info_en": target.info_en,
+            "info_en_audio": target.info_en_audio,
+            "match_type": str(target.match_type),
+            "status": str(target.status)
+        } for target in task_targets]
+
         if not lesson:
-            return None
+            return {
+                "task_target": task_target_list,
+            } 
 
         # 获取知识点
         points = self.db.query(LessonPointEntity).filter(LessonPointEntity.lesson_id == lesson_id).all()
@@ -217,17 +231,7 @@ class TextbookService:
             }
             exercise_list.append(exercise_dict)
 
-        # 获取任务目标
-        task_targets = self.db.query(TaskTargetsEntity).filter(TaskTargetsEntity.lesson_id == lesson_id).all()
-        task_target_list = [{
-            "id": str(target.id),
-            "info_cn": target.info_cn,
-            "info_en": target.info_en,
-            "info_en_audio": target.info_en_audio,
-            "match_type": str(target.match_type),
-            "status": str(target.status)
-        } for target in task_targets]
-
+      
         # 获取教师数据
         teacher = self.db.query(TeacherEntity).filter(
             TeacherEntity.lesson_id == lesson_id).first()

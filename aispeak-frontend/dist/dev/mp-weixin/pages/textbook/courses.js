@@ -1,5 +1,8 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const api_topic = require("../../api/topic.js");
+require("../../axios/api.js");
+require("../../config/env.js");
 const _sfc_main = {
   setup() {
     const pages = common_vendor.ref([]);
@@ -10,6 +13,11 @@ const _sfc_main = {
     const scaleY = common_vendor.ref(1);
     const pageImage = common_vendor.ref(null);
     const isSidebarOpen = common_vendor.ref(false);
+    const hasValidSentences = common_vendor.computed(() => {
+      const sentences2 = getCurrentPageSentence();
+      console.log("当前页面句子:", sentences2);
+      return sentences2 && sentences2.length > 0;
+    });
     const toggleSidebar = () => {
       isSidebarOpen.value = !isSidebarOpen.value;
     };
@@ -220,14 +228,46 @@ const _sfc_main = {
         currentPageIndex.value++;
       }
     };
-    const getCurrentPageTexts = () => {
+    const getCurrentPageSentence = () => {
       if (!currentPageSentences.value)
         return [];
-      return currentPageSentences.value.map((sentence) => getSentenceText(sentence.res_id)).filter((sentence) => sentence && sentence.text).map((sentence) => sentence.text);
+      return currentPageSentences.value.map((sentence) => getSentenceText(sentence.res_id)).filter((sentence) => sentence && sentence.text).map((sentence) => ({
+        info_en: sentence.text,
+        info_cn: sentence.translate_pc
+      }));
     };
-    const goToChatPage = () => {
-      const texts = getCurrentPageTexts();
-      console.log("target texts:", texts);
+    const goToChatPage = async () => {
+      try {
+        const lessonId = book_id.value + ":" + currentPageIndex.value;
+        const sentences2 = getCurrentPageSentence();
+        const existingSession = await api_topic.topicRequest.getSessionByLessonId({ lesson_id: lessonId });
+        if (existingSession == null ? void 0 : existingSession.data) {
+          const { id: sessionId, name } = existingSession.data;
+          if (sessionId) {
+            common_vendor.index.navigateTo({
+              url: `/pages/chat/index?sessionId=${sessionId}&type=LESSON&lessonId=${lessonId}&sessionName=${name}`
+            });
+            return;
+          }
+        }
+        const response = await api_topic.topicRequest.createLessonSession({
+          lesson_id: lessonId,
+          sentences: sentences2
+        });
+        if (response == null ? void 0 : response.data) {
+          common_vendor.index.navigateTo({
+            url: `/pages/chat/index?sessionId=${response.data.id}&type=LESSON&lessonId=${lessonId}&sessionName=${response.data.name}`
+          });
+        } else {
+          throw new Error("创建会话失败");
+        }
+      } catch (error) {
+        console.error("创建课程会话失败:", error);
+        common_vendor.index.showToast({
+          title: "创建会话失败",
+          icon: "none"
+        });
+      }
     };
     return {
       currentPageIndex,
@@ -244,7 +284,9 @@ const _sfc_main = {
       toggleSidebar,
       goToPage,
       pages,
-      goToChatPage
+      goToChatPage,
+      hasValidSentences
+      // 添加这一行
     };
   }
 };
@@ -286,8 +328,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     l: common_vendor.t($setup.pages.length),
     m: $setup.currentPageIndex === $setup.pages.length - 1 ? 1 : "",
     n: common_vendor.o((...args) => $setup.nextPage && $setup.nextPage(...args)),
-    o: common_vendor.o((...args) => $setup.goToChatPage && $setup.goToChatPage(...args))
-  });
+    o: $setup.hasValidSentences
+  }, $setup.hasValidSentences ? {
+    p: common_vendor.o((...args) => $setup.goToChatPage && $setup.goToChatPage(...args))
+  } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-b93a630c"], ["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/pages/textbook/courses.vue"]]);
 wx.createPage(MiniProgramPage);

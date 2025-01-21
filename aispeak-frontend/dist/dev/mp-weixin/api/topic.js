@@ -14,7 +14,10 @@ const topicRequest = {
     return axios_api.request(`/topics/${data.topic_id}/session`, "POST", data, true);
   },
   createLessonSession: (data) => {
-    return axios_api.request(`/topics/${data.lesson_id}/lesson_session`, "POST", data, true);
+    return axios_api.request(`/topics/lesson_session`, "POST", {
+      lesson_id: data.lesson_id,
+      sentences: data.sentences
+    }, true);
   },
   getSessionByLessonId: (data) => {
     return axios_api.request(`/topics/lesson/${data.lesson_id}/session/`, "GET", data, true);

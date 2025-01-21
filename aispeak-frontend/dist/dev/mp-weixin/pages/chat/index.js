@@ -338,6 +338,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       popup.value.open();
     };
     return (_ctx, _cache) => {
+      var _a2, _b;
       return common_vendor.e({
         a: common_vendor.t(session.value.name),
         b: common_vendor.p({
@@ -395,7 +396,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         w: common_vendor.o(completeTopic)
       } : {}, {
         x: common_vendor.o(handleShowModal),
-        y: common_vendor.t(lessonData.value.detail.theme_desc),
+        y: common_vendor.t((_b = (_a2 = lessonData.value) == null ? void 0 : _a2.detail) == null ? void 0 : _b.theme_desc),
         z: common_vendor.f(lessonData.value.task_target, (target, index, i0) => {
           return {
             a: common_vendor.t(target.info_cn),

@@ -7,6 +7,8 @@ from app.db.topic_entities import *
 from app.db.chat_entities import *
 from app.db.account_entities import *
 from app.ai.models import *
+from app.models.topic_models import *
+from typing import List
 from app.db.textbook_entities import TaskTargetsEntity, TeacherEntity, LessonEntity
 from app.core.logging import logging
 from app.ai import chat_ai
@@ -71,11 +73,18 @@ class TopicService:
         topic_session_relation = (
             self.db.query(TopicSessionRelation).filter_by(session_id=session_id).first()
         )
+        # 获取教师信息，如果没有对应的记录则获取一条默认记录
         teach_entity = (
             self.db.query(TeacherEntity)
             .filter(TeacherEntity.lesson_id == topic_session_relation.topic_id)
             .first()
         )
+        logging.info(f"First query teacher result: {teach_entity}")
+        
+        if teach_entity is None:
+            logging.info("No specific teacher found, trying to get default teacher")
+            teach_entity = self.db.query(TeacherEntity).first()
+            logging.info(f"Default teacher query result: {teach_entity}")
         # 获取当前用户已经完成的目标
         completed_targets = (
             self.db.query(MessageSessionEntity)
@@ -96,7 +105,7 @@ class TopicService:
         } for target in task_targets]
         
         logging.info(f"Task targets: {json.dumps(task_target_list, ensure_ascii=False)}")
-
+        logging.info(f"Teacher entity: {teach_entity.__dict__}")
         
         styles = []
         if teach_entity.role_short_name:
@@ -546,20 +555,24 @@ class TopicService:
                     self.db.add(topic_phrase_entity)
         self.db.commit()
 
-    def create_lesson_session(self, lesson_id: str, account_id: str):
+    def create_lesson_session(self, lesson_id: str, account_id: str,  sentences: List[SentenceInfo]):
         """基于课程创建一个会话"""
+        # 添加调试日志
+        print(f"Creating lesson session with lesson_id: {lesson_id}")
+        print(f"Received sentences: {sentences}")
+        
         # 创建session
         session = MessageSessionEntity(
             id=f"session_{short_uuid()}",
             account_id=account_id,
-            type="LESSON",  # 设置类型为LESSON
+            type="LESSON",
         )
         self.db.add(session)
 
         # 创建session与lesson的关系
         session_lesson_relation = TopicSessionRelation(
             session_id=session.id,
-            topic_id=lesson_id,  # 这里使用lesson_id
+            topic_id=lesson_id,
             account_id=account_id,
         )
         self.db.add(session_lesson_relation)
@@ -570,15 +583,51 @@ class TopicService:
         lesson_history_entity = TopicHistoryEntity(
             account_id=account_id,
             topic_id=lesson_id,
-            topic_type="LESSON",  # 设置类型为LESSON
-            topic_name=f"Lesson {lesson_id}",  # 可以根据实际lesson表获取名称
+            topic_type="LESSON",
+            topic_name=f"Lesson {lesson_id}",
             completion=0,
             session_id=session.id,
         )
         self.db.add(lesson_history_entity)
 
+        # 保存句子数据到任务目标表，添加数据验证
+        print(f"Starting to process sentences, total count: {len(sentences)}")
+        for sentence in sentences:
+            try:
+                # 处理 SentenceInfo 对象
+                info_en = sentence.info_en
+                info_cn = sentence.info_cn
+                
+                if not info_en or not info_cn:
+                    print(f"Missing required fields in sentence: {sentence}")
+                    continue
+                    
+                task_target = TaskTargetsEntity(
+                    info_cn=info_cn,
+                    info_en=info_en,
+                    lesson_id=lesson_id,
+                    match_type=1,
+                    status=1
+                )
+                print(f"Created task_target: {task_target.__dict__}")
+                self.db.add(task_target)
+                print("Successfully added task_target to session")
+            except Exception as e:
+                print(f"Error creating task target: {str(e)}")
+                
+        try:
+            print("Attempting to commit changes...")
+            self.db.commit()
+            print("Successfully committed changes")
+        except Exception as e:
+            print(f"Error during commit: {str(e)}")
+            self.db.rollback()
+
         self.db.commit()
-        return {"id": session.id,  "name": lesson.title + ":" + lesson.sub_title}
+        session_info = {"id": session.id}
+        if lesson is not None:
+            session_info["name"] = f"{lesson.title}:{lesson.sub_title}"
+        return session_info
 
     def get_lesson_session(self, lesson_id: str, account_id: str):
         """获取基于课程的会话"""
@@ -603,10 +652,13 @@ class TopicService:
         )
 
         lesson = self.db.query(LessonEntity).filter(LessonEntity.id == lesson_id).first()
-
-        # 直接返回 session 对象的属性
-        return {
+        
+        # 构建返回数据
+        session_info = {
             "id": session.id,
-            "completed": session.completed,
-            "name": lesson.title + ":" + lesson.sub_title
+            "completed": session.completed
         }
+        if lesson is not None:
+            session_info["name"] = f"{lesson.title}:{lesson.sub_title}"
+        
+        return session_info
