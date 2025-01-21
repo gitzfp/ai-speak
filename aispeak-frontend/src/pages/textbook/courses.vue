@@ -1,5 +1,5 @@
 <template>
-  <div class="book-container">
+  <View class="book-container">
     <!-- 侧边目录 -->
     <div class="sidebar" :class="{ 'sidebar-open': isSidebarOpen }">
       <button class="sidebar-toggle" @click="toggleSidebar">
@@ -50,22 +50,39 @@
         }"
         @click="playAudio(getSentenceText(sentence.res_id))"
       >
-        {{ getSentenceText(sentence.res_id).text }}
       </div>
     </div>
 
     <!-- 页面切换按钮 -->
-    <div class="page-controls">
-      <button @click="prevPage" class="control-button">上一页</button>
-      <button @click="nextPage" class="control-button">下一页</button>
-    </div>
-  </div>
+     <!-- 底部控制区 -->
+    <view class="bottom-controls">
+      <!-- 页面切换按钮 -->
+      <view class="page-controls">
+        <view class="control-button" :class="{ disabled: currentPageIndex === 0 }" @tap="prevPage">
+          <text class="iconfont icon-left"></text>
+          <text>上一页</text>
+        </view>
+        <view class="page-number">{{ currentPageIndex + 1 }}/{{ pages.length }}</view>
+        <view class="control-button" :class="{ disabled: currentPageIndex === pages.length - 1 }" @tap="nextPage">
+          <text>下一页</text>
+          <text class="iconfont icon-right"></text>
+        </view>
+      </view>
+
+      <!-- 口语练习按钮 -->
+      <view class="speak-button" @tap="goToChatPage">
+        <image class="speak-icon" src="https://api.zfpai.top/static/icon_voice_fixed.png"></image>
+        <text>口语</text>
+      </view>
+    </view>
+  </view>
 </template>
 
 <script>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import Hls from 'hls.js'; // 引入 hls.js 库
-
+import { onLoad } from '@dcloudio/uni-app'; 
+import Hls from 'hls.js';
+import md5 from 'md5';
 export default {
   setup() {
     // 页面数据
@@ -100,11 +117,18 @@ export default {
       currentPageIndex.value = index;
     };
 
-    // 从接口获取页面数据
+    // 获取页面参数中的 book_id
+    const book_id = ref('');
+    onLoad((options) => {
+      book_id.value = options.book_id;
+      console.log('Received book_id:', book_id.value);
+    });
+
+    // 修改 fetchPages 方法
     const fetchPages = async () => {
       try {
         const response = await fetch(
-          'https://rjdduploadw.mypep.cn/pub_cloud/10/1212001101244/1212001101244_Web.json'
+          `https://rjdduploadw.mypep.cn/pub_cloud/10/${book_id.value}/${book_id.value}_Web.json`
         );
         const data = await response.json();
         pages.value = data.chapters.flatMap((chapter) => chapter.res_main);
@@ -114,11 +138,11 @@ export default {
       }
     };
 
-    // 从接口获取句子数据
+    // 修改 fetchSentences 方法
     const fetchSentences = async () => {
       try {
         const response = await fetch(
-          'https://diandu.mypep.cn/static/textbook/chapter/1212001101244_sentence.json'
+          `https://diandu.mypep.cn/static/textbook/chapter/${book_id.value}_sentence.json`
         );
         const data = await response.json();
         sentences.value = data.list.flatMap((chapter) =>
@@ -212,70 +236,41 @@ export default {
       return value;
     };
 
-    const fetchSignedUrl = async (filePath) => {
-  try {
-    const response = await fetch(
-      '/ap22/resources/ak/pep_click/user/951/urlSignature.json?access_token=KVEmCAZAAQxpKjcsArcMfTuUfkLeg%2BpddaupDU%2FFAtsl0ONFwKl%2Bx66qKejTFeD8sy4NV19l2dyDVvH2RdV0tA%3D%3D',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          flag: '1',
-          fileNameUrl: `https://szjc-3.mypep.cn${filePath}`,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`请求失败，状态码：${response.status}`);
+    const fetchM3u8Url = async (res_id) => {
+          const hostname = "diandu.mypep.cn"
+          const input_string = hostname + res_id;
+          // 计算字符串的 MD5 哈希
+          const hashed_value = md5(input_string);
+          console.log(hashed_value); // 输出 MD5 哈希值
+          const url = `/ap33/api/a/resource/c1ebe466-1cdc-4bd3-ab69-77c3561b9dee/951/${res_id}/${hashed_value}/hlsIndexM3u8.token?access_token=`;
+          try {
+          const response = await fetch(
+            url,{
+              method: 'GET',
+              headers: {
+                'Accept': '*/*',
+                'Origin': 'https://diandu.mypep.cn',
+                'Referer': 'https://diandu.mypep.cn/',
+              },
+            }
+          );
+          const data = await response.text();
+          console.log('m3u8 文件内容:', data);
+          return data;
+        } catch (error) {
+          console.error('获取 m3u8 文件失败:', error);
+          return null;
+        }
     }
-
-    const data = await response.json();
-    return data.url_signature; // 返回签名后的 URL
-  } catch (error) {
-    console.error('获取签名 URL 失败:', error);
-    return null;
-  }
-};
-
-const fetchM3u8Url = async (filePath) => {
-  try {
-    const response = await fetch(
-      `/ap33/api/a/resource/c1ebe466-1cdc-4bd3-ab69-77c3561b9dee/951/12120011012440100001724326791314/79a95acd885d781183cebec7386e300e/hlsIndexM3u8.token?access_token=`,
-      {
-        method: 'GET',
-        headers: {
-          'Accept': '*/*',
-          'Origin': 'https://diandu.mypep.cn',
-          'Referer': 'https://diandu.mypep.cn/',
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`请求失败，状态码：${response.status}`);
-    }
-
-    const data = await response.text() 
-    return data
-  } catch (error) {
-    console.error('获取 m3u8 URL 失败:', error);
-    return null;
-  }
-};
     // 播放音频
     const playAudio = async (sentence) => {
       try {
-        await fetchSignedUrl(sentence.file_path, sentence.access_token);
         // 获取 m3u8 文件内容
-        const m3u8Content = await fetchM3u8Url(sentence.file_path, sentence.access_token);
+        const m3u8Content = await fetchM3u8Url(sentence.res_id);
         if (!m3u8Content) {
           console.error('无法获取 m3u8 文件内容');
           return;
         }
-
         // 将 m3u8 文件内容转换为 Blob URL
         const blob = new Blob([m3u8Content], { type: 'application/vnd.apple.mpegurl' });
         const blobUrl = URL.createObjectURL(blob);
@@ -368,6 +363,25 @@ const fetchM3u8Url = async (filePath) => {
       }
     };
 
+    // 获取当前页面所有句子的文本
+    const getCurrentPageTexts = () => {
+      if (!currentPageSentences.value) return [];
+      return currentPageSentences.value
+        .map(sentence => getSentenceText(sentence.res_id))
+        .filter(sentence => sentence && sentence.text)
+        .map(sentence => sentence.text);
+    };
+
+    // 修改返回按钮处理方法
+    const goToChatPage = () => {
+      const texts = getCurrentPageTexts();
+      console.log('target texts:', texts)
+      // uni.navigateTo({
+      //   url: `/pages/chat/index?texts=${encodeURIComponent(JSON.stringify(texts))}`
+      // });
+    };
+
+    // 添加 goToChatPage 到 return 中
     return {
       currentPageIndex,
       currentPageImage,
@@ -383,8 +397,9 @@ const fetchM3u8Url = async (filePath) => {
       toggleSidebar,
       goToPage,
       pages,
+      goToChatPage,
     };
-  },
+  }
 };
 </script>
 
@@ -467,28 +482,69 @@ const fetchM3u8Url = async (filePath) => {
 }
 
 /* 页面切换按钮 */
-.page-controls {
+/* 底部控制区样式 */
+.bottom-controls {
   position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20rpx;
+  background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 20%);
   display: flex;
-  gap: 10px;
-  z-index: 1000;
+  flex-direction: column;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.page-controls {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
 }
 
 .control-button {
-  padding: 10px 20px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  padding: 16rpx 32rpx;
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: #ffffff;
+  border-radius: 100rpx;
+  font-size: 28rpx;
+  box-shadow: 0 4rpx 12rpx rgba(76, 175, 80, 0.3);
 }
 
-.control-button:hover {
-  background-color: #45a049;
+.control-button.disabled {
+  background: #cccccc;
+  opacity: 0.7;
+}
+
+.page-number {
+  font-size: 28rpx;
+  color: #666;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 10rpx 30rpx;
+  border-radius: 30rpx;
+}
+
+.speak-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  width: 90%;
+  padding: 24rpx;
+  background: linear-gradient(135deg, #FF6B6B, #FF5252);
+  color: #ffffff;
+  border-radius: 100rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  box-shadow: 0 4rpx 12rpx rgba(255, 107, 107, 0.3);
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
+.speak-icon {
+  width: 48rpx;
+  height: 48rpx;
 }
 </style>
+

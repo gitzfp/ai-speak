@@ -16,10 +16,15 @@ const _sfc_main = {
     const goToPage = (index) => {
       currentPageIndex.value = index;
     };
+    const book_id = common_vendor.ref("");
+    common_vendor.onLoad((options) => {
+      book_id.value = options.book_id;
+      console.log("Received book_id:", book_id.value);
+    });
     const fetchPages = async () => {
       try {
         const response = await fetch(
-          "https://rjdduploadw.mypep.cn/pub_cloud/10/1212001101244/1212001101244_Web.json"
+          `https://rjdduploadw.mypep.cn/pub_cloud/10/${book_id.value}/${book_id.value}_Web.json`
         );
         const data = await response.json();
         pages.value = data.chapters.flatMap((chapter) => chapter.res_main);
@@ -31,7 +36,7 @@ const _sfc_main = {
     const fetchSentences = async () => {
       try {
         const response = await fetch(
-          "https://diandu.mypep.cn/static/textbook/chapter/1212001101244_sentence.json"
+          `https://diandu.mypep.cn/static/textbook/chapter/${book_id.value}_sentence.json`
         );
         const data = await response.json();
         sentences.value = data.list.flatMap(
@@ -111,35 +116,15 @@ const _sfc_main = {
       }
       return value;
     };
-    const fetchSignedUrl = async (filePath) => {
+    const fetchM3u8Url = async (res_id) => {
+      const hostname = "diandu.mypep.cn";
+      const input_string = hostname + res_id;
+      const hashed_value = common_vendor.md5Exports(input_string);
+      console.log(hashed_value);
+      const url = `/ap33/api/a/resource/c1ebe466-1cdc-4bd3-ab69-77c3561b9dee/951/${res_id}/${hashed_value}/hlsIndexM3u8.token?access_token=`;
       try {
         const response = await fetch(
-          "/ap22/resources/ak/pep_click/user/951/urlSignature.json?access_token=KVEmCAZAAQxpKjcsArcMfTuUfkLeg%2BpddaupDU%2FFAtsl0ONFwKl%2Bx66qKejTFeD8sy4NV19l2dyDVvH2RdV0tA%3D%3D",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: new URLSearchParams({
-              flag: "1",
-              fileNameUrl: `https://szjc-3.mypep.cn${filePath}`
-            })
-          }
-        );
-        if (!response.ok) {
-          throw new Error(`请求失败，状态码：${response.status}`);
-        }
-        const data = await response.json();
-        return data.url_signature;
-      } catch (error) {
-        console.error("获取签名 URL 失败:", error);
-        return null;
-      }
-    };
-    const fetchM3u8Url = async (filePath) => {
-      try {
-        const response = await fetch(
-          `/ap33/api/a/resource/c1ebe466-1cdc-4bd3-ab69-77c3561b9dee/951/12120011012440100001724326791314/79a95acd885d781183cebec7386e300e/hlsIndexM3u8.token?access_token=`,
+          url,
           {
             method: "GET",
             headers: {
@@ -149,20 +134,17 @@ const _sfc_main = {
             }
           }
         );
-        if (!response.ok) {
-          throw new Error(`请求失败，状态码：${response.status}`);
-        }
         const data = await response.text();
+        console.log("m3u8 文件内容:", data);
         return data;
       } catch (error) {
-        console.error("获取 m3u8 URL 失败:", error);
+        console.error("获取 m3u8 文件失败:", error);
         return null;
       }
     };
     const playAudio = async (sentence) => {
       try {
-        await fetchSignedUrl(sentence.file_path, sentence.access_token);
-        const m3u8Content = await fetchM3u8Url(sentence.file_path, sentence.access_token);
+        const m3u8Content = await fetchM3u8Url(sentence.res_id);
         if (!m3u8Content) {
           console.error("无法获取 m3u8 文件内容");
           return;
@@ -238,6 +220,15 @@ const _sfc_main = {
         currentPageIndex.value++;
       }
     };
+    const getCurrentPageTexts = () => {
+      if (!currentPageSentences.value)
+        return [];
+      return currentPageSentences.value.map((sentence) => getSentenceText(sentence.res_id)).filter((sentence) => sentence && sentence.text).map((sentence) => sentence.text);
+    };
+    const goToChatPage = () => {
+      const texts = getCurrentPageTexts();
+      console.log("target texts:", texts);
+    };
     return {
       currentPageIndex,
       currentPageImage,
@@ -252,10 +243,15 @@ const _sfc_main = {
       isSidebarOpen,
       toggleSidebar,
       goToPage,
-      pages
+      pages,
+      goToChatPage
     };
   }
 };
+if (!Array) {
+  const _component_View = common_vendor.resolveComponent("View");
+  _component_View();
+}
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: common_vendor.t($setup.isSidebarOpen ? "收起目录" : "展开目录"),
@@ -276,17 +272,21 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     h: common_vendor.f($setup.currentPageSentences, (sentence, k0, i0) => {
       return {
-        a: common_vendor.t($setup.getSentenceText(sentence.res_id).text),
-        b: sentence.res_id,
-        c: `${$setup.getScaledPosition(sentence.rect_pos_x, "x")}px`,
-        d: `${$setup.getScaledPosition(sentence.rect_pos_y, "y")}px`,
-        e: `${$setup.getScaledPosition(sentence.rect_width, "x")}px`,
-        f: `${$setup.getScaledPosition(sentence.rect_height, "y")}px`,
-        g: common_vendor.o(($event) => $setup.playAudio($setup.getSentenceText(sentence.res_id)), sentence.res_id)
+        a: sentence.res_id,
+        b: `${$setup.getScaledPosition(sentence.rect_pos_x, "x")}px`,
+        c: `${$setup.getScaledPosition(sentence.rect_pos_y, "y")}px`,
+        d: `${$setup.getScaledPosition(sentence.rect_width, "x")}px`,
+        e: `${$setup.getScaledPosition(sentence.rect_height, "y")}px`,
+        f: common_vendor.o(($event) => $setup.playAudio($setup.getSentenceText(sentence.res_id)), sentence.res_id)
       };
     }),
-    i: common_vendor.o((...args) => $setup.prevPage && $setup.prevPage(...args)),
-    j: common_vendor.o((...args) => $setup.nextPage && $setup.nextPage(...args))
+    i: $setup.currentPageIndex === 0 ? 1 : "",
+    j: common_vendor.o((...args) => $setup.prevPage && $setup.prevPage(...args)),
+    k: common_vendor.t($setup.currentPageIndex + 1),
+    l: common_vendor.t($setup.pages.length),
+    m: $setup.currentPageIndex === $setup.pages.length - 1 ? 1 : "",
+    n: common_vendor.o((...args) => $setup.nextPage && $setup.nextPage(...args)),
+    o: common_vendor.o((...args) => $setup.goToChatPage && $setup.goToChatPage(...args))
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-b93a630c"], ["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/pages/textbook/courses.vue"]]);

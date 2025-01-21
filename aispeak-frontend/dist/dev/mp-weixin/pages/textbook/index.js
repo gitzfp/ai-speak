@@ -1,54 +1,101 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
-const api_textbook = require("../../api/textbook.js");
-require("../../axios/api.js");
-require("../../config/env.js");
-const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
-  __name: "index",
-  setup(__props) {
-    const textbook = common_vendor.ref({});
-    common_vendor.onMounted(async () => {
-      const res = await api_textbook.textbookRequest.getTextbookDetail("2");
-      textbook.value = res.data;
+const _sfc_main = {
+  setup() {
+    const versions = common_vendor.ref(["全部", "PEP", "精通", "新起点", "初中"]);
+    const grades = common_vendor.ref(["全部", "一年级", "二年级", "三年级", "四年级", "五年级", "六年级", "七年级", "八年级", "九年级"]);
+    const terms = common_vendor.ref(["全部", "上册", "下册", "全一册"]);
+    const selectedVersion = common_vendor.ref("全部");
+    const selectedGrade = common_vendor.ref("全部");
+    const selectedTerm = common_vendor.ref("全部");
+    const books = common_vendor.ref([]);
+    const fetchBooks = () => {
+      common_vendor.index.request({
+        url: "https://diandu.mypep.cn/static/textbook/bookList_pep_click_subject_web_1_0_0.json",
+        success: (res) => {
+          const englishSubject = res.data.booklist.find((subject) => subject.subject_name === "英语");
+          if (englishSubject) {
+            books.value = englishSubject.versions.flatMap((version) => version.textbooks);
+          }
+        },
+        fail: (err) => {
+          console.error("Failed to fetch books:", err);
+        }
+      });
+    };
+    const filteredBooks = common_vendor.computed(() => {
+      return books.value.filter((book) => {
+        const matchVersion = selectedVersion.value === "全部" || book.version_type === selectedVersion.value;
+        const matchGrade = selectedGrade.value === "全部" || book.grade === selectedGrade.value;
+        const matchTerm = selectedTerm.value === "全部" || book.term === selectedTerm.value;
+        return matchVersion && matchGrade && matchTerm;
+      });
     });
-    const handleCategorySelect = (category) => {
-      const url = `/pages/textbook/courses?textbookId=${category.textbook_id}&categoryId=${category.category_id}`;
-      console.log("Navigating to:", url);
-      common_vendor.index.navigateTo({
-        url
+    common_vendor.onMounted(() => {
+      fetchBooks();
+    });
+    const handleBuy = (book) => {
+      common_vendor.index.showToast({
+        title: `购买 ${book.book_name}`,
+        icon: "none"
       });
     };
-    const handleSubCategorySelect = (subCategory) => {
-      const url = `/pages/textbook/courses?textbookId=${subCategory.textbook_id}&categoryId=${subCategory.category_id}`;
-      console.log("Navigating to:", url);
+    const goToCourse = (book) => {
       common_vendor.index.navigateTo({
-        url
+        url: `/pages/textbook/courses?book_id=${book.book_id}`
       });
     };
-    return (_ctx, _cache) => {
-      return {
-        a: textbook.value.pic,
-        b: common_vendor.t(textbook.value.title),
-        c: common_vendor.f(textbook.value.category, (category, k0, i0) => {
-          return {
-            a: common_vendor.t(category.title),
-            b: common_vendor.f(category.sub_list, (sub, k1, i1) => {
-              return {
-                a: common_vendor.t(sub.title),
-                b: sub.category_id,
-                c: common_vendor.o(($event) => handleSubCategorySelect(sub), sub.category_id)
-              };
-            }),
-            c: category.category_id,
-            d: common_vendor.o(($event) => {
-              var _a;
-              return handleCategorySelect(((_a = category.sub_list) == null ? void 0 : _a.length) > 0 ? category.sub_list[0] : {});
-            }, category.category_id)
-          };
-        })
-      };
+    return {
+      versions,
+      grades,
+      terms,
+      selectedVersion,
+      selectedGrade,
+      selectedTerm,
+      filteredBooks,
+      handleBuy,
+      goToCourse
+      // 添加这一行
     };
   }
-});
-const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__scopeId", "data-v-c8daf7c1"], ["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/pages/textbook/index.vue"]]);
+};
+function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+  return {
+    a: common_vendor.f($setup.versions, (item, index, i0) => {
+      return {
+        a: common_vendor.t(item),
+        b: index,
+        c: common_vendor.n($setup.selectedVersion === item ? "active" : ""),
+        d: common_vendor.o(($event) => $setup.selectedVersion = item, index)
+      };
+    }),
+    b: common_vendor.f($setup.grades, (grade, index, i0) => {
+      return {
+        a: common_vendor.t(grade),
+        b: index,
+        c: common_vendor.n($setup.selectedGrade === grade ? "active" : ""),
+        d: common_vendor.o(($event) => $setup.selectedGrade = grade, index)
+      };
+    }),
+    c: common_vendor.f($setup.terms, (term, index, i0) => {
+      return {
+        a: common_vendor.t(term),
+        b: index,
+        c: common_vendor.n($setup.selectedTerm === term ? "active" : ""),
+        d: common_vendor.o(($event) => $setup.selectedTerm = term, index)
+      };
+    }),
+    d: common_vendor.f($setup.filteredBooks, (book, index, i0) => {
+      return {
+        a: book.icon_url,
+        b: common_vendor.t(book.book_name),
+        c: common_vendor.t(book.grade),
+        d: common_vendor.t(book.term),
+        e: index,
+        f: common_vendor.o(($event) => $setup.goToCourse(book), index)
+      };
+    })
+  };
+}
+const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/pages/textbook/index.vue"]]);
 wx.createPage(MiniProgramPage);
