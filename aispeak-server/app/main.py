@@ -14,6 +14,7 @@ from app.api.message_routes import router as message_routes
 from app.api.session_routes import router as session_routes
 from app.api.topics_route import router as topic_routes
 from app.api.textbook_routes import router as textbook_routes
+from app.api.alioss_routes import router as alioss_routes
 
 app = FastAPI()
 
@@ -32,7 +33,7 @@ app.include_router(sys_routes, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(session_routes, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(message_routes, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(textbook_routes, prefix=f"{Config.API_PREFIX}/v1")
-
+app.include_router(alioss_routes, prefix=f"{Config.API_PREFIX}/v1")
 # Serve static files
 app.mount("/static", StaticFiles(directory="./static"), name="static")
 
