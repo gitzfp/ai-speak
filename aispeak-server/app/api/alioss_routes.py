@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, UploadFile, File
 import oss2
 from app.models.response import ApiResponse  # 导入 ApiResponse
+from app.config import Config
 
 router = APIRouter()
 
 region = 'oss-cn-beijing'
-auth = oss2.Auth('LTAI5tMjmUPHEitz9RNi7QjJ', 'xxcNZWIAQmUqeoW1TaIekQz9WGyOsW')
+auth = oss2.Auth(Config.alioss_access_key_id, Config.alioss_access_key_secret)
 bucket_name = 'books-bct'
 endpoint = f"https://{region}.aliyuncs.com"
 bucket = oss2.Bucket(auth, endpoint, bucket_name)

@@ -188,7 +188,7 @@ export default {
         }
 
         const data = await response.json();
-        console.log('OSS response:', data);
+        console.log('OSS response:', ossKey, data);
 
         if (data.code !== 1000) {
           throw new Error(data.message || '获取文件失败');
@@ -219,7 +219,7 @@ export default {
       // 检查文件是否已存储在阿里云 OSS 中
       const checkResult = await checkFileInOSS(ossKey);
 
-      if (checkResult.exists) {
+      if (checkResult?.data.exists) {
         // 如果已存储，直接从 FastAPI 获取文件 URL
         const data = await getFileFromOSS(ossKey);
         pages.value = data.chapters.flatMap((chapter) => chapter.res_main);
@@ -332,7 +332,7 @@ export default {
           return;
         }
 
-        const ossKey = `images/${pageUrl.split('/').pop()}`;
+        const ossKey = `images/${book_id.value}/${pageUrl.split('/').pop()}`;
 
         // 检查文件是否已存储在阿里云 OSS 中
         const checkResult = await checkFileInOSS(ossKey);
@@ -382,12 +382,12 @@ export default {
     };
 
     const fetchM3u8Url = async (res_id) => {
-        const ossKey = `audios/${res_id}.m3u8`;
+        const ossKey = `audios/${book_id.value}/${res_id}.m3u8`;
 
         // 检查文件是否已存储在阿里云 OSS 中
         const checkResult = await checkFileInOSS(ossKey);
 
-        if (checkResult.exists) {
+        if (checkResult?.data.exists) {
           // 如果已存储，直接从 FastAPI 获取文件 URL
           return await getFileFromOSS(ossKey);
         } else {
@@ -522,7 +522,6 @@ export default {
     // 根据 res_id 获取句子的 text
     const getSentenceText = (resId) => {
       const sentence = sentences.value.find((s) => s.res_id === resId);
-      console.log('查找句子:', resId, '结果:', sentence);
       return sentence || {res_id: resId};
     };
 

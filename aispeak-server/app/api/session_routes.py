@@ -6,7 +6,6 @@ from app.core.utils import *
 from app.db import get_db
 from app.models.account_models import *
 from app.models.response import ApiResponse
-from app.services.account_service import AccountService
 from app.services.chat_service import ChatService
 
 router = APIRouter()
