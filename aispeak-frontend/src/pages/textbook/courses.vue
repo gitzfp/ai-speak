@@ -564,7 +564,7 @@ export default {
           const { id: sessionId, name } = existingSession.data;
           if (sessionId) {
             uni.navigateTo({
-              url: `/pages/chat/index?sessionId=${sessionId}&type=LESSON&lessonId=${lessonId}&sessionName=${name}`
+              url: `/pages/chat/index?sessionId=${sessionId}&type=LESSON&lessonId=${lessonId}&sessionName=${currentChapterName.value}`
             });
             return;
           }
@@ -578,7 +578,7 @@ export default {
     
         if (response?.data) {
           uni.navigateTo({
-            url: `/pages/chat/index?sessionId=${response.data.id}&type=LESSON&lessonId=${lessonId}&sessionName=${response.data.name}`
+            url: `/pages/chat/index?sessionId=${response.data.id}&type=LESSON&lessonId=${lessonId}&sessionName=${currentChapterName.value}`
           });
         } else {
           throw new Error('创建会话失败');
@@ -603,9 +603,6 @@ export default {
 
     // 播放所有句子音频
     const playAllSentences = async () => {
-      const sentences = currentPageSentences.value;
-      if (!sentences || sentences.length === 0) return;
-
       // 如果已经在播放，则停止
       if (isPlaying.value) {
         stopPlayback();
@@ -614,31 +611,51 @@ export default {
 
       // 设置播放状态
       isPlaying.value = true;
-      
-      // 禁用按钮防止重复点击
-      const continuousReadButton = document.querySelector('.continuous-read-button');
-      if (continuousReadButton) {
-        continuousReadButton.classList.add('disabled');
-      }
 
       try {
-        for (let i = 0; i < sentences.length; i++) {
-          // 检查是否被停止
-          if (!isPlaying.value) break;
-          
-          const sentence = sentences[i];
-          currentAudio.value = await playAudio(getSentenceText(sentence.res_id));
-          
-          // 等待当前音频播放完成
-          await new Promise((resolve, reject) => {
-            if (!currentAudio.value) {
-              reject(new Error('无法获取音频元素'));
-              return;
-            }
+        // 循环播放所有页面
+        while (isPlaying.value && currentPageIndex.value < pages.value.length - 1) {
+          const sentences = currentPageSentences.value;
+          if (!sentences || sentences.length === 0) {
+            // 如果当前页面没有句子，直接跳转到下一页
+            nextPage();
+            continue;
+          }
 
-            currentAudio.value.addEventListener('ended', resolve);
-            currentAudio.value.addEventListener('error', reject);
-          });
+          // 禁用按钮防止重复点击
+          const continuousReadButton = document.querySelector('.continuous-read-button');
+          if (continuousReadButton) {
+            continuousReadButton.classList.add('disabled');
+          }
+
+          // 播放当前页面的所有句子
+          for (let i = 0; i < sentences.length; i++) {
+            // 检查是否被停止
+            if (!isPlaying.value) break;
+            
+            const sentence = sentences[i];
+            currentAudio.value = await playAudio(getSentenceText(sentence.res_id));
+            
+            // 等待当前音频播放完成
+            await new Promise((resolve, reject) => {
+              if (!currentAudio.value) {
+                reject(new Error('无法获取音频元素'));
+                return;
+              }
+
+              currentAudio.value.addEventListener('ended', resolve);
+              currentAudio.value.addEventListener('error', reject);
+            });
+          }
+
+          // 如果还在播放状态且不是最后一页，跳转到下一页
+          if (isPlaying.value && currentPageIndex.value < pages.value.length - 1) {
+            nextPage();
+            // 等待图片加载完成
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } else {
+            break;
+          }
         }
       } catch (error) {
         console.error('音频播放失败:', error);
@@ -652,6 +669,7 @@ export default {
         currentAudio.value = null;
         
         // 重新启用按钮
+        const continuousReadButton = document.querySelector('.continuous-read-button');
         if (continuousReadButton) {
           continuousReadButton.classList.remove('disabled');
         }
