@@ -614,7 +614,7 @@ export default {
 
       try {
         // 循环播放所有页面
-        while (isPlaying.value && currentPageIndex.value < pages.value.length - 1) {
+        while (isPlaying.value && currentPageIndex.value < pages.value.length) {
           const sentences = currentPageSentences.value;
           if (!sentences || sentences.length === 0) {
             // 如果当前页面没有句子，直接跳转到下一页
