@@ -21,10 +21,10 @@
     <!-- 当前页面 -->
     <div class="page">
       <!-- 页面图片 -->
-      <img
+      <image
         v-if="currentPageImage"
         :src="currentPageImage"
-        alt="Page Image"
+        mode="widthFix"
         class="page-image"
         @load="onImageLoad"
         ref="pageImage"
@@ -85,7 +85,6 @@
 <script>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { onLoad } from '@dcloudio/uni-app'; 
-import Hls from 'hls.js';
 import md5 from 'md5';
 import topicRequest from "@/api/topic"; 
 import env from "@/config/env"; // 导入 env.ts
@@ -146,8 +145,10 @@ export default {
 
     const checkFileInOSS = async (ossKey) => {
       try {
-        const response = await fetch(`${baseUrl}/ali-oss/check-file/?oss_key=${ossKey}`);
-        const data = await response.json();
+        const { data } = await uni.request({
+          url: `${baseUrl}/ali-oss/check-file/?oss_key=${ossKey}`,
+          method: 'GET'
+        });
         return data;
       } catch (error) {
         console.error('检查文件失败:', error);
@@ -155,55 +156,85 @@ export default {
       }
     };
 
-    const uploadFileToOSS = async (ossKey, file) => {
+    const uploadFileToOSS = async (ossKey, fileData) => {
       try {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch(`${baseUrl}/ali-oss/upload-file/?oss_key=${ossKey}`, {
-          method: 'POST',
-          body: formData,
+        console.log('开始上传文件, ossKey:', ossKey);
+        
+        // 如果是 JSON 数据，直接上传内容
+        if (ossKey.endsWith('.json')) {
+          const { data } = await uni.request({
+            url: `${baseUrl}/ali-oss/upload-file/?oss_key=${ossKey}`,
+            method: 'POST',
+            header: {
+              'Content-Type': 'application/json'
+            },
+            data: {
+              oss_key: ossKey,
+              content: fileData
+            }
+          });
+          console.log('JSON 数据上传成功:', data);
+          return data;
+        }
+        
+        // 如果是图片或音频文件，需要先下载
+        if (typeof fileData === 'string' && (fileData.startsWith('http://') || fileData.startsWith('https://'))) {
+          const tempFilePath = await new Promise((resolve, reject) => {
+            uni.downloadFile({
+              url: fileData,
+              success: (res) => {
+                if (res.statusCode === 200) {
+                  resolve(res.tempFilePath);
+                } else {
+                  reject(new Error('下载文件失败'));
+                }
+              },
+              fail: reject
+            });
+          });
+          fileData = tempFilePath;
+        }
+    
+        // 上传文件
+        const { data } = await uni.uploadFile({
+          url: `${baseUrl}/ali-oss/upload-file/?oss_key=${ossKey}`,
+          filePath: fileData,
+          name: 'file',
         });
-
-        const data = await response.json();
         console.log('文件上传成功:', data);
-        return data;
+        return typeof data === 'string' ? JSON.parse(data) : data;
       } catch (error) {
         console.error('文件上传失败:', error);
         return null;
       }
     };
 
+
+
     const getFileFromOSS = async (ossKey) => {
       try {
-        const response = await fetch(`${baseUrl}/ali-oss/get-file/?oss_key=${ossKey}`, {
-          headers: {
+        const { data } = await uni.request({
+          url: `${baseUrl}/ali-oss/get-file/?oss_key=${ossKey}`,
+          method: 'GET',
+          header: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           }
         });
 
-        if (!response.ok) {
-          throw new Error(`请求失败，状态码：${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('OSS response:', ossKey, data);
-
         if (data.code !== 1000) {
           throw new Error(data.message || '获取文件失败');
         }
+
         if(ossKey.endsWith('.m3u8')) {
-          return data?.data?.content 
+          return data?.data?.content;
         }
-        // 根据文件类型处理返回内容
-        if (ossKey.endsWith('.json') ) {
-          // JSON 文件返回解析后的内容
+
+        if (ossKey.endsWith('.json')) {
           const jsonContent = JSON.parse(data.data.content);
           console.log('解析后的 JSON 内容:', jsonContent);
           return jsonContent;
         } else {
-          // 其他类型文件（图片、音频等）返回 URL
           return data.data.url;
         }
       } catch (error) {
@@ -225,18 +256,29 @@ export default {
         pages.value = data.chapters.flatMap((chapter) => chapter.res_main);
         console.log('页面数据获取成功（来自 OSS）:', pages.value);
       } else {
-        
-          const response = await fetch(
-            `https://rjdduploadw.mypep.cn/pub_cloud/10/${book_id.value}/${book_id.value}_Web.json`
-          );
-          const data = await response.json();
+          const url = `https://rjdduploadw.mypep.cn/pub_cloud/10/${book_id.value}/${book_id.value}_Web.json`;
+          console.log('页面数据获取请求开始:', pages.value);
+          const response = await new Promise((resolve, reject) => {
+              uni.request({
+                  url: url,
+                  method: 'GET',
+                  success: (res) => {
+                      resolve(res);
+                  },
+                  fail: (err) => {
+                      reject(err);
+                  }
+              });
+          });
+
+          const data = response.data;
           pages.value = data.chapters.flatMap((chapter) => chapter.res_main);
           console.log('页面数据获取成功（来自原接口）:', pages.value);
-
-          // 将数据上传到阿里云 OSS
-          const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-          const file = new File([blob], `${book_id.value}_Web.json`);
-          await uploadFileToOSS(ossKey, file);
+      
+          // 直接使用 JSON 字符串上传
+          const jsonString = JSON.stringify(data);
+          await uploadFileToOSS(ossKey, jsonString);
+          console.log('JSON 数据上传成功');
         } 
       }
       catch (error) {
@@ -261,10 +303,20 @@ export default {
     } else {
       // 如果未存储，调用原有接口获取数据
       try {
-        const response = await fetch(
-          `https://diandu.mypep.cn/static/textbook/chapter/${book_id.value}_sentence.json`
-        );
-        const data = await response.json();
+        const url = `https://diandu.mypep.cn/static/textbook/chapter/${book_id.value}_sentence.json`
+        const response = await new Promise((resolve, reject) => {
+        uni.request({
+          url: url,
+          method: 'GET',
+          success: (res) => {
+            resolve(res);
+          },
+          fail: (err) => {
+            reject(err);
+          }
+        });
+      });
+        const data = await response.data;
         chapters.value = data.list
         console.log('Chapters data:', chapters.value);
         sentences.value = data.list.flatMap((chapter) =>
@@ -273,9 +325,8 @@ export default {
         console.log('句子数据获取成功（来自原接口）:', chapters.value, sentences.value);
 
         // 将数据上传到阿里云 OSS
-        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-        const file = new File([blob], `${book_id.value}_sentence.json`);
-        await uploadFileToOSS(ossKey, file);
+        const jsonString = JSON.stringify(data);
+        await uploadFileToOSS(ossKey, jsonString);
       } catch (error) {
         console.error('句子数据获取失败:', error);
       }
@@ -286,23 +337,18 @@ export default {
     // 获取 access_token
     const getAccessToken = async () => {
       try {
-        const response = await fetch(`${baseUrl}/ap22/user/pep_click/215/access_token.json`, {
+        const { data } = await uni.request({
+          url: `${baseUrl}/ap22/user/pep_click/215/access_token.json`,
           method: 'POST',
-          headers: {
+          header: {
             'Accept': '*/*',
             'Content-Type': 'application/x-www-form-urlencoded',
             'Origin': 'https://diandu.mypep.cn',
             'Referer': 'https://diandu.mypep.cn/rjdd/',
           }
         });
-    
-        if (!response.ok) {
-          throw new Error(`获取 access_token 失败, ${response.status}`);
-        }
-    
-        const data = await response.json();
-        console.log(`获取 access_token 成功: ,` ,data);
 
+        console.log(`获取 access_token 成功:`, data);
         return data.access_token;
       } catch (error) {
         console.error('获取 access_token 失败:', error);
@@ -312,25 +358,18 @@ export default {
     
     // 处理图片签名请求的重试逻辑
     const retryImageSignature = async (pageUrl, accessToken) => {
-      const response = await fetch(
-        `${baseUrl}/ap22/resources/ak/pep_click/user/951/urlSignature.json?access_token=${accessToken}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            flag: '1',
-            fileNameUrl: `https://szjc-3.mypep.cn${pageUrl}`,
-          }),
+      const { data } = await uni.request({
+        url: `${baseUrl}/ap22/resources/ak/pep_click/user/951/urlSignature.json?access_token=${accessToken}`,
+        method: 'POST',
+        header: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        data: {
+          flag: '1',
+          fileNameUrl: `https://szjc-3.mypep.cn${pageUrl}`,
         }
-      );
-    
-      if (!response.ok) {
-        throw new Error(`请求失败，状态码：${response.status}`);
-      }
-    
-      const data = await response.json();
+      });
+
       console.log('图片 URL 签名成功:', data);
       return data.url_signature;
     };
@@ -402,21 +441,42 @@ export default {
           currentPageImage.value = urlSignature;
 
           // 将图片上传到阿里云 OSS
-          const response = await fetch(urlSignature);
+          const response = await uni.request(urlSignature);
           const blob = await response.blob();
           const file = new File([blob], ossKey.split('/').pop());
           await uploadFileToOSS(ossKey, file);
         }
       };
     // 图片加载完成时计算缩放比例
-    const onImageLoad = () => {
-      const image = pageImage.value;
-      if (image) {
-        const containerWidth = document.querySelector('.book-container').clientWidth;
-        scaleX.value = containerWidth / image.naturalWidth;
-        scaleY.value = containerWidth / image.naturalWidth; // 保持宽高比一致
-        console.log('图片缩放比例:', { scaleX: scaleX.value, scaleY: scaleY.value });
-      }
+    const onImageLoad = (e) => {
+      // 小程序环境下，通过事件获取图片信息
+      const { width: naturalWidth, height: naturalHeight } = e.detail;
+      
+      // 获取容器宽度和高度
+      const query = uni.createSelectorQuery();
+      query.select('.book-container').boundingClientRect(data => {
+        const containerWidth = data.width;
+        const containerHeight = data.height;
+        
+        // 计算宽度和高度的缩放比例
+        const widthScale = containerWidth / naturalWidth;
+        const heightScale = containerHeight / naturalHeight;
+        
+        // 使用较小的缩放比例，确保图片完全适应容器
+        const scale = Math.min(widthScale, heightScale);
+        
+        scaleX.value = scale;
+        scaleY.value = scale;
+        
+        console.log('图片缩放比例:', { 
+          scaleX: scaleX.value, 
+          scaleY: scaleY.value,
+          naturalWidth,
+          naturalHeight,
+          containerWidth,
+          containerHeight
+        });
+      }).exec();
     };
 
     // 根据缩放比例调整位置
@@ -429,109 +489,199 @@ export default {
       return value;
     };
 
-    const fetchM3u8Url = async (res_id) => {
-        const ossKey = `audios/${book_id.value}/${res_id}.m3u8`;
+  const fetchM3u8Url = async (res_id) => {
+  const ossKey = `audios/${book_id.value}/${res_id}.mp3`;
+  console.log('开始获取音频 URL, ossKey:', ossKey);
 
-        // 检查文件是否已存储在阿里云 OSS 中
-        const checkResult = await checkFileInOSS(ossKey);
+  try {
+    const checkResult = await checkFileInOSS(ossKey);
+    console.log('检查 OSS 文件结果:', checkResult);
 
-        if (checkResult?.data?.exists1) {
-          // 如果已存储，直接从 FastAPI 获取文件 URL
-         const m3u8Content = await getFileFromOSS(ossKey);
-          // 输出提取的 URI
-         return m3u8Content
-        } else {
-          // 如果未存储，调用原有接口获取数据
-          const hostname = "diandu.mypep.cn";
-          const input_string = hostname + res_id;
-          const hashed_value = md5(input_string);
-          const url = `${baseUrl}/ap33/api/a/resource/c1ebe466-1cdc-4bd3-ab69-77c3561b9dee/951/${res_id}/${hashed_value}/hlsIndexM3u8.token?access_token=`;
-          try {
-            const response = await fetch(url, {
-              method: 'GET',
-              headers: {
-                'Accept': '*/*',
-                'Origin': 'https://diandu.mypep.cn',
-                'Referer': 'https://diandu.mypep.cn/',
-              },
-            });
-            const data = await response.text();
-            console.log('m3u8 文件内容（来自原接口）:', data);
-
-            // 将数据上传到阿里云 OSS
-            const blob = new Blob([data], { type: 'application/vnd.apple.mpegurl' });
-            const file = new File([blob], `${res_id}.m3u8`);
-            await uploadFileToOSS(ossKey, file);
-
-            return data;
-          } catch (error) {
-            console.error('获取 m3u8 文件失败:', error);
-            return null;
+    if (checkResult?.data?.exists) {
+      const m3u8Content = checkResult?.data?.url;
+      console.log('从阿里云获取到的 URL:', m3u8Content);
+      return m3u8Content;
+    } else {
+      console.log('开始网络请求音频');
+      const hostname = "diandu.mypep.cn";
+      const input_string = hostname + res_id;
+      const hashed_value = md5(input_string);
+      
+      const url = `${baseUrl}/ap33/api/a/resource/c1ebe466-1cdc-4bd3-ab69-77c3561b9dee/951/${res_id}/${hashed_value}/hlsIndexM3u8.token?access_token=`;
+      const realUrl = `https://api.mypep.com.cn/api/a/resource/c1ebe466-1cdc-4bd3-ab69-77c3561b9dee/951/${res_id}/${hashed_value}/hlsIndexM3u8.token?access_token=`;
+      
+      console.log('请求 URL:', url);
+      
+      // 使用 Promise 包装 uni.request
+      const response = await new Promise((resolve, reject) => {
+        uni.request({
+          url: url,
+          method: 'GET',
+          success: (res) => {
+            resolve(res);
+          },
+          fail: (err) => {
+            reject(err);
           }
-        }
-      };
-    // 播放音频
-    const playAudio = async (sentence) => {
-      try {
-        // 获取 m3u8 文件内容
-        const m3u8Content = await fetchM3u8Url(sentence.res_id);
-        if (!m3u8Content) {
-          console.error('无法获取 m3u8 文件内容');
-          return null;
-        }
-        // 将 m3u8 文件内容转换为 Blob URL
-        const blob = new Blob([m3u8Content], { type: 'application/vnd.apple.mpegurl' });
-        const blobUrl = URL.createObjectURL(blob);
+        });
+      });
 
-        // 使用 hls.js 播放音频
-        if (Hls.isSupported()) {
-          const hls = new Hls();
-          const audioElement = new Audio();
-          hls.loadSource(blobUrl);
-          hls.attachMedia(audioElement);
-          
-          return new Promise((resolve) => {
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-              audioElement.play();
-              resolve(audioElement);
-            });
-
-            hls.on(Hls.Events.ERROR, (event, data) => {
-              console.error('HLS 错误:', data);
-              if (data.fatal) {
-                switch (data.type) {
-                  case Hls.ErrorTypes.NETWORK_ERROR:
-                    console.error('网络错误，尝试重新加载');
-                    hls.startLoad();
-                    break;
-                  case Hls.ErrorTypes.MEDIA_ERROR:
-                    console.error('媒体错误，尝试重新加载');
-                    hls.recoverMediaError();
-                    break;
-                  default:
-                    console.error('无法恢复的错误');
-                    hls.destroy();
-                    break;
-                }
-              }
-            });
-          });
-        } else if (audioElement.canPlayType('application/vnd.apple.mpegurl')) {
-          // 原生支持 HLS 的浏览器
-          audioElement.src = blobUrl;
-          audioElement.play();
-          return Promise.resolve(audioElement);
-        } else {
-          console.error('当前浏览器不支持 HLS 播放');
-          return null;
-        }
-      } catch (error) {
-        console.error('音频播放失败:', error);
-        return null;
+      if (!response.data) {
+        throw new Error('获取音频数据失败');
       }
-    };
 
-    const currentChapterName = computed(() => {
+      console.log('获取到的音频数据:', response.data);
+
+      const encodedRealUrl = encodeURIComponent(realUrl);
+
+      console.log('开始解密和上传');
+      const uploadResponse = await new Promise((resolve, reject) => {
+        uni.request({
+          url: `${baseUrl}/ali-oss/decrypt-and-upload/?oss_key=${ossKey}&url=${realUrl}`,
+          method: 'GET',
+          success: (res) => {
+            resolve(res);
+          },
+          fail: (err) => {
+            reject(err);
+          }
+        });
+      });
+
+      if (!uploadResponse.data) {
+        throw new Error('解密上传失败');
+      }
+
+      console.log('解密上传响应:', uploadResponse.data);
+      return uploadResponse.data?.data?.url;
+    }
+  } catch (err) {
+    console.error('获取音频 URL 过程中发生错误:', err);
+    return null;
+  }
+};
+
+const playAudio = async (sentence) => {
+  try {
+    if (currentAudio.value) {
+      currentAudio.value.stop();
+      currentAudio.value.destroy();
+      currentAudio.value = null;
+    }
+
+    const audioUrl = await fetchM3u8Url(sentence.res_id);
+    if (!audioUrl) {
+      throw new Error('获取音频地址失败');
+    }
+
+    return new Promise((resolve, reject) => {
+      const audioContext = uni.createInnerAudioContext();
+      audioContext.src = audioUrl;
+      audioContext.autoplay = true;
+
+      audioContext.onError((res) => {
+        console.error('音频播放错误:', res);
+        reject(new Error('音频播放失败'));
+      });
+
+      audioContext.onEnded(() => {
+        audioContext.destroy();
+        currentAudio.value = null;
+        resolve();
+      });
+
+      currentAudio.value = audioContext;
+    });
+  } catch (error) {
+    console.error('播放音频失败:', error);
+    throw error;
+  }
+};
+
+const playAllSentences = async () => {
+  if (isPlaying.value) {
+    stopPlayback();
+    return;
+  }
+
+  isPlaying.value = true;
+  console.log('开始连读，当前播放状态:', isPlaying.value);
+
+  try {
+    // 循环播放所有页面
+    while (isPlaying.value && currentPageIndex.value < pages.value.length) {
+      const sentences = currentPageSentences.value;
+      if (!sentences || sentences.length === 0) {
+        console.log('当前页面没有句子，切换到下一页');
+        nextPage();
+        continue;
+      }
+
+      console.log(`开始播放第 ${currentPageIndex.value + 1} 页，共 ${sentences.length} 个句子`);
+
+      // 播放当前页面的所有句子
+      for (let i = 0; i < sentences.length; i++) {
+        if (!isPlaying.value) {
+          console.log('播放被手动停止');
+          break;
+        }
+
+        const sentence = sentences[i];
+        const sentenceText = getSentenceText(sentence.res_id);
+        if (!sentenceText) {
+          console.warn(`跳过无效句子: ${sentence.res_id}`);
+          continue;
+        }
+
+        console.log(`播放第 ${i + 1} 个句子:`, sentenceText);
+        await playAudio(sentenceText);
+
+        // 如果当前句子不是最后一个，添加间隔时间
+        if (isPlaying.value && i < sentences.length - 1) {
+          console.log('添加 800ms 间隔');
+          await new Promise(resolve => setTimeout(resolve, 800)); // 800ms 间隔
+        }
+      }
+
+      // 如果还在播放状态且不是最后一页，跳转到下一页
+      if (isPlaying.value && currentPageIndex.value < pages.value.length - 1) {
+        console.log('切换到下一页');
+        nextPage();
+        // 等待图片加载完成
+        await new Promise(resolve => setTimeout(resolve, 1000)); // 1s 等待
+      } else {
+        console.log('已播放到最后一页，停止连读');
+        break; // 如果是最后一页，停止播放
+      }
+    }
+  } catch (error) {
+    console.error('连续播放失败:', error);
+    uni.showToast({
+      title: '连续播放失败',
+      icon: 'none'
+    });
+  } finally {
+    console.log('连读结束，重置播放状态');
+    isPlaying.value = false;
+    if (currentAudio.value) {
+      currentAudio.value.stop();
+      currentAudio.value.destroy();
+      currentAudio.value = null;
+    }
+  }
+};
+// 修改 stopPlayback 函数
+const stopPlayback = () => {
+  isPlaying.value = false;
+  if (currentAudio.value) {
+    currentAudio.value.stop();
+    currentAudio.value.destroy();
+    currentAudio.value = null;
+  }
+};
+
+
+  const currentChapterName = computed(() => {
       if (!chapters.value.length) return '';
       // Find the chapter that contains the current page
       const currentChapter = chapters.value.find(chapter => {
@@ -549,13 +699,21 @@ export default {
       await updateCurrentPageImage();
 
       // 监听窗口大小变化
-      window.addEventListener('resize', onImageLoad);
+      // window.addEventListener('resize', onImageLoad);
     });
 
     // 组件卸载时移除监听器
     onUnmounted(() => {
-      window.removeEventListener('resize', onImageLoad);
-    });
+      // window.removeEventListener('resize', onImageLoad);
+       // 移除窗口大小变化监听
+  
+  // 停止并销毁音频实例
+      if (currentAudio.value) {
+        currentAudio.value.stop();
+        currentAudio.value.destroy();
+        currentAudio.value = null;
+      }
+        });
 
     // 监听 currentPageIndex 变化，更新图片 URL
     watch(currentPageIndex, async () => {
@@ -641,90 +799,8 @@ export default {
       }
     };
 
-    // 停止播放
-    const stopPlayback = () => {
-      isPlaying.value = false;
-      if (currentAudio.value) {
-        currentAudio.value.pause();
-        currentAudio.value = null;
-      }
-    };
-
-    // 播放所有句子音频
-    const playAllSentences = async () => {
-      // 如果已经在播放，则停止
-      if (isPlaying.value) {
-        stopPlayback();
-        return;
-      }
-
-      // 设置播放状态
-      isPlaying.value = true;
-
-      try {
-        // 循环播放所有页面
-        while (isPlaying.value && currentPageIndex.value < pages.value.length) {
-          const sentences = currentPageSentences.value;
-          if (!sentences || sentences.length === 0) {
-            // 如果当前页面没有句子，直接跳转到下一页
-            nextPage();
-            continue;
-          }
-
-          // 禁用按钮防止重复点击
-          const continuousReadButton = document.querySelector('.continuous-read-button');
-          if (continuousReadButton) {
-            continuousReadButton.classList.add('disabled');
-          }
-
-          // 播放当前页面的所有句子
-          for (let i = 0; i < sentences.length; i++) {
-            // 检查是否被停止
-            if (!isPlaying.value) break;
-            
-            const sentence = sentences[i];
-            currentAudio.value = await playAudio(getSentenceText(sentence.res_id));
-            
-            // 等待当前音频播放完成
-            await new Promise((resolve, reject) => {
-              if (!currentAudio.value) {
-                reject(new Error('无法获取音频元素'));
-                return;
-              }
-
-              currentAudio.value.addEventListener('ended', resolve);
-              currentAudio.value.addEventListener('error', reject);
-            });
-          }
-
-          // 如果还在播放状态且不是最后一页，跳转到下一页
-          if (isPlaying.value && currentPageIndex.value < pages.value.length - 1) {
-            nextPage();
-            // 等待图片加载完成
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          } else {
-            break;
-          }
-        }
-      } catch (error) {
-        console.error('音频播放失败:', error);
-        uni.showToast({
-          title: '音频播放失败',
-          icon: 'none'
-        });
-      } finally {
-        // 重置状态
-        isPlaying.value = false;
-        currentAudio.value = null;
-        
-        // 重新启用按钮
-        const continuousReadButton = document.querySelector('.continuous-read-button');
-        if (continuousReadButton) {
-          continuousReadButton.classList.remove('disabled');
-        }
-      }
-    };
-
+   
+  
     // 添加 goToChatPage 到 return 中
     return {
       currentPageIndex,
@@ -896,6 +972,7 @@ export default {
   flex-direction: row;
   justify-content: space-around;
   gap: 10rpx;
+  align-items: center;
 }
 
 .speak-icon {
