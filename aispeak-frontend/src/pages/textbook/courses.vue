@@ -283,34 +283,82 @@ export default {
   }; 
 
     // 从接口获取图片 URL 签名
+    // 获取 access_token
+    const getAccessToken = async () => {
+      try {
+        const response = await fetch(`${baseUrl}/ap22/user/pep_click/215/access_token.json`, {
+          method: 'POST',
+          headers: {
+            'Accept': '*/*',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Origin': 'https://diandu.mypep.cn',
+            'Referer': 'https://diandu.mypep.cn/rjdd/',
+          }
+        });
+    
+        if (!response.ok) {
+          throw new Error(`获取 access_token 失败, ${response.status}`);
+        }
+    
+        const data = await response.json();
+        console.log(`获取 access_token 成功: ,` ,data);
+
+        return data.access_token;
+      } catch (error) {
+        console.error('获取 access_token 失败:', error);
+        throw error;
+      }
+    };
+    
+    // 处理图片签名请求的重试逻辑
+    const retryImageSignature = async (pageUrl, accessToken) => {
+      const response = await fetch(
+        `${baseUrl}/ap22/resources/ak/pep_click/user/951/urlSignature.json?access_token=${accessToken}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            flag: '1',
+            fileNameUrl: `https://szjc-3.mypep.cn${pageUrl}`,
+          }),
+        }
+      );
+    
+      if (!response.ok) {
+        throw new Error(`请求失败，状态码：${response.status}`);
+      }
+    
+      const data = await response.json();
+      console.log('图片 URL 签名成功:', data);
+      return data.url_signature;
+    };
+    
+    // 修改 fetchImageUrlSignature 函数
     const fetchImageUrlSignature = async (pageUrl) => {
       if (!pageUrl) {
         console.error('pageUrl 未定义');
         return null;
       }
-
+    
+      let accessToken = 'Er0iHLzF3oww+9UGQ6wU8U7ZuQQQa011qxMFTQkJj45MGgNjf4QUVVWL6OyOxinnufcJ7SMVceH7M9JWzsnINw==';
+    
       try {
-        const response = await fetch(
-          '/ap22/resources/ak/pep_click/user/951/urlSignature.json?access_token=KVEmCAZAAQxpKjcsArcMfTuUfkLeg%2BpddaupDU%2FFAtsl0ONFwKl%2Bx66qKejTFeD8sy4NV19l2dyDVvH2RdV0tA%3D%3D',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-              flag: '1',
-              fileNameUrl: `https://szjc-3.mypep.cn${pageUrl}`,
-            }),
+        // 尝试使用当前 token 获取签名
+        try {
+          data =  await retryImageSignature(pageUrl, accessToken);
+          if(!data){
+            accessToken = await getAccessToken();
+            return await retryImageSignature(pageUrl, accessToken);
           }
-        );
-
-        if (!response.ok) {
-          throw new Error(`请求失败，状态码：${response.status}`);
+          return data
+        } catch (error) {
+          console.log('access_token 已失效，重新获取');
+          // 获取新的 token 并重试
+          accessToken = await getAccessToken();
+          return await retryImageSignature(pageUrl, accessToken);
         }
-
-        const data = await response.json();
-        console.log('图片 URL 签名成功:', data);
-        return data.url_signature;
       } catch (error) {
         console.error('图片 URL 签名获取失败:', error);
         return null;
@@ -387,15 +435,17 @@ export default {
         // 检查文件是否已存储在阿里云 OSS 中
         const checkResult = await checkFileInOSS(ossKey);
 
-        if (checkResult?.data.exists) {
+        if (checkResult?.data?.exists1) {
           // 如果已存储，直接从 FastAPI 获取文件 URL
-          return await getFileFromOSS(ossKey);
+         const m3u8Content = await getFileFromOSS(ossKey);
+          // 输出提取的 URI
+         return m3u8Content
         } else {
           // 如果未存储，调用原有接口获取数据
           const hostname = "diandu.mypep.cn";
           const input_string = hostname + res_id;
           const hashed_value = md5(input_string);
-          const url = `/ap33/api/a/resource/c1ebe466-1cdc-4bd3-ab69-77c3561b9dee/951/${res_id}/${hashed_value}/hlsIndexM3u8.token?access_token=`;
+          const url = `${baseUrl}/ap33/api/a/resource/c1ebe466-1cdc-4bd3-ab69-77c3561b9dee/951/${res_id}/${hashed_value}/hlsIndexM3u8.token?access_token=`;
           try {
             const response = await fetch(url, {
               method: 'GET',
@@ -429,7 +479,6 @@ export default {
           console.error('无法获取 m3u8 文件内容');
           return null;
         }
-
         // 将 m3u8 文件内容转换为 Blob URL
         const blob = new Blob([m3u8Content], { type: 'application/vnd.apple.mpegurl' });
         const blobUrl = URL.createObjectURL(blob);

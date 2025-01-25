@@ -48,3 +48,6 @@ wheel==0.44.0
 zhipuai==1.0.7
 pymysql
 oss2
+pycryptodome
+m3u8
+aiohttp
