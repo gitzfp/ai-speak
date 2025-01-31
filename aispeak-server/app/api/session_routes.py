@@ -55,10 +55,11 @@ def get_session_greeting(
     session_id: str,
     db: Session = Depends(get_db),
     account_id: str = Depends(get_current_account),
+    task_targets: list = None,
 ):
     """获取会话消息"""
     chat_service = ChatService(db)
-    return ApiResponse(data=chat_service.get_session_greeting(session_id, account_id))
+    return ApiResponse(data=chat_service.get_session_greeting(session_id, account_id, task_targets))
 
 
 @router.post("/sessions/{session_id}/chat")

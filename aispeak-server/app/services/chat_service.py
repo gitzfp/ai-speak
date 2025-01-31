@@ -68,7 +68,7 @@ class ChatService:
         result["messages"] = self.get_session_messages(session_id, account_id, 1, 100)
         return result
 
-    def get_session_greeting(self, session_id: str, account_id: str):
+    def get_session_greeting(self, session_id: str, account_id: str, task_targets: list = None):
         """需要会话没有任何消息时，需要返回的问候语"""
         try:
             logging.info(f"Starting get_session_greeting for session_id: {session_id}, account_id: {account_id}")
@@ -97,16 +97,29 @@ class ChatService:
             elif (session.type == "LESSON"):
                 logging.info("LESSON type, getting lesson session")
                 # 构建课程相关的问候参数
+                targets_str = ""
+                if task_targets:
+                    targets_str = "\n".join([f"- {target['info_cn']}" for target in task_targets])
+                    first_target = task_targets[0] if task_targets else None
+                
                 topic_greet_params = TopicGreetParams(
                     language=self.account_service.get_account_target_language(account_id),
-                    prompt="""你是一位专业的英语老师，正在给学生上一节英语课。
-                    请用友好和鼓励的语气向学生问好，并简单介绍一下今天的学习内容。
-                    记住：
-                    1. 使用简单易懂的英语
-                    2. 保持积极正面的态度
-                    3. 让学生感到轻松和有趣
-                    4. 鼓励学生积极参与
-                    """
+                    prompt=f"""你是一位专业的英语老师，正在给学生上一节英语课。
+
+本节课的学习目标是：
+{targets_str}
+
+请按以下要求回复：
+1. 先用简单的英语向学生问好
+2. 用中文介绍本节课的学习目标
+3. 用简单的英语让学生完成第一个目标：{first_target['info_en'] if first_target else ''}
+
+注意：
+1. 使用简单易懂的英语
+2. 保持积极正面的态度
+3. 让学生感到轻松和有趣
+4. 鼓励学生积极参与
+"""
                 )
                 
                 logging.info(f"Created topic_greet_params: {topic_greet_params.__dict__}")
