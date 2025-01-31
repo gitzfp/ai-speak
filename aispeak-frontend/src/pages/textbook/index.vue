@@ -6,10 +6,12 @@
         <text class="filter-title">版本</text>
         <scroll-view class="filter-row" scroll-x>
           <view class="filter-list">
-            <view v-for="(item, index) in versions" 
-                  :key="index"
-                  :class="['filter-item', selectedVersion === item ? 'active' : '']"
-                  @tap="selectedVersion = item">
+            <view
+              v-for="(item, index) in versions"
+              :key="index"
+              :class="['filter-item', selectedVersion === item ? 'active' : '']"
+              @tap="selectedVersion = item"
+            >
               {{ item }}
             </view>
           </view>
@@ -20,10 +22,12 @@
         <text class="filter-title">年级</text>
         <scroll-view class="filter-row" scroll-x>
           <view class="filter-list">
-            <view v-for="(grade, index) in grades" 
-                  :key="index"
-                  :class="['filter-item', selectedGrade === grade ? 'active' : '']"
-                  @tap="selectedGrade = grade">
+            <view
+              v-for="(grade, index) in grades"
+              :key="index"
+              :class="['filter-item', selectedGrade === grade ? 'active' : '']"
+              @tap="selectedGrade = grade"
+            >
               {{ grade }}
             </view>
           </view>
@@ -34,10 +38,12 @@
         <text class="filter-title">册次</text>
         <scroll-view class="filter-row" scroll-x>
           <view class="filter-list">
-            <view v-for="(term, index) in terms" 
-                  :key="index"
-                  :class="['filter-item', selectedTerm === term ? 'active' : '']"
-                  @tap="selectedTerm = term">
+            <view
+              v-for="(term, index) in terms"
+              :key="index"
+              :class="['filter-item', selectedTerm === term ? 'active' : '']"
+              @tap="selectedTerm = term"
+            >
               {{ term }}
             </view>
           </view>
@@ -47,11 +53,13 @@
 
     <!-- 书籍列表 -->
     <view class="book-grid">
-      <view v-for="(book, index) in filteredBooks" 
-            :key="index" 
-            class="book-card"
-            @tap="goToCourse(book)">
-        <image :src="book.icon_url" mode="aspectFit" class="book-cover"/>
+      <view
+        v-for="(book, index) in filteredBooks"
+        :key="index"
+        class="book-card"
+        @tap="goToCourse(book)"
+      >
+        <image :src="book.icon_url" mode="aspectFit" class="book-cover" />
         <view class="book-info">
           <text class="book-title">{{ book.book_name }}</text>
           <text class="book-subtitle">{{ book.grade }} {{ book.term }}</text>
@@ -62,70 +70,89 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from "vue"
 
 export default {
   setup() {
     // 版本、年级和册次选项
-    const versions = ref(['全部', 'PEP', '精通', '新起点', '初中']);
-    const grades = ref(['全部', '一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级']);
-    const terms = ref(['全部', '上册', '下册', '全一册']);
+    const versions = ref(["全部", "PEP", "精通", "新起点", "初中"])
+    const grades = ref([
+      "全部",
+      "一年级",
+      "二年级",
+      "三年级",
+      "四年级",
+      "五年级",
+      "六年级",
+      "七年级",
+      "八年级",
+      "九年级",
+    ])
+    const terms = ref(["全部", "上册", "下册", "全一册"])
 
     // 当前选中的版本、年级和册次
-    const selectedVersion = ref('全部');
-    const selectedGrade = ref('全部');
-    const selectedTerm = ref('全部');
+    const selectedVersion = ref("全部")
+    const selectedGrade = ref("全部")
+    const selectedTerm = ref("全部")
 
     // 书籍数据
-    const books = ref([]);
+    const books = ref([])
 
     // 从接口获取数据
     const fetchBooks = () => {
       uni.request({
-        url: 'https://diandu.mypep.cn/static/textbook/bookList_pep_click_subject_web_1_0_0.json',
+        url: "https://diandu.mypep.cn/static/textbook/bookList_pep_click_subject_web_1_0_0.json",
         success: (res) => {
           // 过滤出英语科目的书籍
-          const englishSubject = res.data.booklist.find(subject => subject.subject_name === '英语');
+          const englishSubject = res.data.booklist.find(
+            (subject) => subject.subject_name === "英语"
+          )
           if (englishSubject) {
             // 将所有版本的书籍合并到一个数组中
-            books.value = englishSubject.versions.flatMap(version => version.textbooks);
+            books.value = englishSubject.versions.flatMap(
+              (version) => version.textbooks
+            )
           }
         },
         fail: (err) => {
-          console.error('Failed to fetch books:', err);
-        }
-      });
-    };
+          console.error("Failed to fetch books:", err)
+        },
+      })
+    }
 
     // 根据选中的版本、年级和册次过滤书籍
     const filteredBooks = computed(() => {
-      return books.value.filter(book => {
-        const matchVersion = selectedVersion.value === '全部' || book.version_type === selectedVersion.value;
-        const matchGrade = selectedGrade.value === '全部' || book.grade === selectedGrade.value;
-        const matchTerm = selectedTerm.value === '全部' || book.term === selectedTerm.value;
-        return matchVersion && matchGrade && matchTerm;
-      });
-    });
+      return books.value.filter((book) => {
+        const matchVersion =
+          selectedVersion.value === "全部" ||
+          book.version_type === selectedVersion.value
+        const matchGrade =
+          selectedGrade.value === "全部" || book.grade === selectedGrade.value
+        const matchTerm =
+          selectedTerm.value === "全部" || book.term === selectedTerm.value
+        return matchVersion && matchGrade && matchTerm
+      })
+    })
 
     // 组件挂载时获取数据
     onMounted(() => {
-      fetchBooks();
-    });
+      fetchBooks()
+    })
 
     // 立即购买按钮点击事件
     const handleBuy = (book) => {
       uni.showToast({
         title: `购买 ${book.book_name}`,
-        icon: 'none'
-      });
-    };
+        icon: "none",
+      })
+    }
 
     // 添加跳转到课程页面的方法
     const goToCourse = (book) => {
       uni.navigateTo({
-        url: `/pages/textbook/courses?book_id=${book.book_id}`
-      });
-    };
+        url: `/pages/textbook/books?book_id=${book.book_id}`,
+      })
+    }
 
     return {
       versions,
@@ -136,10 +163,10 @@ export default {
       selectedTerm,
       filteredBooks,
       handleBuy,
-      goToCourse  // 添加这一行
-    };
-  }
-};
+      goToCourse, // 添加这一行
+    }
+  },
+}
 </script>
 
 <style>
@@ -185,7 +212,7 @@ export default {
 }
 
 .filter-item.active {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: #fff;
 }
 
@@ -210,7 +237,7 @@ export default {
   border-radius: 12rpx;
   margin-bottom: 20rpx;
   overflow: hidden;
-  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.1);
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
 }
 
 .book-cover {
@@ -239,7 +266,7 @@ export default {
 }
 
 .buy-btn {
-  background-color: #FF6B6B;
+  background-color: #ff6b6b;
   color: #ffffff;
   font-size: 26rpx;
   padding: 10rpx 0;
@@ -250,6 +277,6 @@ export default {
 }
 
 .buy-btn:active {
-  background-color: #FF5252;
+  background-color: #ff5252;
 }
 </style>

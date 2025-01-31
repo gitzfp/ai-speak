@@ -25,6 +25,12 @@
       }
     },
     {
+      "path": "pages/textbook/books",
+      "style": {
+        "navigationBarTitleText": "书籍"
+      }
+    },
+    {
       "path": "pages/textbook/lesson",
       "style": {
         "navigationBarTitleText": "课程详情"
@@ -61,7 +67,7 @@
       }
     },
     {
-      "path":"pages/my/learnLanguage",
+      "path": "pages/my/learnLanguage",
       "style": {
         "navigationStyle": "custom"
       }
@@ -107,7 +113,7 @@
       "style": {
         "navigationStyle": "custom"
       }
-    } 
+    }
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",

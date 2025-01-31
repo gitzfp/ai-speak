@@ -103,10 +103,6 @@ def create_chat_topic_session(
     topic_service = TopicService(db)
     return ApiResponse(data=topic_service.create_topic_session(topic_id, account_id))
 
-# 在文件顶部添加 Pydantic 模型
-from pydantic import BaseModel
-from typing import List
-
 
 # 修改路由
 @router.post("/topics/lesson_session", name="Create chat lesson session")

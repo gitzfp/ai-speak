@@ -7,6 +7,7 @@ from Crypto.Cipher import AES
 from urllib.parse import unquote
 import ffmpeg
 import os
+import base64
 
 import logging
 logger = logging.getLogger(__name__)
@@ -92,8 +93,32 @@ async def get_file(oss_key: str):
         print(f"Error retrieving file: {str(e)}")
         return ApiResponse.system_error(f"获取文件失败: {str(e)}")
 
-
-
+@router.get("/ali-oss/get-binary-file/")
+async def get_file(oss_key: str):
+    """
+    从阿里云 OSS 获取文件内容
+    """
+    try:
+        print(f"Checking if file exists in OSS with key: {oss_key}")
+        if not bucket.object_exists(oss_key):
+            return ApiResponse.error("文件不存在", code=404)
+        
+        # 获取文件内容
+        result = bucket.get_object(oss_key)
+        content = result.read()
+        
+        # 将二进制内容转换为 base64 字符串
+        base64_content = base64.b64encode(content).decode('utf-8')
+        
+        # 返回 base64 编码的内容
+        return ApiResponse.success(data={
+            "content": base64_content,
+            "type": "zip"
+        })
+       
+    except Exception as e:
+        print(f"Error retrieving file: {str(e)}")
+        return ApiResponse.system_error(f"获取文件失败: {str(e)}") 
 
 async def fetch_with_proxy(url: str) -> str:
     """模拟 vite 代理请求获取 m3u8 内容"""
@@ -449,5 +474,40 @@ async def proxy_mypep_api(request: Request, path: str):
                     headers=dict(response.headers)
                 )
             
+    except Exception as e:
+        return ApiResponse.system_error(f"代理请求失败: {str(e)}")
+
+# 添加一个通用的代理函数
+@router.api_route("/proxy/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_request(request: Request, custom_headers: dict = None) -> Response:
+    """
+    通用的代理请求函数
+    """
+    try:
+        method = request.method
+        headers = dict(request.headers)
+        body = await request.body()
+        
+        # 移除不需要转发的 headers
+        headers.pop('host', None)
+        headers.pop('connection', None)
+        
+        # 添加自定义请求头
+        if custom_headers:
+            headers.update(custom_headers)
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.request(
+                method=method,
+                url="https://diandu.mypep.cn/book/getBookUrl.json",
+                headers=headers,
+                data=body
+            ) as response:
+                content = await response.read()
+                return Response(
+                    content=content,
+                    status_code=response.status,
+                    headers=dict(response.headers)
+                )
     except Exception as e:
         return ApiResponse.system_error(f"代理请求失败: {str(e)}")
