@@ -9,8 +9,13 @@ export default {
   sessionDetailsGet: (data: any) => {
     return request("/sessions/" + data.sessionId, "GET", data, true);
   },
-  sessionInitGreeting: (sessionId: string) => {
-    return request("/sessions/" + sessionId + "/greeting", "GET", {}, false);
+  sessionInitGreeting: (sessionId: string, taskTargets: any) => {
+    return request(
+      `/sessions/${sessionId}/greeting`, 
+      "GET", 
+      taskTargets ? { task_targets: taskTargets } : undefined, 
+      false
+    );
   },
   sessionChatInvoke: (data: any) => {
     return request(`/sessions/${data.sessionId}/chat`, "POST", data, false);

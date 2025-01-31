@@ -188,10 +188,10 @@ const loadLesson = async (lessonId: string) => {
   }
 }
 
-onLoad((option: any) => {
+onLoad(async (option: any) => {
   if (option.type === 'LESSON') {
     session.value.type = 'LESSON';
-    loadLesson(option.lessonId);
+    await loadLesson(option.lessonId);
   }
   initData(option.sessionId, option.sessionName);
   uni.setNavigationBarTitle({
@@ -399,7 +399,7 @@ const initData = (sessionId: string, sessionName: string) => {
         auto_pronunciation: false,
       };
       messages.value.push(aiMessage);
-      chatRequest.sessionInitGreeting(sessionId).then((res: any) => {
+      chatRequest.sessionInitGreeting(sessionId, lessonData.value.task_target).then((res: any) => {
         messages.value.pop();
         session.value.messages.list.push(res.data)
         messages.value.push({
