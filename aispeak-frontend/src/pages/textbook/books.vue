@@ -91,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, onBeforeUnmount } from "vue"
+import { ref, onBeforeUnmount, onMounted } from "vue"
 import { onLoad } from '@dcloudio/uni-app'; 
 import CryptoJS from "crypto-js"
 import JSZip from "jszip"
@@ -420,31 +420,69 @@ async function fetchAndProcessData() {
   }
 }
 
+// 添加页面缩放监听
+let resizeObserver = null;
 
-// 图片加载完成后的处理函数
+onMounted(() => {
+  // 创建 ResizeObserver 实例
+  resizeObserver = new ResizeObserver(() => {
+    // 重新计算所有已加载图片的比例
+    Object.keys(imageRatios.value).forEach(pageId => {
+      const imageInfo = imageRatios.value[pageId];
+      if (imageInfo) {
+        imageRatios.value[pageId] = {
+          ...imageInfo,
+          containerWidth: uni.getSystemInfoSync().windowWidth
+        };
+      }
+    });
+  });
+
+  // 监听容器大小变化
+  const container = document.querySelector('.container');
+  if (container) {
+    resizeObserver.observe(container);
+  }
+});
+
+// 在组件销毁时清理
+onBeforeUnmount(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
+  }
+});
+
+// 修改图片加载处理函数
 function onImageLoad(e, pageId) {
-  const { width, height } = e.detail
+  const { width, height } = e.detail;
   imageRatios.value[pageId] = {
     width,
     height,
     ratio: height / width,
-  }
+    containerWidth: uni.getSystemInfoSync().windowWidth
+  };
 }
 
-// 计算音频区域样式
+// 修改计算音频区域样式的函数
 function getTrackStyle(track, pageId) {
-  const imageInfo = imageRatios.value[pageId]
-  if (!imageInfo) return {}
+  const imageInfo = imageRatios.value[pageId];
+  if (!imageInfo) return {};
 
-  const containerWidth = uni.getSystemInfoSync().windowWidth
-  const imageHeight = containerWidth * imageInfo.ratio
+  const containerWidth = uni.getSystemInfoSync().windowWidth;
+  const imageHeight = containerWidth * imageInfo.ratio;
+
+  // 如果容器宽度发生变化，更新存储的宽度
+  if (imageInfo.containerWidth !== containerWidth) {
+    imageInfo.containerWidth = containerWidth;
+  }
 
   return {
     left: `${track.track_left * containerWidth}px`,
     top: `${track.track_top * imageHeight}px`,
     width: `${(track.track_right - track.track_left) * containerWidth}px`,
     height: `${(track.track_bottom - track.track_top) * imageHeight}px`,
-  }
+  };
 }
 
 // 翻页处理
