@@ -399,26 +399,40 @@ const initData = (sessionId: string, sessionName: string) => {
         auto_pronunciation: false,
       };
       messages.value.push(aiMessage);
-      chatRequest.sessionInitGreeting(sessionId, lessonData.value.task_target).then((res: any) => {
-        messages.value.pop();
-        session.value.messages.list.push(res.data)
-        messages.value.push({
-          id: res.data.id,
-          session_id: res.data.session_id,
-          content: res.data.content,
-          role: res.data.role,
-          owner: res.data.role === "USER",
-          auto_hint: accountSetting.value.auto_text_shadow == 1,
-          auto_play: accountSetting.value.auto_playing_voice == 1,
-          auto_pronunciation: false,
-          pronunciation: null
+      if (lessonData.value?.task_target) {
+        const formattedTargets = lessonData.value.task_target.map(target => ({
+          id: target.id || '',
+          info_cn: target.info_cn || '',
+          info_en: target.info_en || ''
+        }));
+
+        chatRequest.sessionInitGreeting(sessionId, formattedTargets).then((res: any) => {
+          messages.value.pop();
+          session.value.messages.list.push(res.data)
+          messages.value.push({
+            id: res.data.id,
+            session_id: res.data.session_id,
+            content: res.data.content,
+            role: res.data.role,
+            owner: res.data.role === "USER",
+            auto_hint: accountSetting.value.auto_text_shadow == 1,
+            auto_play: accountSetting.value.auto_playing_voice == 1,
+            auto_pronunciation: false,
+            pronunciation: null
+          });
+          
+          nextTick(() => {
+            scrollToBottom();
+          });
+        }).catch(error => {
+          console.error('初始化对话失败:', error);
+          uni.showToast({
+            title: '初始化对话失败',
+            icon: 'none'
+          });
         });
-        // AI消息自动播放与模糊
-        nextTick(() => {
-          scrollToBottom();
-        });
-      })
-      return;
+        return;
+      }
     }
 
     session.value.messages.list.forEach((item) => {
@@ -664,61 +678,72 @@ const handleShowModal = () => {
 
 
 .modal-content {
-  background-color: #f7f7f7; 
-  border-radius: 20rpx 20rpx 0 0;
-  padding: 30rpx;
+  background-color: #fff; 
+  border-radius: 32rpx 32rpx 0 0;
   position: relative;
-  min-height: 60vh;
-  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1); /* Added shadow for better visibility */
-  padding: 30rpx;
-  position: relative;
-  min-height: 60vh;
+  max-height: 80vh; /* 限制最大高度 */
+  overflow: hidden; /* 防止内容溢出 */
+  display: flex;
+  flex-direction: column;
 }
 
 .clip {
+  width: 60rpx;
+  height: 8rpx;
+  background: #E5E6EB;
+  border-radius: 4rpx;
   position: absolute;
-  top: -20rpx;
   left: 50%;
   transform: translateX(-50%);
-  width: 60rpx;
-  height: 60rpx;
-  background: #FFD54F;
-  border-radius: 10rpx;
-  z-index: 1;
+  top: 24rpx;
 }
 
 .modal-body {
-  padding: 20rpx;
-  font-size: 28rpx;
-  color: #333;
+  padding: 60rpx 32rpx 32rpx;
+  flex: 1;
+  overflow-y: auto; /* 允许内容滚动 */
 }
 
 .section {
-  margin-bottom: 30rpx;
+  margin-bottom: 40rpx;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .section-title {
-  font-weight: bold;
-  margin-bottom: 10rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1D2129;
+  margin-bottom: 16rpx;
   display: block;
-  color: #333;
 }
 
 .section-content {
-  line-height: 1.5;
-  color: #666;
+  font-size: 28rpx;
+  color: #4E5969;
+  line-height: 1.6;
 }
 
 .target-item {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 20rpx;
+  margin-bottom: 24rpx;
+  background: #F7F8FA;
+  border-radius: 12rpx;
+  padding: 24rpx;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .star {
-  margin-right: 10rpx;
-  font-size: 24rpx; /* Size of the star */
-  color: #FFD700; /* Changed color to gold */
+  color: #FFB400;
+  font-size: 32rpx;
+  margin-right: 16rpx;
+  line-height: 1.4;
 }
 
 .target-text {
@@ -727,40 +752,46 @@ const handleShowModal = () => {
 
 .text-cn {
   display: block;
-  margin-bottom: 5rpx;
-  color: #333; /* Added text color */
+  color: #1D2129;
+  font-size: 28rpx;
+  margin-bottom: 8rpx;
+  line-height: 1.4;
 }
 
 .text-en {
   display: block;
-  color: #999;
+  color: #86909C;
   font-size: 24rpx;
+  line-height: 1.4;
 }
 
 .audio-icon {
   width: 40rpx;
   height: 40rpx;
-  display: inline-block;
-  vertical-align: middle;
-  margin-left: 10rpx;
-}
-
-.audio-icon image {
-  width: 100%;
-  height: 100%;
+  margin-left: 12rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  image {
+    width: 100%;
+    height: 100%;
+  }
 }
 
 .modal-footer {
-  margin-top: 40rpx;
-  text-align: center;
+  padding: 32rpx;
+  border-top: 2rpx solid #E5E6EB;
 }
 
 .btn-ok {
-  background: #4CAF50;
+  background: #165DFF;
   color: #fff;
   border: none;
-  border-radius: 30rpx;
-  padding: 15rpx 60rpx;
-  font-size: 28rpx;
+  border-radius: 8rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 32rpx;
+  font-weight: 500;
 }
 </style>

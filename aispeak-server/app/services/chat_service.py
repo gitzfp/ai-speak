@@ -98,27 +98,49 @@ class ChatService:
                 logging.info("LESSON type, getting lesson session")
                 # 构建课程相关的问候参数
                 targets_str = ""
-                if task_targets:
-                    targets_str = "\n".join([f"- {target['info_cn']}" for target in task_targets])
-                    first_target = task_targets[0] if task_targets else None
+                first_target = None
+                
+                if task_targets and len(task_targets) > 0:
+                    logging.info(f"Processing task_targets: {task_targets}")
+                    targets_str = ",\n".join([f"{target['info_en']}" for target in task_targets])
+                    first_target = task_targets[0]
+                    logging.info(f"First target: {first_target}")
+                else:
+                    logging.warning("No task_targets provided or empty list")
+                
+                first_target_text = first_target['info_en'] if first_target else "No target specified"
                 
                 topic_greet_params = TopicGreetParams(
                     language=self.account_service.get_account_target_language(account_id),
-                    prompt=f"""你是一位专业的英语老师，正在给学生上一节英语课。
+                    prompt=f"""你是一位充满创意的英语老师，正在给一位中国学生上一节有趣的英语课。
 
 本节课的学习目标是：
 {targets_str}
 
-请按以下要求回复：
-1. 先用简单的英语向学生问好
-2. 用中文介绍本节课的学习目标
-3. 用简单的英语让学生完成第一个目标：{first_target['info_en'] if first_target else ''}
+请按以下顺序回复：
+1. 用简单的中文以老师的身份热情地向学生问好，称呼要用"你"，展现亲切感
+2. 用中文清晰列出本节课的具体学习目标，用"让你"而不是"让大家"
+3. 用简单的英语创造一个有趣的情境，引导学生说出第一个目标句子：{first_target_text}
+   - 创造一个你和学生之间的互动场景
+   - 或设计一个你带着学生玩的小游戏
+   - 让学生在轻松的对话中自然说出目标句子
 
-注意：
-1. 使用简单易懂的英语
-2. 保持积极正面的态度
-3. 让学生感到轻松和有趣
-4. 鼓励学生积极参与
+注意事项：
+1. 全程使用"你"而不是"你们"，让每个学生感受到专属关注
+2. 使用简单易懂的英语(no more than 60 words)表达
+3. 给予个性化的鼓励和引导
+4. 通过一对一的提问让学生更投入
+5. 创造轻松愉快的学习氛围
+6. 目标句子要自然地融入对话中
+7. 先示范给学生听，再邀请学生模仿
+8. 回答不要有旁白信息，全程对同一个学生说话
+
+示例引导方式：
+- "假设我是商店店员，你来询问商品价格"
+- "我来扮演服务员，你来点一份你最喜欢的食物"
+- "让我们玩个游戏，我迷路了，你来告诉我路线"
+- "想象你是你最喜欢的明星，向我介绍一下你自己"
+- "我这里有一个神秘物品，你来猜猜是什么"
 """
                 )
                 
@@ -580,10 +602,22 @@ class ChatService:
     def transform_text(self, session_id: str, dto: VoiceTranslateDTO, account_id: str):
         """语音解析成文字"""
         input_file = voice_file_get_path(dto.file_name)
+        logging.info(f"Starting voice transformation for file: {input_file}")
         
         try:
+            # 检查输入文件是否存在
+            if not os.path.exists(input_file):
+                raise Exception(f"输入文件不存在: {input_file}")
+                
+            # 检查文件大小
+            file_size = os.path.getsize(input_file)
+            logging.info(f"Input file size: {file_size} bytes")
+            if file_size == 0:
+                raise Exception("输入文件为空")
+            
             # 转换音频格式
             temp_wav = self._convert_to_standard_wav(input_file)
+            logging.info(f"Audio converted successfully to: {temp_wav}")
             
             # 使用转换后的文件进行识别
             result = speech_translate_text(
@@ -594,6 +628,7 @@ class ChatService:
             # 删除临时文件
             if os.path.exists(temp_wav):
                 os.remove(temp_wav)
+                logging.info("Temporary WAV file removed")
                 
             return result
             
@@ -606,31 +641,62 @@ class ChatService:
         try:
             # 生成临时文件路径
             temp_path = input_file + ".standard.wav"
+            logging.info(f"Converting audio file: {input_file} to {temp_path}")
             
-            # 加载音频文件
-            audio = AudioSegment.from_file(input_file)
+            # 检查输入文件格式
+            try:
+                audio = AudioSegment.from_file(input_file)
+                logging.info(f"Original audio properties - Channels: {audio.channels}, "
+                           f"Frame rate: {audio.frame_rate}, "
+                           f"Sample width: {audio.sample_width}")
+            except Exception as e:
+                logging.error(f"Failed to load audio file: {str(e)}")
+                # 尝试指定格式加载
+                audio = AudioSegment.from_file(input_file, format="wav")
+                logging.info("Successfully loaded file with explicit WAV format")
             
             # 设置标准参数
-            audio = audio.set_channels(1)  # 单声道
-            audio = audio.set_frame_rate(16000)  # 16kHz 采样率
-            audio = audio.set_sample_width(2)  # 16-bit
-            
-            # 导出为标准 WAV 格式
-            audio.export(
-                temp_path,
-                format="wav",
-                parameters=[
-                    "-acodec", "pcm_s16le",  # 16-bit PCM
-                    "-ar", "16000",          # 16kHz
-                    "-ac", "1"               # 单声道
-                ]
-            )
-            
-            return temp_path
+            try:
+                # 转换为单声道
+                if audio.channels > 1:
+                    audio = audio.set_channels(1)
+                    logging.info("Converted to mono")
+                
+                # 设置采样率
+                if audio.frame_rate != 16000:
+                    audio = audio.set_frame_rate(16000)
+                    logging.info("Set frame rate to 16kHz")
+                
+                # 设置采样位深
+                if audio.sample_width != 2:
+                    audio = audio.set_sample_width(2)
+                    logging.info("Set sample width to 16-bit")
+                
+                # 导出为标准 WAV 格式
+                audio.export(
+                    temp_path,
+                    format="wav",
+                    parameters=["-acodec", "pcm_s16le"]
+                )
+                
+                # 验证输出文件
+                if not os.path.exists(temp_path):
+                    raise Exception("输出文件未生成")
+                
+                output_size = os.path.getsize(temp_path)
+                logging.info(f"Output file size: {output_size} bytes")
+                if output_size == 0:
+                    raise Exception("输出文件为空")
+                
+                return temp_path
+                
+            except Exception as e:
+                logging.error(f"Audio conversion failed: {str(e)}")
+                raise Exception(f"音频参数转换失败: {str(e)}")
             
         except Exception as e:
             logging.error(f"音频转换失败: {str(e)}, file: {input_file}")
-            raise Exception("音频格式转换失败")
+            raise Exception(f"音频格式转换失败: {str(e)}")
 
     def delete_latest_session_messages(self, session_id: str, account_id: str):
         """查出最近的一条type为ACCOUNT的数据，并且把create_time之后的数据全部调整为deleted=1，删除成功后需要返回所有删除成功的message的id"""

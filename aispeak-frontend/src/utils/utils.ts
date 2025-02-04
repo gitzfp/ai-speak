@@ -22,7 +22,7 @@ const base64ToArrayBuffer = (base64: any) => {
   return bytes.buffer; // 返回 ArrayBuffer
 };
 
-const MAX_RETRIES = 105;
+const MAX_RETRIES = 10005;
 
 const uploadFileToOSS = async (ossKey: string, fileData: any, retries = MAX_RETRIES) => {
   try {

@@ -7,6 +7,8 @@ from app.db import get_db
 from app.models.account_models import *
 from app.models.response import ApiResponse
 from app.services.chat_service import ChatService
+from pydantic import BaseModel
+import logging
 
 router = APIRouter()
 
@@ -49,17 +51,28 @@ def voice_upload_api(
         return ApiResponse.system_error(f'发生错误: {str(e)}')
 
 
-# 获取ai的第一句问候语
-@router.get("/sessions/{session_id}/greeting")
+class GreetingRequest(BaseModel):
+    task_targets: list | None = None
+
+@router.post("/sessions/{session_id}/greeting")
 def get_session_greeting(
     session_id: str,
+    request: GreetingRequest,
     db: Session = Depends(get_db),
     account_id: str = Depends(get_current_account),
-    task_targets: list = None,
 ):
     """获取会话消息"""
-    chat_service = ChatService(db)
-    return ApiResponse(data=chat_service.get_session_greeting(session_id, account_id, task_targets))
+    logging.info(f"Session greeting request - session_id: {session_id}, account_id: {account_id}")
+    logging.info(f"Task targets received: {request.task_targets}")
+    
+    try:
+        chat_service = ChatService(db)
+        result = chat_service.get_session_greeting(session_id, account_id, request.task_targets)
+        logging.info(f"Greeting generated successfully for session {session_id}")
+        return ApiResponse(data=result)
+    except Exception as e:
+        logging.error(f"Error generating greeting: {str(e)}", exc_info=True)
+        return ApiResponse.system_error(f"Error generating greeting: {str(e)}")
 
 
 @router.post("/sessions/{session_id}/chat")

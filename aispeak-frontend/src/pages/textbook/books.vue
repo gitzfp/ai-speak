@@ -13,11 +13,11 @@
           class="catalog-item"
           v-for="(chapter, index) in catalogData"
           :key="chapter.audio_id"
-          @click="goToPage(chapter.page_index || index)"
+          @click="goToPage(chapter.page_no || index)"
         >
           <text class="catalog-title">{{ chapter.title }}</text>
           <text class="catalog-page"
-            >第{{ chapter.page_index || index + 1 }}页</text
+            >第{{ chapter.page_no || index + 1 }}页</text
           >
         </view>
       </view>
@@ -106,6 +106,7 @@ const loading = ref(true)
 const error = ref("")
 const bookPages = ref([])
 const catalogData = ref([])
+const sentences = ref([])
 const pageTitle = ref("")
 const imageRatios = ref({})
 const currentPage = ref(0)
@@ -126,7 +127,52 @@ onLoad((options) => {
     // 页面加载时调用
 
     fetchAndProcessData()   
+    fetchSentences()
   });
+
+  const fetchSentences = async () => {
+    const ossKey = `json_files/${book_id.value}_sentence.json`;
+    // 检查文件是否已存储在阿里云 OSS 中
+    const checkResult = await utils.checkFileInOSS(ossKey);
+    console.log('检查文件是否存在:', checkResult);
+    if (checkResult?.data?.exists) {
+      // 如果已存储，直接从 FastAPI 获取文件 URL
+      let data = await utils.getFileFromOSS(ossKey);
+      data = JSON.parse(data)
+      sentences.value = data.list.flatMap((chapter) =>
+        chapter.groups.flatMap((group) => group.sentences)
+      );
+      console.log('句子数据获取成功（来自 OSS）:', sentences.value);
+    } else {
+      // 如果未存储，调用原有接口获取数据
+      try {
+        const url = `https://diandu.mypep.cn/static/textbook/chapter/${book_id.value}_sentence.json`
+        const response = await new Promise((resolve, reject) => {
+        uni.request({
+          url: url,
+          method: 'GET',
+          success: (res) => {
+            resolve(res);
+          },
+          fail: (err) => {
+            reject(err);
+          }
+        });
+      });
+        const data = await response.data;
+        sentences.value = data.list.flatMap((chapter) =>
+          chapter.groups.flatMap((group) => group.sentences)
+        );
+        console.log('句子数据获取成功（来自原接口）:', sentences.value);
+        // 将数据上传到阿里云 OSS
+        const jsonString = JSON.stringify(data);
+        await utils.uploadFileToOSS(ossKey, jsonString);
+      } catch (error) {
+        console.error('句子数据获取失败:', error);
+      }
+    }
+  }; 
+
 // 解密函数
 function decrypt(t, e = "book.json") {
   const n = new Array(32).fill(" ")
@@ -362,11 +408,11 @@ async function getBookUrl() {
 
 const parseJsonData = (data, comeFrom="OSS") => {
   try {
-      console.log(`页面数据获取成功（来自 ${comeFrom}）:`, data.slice(0, 20))
       let jsonData = JSON.parse(data)
+      console.log(`页面数据获取成功（来自 ${comeFrom}）:`, jsonData)
       // 更新页面数据
       bookPages.value = jsonData.bookpage
-      catalogData.value = jsonData.bookaudio_v3
+      catalogData.value = jsonData.bookaudio_v3?.length > 0 ? jsonData.bookaudio_v3 : jsonData.bookaudio_v2
       pageTitle.value = catalogData.value[0].title
       uni.setNavigationBarTitle({
         title: catalogData.value[0].title  // 你想要显示的标题
@@ -490,10 +536,10 @@ function handlePageChange(e) {
   currentPage.value = e.detail.current
   stopCurrentAudio() // 翻页时停止音频
   isPlaying.value = false // 重置播放状态
-
+  console.log("翻页处理", currentPage.value, catalogData.value)
    // 更新页面标题
    const currentChapter = catalogData.value.find(
-    chapter => chapter.page_index === currentPage.value
+    chapter => chapter.page_no === currentPage.value
   );
   if (currentChapter?.title) {
     pageTitle.value = currentChapter.title;
@@ -516,14 +562,14 @@ function goToPage(index) {
 
  // 获取当前页面所有句子的文本
  const getCurrentPageSentence = () => {
-  const currentPageData = bookPages.value[currentPage.value]
-  return currentPageData.track_info.filter(item => item.is_recite === 1).map(sentence => {
-    return {
-          info_en: sentence.track_text,
-          info_cn: sentence.track_genre
-        };
-  })
-};
+  const practiceSentences = sentences.value.filter(sentence => sentence.jump_page == currentPage.value)
+  console.log(sentences.value, currentPage.value, 'practiceSentences')
+  return practiceSentences
+        .map(sentence => ({
+          info_en: sentence.text,
+          info_cn: sentence.translate
+        }));
+      }
 
 const goToChatPage = async () => {
     try {

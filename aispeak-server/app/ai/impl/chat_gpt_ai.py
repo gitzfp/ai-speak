@@ -31,7 +31,7 @@ class ChatGPTAI(ChatAI):
         messages = [
             {
                 "role": "system",
-                "content": f"场景：{params.prompt}. 现在你需要使用标识为 {params.language} 的语言来打个招呼，20字左右.",
+                "content": f"场景：{params.prompt}",
             }
         ]
 
@@ -73,12 +73,27 @@ class ChatGPTAI(ChatAI):
         system_message = (
             f"Lesson: {dto.prompt}\n"
             f"Completed Targets:\n{completed_targets_info}\n"
-            f"Learning Targets:\n{targets_info}\n\n"
+            f"Learning Targets:\n{targets_info}\n"
             "'The reply must be JSON format, Rules:\n"
             "1. Track each learning target achievement, showing which have already been met.\n"
             "2. For the current user input, if the target is achieved, include in new_achieved_target:\n"
             '   {"user_say": "actual user input", "target_id": "achieved target ID", "target_name": "achieved target name (info_en of target)"}\n'
-            '3. If no targets are achieved, set new_achieved_target to None.\n'
+            '3. If target is achieved:\n'
+            '   - Include achievement in new_achieved_target\n'
+            '   - Give brief positive feedback\n'
+            '   - Immediately create a simple, engaging scenario for the next target\n'
+            '   - Use one of these approaches for the next target:\n'
+            '     * Simple role-play (e.g., "Now imagine you are...")\n'
+            '     * Easy question (e.g., "What do you think about...")\n'
+            '     * Real-life situation (e.g., "Let\'s say you...")\n'
+            '4. If no targets are achieved:\n'
+            '   - Set new_achieved_target to None\n'
+            '   - If attempts < 5:\n'
+            '     * Continue guiding with simpler approaches\n'
+            '     * Use encouraging feedback and hints\n'
+            '   - If attempts >= 5:\n'
+            '     * Show the correct answer\n'
+            '     * Move to next target with simple scenario\n'
             'Response Format:\n'
             '{\n'
             '  "message": "your response",\n'
@@ -92,9 +107,23 @@ class ChatGPTAI(ChatAI):
             '}\n\n'
             f"Additional Instructions:\n"
             f"- Respond only in {dto.language}\n"
-            f"- Your name is {dto.name}\n"
-            "- Naturally integrate acknowledgment of achieved targets to avoid repetition and guide through the lesson effectively\n"
-            "- Use engaging and supportive language to facilitate the learning experience."
+            "- Keep all responses under 160 words\n"
+            "- When moving to next target:\n"
+            "  * Keep transition natural and brief\n"
+            "  * Create simple, fun scenarios\n"
+            "  * Use daily life contexts\n"
+            "  * Make it personal and relevant\n"
+            "  * Encourage natural use of target sentence\n"
+            "- For attempts 1-5 on unachieved target:\n"
+            "  * First: Clear guidance and examples\n"
+            "  * Second: Simpler context\n"
+            "  * Third: Break into steps\n"
+            "  * Fourth: New approach\n"
+            "  * Fifth: Direct hints\n"
+            "- After 5 attempts:\n"
+            "  * Show correct answer\n"
+            "  * Move to next target with simple scenario\n"
+            "- Always be encouraging and patient"
         )
         
         logging.info(f"System message: {system_message}")
@@ -333,7 +362,7 @@ class ChatGPTAI(ChatAI):
         )
         logging.info(f"response:{resp}")
         result = resp.choices[0].message.content
-        # 去掉俩边的 “” ''
+        # 去掉俩边的 " " ' '
         result = result.strip('"')
         result = result.strip("'")
         # 去掉json的转义字符

@@ -1,4 +1,12 @@
 import request from "@/axios/api";
+
+// 定义任务目标的接口
+interface TaskTarget {
+  id: string;
+  info_cn: string;
+  info_en: string;
+}
+
 export default {
   sessionCreate: (data: any) => {
     return request("/sessions", "POST", data, true);
@@ -10,12 +18,17 @@ export default {
     return request("/sessions/" + data.sessionId, "GET", data, true);
   },
   sessionInitGreeting: (sessionId: string, taskTargets: any) => {
+    const data = taskTargets ? { task_targets: taskTargets } : {};
+    console.log('Sending greeting request:', { sessionId, data });
     return request(
-      `/sessions/${sessionId}/greeting`, 
-      "GET", 
-      taskTargets ? { task_targets: taskTargets } : undefined, 
+      `/sessions/${sessionId}/greeting`,
+      "POST",
+      data,
       false
-    );
+    ).catch(error => {
+      console.error('Greeting request failed:', error);
+      throw error;
+    });
   },
   sessionChatInvoke: (data: any) => {
     return request(`/sessions/${data.sessionId}/chat`, "POST", data, false);

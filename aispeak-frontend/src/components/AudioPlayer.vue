@@ -53,7 +53,9 @@ const handleSpeech = async () => {
     if (props.messageId) {   // 聊天信息转换成语音文件再播放
       transformFileLoading.value = true;
       audioUrl = `${__config.basePath}/message/speech?message_id=${props.messageId}`;
+      console.log("聊天信息转换成语音文件再播放", audioUrl)
     } else if (props.content) {  // 内容转换成语音后播放
+      console.log("内容转换成语音后播放", props.content)
       transformFileLoading.value = true;
       audioUrl = `${__config.basePath}/message/speech-content?content=${props.content}`;
       if (props.speechRoleName) {
