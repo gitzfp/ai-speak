@@ -92,14 +92,14 @@
 
 <script setup>
 import { ref, onBeforeUnmount, onMounted } from "vue"
-import { onLoad } from '@dcloudio/uni-app'; 
+import { onLoad } from "@dcloudio/uni-app"
 import CryptoJS from "crypto-js"
 import JSZip from "jszip"
 import utils from "@/utils/utils"
 import env from "@/config/env" // 导入 env.ts
-import topicRequest from "@/api/topic"; 
+import topicRequest from "@/api/topic"
 
-const baseUrl = env.basePath; // 获取 basePath
+const baseUrl = env.basePath // 获取 basePath
 
 // 定义响应式数据
 const loading = ref(true)
@@ -120,58 +120,60 @@ const repeatEndIndex = ref(0) // 复读结束段落
 const repeatOptions = ref([]) // 复读段落选项
 
 // 获取页面参数中的 book_id
-const book_id = ref('');
+const book_id = ref("")
 onLoad((options) => {
-    book_id.value = options.book_id;
-    console.log('Received book_id:', book_id.value);
-    // 页面加载时调用
+  book_id.value = options.book_id
+  console.log("Received book_id:", book_id.value)
+  // 页面加载时调用
 
-    fetchAndProcessData()   
-    fetchSentences()
-  });
+  fetchAndProcessData()
+  fetchSentences()
+})
 
-  const fetchSentences = async () => {
-    const ossKey = `json_files/${book_id.value}_sentence.json`;
-    // 检查文件是否已存储在阿里云 OSS 中
-    const checkResult = await utils.checkFileInOSS(ossKey);
-    console.log('检查文件是否存在:', checkResult);
-    if (checkResult?.data?.exists) {
-      // 如果已存储，直接从 FastAPI 获取文件 URL
-      let data = await utils.getFileFromOSS(ossKey);
-      data = JSON.parse(data)
-      sentences.value = data.list.flatMap((chapter) =>
-        chapter.groups.flatMap((group) => group.sentences)
-      );
-      console.log('句子数据获取成功（来自 OSS）:', sentences.value);
-    } else {
-      // 如果未存储，调用原有接口获取数据
-      try {
-        const url = `https://diandu.mypep.cn/static/textbook/chapter/${book_id.value}_sentence.json`
-        const response = await new Promise((resolve, reject) => {
+const fetchSentences = async () => {
+  const ossKey = `json_files/${book_id.value}_sentence.json`
+  // 检查文件是否已存储在阿里云 OSS 中
+  const checkResult = await utils.checkFileInOSS(ossKey)
+  console.log("检查文件是否存在:", checkResult)
+  if (checkResult?.data?.exists) {
+    // 如果已存储，直接从 FastAPI 获取文件 URL
+    let data = await utils.getFileFromOSS(ossKey)
+    data = JSON.parse(data)
+    sentences.value = data.list.flatMap((chapter) =>
+      chapter.groups.flatMap((group) => group.sentences)
+    )
+    console.log("句子数据获取成功（来OSS）")
+  } else {
+    // 如果未存储，调用原有接口获取数据
+    try {
+      const url = `https://diandu.mypep.cn/static/textbook/chapter/${book_id.value}_sentence.json`
+      const response = await new Promise((resolve, reject) => {
         uni.request({
           url: url,
-          method: 'GET',
+          method: "GET",
+          enableHttpDNS: true,
+          httpDNSServiceId: "wxa410372c837a5f26",
           success: (res) => {
-            resolve(res);
+            resolve(res)
           },
           fail: (err) => {
-            reject(err);
-          }
-        });
-      });
-        const data = await response.data;
-        sentences.value = data.list.flatMap((chapter) =>
-          chapter.groups.flatMap((group) => group.sentences)
-        );
-        console.log('句子数据获取成功（来自原接口）:', sentences.value);
-        // 将数据上传到阿里云 OSS
-        const jsonString = JSON.stringify(data);
-        await utils.uploadFileToOSS(ossKey, jsonString);
-      } catch (error) {
-        console.error('句子数据获取失败:', error);
-      }
+            reject(err)
+          },
+        })
+      })
+      const data = await response.data
+      sentences.value = data.list.flatMap((chapter) =>
+        chapter.groups.flatMap((group) => group.sentences)
+      )
+      console.log("句子数据获取成功（来自原接口）:"
+      // 将数据上传到阿里云 OSS
+      const jsonString = JSON.stringify(data)
+      await utils.uploadFileToOSS(ossKey, jsonString)
+    } catch (error) {
+      console.error("句子数据获取失败:", error)
     }
-  }; 
+  }
+}
 
 // 解密函数
 function decrypt(t, e = "book.json") {
@@ -195,21 +197,20 @@ function decrypt(t, e = "book.json") {
 
 // 图片加载失败处理函数
 async function handleImageError(e, page) {
-  console.error('图片加载失败:', {
-    url: e.target?.src || '未获取到图片地址',
+  console.error("图片加载失败:", {
+    url: e.target?.src || "未获取到图片地址",
     pageId: page?.page_id,
-    pageUrl: page?.page_url_source
+    pageUrl: page?.page_url_source,
   })
   uni.showToast({
-    title: '图片加载失败',
-    icon: 'none'
+    title: "图片加载失败",
+    icon: "none",
   })
-  const ossKey = processOssKeyUrl(page.page_url_source);
-  const originalUrl =  handleErrorImageUrl(page.page_url_source)
-  console.log("上传的key:",ossKey, "上传的url:",originalUrl)
+  const ossKey = processOssKeyUrl(page.page_url_source)
+  const originalUrl = handleErrorImageUrl(page.page_url_source)
+  console.log("上传的key:", ossKey, "上传的url:", originalUrl)
   await utils.uploadFileToOSS(ossKey, originalUrl)
 }
-
 
 // 解压函数
 async function unzipData(decryptedData) {
@@ -225,21 +226,20 @@ async function unzipData(decryptedData) {
   }
 }
 
-
 // 播放音频
 function playAudio(track) {
   stopCurrentAudio() // First stop any existing audio
 
   const audio = uni.createInnerAudioContext()
   currentAudio.value = audio
-  
+
   // Set up event listeners before starting playback
   audio.onError((res) => {
-    console.error('Audio playback error:', res)
+    console.error("Audio playback error:", res)
     uni.hideToast()
     uni.showToast({
-      title: '音频播放失败',
-      icon: 'none'
+      title: "音频播放失败",
+      icon: "none",
     })
   })
 
@@ -248,7 +248,7 @@ function playAudio(track) {
     uni.showToast({
       title: track.track_genre,
       duration: 999999, // Long duration
-      position: 'bottom',
+      position: "bottom",
       icon: "none",
     })
   })
@@ -271,27 +271,26 @@ function stopCurrentAudio() {
       currentAudio.value.stop()
       currentAudio.value.destroy()
     } catch (error) {
-      console.error('Error stopping audio:', error)
+      console.error("Error stopping audio:", error)
     }
     currentAudio.value = null
   }
 }
 
 function processOssKeyUrl(url) {
-  if (!url) return url;
+  if (!url) return url
   // 移除域名和所有查询参数
-  let processedUrl = url
-    .replace(/^https?:\/\/[^\/]+/, '')
-    .replace(/\?.*$/, ""); // 移除 ? 及其后的所有内容
+  let processedUrl = url.replace(/^https?:\/\/[^\/]+/, "").replace(/\?.*$/, "") // 移除 ? 及其后的所有内容
   // 确保不以斜杠开头
-  if (processedUrl.startsWith('/')) {
-    processedUrl = processedUrl.slice(1);
+  if (processedUrl.startsWith("/")) {
+    processedUrl = processedUrl.slice(1)
   }
-  return processedUrl;
+  return processedUrl
 }
 
 function handleErrorImageUrl(url) {
-  return  url.replace(/^https?:\/\/[^\/]+/, 'https://pdpd.mypep.cn')
+  return url
+    .replace(/^https?:\/\/[^\/]+/, "https://pdpd.mypep.cn")
     .replace(/\?ts=\d+$/, "")
 }
 
@@ -300,7 +299,10 @@ function processUrl(url) {
   if (!url) return url
   // 移除域名和时间戳，并确保返回的 URL 不以斜杆开头
   return url
-    .replace(/^https?:\/\/[^\/]+/, 'https://books-bct.oss-cn-beijing.aliyuncs.com')
+    .replace(
+      /^https?:\/\/[^\/]+/,
+      "https://books-bct.oss-cn-beijing.aliyuncs.com"
+    )
     .replace(/\?ts=\d+$/, "")
 }
 
@@ -313,8 +315,15 @@ async function processResources(data) {
       // 处理图片URL
       const processedImageUrl = processUrl(page.page_url_source)
       // 检查URL前缀，如果不是目标OSS地址才进行上传
-      if (!page.page_url_source.startsWith('https://books-bct.oss-cn-beijing.aliyuncs.com')) {
-        await utils.uploadFileToOSS(processOssKeyUrl(page.page_url_source), page.page_url_source)
+      if (
+        !page.page_url_source.startsWith(
+          "https://books-bct.oss-cn-beijing.aliyuncs.com"
+        )
+      ) {
+        await utils.uploadFileToOSS(
+          processOssKeyUrl(page.page_url_source),
+          page.page_url_source
+        )
       }
       page.page_url_source = processedImageUrl
       // 处理音频URL
@@ -322,8 +331,15 @@ async function processResources(data) {
         for (let track of page.track_info) {
           const processedAudioUrl = processUrl(track.track_url_source)
           // 检查URL前缀，如果不是目标OSS地址才进行上传
-          if (!track.track_url_source.startsWith('https://books-bct.oss-cn-beijing.aliyuncs.com')) {
-            await utils.uploadFileToOSS(processOssKeyUrl(track.track_url_source), track.track_url_source)
+          if (
+            !track.track_url_source.startsWith(
+              "https://books-bct.oss-cn-beijing.aliyuncs.com"
+            )
+          ) {
+            await utils.uploadFileToOSS(
+              processOssKeyUrl(track.track_url_source),
+              track.track_url_source
+            )
           }
           track.track_url_source = processedAudioUrl
         }
@@ -347,26 +363,26 @@ async function processResources(data) {
 
 function formatDate(date) {
   const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  const hours = String(date.getHours()).padStart(2, "0")
+  const minutes = String(date.getMinutes()).padStart(2, "0")
+  const seconds = String(date.getSeconds()).padStart(2, "0")
   return `${year}${month}${day}${hours}${minutes}${seconds}`
 }
 
 async function getBookUrl() {
-    // 检查文件是否已存储在阿里云 OSS 中
-    const ossKey = `proxy/book/${book_id.value}/getBookUrl.json`
-    const checkResult = await utils.checkFileInOSS(ossKey);
-    if (checkResult?.data.exists) {
-      // 如果已存储，直接从 FastAPI 获取文件 URL
-      const data = await utils.getFileFromOSS(ossKey);
-      console.log('books.json 已存储，直接从 FastAPI 获取文件 URL', data)
-      return data
-    }
+  // 检查文件是否已存储在阿里云 OSS 中
+  const ossKey = `proxy/book/${book_id.value}/getBookUrl.json`
+  const checkResult = await utils.checkFileInOSS(ossKey)
+  if (checkResult?.data.exists) {
+    // 如果已存储，直接从 FastAPI 获取文件 URL
+    const data = await utils.getFileFromOSS(ossKey)
+    console.log("books.json 已存储，直接从 FastAPI 获取文件 URL", data)
+    return data
+  }
   if (!book_id.value) {
-    throw new Error('Book ID is required')
+    throw new Error("Book ID is required")
   }
 
   const timestamp = formatDate(new Date())
@@ -377,18 +393,21 @@ async function getBookUrl() {
   try {
     const response = await uni.request({
       url: `${baseUrl}/${ossKey}`,
-      method: 'POST',
+      method: "POST",
+      enableHttpDNS: true,
+      httpDNSServiceId: "wxa410372c837a5f26",
       data: {
         book_id: book_id.value,
         sign: sign,
-        timestamp: timestamp
+        timestamp: timestamp,
       },
       header: {
-        'Accept': '*/*',
-        'Content-Type': 'application/json',
-        'Origin': 'https://diandu.mypep.cn',
-        'Referer': 'https://diandu.mypep.cn/rjdd/',
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1'
+        Accept: "*/*",
+        "Content-Type": "application/json",
+        Origin: "https://diandu.mypep.cn",
+        Referer: "https://diandu.mypep.cn/rjdd/",
+        "User-Agent":
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
       },
     })
 
@@ -396,31 +415,34 @@ async function getBookUrl() {
       await utils.uploadFileToOSS(ossKey, response.data.result)
       return response.data.result
     }
-    
-    const errorMessage = response.data?.message || 'Failed to get book URL'
-    console.error('Server response:', response.data)
+
+    const errorMessage = response.data?.message || "Failed to get book URL"
+    console.error("Server response:", response.data)
     throw new Error(errorMessage)
   } catch (error) {
-    console.error('Error getting book URL:', error)
+    console.error("Error getting book URL:", error)
     throw error
   }
 }
 
-const parseJsonData = (data, comeFrom="OSS") => {
+const parseJsonData = (data, comeFrom = "OSS") => {
   try {
-      let jsonData = JSON.parse(data)
-      console.log(`页面数据获取成功（来自 ${comeFrom}）:`, jsonData)
-      // 更新页面数据
-      bookPages.value = jsonData.bookpage
-      catalogData.value = jsonData.bookaudio_v3?.length > 0 ? jsonData.bookaudio_v3 : jsonData.bookaudio_v2
-      pageTitle.value = catalogData.value[0].title
-      uni.setNavigationBarTitle({
-        title: catalogData.value[0].title  // 你想要显示的标题
-      });
-      loading.value = false
-      return jsonData
+    let jsonData = JSON.parse(data)
+    console.log(`页面数据获取成功（来自 ${comeFrom}）:`)
+    // 更新页面数据
+    bookPages.value = jsonData.bookpage
+    catalogData.value =
+      jsonData.bookaudio_v3?.length > 0
+        ? jsonData.bookaudio_v3
+        : jsonData.bookaudio_v2
+    pageTitle.value = catalogData.value[0].title
+    uni.setNavigationBarTitle({
+      title: catalogData.value[0].title, // 你想要显示的标题
+    })
+    loading.value = false
+    return jsonData
   } catch (error) {
-    console.error('Error parsing JSON data:', error)
+    console.error("Error parsing JSON data:", error)
     return null
   }
 }
@@ -434,30 +456,30 @@ async function fetchAndProcessData() {
     if (checkResult?.data.exists) {
       // 如果已存储，直接从 FastAPI 获取文件 URL
       const data = await utils.getFileFromOSS(ossKey, true)
-      
+
       // 解压数据并更新页面
       const zip = new JSZip()
       const content = await zip.loadAsync(data, { base64: true })
       const files = Object.keys(content.files)
       const unzippedData = await content.files[files[0]].async("text")
       const result = parseJsonData(unzippedData)
-      if(result){
+      if (result) {
         return
       }
     }
     const response = await uni.request({
-        url: `https://pdpd.mypep.cn/${ossKey}`,
-        responseType: "arraybuffer",
-      })
+      url: `https://pdpd.mypep.cn/${ossKey}`,
+      responseType: "arraybuffer",
+    })
 
-      const decryptedData = decrypt(new Uint8Array(response.data))
-      let jsonData = await unzipData(decryptedData)
-      parseJsonData(jsonData, "Orginal")
-      // 在后台处理资源
-      setTimeout(async () => {
-        jsonData = await processResources(jsonData)
-        await utils.uploadBinaryData(ossKey, jsonData)
-      }, 0)
+    const decryptedData = decrypt(new Uint8Array(response.data))
+    let jsonData = await unzipData(decryptedData)
+    parseJsonData(jsonData, "Orginal")
+    // 在后台处理资源
+    setTimeout(async () => {
+      jsonData = await processResources(jsonData)
+      await utils.uploadBinaryData(ossKey, jsonData)
+    }, 0)
   } catch (err) {
     console.error("Error:", err)
     error.value = "加载数据失败，请重试"
@@ -467,60 +489,60 @@ async function fetchAndProcessData() {
 }
 
 // 添加页面缩放监听
-let resizeObserver = null;
+let resizeObserver = null
 
 onMounted(() => {
   // 创建 ResizeObserver 实例
   resizeObserver = new ResizeObserver(() => {
     // 重新计算所有已加载图片的比例
-    Object.keys(imageRatios.value).forEach(pageId => {
-      const imageInfo = imageRatios.value[pageId];
+    Object.keys(imageRatios.value).forEach((pageId) => {
+      const imageInfo = imageRatios.value[pageId]
       if (imageInfo) {
         imageRatios.value[pageId] = {
           ...imageInfo,
-          containerWidth: uni.getSystemInfoSync().windowWidth
-        };
+          containerWidth: uni.getSystemInfoSync().windowWidth,
+        }
       }
-    });
-  });
+    })
+  })
 
   // 监听容器大小变化
-  const container = document.querySelector('.container');
+  const container = document.querySelector(".container")
   if (container) {
-    resizeObserver.observe(container);
+    resizeObserver.observe(container)
   }
-});
+})
 
 // 在组件销毁时清理
 onBeforeUnmount(() => {
   if (resizeObserver) {
-    resizeObserver.disconnect();
-    resizeObserver = null;
+    resizeObserver.disconnect()
+    resizeObserver = null
   }
-});
+})
 
 // 修改图片加载处理函数
 function onImageLoad(e, pageId) {
-  const { width, height } = e.detail;
+  const { width, height } = e.detail
   imageRatios.value[pageId] = {
     width,
     height,
     ratio: height / width,
-    containerWidth: uni.getSystemInfoSync().windowWidth
-  };
+    containerWidth: uni.getSystemInfoSync().windowWidth,
+  }
 }
 
 // 修改计算音频区域样式的函数
 function getTrackStyle(track, pageId) {
-  const imageInfo = imageRatios.value[pageId];
-  if (!imageInfo) return {};
+  const imageInfo = imageRatios.value[pageId]
+  if (!imageInfo) return {}
 
-  const containerWidth = uni.getSystemInfoSync().windowWidth;
-  const imageHeight = containerWidth * imageInfo.ratio;
+  const containerWidth = uni.getSystemInfoSync().windowWidth
+  const imageHeight = containerWidth * imageInfo.ratio
 
   // 如果容器宽度发生变化，更新存储的宽度
   if (imageInfo.containerWidth !== containerWidth) {
-    imageInfo.containerWidth = containerWidth;
+    imageInfo.containerWidth = containerWidth
   }
 
   return {
@@ -528,7 +550,7 @@ function getTrackStyle(track, pageId) {
     top: `${track.track_top * imageHeight}px`,
     width: `${(track.track_right - track.track_left) * containerWidth}px`,
     height: `${(track.track_bottom - track.track_top) * imageHeight}px`,
-  };
+  }
 }
 
 // 翻页处理
@@ -537,15 +559,15 @@ function handlePageChange(e) {
   stopCurrentAudio() // 翻页时停止音频
   isPlaying.value = false // 重置播放状态
   console.log("翻页处理", currentPage.value, catalogData.value)
-   // 更新页面标题
-   const currentChapter = catalogData.value.find(
-    chapter => chapter.page_no === currentPage.value
-  );
+  // 更新页面标题
+  const currentChapter = catalogData.value.find(
+    (chapter) => chapter.page_no === currentPage.value
+  )
   if (currentChapter?.title) {
-    pageTitle.value = currentChapter.title;
+    pageTitle.value = currentChapter.title
     uni.setNavigationBarTitle({
-      title: currentChapter.title
-    });
+      title: currentChapter.title,
+    })
   }
 }
 
@@ -560,56 +582,66 @@ function goToPage(index) {
   showCatalog.value = false
 }
 
- // 获取当前页面所有句子的文本
- const getCurrentPageSentence = () => {
-  const practiceSentences = sentences.value.filter(sentence => sentence.jump_page == currentPage.value)
-  console.log(sentences.value, currentPage.value, 'practiceSentences')
-  return practiceSentences
-        .map(sentence => ({
-          info_en: sentence.text,
-          info_cn: sentence.translate
-        }));
-      }
+// 获取当前页面所有句子的文本
+const getCurrentPageSentence = () => {
+  const practiceSentences = sentences.value.filter(
+    (sentence) => sentence.jump_page == currentPage.value
+  )
+  console.log(sentences.value, currentPage.value, "practiceSentences")
+  return practiceSentences.map((sentence) => ({
+    info_en: sentence.text,
+    info_cn: sentence.translate,
+  }))
+}
 
 const goToChatPage = async () => {
-    try {
-      const lessonId = book_id.value + ":" + currentPage.value;
-      const sentences = getCurrentPageSentence();
-      // 先检查是否存在会话
-      const existingSession = await topicRequest.getSessionByLessonId({ lesson_id: lessonId });
-      
-      if (existingSession?.data) {
-        const { id: sessionId } = existingSession.data;
-        console.log("会话已经存在，句子: ",sentences, "sessionId: ", sessionId)
-        if (sessionId) {
-          uni.navigateTo({
-            url: `/pages/chat/index?sessionId=${sessionId}&type=LESSON&lessonId=${lessonId}&sessionName=${pageTitle.value}`
-          });
-          return;
-        }
-      }
-      console.log("创建新会话，句子: ",sentences, "sessionId: ")
-      // 创建新会话
-      const response = await topicRequest.createLessonSession({
-        lesson_id: lessonId,
-        sentences: sentences
-      });
-  
-      if (response?.data) {
-        uni.navigateTo({
-          url: `/pages/chat/index?sessionId=${response.data.id}&type=LESSON&lessonId=${lessonId}&sessionName=${pageTitle.value}`
-        });
-      } else {
-        throw new Error('创建会话失败');
-      }
-    } catch (error) {
-      console.error('创建课程会话失败:', error);
+  try {
+    const lessonId = book_id.value + ":" + currentPage.value
+    const sentences = getCurrentPageSentence()
+    if (!sentences || sentences?.length <= 0) {
       uni.showToast({
-        title: '创建会话失败',
-        icon: 'none'
-      });
+        title: "没有需要测评的口语",
+        icon: "none",
+      })
+      return
     }
-};
+    // 先检查是否存在会话
+    const existingSession = await topicRequest.getSessionByLessonId({
+      lesson_id: lessonId,
+    })
+
+    if (existingSession?.data) {
+      const { id: sessionId } = existingSession.data
+      console.log("会话已经存在，句子: ", sentences, "sessionId: ", sessionId)
+      if (sessionId) {
+        uni.navigateTo({
+          url: `/pages/chat/index?sessionId=${sessionId}&type=LESSON&lessonId=${lessonId}&sessionName=${pageTitle.value}`,
+        })
+        return
+      }
+    }
+    console.log("创建新会话，句子: ", sentences, "sessionId: ")
+    // 创建新会话
+    const response = await topicRequest.createLessonSession({
+      lesson_id: lessonId,
+      sentences: sentences,
+    })
+
+    if (response?.data) {
+      uni.navigateTo({
+        url: `/pages/chat/index?sessionId=${response.data.id}&type=LESSON&lessonId=${lessonId}&sessionName=${pageTitle.value}`,
+      })
+    } else {
+      throw new Error("创建会话失败")
+    }
+  } catch (error) {
+    console.error("创建课程会话失败:", error)
+    uni.showToast({
+      title: "创建会话失败",
+      icon: "none",
+    })
+  }
+}
 
 // 连续播放当前页面的所有音频
 function playCurrentPage() {
@@ -730,8 +762,6 @@ onBeforeUnmount(() => {
   stopCurrentAudio()
   isPlaying.value = false
 })
-
-
 </script>
 
 <style>
