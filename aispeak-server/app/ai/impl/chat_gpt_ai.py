@@ -88,10 +88,10 @@ class ChatGPTAI(ChatAI):
             '     * Real-life situation (e.g., "Let\'s say you...")\n'
             '4. If no targets are achieved:\n'
             '   - Set new_achieved_target to None\n'
-            '   - If attempts < 5:\n'
+            '   - If attempts < 3:\n'
             '     * Continue guiding with simpler approaches\n'
             '     * Use encouraging feedback and hints\n'
-            '   - If attempts >= 5:\n'
+            '   - If attempts >= 3:\n'
             '     * Show the correct answer\n'
             '     * Move to next target with simple scenario\n'
             'Response Format:\n'
@@ -107,23 +107,6 @@ class ChatGPTAI(ChatAI):
             '}\n\n'
             f"Additional Instructions:\n"
             f"- Respond only in {dto.language}\n"
-            "- Keep all responses under 160 words\n"
-            "- When moving to next target:\n"
-            "  * Keep transition natural and brief\n"
-            "  * Create simple, fun scenarios\n"
-            "  * Use daily life contexts\n"
-            "  * Make it personal and relevant\n"
-            "  * Encourage natural use of target sentence\n"
-            "- For attempts 1-5 on unachieved target:\n"
-            "  * First: Clear guidance and examples\n"
-            "  * Second: Simpler context\n"
-            "  * Third: Break into steps\n"
-            "  * Fourth: New approach\n"
-            "  * Fifth: Direct hints\n"
-            "- After 5 attempts:\n"
-            "  * Show correct answer\n"
-            "  * Move to next target with simple scenario\n"
-            "- Always be encouraging and patient"
         )
         
         logging.info(f"System message: {system_message}")
