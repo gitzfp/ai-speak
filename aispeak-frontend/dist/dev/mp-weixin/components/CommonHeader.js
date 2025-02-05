@@ -36,5 +36,5 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     };
   }
 });
-const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__scopeId", "data-v-1bc5cecc"], ["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/components/CommonHeader.vue"]]);
+const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__scopeId", "data-v-1bc5cecc"], ["__file", "/Users/zfp/Downloads/ai-speak/aispeak-frontend/src/components/CommonHeader.vue"]]);
 wx.createComponent(Component);

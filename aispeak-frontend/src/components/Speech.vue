@@ -7,7 +7,10 @@
       </slot>
       <view @tap="handleSpeech" class="recorder-btn-box">
         <view class="voice-circle">
-          <image class="voice-icon" src="https://api.zfpai.top/static/icon_voice.png"></image>
+          <image
+            class="voice-icon"
+            src="http://114.116.224.128:8097/static/icon_voice.png"
+          ></image>
         </view>
       </view>
       <slot name="rightMenu">
@@ -26,20 +29,23 @@
     <!-- 录音结束 -->
     <view v-if="recorder.completed" class="recorder-completed-box">
       <view @tap="handleTrash" class="trash-btn-box">
-        <image class="trash-btn" src="https://api.zfpai.top/static/icon_trash.png"></image>
+        <image
+          class="trash-btn"
+          src="http://114.116.224.128:8097/static/icon_trash.png"
+        ></image>
       </view>
       <view @tap="handlePlaySpeech" class="play-btn-box">
         <image
           v-if="!voicePlaying"
           class="play-btn"
-          src="https://api.zfpai.top/static/icon_menu_play.png"
+          src="http://114.116.224.128:8097/static/icon_menu_play.png"
         >
         </image>
         <image
           v-else="voicePlaying"
           class="play-btn"
           style="width: 100%; height: 100%"
-          src="https://api.zfpai.top/static/menu_voice_playing.gif"
+          src="http://114.116.224.128:8097/static/menu_voice_playing.gif"
         ></image>
       </view>
       <view @tap="handleSend" class="send-btn-box">
@@ -47,119 +53,119 @@
         <image
           v-if="!recorder.processing"
           class="send-btn"
-          src="https://api.zfpai.top/static/icon_send.png"
+          src="http://114.116.224.128:8097/static/icon_send.png"
         ></image>
       </view>
     </view>
   </view>
 </template>
 <script setup lang="ts">
-import { ref, defineEmits, getCurrentInstance } from "vue";
-import LoadingRound from "@/components/LoadingRound.vue";
-import speech from "./speechExecuter";
+import { ref, defineEmits, getCurrentInstance } from "vue"
+import LoadingRound from "@/components/LoadingRound.vue"
+import speech from "./speechExecuter"
 // import audioPlayer from "@/components/audioPlayerExecuter";
-import audioPlayer from "./audioPlayerExecuter"; // 导入共享对象
-import utils from "@/utils/utils";
+import audioPlayer from "./audioPlayerExecuter" // 导入共享对象
+import utils from "@/utils/utils"
 
-const emit = defineEmits();
+const emit = defineEmits()
 
-const $bus: any = getCurrentInstance()?.appContext.config.globalProperties.$bus;
+const $bus: any = getCurrentInstance()?.appContext.config.globalProperties.$bus
 const recorder = ref({
   start: false,
   processing: false,
   completed: false,
   voiceFileName: null,
-});
-const voicePlaying = ref(false);
+})
+const voicePlaying = ref(false)
 
 /**
  * 开始录音
  */
 const handleSpeech = () => {
   if (recorder.value.start) {
-    speech.handleEndVoice();
-    return;
+    speech.handleEndVoice()
+    return
   }
 
-  audioPlayer.stopAudio();
-  recorder.value.start = true;
-  recorder.value.completed = false;
+  audioPlayer.stopAudio()
+  recorder.value.start = true
+  recorder.value.completed = false
   speech.handleVoiceStart({
     processing: () => {
-      recorder.value.processing = true;
+      recorder.value.processing = true
     },
     success: ({ voiceFileName }) => {
-      recorder.value.voiceFileName = voiceFileName;
-      recorder.value.processing = false;
-      recorder.value.start = false;
-      recorder.value.completed = true;
+      recorder.value.voiceFileName = voiceFileName
+      recorder.value.processing = false
+      recorder.value.start = false
+      recorder.value.completed = true
     },
     interval: (interval: any) => {
-      recorder.value.remainingTime = interval;
+      recorder.value.remainingTime = interval
     },
     cancel: () => {
-      recorder.value.processing = false;
-      recorder.value.start = false;
+      recorder.value.processing = false
+      recorder.value.start = false
     },
     error: (err: any) => {
-      recorder.value.processing = false;
-      recorder.value.start = false;
+      recorder.value.processing = false
+      recorder.value.start = false
     },
-  });
-};
+  })
+}
 
 /**
  * 结束录音
  */
 const handleSpeechEnd = () => {
-  speech.handleEndVoice();
-};
+  speech.handleEndVoice()
+}
 
 /**
  * 删除录音
  */
 const handleTrash = () => {
-  recorder.value.completed = false;
-};
+  recorder.value.completed = false
+}
 
 /**
  * 播放录音
  */
 const handlePlaySpeech = () => {
   if (!recorder.value.voiceFileName) {
-    console.error("没有语音文件");
-    return;
+    console.error("没有语音文件")
+    return
   }
   audioPlayer.playAudio({
     audioUrl: utils.getVoiceFileUrl(recorder.value.voiceFileName),
     listener: {
       playing: () => {
-        voicePlaying.value = true;
+        voicePlaying.value = true
       },
       success: () => {
-        voicePlaying.value = false;
-        console.log(voicePlaying.value);
+        voicePlaying.value = false
+        console.log(voicePlaying.value)
       },
       error: () => {
-        voicePlaying.value = false;
+        voicePlaying.value = false
       },
     },
-  });
-};
+  })
+}
 
 /**
  * 发送语音
  */
 const handleSend = () => {
   if (!recorder.value.voiceFileName) {
-    console.error("没有语音文件");
-    return;
+    console.error("没有语音文件")
+    return
   }
   emit("success", {
     fileName: recorder.value.voiceFileName,
-  });
-  recorder.value.completed = false;
-};
+  })
+  recorder.value.completed = false
+}
 </script>
 <style lang="scss" scoped>
 .speech-container {

@@ -85,7 +85,7 @@
 .page-controls.data-v-b93a630c {
   display: flex;
   align-items: center;
-  gap: 20rpx;
+  gap: 10rpx;
 }
 .control-button.data-v-b93a630c {
   display: flex;
@@ -108,12 +108,13 @@
   padding: 10rpx 30rpx;
   border-radius: 30rpx;
 }
-.speak-button.data-v-b93a630c {
+.speak-button.data-v-b93a630c,
+.continuous-read-button.data-v-b93a630c {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10rpx;
-  width: 90%;
+  width: 35%;
   padding: 24rpx;
   background: linear-gradient(135deg, #FF6B6B, #FF5252);
   color: #ffffff;
@@ -122,6 +123,12 @@
   font-weight: bold;
   box-shadow: 0 4rpx 12rpx rgba(255, 107, 107, 0.3);
   margin-bottom: env(safe-area-inset-bottom);
+}
+.bottom-controls.data-v-b93a630c {
+  flex-direction: row;
+  justify-content: space-around;
+  gap: 10rpx;
+  align-items: center;
 }
 .speak-icon.data-v-b93a630c {
   width: 48rpx;

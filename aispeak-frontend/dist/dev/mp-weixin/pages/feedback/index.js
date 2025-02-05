@@ -57,5 +57,5 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     };
   }
 });
-const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__scopeId", "data-v-3aa1718d"], ["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/pages/feedback/index.vue"]]);
+const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__scopeId", "data-v-3aa1718d"], ["__file", "/Users/zfp/Downloads/ai-speak/aispeak-frontend/src/pages/feedback/index.vue"]]);
 wx.createPage(MiniProgramPage);

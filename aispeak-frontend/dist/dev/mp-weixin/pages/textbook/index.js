@@ -3,7 +3,18 @@ const common_vendor = require("../../common/vendor.js");
 const _sfc_main = {
   setup() {
     const versions = common_vendor.ref(["全部", "PEP", "精通", "新起点", "初中"]);
-    const grades = common_vendor.ref(["全部", "一年级", "二年级", "三年级", "四年级", "五年级", "六年级", "七年级", "八年级", "九年级"]);
+    const grades = common_vendor.ref([
+      "全部",
+      "一年级",
+      "二年级",
+      "三年级",
+      "四年级",
+      "五年级",
+      "六年级",
+      "七年级",
+      "八年级",
+      "九年级"
+    ]);
     const terms = common_vendor.ref(["全部", "上册", "下册", "全一册"]);
     const selectedVersion = common_vendor.ref("全部");
     const selectedGrade = common_vendor.ref("全部");
@@ -13,9 +24,13 @@ const _sfc_main = {
       common_vendor.index.request({
         url: "https://diandu.mypep.cn/static/textbook/bookList_pep_click_subject_web_1_0_0.json",
         success: (res) => {
-          const englishSubject = res.data.booklist.find((subject) => subject.subject_name === "英语");
+          const englishSubject = res.data.booklist.find(
+            (subject) => subject.subject_name === "英语"
+          );
           if (englishSubject) {
-            books.value = englishSubject.versions.flatMap((version) => version.textbooks);
+            books.value = englishSubject.versions.flatMap(
+              (version) => version.textbooks
+            );
           }
         },
         fail: (err) => {
@@ -42,7 +57,7 @@ const _sfc_main = {
     };
     const goToCourse = (book) => {
       common_vendor.index.navigateTo({
-        url: `/pages/textbook/courses?book_id=${book.book_id}`
+        url: `/pages/textbook/books?book_id=${book.book_id}`
       });
     };
     return {
@@ -97,5 +112,5 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     })
   };
 }
-const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/pages/textbook/index.vue"]]);
+const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__file", "/Users/zfp/Downloads/ai-speak/aispeak-frontend/src/pages/textbook/index.vue"]]);
 wx.createPage(MiniProgramPage);

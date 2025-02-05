@@ -37,7 +37,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         if (props.messageId) {
           transformFileLoading.value = true;
           audioUrl = `${config_env.__config.basePath}/message/speech?message_id=${props.messageId}`;
+          console.log("聊天信息转换成语音文件再播放", audioUrl);
         } else if (props.content) {
+          console.log("内容转换成语音后播放", props.content);
           transformFileLoading.value = true;
           audioUrl = `${config_env.__config.basePath}/message/speech-content?content=${props.content}`;
           if (props.speechRoleName) {
@@ -98,5 +100,5 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     };
   }
 });
-const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__scopeId", "data-v-9e3d83e8"], ["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/components/AudioPlayer.vue"]]);
+const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__scopeId", "data-v-9e3d83e8"], ["__file", "/Users/zfp/Downloads/ai-speak/aispeak-frontend/src/components/AudioPlayer.vue"]]);
 wx.createComponent(Component);

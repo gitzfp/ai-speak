@@ -186,15 +186,15 @@ export default {
   },
   checkFileInOSS: async (ossKey: string) => {
     try {
-      if(isWechat()){
-        const { data } = await wx.request({
-          url: `${baseUrl}/ali-oss/check-file/?oss_key=${ossKey}`,
-          method: 'GET',
-          enableHttpDNS: true,
-          httpDNSServiceId: "wxa410372c837a5f26",
-        });
-        return data
-      }
+      // if(isWechat()){
+      //   const { data } = await wx.request({
+      //     url: `${baseUrl}/ali-oss/check-file/?oss_key=${ossKey}`,
+      //     method: 'GET',
+      //     enableHttpDNS: true,
+      //     httpDNSServiceId: "wxa410372c837a5f26",
+      //   });
+      //   return data
+      // }
       const { data } = await uni.request({
         url: `${baseUrl}/ali-oss/check-file/?oss_key=${ossKey}`,
         method: 'GET'

@@ -1,12 +1,11 @@
 <template>
   <view class="container">
-    <image class="logo" src="https://api.zfpai.top/static/logo.png"></image>
-    <text class="title">
-      欢迎使用AISPeak
-    </text>
-    <text class="sub-title">
-      智能语言学习助手
-    </text>
+    <image
+      class="logo"
+      src="http://114.116.224.128:8097/static/logo.png"
+    ></image>
+    <text class="title"> 欢迎使用AISPeak </text>
+    <text class="sub-title"> 智能语言学习助手 </text>
 
     <!-- 微信登录按钮（微信环境显示） -->
     <button
@@ -38,80 +37,82 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import accountReqeust from '@/api/account';
-import utils from '@/utils/utils';
-const X_TOKEN = 'x-token';
-const loginLoading = ref(false);
-const isWeixin = ref(false); // 是否为微信环境
-const phoneNumber = ref(''); // 手机号
-const password = ref(''); // 密码
+import { ref, onMounted } from "vue"
+import accountReqeust from "@/api/account"
+import utils from "@/utils/utils"
+const X_TOKEN = "x-token"
+const loginLoading = ref(false)
+const isWeixin = ref(false) // 是否为微信环境
+const phoneNumber = ref("") // 手机号
+const password = ref("") // 密码
 
 onMounted(() => {
   uni.setNavigationBarTitle({
-    title: 'AISPeak',
-  });
- 
+    title: "AISPeak",
+  })
+
   // 判断是否为微信环境
-  isWeixin.value = utils.isWechat();
-  console.log('isWeixin:', isWeixin.value);
- 
+  isWeixin.value = utils.isWechat()
+  console.log("isWeixin:", isWeixin.value)
+
   // 是否有保存登录的token
-  let storageToken = uni.getStorageSync(X_TOKEN);
+  let storageToken = uni.getStorageSync(X_TOKEN)
   if (storageToken) {
-    loginSucessByToken(storageToken);
+    loginSucessByToken(storageToken)
   }
-});
+})
 
 /**
  * 微信登录
  */
 const handleWechatLogin = (e: any) => {
-  if (loginLoading.value) return;
-  loginLoading.value = true;
+  if (loginLoading.value) return
+  loginLoading.value = true
 
   // 获取微信登录 code
   uni.login({
-    provider: 'weixin',
+    provider: "weixin",
     success: (res) => {
-      const code = res.code;
+      const code = res.code
 
       // 调用后端微信登录接口
-      accountReqeust.wechatLogin({ code })
+      accountReqeust
+        .wechatLogin({ code })
         .then((data) => {
-          loginSuccess(data);
+          loginSuccess(data)
         })
         .finally(() => {
-          loginLoading.value = false;
-        });
+          loginLoading.value = false
+        })
     },
     fail: (err) => {
-      console.error('微信登录失败', err);
-      loginLoading.value = false;
+      console.error("微信登录失败", err)
+      loginLoading.value = false
     },
-  });
-};
+  })
+}
 
 /**
  * 手机号登录
  */
 const handlePhoneLogin = () => {
-  console.log('手机号登录');
-  if (loginLoading.value) return;
-  loginLoading.value = true;
+  console.log("手机号登录")
+  if (loginLoading.value) return
+  loginLoading.value = true
 
   // 调用后端手机号登录接口
-  accountReqeust.phoneLogin({
-    phone_number: phoneNumber.value,
-    password: password.value,
-  })
+  accountReqeust
+    .phoneLogin({
+      phone_number: phoneNumber.value,
+      password: password.value,
+    })
     .then((data) => {
-      loginSuccess(data);
+      loginSuccess(data)
     })
     .finally(() => {
-      loginLoading.value = false;
-    });
-};
+      loginLoading.value = false
+    })
+}
 
 /**
  * 用户登录请求结果处理
@@ -120,23 +121,23 @@ const loginSuccess = (data: any) => {
   if (data.code !== 1000) {
     uni.showToast({
       title: data.message,
-      icon: 'none',
-    });
-    return;
+      icon: "none",
+    })
+    return
   }
-  let storageToken = data.data.token;
-  loginSucessByToken(storageToken);
-};
+  let storageToken = data.data.token
+  loginSucessByToken(storageToken)
+}
 
 /**
  * 通过用户token加载后续逻辑
  */
 const loginSucessByToken = (storageToken: string) => {
-  uni.setStorageSync('x-token', storageToken);
+  uni.setStorageSync("x-token", storageToken)
   uni.switchTab({
-    url: '/pages/textbook/index',
-  });
-};
+    url: "/pages/textbook/index",
+  })
+}
 </script>
 
 <style scoped lang="less">

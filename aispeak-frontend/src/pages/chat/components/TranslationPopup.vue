@@ -1,16 +1,32 @@
 <template>
-  <uni-popup ref="translationPopup" type="bottom" :background-color="popupBackgoundColor">
+  <uni-popup
+    ref="translationPopup"
+    type="bottom"
+    :background-color="popupBackgoundColor"
+  >
     <view class="translation-container">
       <view @tap="handleClose" class="close-icon-box">
-        <image class="close-icon" src="https://api.zfpai.top/static/icon_close.png"></image>
+        <image
+          class="close-icon"
+          src="http://114.116.224.128:8097/static/icon_close.png"
+        ></image>
       </view>
       <view class="content">
         <view class="title-box">
           <text class="title-text"> 输入语句 </text>
         </view>
         <view class="textarea-box">
-          <textarea v-model="inputText" confirm-type="send" class="textarea" placeholder="例如：我喜欢音乐"></textarea>
-          <view @tap.stop="handleTranslate" class="translate-btn-box" :class="{ active: inputHasText }">
+          <textarea
+            v-model="inputText"
+            confirm-type="send"
+            class="textarea"
+            placeholder="例如：我喜欢音乐"
+          ></textarea>
+          <view
+            @tap.stop="handleTranslate"
+            class="translate-btn-box"
+            :class="{ active: inputHasText }"
+          >
             <view class="translate-btn"> 翻译 </view>
           </view>
         </view>
@@ -24,7 +40,11 @@
           <text class="translation-text">
             {{ translationText }}
           </text>
-          <AudioPlayer class="playing-box" :content="translationText" :session-id="sessionId" />
+          <AudioPlayer
+            class="playing-box"
+            :content="translationText"
+            :session-id="sessionId"
+          />
         </view>
         <!-- 直接发送 -->
         <view v-if="translationText && !translating" class="send-box">
@@ -40,89 +60,89 @@
   </uni-popup>
 </template>
 <script setup lang="ts">
-import { ref, computed, getCurrentInstance, onMounted } from "vue";
-import chatService from "@/api/chat";
-import AudioPlayer from "@/components/AudioPlayer.vue";
-import Speech from "./MessageSpeech.vue";
-import LoadingRound from "@/components/LoadingRound.vue";
+import { ref, computed, getCurrentInstance, onMounted } from "vue"
+import chatService from "@/api/chat"
+import AudioPlayer from "@/components/AudioPlayer.vue"
+import Speech from "./MessageSpeech.vue"
+import LoadingRound from "@/components/LoadingRound.vue"
 
-const $bus: any = getCurrentInstance()?.appContext.config.globalProperties.$bus;
-const translationPopup = ref(null);
-const inputText = ref("");
-const translating = ref(false);
-const translationText = ref("");
-const sessionId = ref("");
-const popupBackgoundColor = ref("");
+const $bus: any = getCurrentInstance()?.appContext.config.globalProperties.$bus
+const translationPopup = ref(null)
+const inputText = ref("")
+const translating = ref(false)
+const translationText = ref("")
+const sessionId = ref("")
+const popupBackgoundColor = ref("")
 
 onMounted(() => {
   // 如果是微信息小程序，背景色要设置成#fff
   if (process.env.VUE_APP_PLATFORM === "mp-weixin") {
-    popupBackgoundColor.value = "#fff";
+    popupBackgoundColor.value = "#fff"
   }
-});
+})
 
 // 是否已经输入文本
 const inputHasText = computed(() => {
-  return !!(inputText.value && inputText.value.trim());
-});
+  return !!(inputText.value && inputText.value.trim())
+})
 
 const handleTranslate = () => {
   if (!inputHasText.value) {
     uni.showToast({
       title: "请输入文本",
       icon: "none",
-    });
-    return;
+    })
+    return
   }
-  translating.value = true;
+  translating.value = true
   chatService
     .translateSettingLanguage({
       text: inputText.value,
-      session_id: sessionId.value
+      session_id: sessionId.value,
     })
     .then((data) => {
-      translationText.value = data.data;
-      translating.value = false;
+      translationText.value = data.data
+      translating.value = false
     })
     .catch(() => {
-      translating.value = false;
-    });
-};
+      translating.value = false
+    })
+}
 
 const handleSend = () => {
   if (!translationText.value) {
     uni.showToast({
       title: "请输入文本并进行翻译",
       icon: "none",
-    });
-    return;
+    })
+    return
   }
   $bus.emit("SendMessage", {
     text: translationText.value,
-  });
-  handleClose();
-};
+  })
+  handleClose()
+}
 
 const handleSuccess = (data: any) => {
-  handleClose();
-};
+  handleClose()
+}
 
 const handleClose = () => {
-  translationPopup.value.close();
-  inputText.value = "";
-  translationText.value = "";
-  sessionId.value = "";
-};
+  translationPopup.value.close()
+  inputText.value = ""
+  translationText.value = ""
+  sessionId.value = ""
+}
 
 const open = (sessionIdVal: string) => {
-  sessionId.value = sessionIdVal;
-  translationPopup.value.open();
-};
+  sessionId.value = sessionIdVal
+  translationPopup.value.open()
+}
 
 defineExpose({
   open,
   handleClose,
-});
+})
 </script>
 <style lang="less" scoped>
 @import url("../../../less/global.less");

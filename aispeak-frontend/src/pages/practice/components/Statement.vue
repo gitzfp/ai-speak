@@ -7,9 +7,18 @@
         </view>
       </view>
       <view class="chat-list-action-box">
-        <AudioPlayer class="chat-list-action_playing btn-box" :messageId="collect.message_id"
-          :content="collect.content" />
-        <image v-if="!cannotCancel" @tap="handleDelete" class="chat-list-action btn-box" src="https://api.zfpai.top/static/deleted.png" mode="heightFix" />
+        <AudioPlayer
+          class="chat-list-action_playing btn-box"
+          :messageId="collect.message_id"
+          :content="collect.content"
+        />
+        <image
+          v-if="!cannotCancel"
+          @tap="handleDelete"
+          class="chat-list-action btn-box"
+          src="http://114.116.224.128:8097/static/deleted.png"
+          mode="heightFix"
+        />
       </view>
     </view>
     <view class="chat-list-left-bot">
@@ -19,17 +28,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineEmits, defineProps } from "vue";
-import AudioPlayer from "@/components/AudioPlayer.vue";
-import type { Collect } from "@/models/models";
-import accountRequest from "@/api/account";
+import { ref, defineEmits, defineProps } from "vue"
+import AudioPlayer from "@/components/AudioPlayer.vue"
+import type { Collect } from "@/models/models"
+import accountRequest from "@/api/account"
 
-const emit = defineEmits();
+const emit = defineEmits()
 // 定义Collect类型为prop
 const props = defineProps<{
-  collect: Collect;
-  cannotCancel?: boolean;
-}>();
+  collect: Collect
+  cannotCancel?: boolean
+}>()
 
 const handleDelete = () => {
   // 调用提示用户是否删除
@@ -51,16 +60,16 @@ const handleDelete = () => {
             uni.showToast({
               title: "删除成功",
               icon: "none",
-            });
+            })
             // 触发父组件的事件
-            emit("deleteCollect", props.collect);
-          });
+            emit("deleteCollect", props.collect)
+          })
       } else if (res.cancel) {
         // 用户点击取消
       }
     },
-  });
-};
+  })
+}
 </script>
 
 <style lang="less">

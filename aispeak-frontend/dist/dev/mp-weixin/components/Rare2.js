@@ -341,5 +341,5 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     g: $props.pageBg
   };
 }
-const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/components/Rare2.vue"]]);
+const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__file", "/Users/zfp/Downloads/ai-speak/aispeak-frontend/src/components/Rare2.vue"]]);
 wx.createComponent(Component);

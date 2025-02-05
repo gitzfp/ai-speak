@@ -1,1 +1,21 @@
-<uni-popup wx:if="{{k}}" class="r data-v-d41638ae" u-s="{{['d']}}" u-r="wordAnalysisPopup" u-i="d41638ae-0" bind:__l="__l" u-p="{{k}}"><view class="word-analysis-container data-v-d41638ae"><view class="close-icon-box data-v-d41638ae"><image bindtap="{{a}}" class="close-icon data-v-d41638ae" src="https://api.zfpai.top/static/icon_close.png"></image></view><loading-round wx:if="{{b}}" class="data-v-d41638ae" u-i="d41638ae-1,d41638ae-0" bind:__l="__l" u-p="{{c}}"></loading-round><view wx:elif="{{d}}" class="content data-v-d41638ae"><view class="word-box row-bc data-v-d41638ae"><text class="word-text data-v-d41638ae">{{e}}</text><collect wx:if="{{f}}" class="data-v-d41638ae" u-i="d41638ae-2,d41638ae-0" bind:__l="__l" u-p="{{f}}"/></view><view class="pronunciation-box row-sc data-v-d41638ae"><text class="pronunciation-text data-v-d41638ae">{{g}}</text><audio-player wx:if="{{h}}" class="pronunciation-play-icon data-v-d41638ae" u-i="d41638ae-3,d41638ae-0" bind:__l="__l" u-p="{{h}}"/></view><view class="translation-box row-bc data-v-d41638ae"><text class="translatetion-text data-v-d41638ae">{{i}}</text></view></view></view></uni-popup>
+<uni-popup wx:if="{{k}}" class="r data-v-d41638ae" u-s="{{['d']}}" u-r="wordAnalysisPopup" u-i="d41638ae-0" bind:__l="__l" u-p="{{k}}">
+  <view class="word-analysis-container data-v-d41638ae">
+    <view class="close-icon-box data-v-d41638ae">
+      <image bindtap="{{a}}" class="close-icon data-v-d41638ae" src="http://114.116.224.128:8097/static/icon_close.png"></image>
+    </view>
+    <loading-round wx:if="{{b}}" class="data-v-d41638ae" u-i="d41638ae-1,d41638ae-0" bind:__l="__l" u-p="{{c}}"></loading-round>
+    <view wx:elif="{{d}}" class="content data-v-d41638ae">
+      <view class="word-box row-bc data-v-d41638ae">
+        <text class="word-text data-v-d41638ae">{{e}}</text>
+        <collect wx:if="{{f}}" class="data-v-d41638ae" u-i="d41638ae-2,d41638ae-0" bind:__l="__l" u-p="{{f}}" />
+      </view>
+      <view class="pronunciation-box row-sc data-v-d41638ae">
+        <text class="pronunciation-text data-v-d41638ae">{{g}}</text>
+        <audio-player wx:if="{{h}}" class="pronunciation-play-icon data-v-d41638ae" u-i="d41638ae-3,d41638ae-0" bind:__l="__l" u-p="{{h}}" />
+      </view>
+      <view class="translation-box row-bc data-v-d41638ae">
+        <text class="translatetion-text data-v-d41638ae">{{i}}</text>
+      </view>
+    </view>
+  </view>
+</uni-popup>

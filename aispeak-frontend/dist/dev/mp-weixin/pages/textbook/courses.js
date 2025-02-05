@@ -1,12 +1,16 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_topic = require("../../api/topic.js");
+const config_env = require("../../config/env.js");
 require("../../axios/api.js");
-require("../../config/env.js");
 const _sfc_main = {
   setup() {
+    const baseUrl = config_env.__config.basePath;
     const pages = common_vendor.ref([]);
     const sentences = common_vendor.ref([]);
+    const chapters = common_vendor.ref([]);
+    const isPlaying = common_vendor.ref(false);
+    const currentAudio = common_vendor.ref(null);
     const currentPageIndex = common_vendor.ref(0);
     const currentPageImage = common_vendor.ref("");
     const scaleX = common_vendor.ref(1);
@@ -29,64 +33,228 @@ const _sfc_main = {
       book_id.value = options.book_id;
       console.log("Received book_id:", book_id.value);
     });
+    const checkFileInOSS = async (ossKey) => {
+      try {
+        const { data: data2 } = await common_vendor.index.request({
+          url: `${baseUrl}/ali-oss/check-file/?oss_key=${ossKey}`,
+          method: "GET"
+        });
+        return data2;
+      } catch (error) {
+        console.error("检查文件失败:", error);
+        return { exists: false };
+      }
+    };
+    const uploadFileToOSS = async (ossKey, fileData) => {
+      try {
+        console.log("开始上传文件, ossKey:", ossKey);
+        if (ossKey.endsWith(".json")) {
+          const { data: data3 } = await common_vendor.index.request({
+            url: `${baseUrl}/ali-oss/upload-file/?oss_key=${ossKey}`,
+            method: "POST",
+            header: {
+              "Content-Type": "application/json"
+            },
+            data: {
+              oss_key: ossKey,
+              content: fileData
+            }
+          });
+          console.log("JSON 数据上传成功:", data3);
+          return data3;
+        }
+        if (typeof fileData === "string" && (fileData.startsWith("http://") || fileData.startsWith("https://"))) {
+          const tempFilePath = await new Promise((resolve, reject) => {
+            common_vendor.index.downloadFile({
+              url: fileData,
+              success: (res) => {
+                if (res.statusCode === 200) {
+                  resolve(res.tempFilePath);
+                } else {
+                  reject(new Error("下载文件失败"));
+                }
+              },
+              fail: reject
+            });
+          });
+          fileData = tempFilePath;
+        }
+        const { data: data2 } = await common_vendor.index.uploadFile({
+          url: `${baseUrl}/ali-oss/upload-file/?oss_key=${ossKey}`,
+          filePath: fileData,
+          name: "file"
+        });
+        console.log("文件上传成功:", data2);
+        return typeof data2 === "string" ? JSON.parse(data2) : data2;
+      } catch (error) {
+        console.error("文件上传失败:", error);
+        return null;
+      }
+    };
+    const getFileFromOSS = async (ossKey) => {
+      var _a;
+      try {
+        const { data: data2 } = await common_vendor.index.request({
+          url: `${baseUrl}/ali-oss/get-file/?oss_key=${ossKey}`,
+          method: "GET",
+          header: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+          }
+        });
+        if (data2.code !== 1e3) {
+          throw new Error(data2.message || "获取文件失败");
+        }
+        if (ossKey.endsWith(".m3u8")) {
+          return (_a = data2 == null ? void 0 : data2.data) == null ? void 0 : _a.content;
+        }
+        if (ossKey.endsWith(".json")) {
+          const jsonContent = JSON.parse(data2.data.content);
+          console.log("解析后的 JSON 内容:", jsonContent);
+          return jsonContent;
+        } else {
+          return data2.data.url;
+        }
+      } catch (error) {
+        console.error("获取文件失败:", error);
+        return null;
+      }
+    };
     const fetchPages = async () => {
       try {
-        const response = await fetch(
-          `https://rjdduploadw.mypep.cn/pub_cloud/10/${book_id.value}/${book_id.value}_Web.json`
-        );
-        const data = await response.json();
-        pages.value = data.chapters.flatMap((chapter) => chapter.res_main);
-        console.log("页面数据获取成功:", pages.value);
+        const ossKey = `json_files/${book_id.value}_Web.json`;
+        const checkResult = await checkFileInOSS(ossKey);
+        if (checkResult == null ? void 0 : checkResult.data.exists) {
+          const data2 = await getFileFromOSS(ossKey);
+          pages.value = data2.chapters.flatMap((chapter) => chapter.res_main);
+          console.log("页面数据获取成功（来自 OSS）:", pages.value);
+        } else {
+          const url = `https://rjdduploadw.mypep.cn/pub_cloud/10/${book_id.value}/${book_id.value}_Web.json`;
+          console.log("页面数据获取请求开始:", pages.value);
+          const response = await new Promise((resolve, reject) => {
+            common_vendor.index.request({
+              url,
+              method: "GET",
+              success: (res) => {
+                resolve(res);
+              },
+              fail: (err) => {
+                reject(err);
+              }
+            });
+          });
+          const data2 = response.data;
+          pages.value = data2.chapters.flatMap((chapter) => chapter.res_main);
+          console.log("页面数据获取成功（来自原接口）:", pages.value);
+          const jsonString = JSON.stringify(data2);
+          await uploadFileToOSS(ossKey, jsonString);
+          console.log("JSON 数据上传成功");
+        }
       } catch (error) {
         console.error("页面数据获取失败:", error);
       }
     };
     const fetchSentences = async () => {
-      try {
-        const response = await fetch(
-          `https://diandu.mypep.cn/static/textbook/chapter/${book_id.value}_sentence.json`
-        );
-        const data = await response.json();
-        sentences.value = data.list.flatMap(
+      var _a;
+      const ossKey = `json_files/${book_id.value}_sentence.json`;
+      const checkResult = await checkFileInOSS(ossKey);
+      console.log("检查文件是否存在:", checkResult);
+      if ((_a = checkResult == null ? void 0 : checkResult.data) == null ? void 0 : _a.exists) {
+        const data2 = await getFileFromOSS(ossKey);
+        sentences.value = data2.list.flatMap(
           (chapter) => chapter.groups.flatMap((group) => group.sentences)
         );
-        console.log("句子数据获取成功:", sentences.value);
-      } catch (error) {
-        console.error("句子数据获取失败:", error);
+        chapters.value = data2.list;
+        console.log("句子数据获取成功（来自 OSS）:", sentences.value, chapters.value);
+      } else {
+        try {
+          const url = `https://diandu.mypep.cn/static/textbook/chapter/${book_id.value}_sentence.json`;
+          const response = await new Promise((resolve, reject) => {
+            common_vendor.index.request({
+              url,
+              method: "GET",
+              success: (res) => {
+                resolve(res);
+              },
+              fail: (err) => {
+                reject(err);
+              }
+            });
+          });
+          const data2 = await response.data;
+          chapters.value = data2.list;
+          console.log("Chapters data:", chapters.value);
+          sentences.value = data2.list.flatMap(
+            (chapter) => chapter.groups.flatMap((group) => group.sentences)
+          );
+          console.log("句子数据获取成功（来自原接口）:", chapters.value, sentences.value);
+          const jsonString = JSON.stringify(data2);
+          await uploadFileToOSS(ossKey, jsonString);
+        } catch (error) {
+          console.error("句子数据获取失败:", error);
+        }
       }
+    };
+    const getAccessToken = async () => {
+      try {
+        const { data: data2 } = await common_vendor.index.request({
+          url: `${baseUrl}/ap22/user/pep_click/215/access_token.json`,
+          method: "POST",
+          header: {
+            "Accept": "*/*",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Origin": "https://diandu.mypep.cn",
+            "Referer": "https://diandu.mypep.cn/rjdd/"
+          }
+        });
+        console.log(`获取 access_token 成功:`, data2);
+        return data2.access_token;
+      } catch (error) {
+        console.error("获取 access_token 失败:", error);
+        throw error;
+      }
+    };
+    const retryImageSignature = async (pageUrl, accessToken) => {
+      const { data: data2 } = await common_vendor.index.request({
+        url: `${baseUrl}/ap22/resources/ak/pep_click/user/951/urlSignature.json?access_token=${accessToken}`,
+        method: "POST",
+        header: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        data: {
+          flag: "1",
+          fileNameUrl: `https://szjc-3.mypep.cn${pageUrl}`
+        }
+      });
+      console.log("图片 URL 签名成功:", data2);
+      return data2.url_signature;
     };
     const fetchImageUrlSignature = async (pageUrl) => {
       if (!pageUrl) {
         console.error("pageUrl 未定义");
         return null;
       }
+      let accessToken = "Er0iHLzF3oww+9UGQ6wU8U7ZuQQQa011qxMFTQkJj45MGgNjf4QUVVWL6OyOxinnufcJ7SMVceH7M9JWzsnINw==";
       try {
-        const response = await fetch(
-          "/ap22/resources/ak/pep_click/user/951/urlSignature.json?access_token=KVEmCAZAAQxpKjcsArcMfTuUfkLeg%2BpddaupDU%2FFAtsl0ONFwKl%2Bx66qKejTFeD8sy4NV19l2dyDVvH2RdV0tA%3D%3D",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: new URLSearchParams({
-              flag: "1",
-              fileNameUrl: `https://szjc-3.mypep.cn${pageUrl}`
-            })
+        try {
+          data = await retryImageSignature(pageUrl, accessToken);
+          if (!data) {
+            accessToken = await getAccessToken();
+            return await retryImageSignature(pageUrl, accessToken);
           }
-        );
-        if (!response.ok) {
-          throw new Error(`请求失败，状态码：${response.status}`);
+          return data;
+        } catch (error) {
+          console.log("access_token 已失效，重新获取");
+          accessToken = await getAccessToken();
+          return await retryImageSignature(pageUrl, accessToken);
         }
-        const data = await response.json();
-        console.log("图片 URL 签名成功:", data);
-        return data.url_signature;
       } catch (error) {
         console.error("图片 URL 签名获取失败:", error);
         return null;
       }
     };
     const updateCurrentPageImage = async () => {
-      var _a;
+      var _a, _b;
       if (pages.value.length === 0) {
         console.error("页面数据未加载");
         currentPageImage.value = "";
@@ -98,23 +266,46 @@ const _sfc_main = {
         currentPageImage.value = "";
         return;
       }
-      const urlSignature = await fetchImageUrlSignature(pageUrl);
-      if (!urlSignature) {
-        console.error("获取 URL 签名失败");
-        currentPageImage.value = "";
-        return;
+      const ossKey = `images/${book_id.value}/${pageUrl.split("/").pop()}`;
+      const checkResult = await checkFileInOSS(ossKey);
+      if ((_b = checkResult == null ? void 0 : checkResult.data) == null ? void 0 : _b.exists) {
+        currentPageImage.value = await getFileFromOSS(ossKey);
+        console.log("当前页面图片 URL（来自 OSS）:", currentPageImage.value);
+      } else {
+        const urlSignature = await fetchImageUrlSignature(pageUrl);
+        if (!urlSignature) {
+          console.error("获取 URL 签名失败");
+          currentPageImage.value = "";
+          return;
+        }
+        console.log("当前页面图片 URL（来自原接口）:", urlSignature);
+        currentPageImage.value = urlSignature;
+        const response = await common_vendor.index.request(urlSignature);
+        const blob = await response.blob();
+        const file = new File([blob], ossKey.split("/").pop());
+        await uploadFileToOSS(ossKey, file);
       }
-      console.log("当前页面图片 URL:", urlSignature);
-      currentPageImage.value = urlSignature;
     };
-    const onImageLoad = () => {
-      const image = pageImage.value;
-      if (image) {
-        const containerWidth = document.querySelector(".book-container").clientWidth;
-        scaleX.value = containerWidth / image.naturalWidth;
-        scaleY.value = containerWidth / image.naturalWidth;
-        console.log("图片缩放比例:", { scaleX: scaleX.value, scaleY: scaleY.value });
-      }
+    const onImageLoad = (e) => {
+      const { width: naturalWidth, height: naturalHeight } = e.detail;
+      const query = common_vendor.index.createSelectorQuery();
+      query.select(".book-container").boundingClientRect((data2) => {
+        const containerWidth = data2.width;
+        const containerHeight = data2.height;
+        const widthScale = containerWidth / naturalWidth;
+        const heightScale = containerHeight / naturalHeight;
+        const scale = Math.min(widthScale, heightScale);
+        scaleX.value = scale;
+        scaleY.value = scale;
+        console.log("图片缩放比例:", {
+          scaleX: scaleX.value,
+          scaleY: scaleY.value,
+          naturalWidth,
+          naturalHeight,
+          containerWidth,
+          containerHeight
+        });
+      }).exec();
     };
     const getScaledPosition = (value, axis) => {
       if (axis === "x") {
@@ -125,85 +316,184 @@ const _sfc_main = {
       return value;
     };
     const fetchM3u8Url = async (res_id) => {
-      const hostname = "diandu.mypep.cn";
-      const input_string = hostname + res_id;
-      const hashed_value = common_vendor.md5Exports(input_string);
-      console.log(hashed_value);
-      const url = `/ap33/api/a/resource/c1ebe466-1cdc-4bd3-ab69-77c3561b9dee/951/${res_id}/${hashed_value}/hlsIndexM3u8.token?access_token=`;
+      var _a, _b, _c, _d;
+      const ossKey = `audios/${book_id.value}/${res_id}.mp3`;
+      console.log("开始获取音频 URL, ossKey:", ossKey);
       try {
-        const response = await fetch(
-          url,
-          {
-            method: "GET",
-            headers: {
-              "Accept": "*/*",
-              "Origin": "https://diandu.mypep.cn",
-              "Referer": "https://diandu.mypep.cn/"
-            }
+        const checkResult = await checkFileInOSS(ossKey);
+        console.log("检查 OSS 文件结果:", checkResult);
+        if ((_a = checkResult == null ? void 0 : checkResult.data) == null ? void 0 : _a.exists) {
+          const m3u8Content = (_b = checkResult == null ? void 0 : checkResult.data) == null ? void 0 : _b.url;
+          console.log("从阿里云获取到的 URL:", m3u8Content);
+          return m3u8Content;
+        } else {
+          console.log("开始网络请求音频");
+          const hostname = "diandu.mypep.cn";
+          const input_string = hostname + res_id;
+          const hashed_value = common_vendor.md5Exports(input_string);
+          const url = `${baseUrl}/ap33/api/a/resource/c1ebe466-1cdc-4bd3-ab69-77c3561b9dee/951/${res_id}/${hashed_value}/hlsIndexM3u8.token?access_token=`;
+          const realUrl = `https://api.mypep.com.cn/api/a/resource/c1ebe466-1cdc-4bd3-ab69-77c3561b9dee/951/${res_id}/${hashed_value}/hlsIndexM3u8.token?access_token=`;
+          console.log("请求 URL:", url);
+          const response = await new Promise((resolve, reject) => {
+            common_vendor.index.request({
+              url,
+              method: "GET",
+              success: (res) => {
+                resolve(res);
+              },
+              fail: (err) => {
+                reject(err);
+              }
+            });
+          });
+          if (!response.data) {
+            throw new Error("获取音频数据失败");
           }
-        );
-        const data = await response.text();
-        console.log("m3u8 文件内容:", data);
-        return data;
-      } catch (error) {
-        console.error("获取 m3u8 文件失败:", error);
+          console.log("获取到的音频数据:", response.data);
+          const encodedRealUrl = encodeURIComponent(realUrl);
+          console.log("开始解密和上传");
+          const uploadResponse = await new Promise((resolve, reject) => {
+            common_vendor.index.request({
+              url: `${baseUrl}/ali-oss/decrypt-and-upload/?oss_key=${ossKey}&url=${realUrl}`,
+              method: "GET",
+              success: (res) => {
+                resolve(res);
+              },
+              fail: (err) => {
+                reject(err);
+              }
+            });
+          });
+          if (!uploadResponse.data) {
+            throw new Error("解密上传失败");
+          }
+          console.log("解密上传响应:", uploadResponse.data);
+          return (_d = (_c = uploadResponse.data) == null ? void 0 : _c.data) == null ? void 0 : _d.url;
+        }
+      } catch (err) {
+        console.error("获取音频 URL 过程中发生错误:", err);
         return null;
       }
     };
     const playAudio = async (sentence) => {
       try {
-        const m3u8Content = await fetchM3u8Url(sentence.res_id);
-        if (!m3u8Content) {
-          console.error("无法获取 m3u8 文件内容");
-          return;
+        if (currentAudio.value) {
+          currentAudio.value.stop();
+          currentAudio.value.destroy();
+          currentAudio.value = null;
         }
-        const blob = new Blob([m3u8Content], { type: "application/vnd.apple.mpegurl" });
-        const blobUrl = URL.createObjectURL(blob);
-        if (common_vendor.Hls.isSupported()) {
-          const hls = new common_vendor.Hls();
-          hls.loadSource(blobUrl);
-          const audioElement2 = new Audio();
-          hls.attachMedia(audioElement2);
-          hls.on(common_vendor.Hls.Events.MANIFEST_PARSED, () => {
-            audioElement2.play();
-          });
-          hls.on(common_vendor.Hls.Events.ERROR, (event, data) => {
-            console.error("HLS 错误:", data);
-            if (data.fatal) {
-              switch (data.type) {
-                case common_vendor.Hls.ErrorTypes.NETWORK_ERROR:
-                  console.error("网络错误，尝试重新加载");
-                  hls.startLoad();
-                  break;
-                case common_vendor.Hls.ErrorTypes.MEDIA_ERROR:
-                  console.error("媒体错误，尝试重新加载");
-                  hls.recoverMediaError();
-                  break;
-                default:
-                  console.error("无法恢复的错误");
-                  hls.destroy();
-                  break;
-              }
-            }
-          });
-        } else if (audioElement.canPlayType("application/vnd.apple.mpegurl")) {
-          const audioElement2 = new Audio(blobUrl);
-          audioElement2.play();
-        } else {
-          console.error("当前浏览器不支持 HLS 播放");
+        const audioUrl = await fetchM3u8Url(sentence.res_id);
+        if (!audioUrl) {
+          throw new Error("获取音频地址失败");
         }
+        return new Promise((resolve, reject) => {
+          const audioContext = common_vendor.index.createInnerAudioContext();
+          audioContext.src = audioUrl;
+          audioContext.autoplay = true;
+          audioContext.onError((res) => {
+            console.error("音频播放错误:", res);
+            reject(new Error("音频播放失败"));
+          });
+          audioContext.onEnded(() => {
+            audioContext.destroy();
+            currentAudio.value = null;
+            resolve();
+          });
+          currentAudio.value = audioContext;
+        });
       } catch (error) {
-        console.error("音频播放失败:", error);
+        console.error("播放音频失败:", error);
+        throw error;
       }
     };
+    const playAllSentences = async () => {
+      if (isPlaying.value) {
+        stopPlayback();
+        return;
+      }
+      isPlaying.value = true;
+      console.log("开始连读，当前播放状态:", isPlaying.value);
+      try {
+        while (isPlaying.value && currentPageIndex.value < pages.value.length) {
+          const sentences2 = currentPageSentences.value;
+          if (!sentences2 || sentences2.length === 0) {
+            console.log("当前页面没有句子，切换到下一页");
+            nextPage();
+            continue;
+          }
+          console.log(`开始播放第 ${currentPageIndex.value + 1} 页，共 ${sentences2.length} 个句子`);
+          for (let i = 0; i < sentences2.length; i++) {
+            if (!isPlaying.value) {
+              console.log("播放被手动停止");
+              break;
+            }
+            const sentence = sentences2[i];
+            const sentenceText = getSentenceText(sentence.res_id);
+            if (!sentenceText) {
+              console.warn(`跳过无效句子: ${sentence.res_id}`);
+              continue;
+            }
+            console.log(`播放第 ${i + 1} 个句子:`, sentenceText);
+            await playAudio(sentenceText);
+            if (isPlaying.value && i < sentences2.length - 1) {
+              console.log("添加 800ms 间隔");
+              await new Promise((resolve) => setTimeout(resolve, 800));
+            }
+          }
+          if (isPlaying.value && currentPageIndex.value < pages.value.length - 1) {
+            console.log("切换到下一页");
+            nextPage();
+            await new Promise((resolve) => setTimeout(resolve, 1e3));
+          } else {
+            console.log("已播放到最后一页，停止连读");
+            break;
+          }
+        }
+      } catch (error) {
+        console.error("连续播放失败:", error);
+        common_vendor.index.showToast({
+          title: "连续播放失败",
+          icon: "none"
+        });
+      } finally {
+        console.log("连读结束，重置播放状态");
+        isPlaying.value = false;
+        if (currentAudio.value) {
+          currentAudio.value.stop();
+          currentAudio.value.destroy();
+          currentAudio.value = null;
+        }
+      }
+    };
+    const stopPlayback = () => {
+      isPlaying.value = false;
+      if (currentAudio.value) {
+        currentAudio.value.stop();
+        currentAudio.value.destroy();
+        currentAudio.value = null;
+      }
+    };
+    const currentChapterName = common_vendor.computed(() => {
+      if (!chapters.value.length)
+        return "";
+      const currentChapter = chapters.value.find((chapter) => {
+        const startPage = chapter.groups[0].str_page - 1;
+        const endPage = startPage + (chapter.groups.length || 0);
+        return currentPageIndex.value >= startPage && currentPageIndex.value < endPage;
+      });
+      return currentChapter ? currentChapter.chapterName : "";
+    });
     common_vendor.onMounted(async () => {
       await fetchPages();
       await fetchSentences();
       await updateCurrentPageImage();
-      window.addEventListener("resize", onImageLoad);
     });
     common_vendor.onUnmounted(() => {
-      window.removeEventListener("resize", onImageLoad);
+      if (currentAudio.value) {
+        currentAudio.value.stop();
+        currentAudio.value.destroy();
+        currentAudio.value = null;
+      }
     });
     common_vendor.watch(currentPageIndex, async () => {
       await updateCurrentPageImage();
@@ -215,8 +505,7 @@ const _sfc_main = {
     });
     const getSentenceText = (resId) => {
       const sentence = sentences.value.find((s) => s.res_id === resId);
-      console.log("查找句子:", resId, "结果:", sentence);
-      return sentence || {};
+      return sentence || { res_id: resId };
     };
     const prevPage = () => {
       if (currentPageIndex.value > 0) {
@@ -245,7 +534,7 @@ const _sfc_main = {
           const { id: sessionId, name } = existingSession.data;
           if (sessionId) {
             common_vendor.index.navigateTo({
-              url: `/pages/chat/index?sessionId=${sessionId}&type=LESSON&lessonId=${lessonId}&sessionName=${name}`
+              url: `/pages/chat/index?sessionId=${sessionId}&type=LESSON&lessonId=${lessonId}&sessionName=${currentChapterName.value}`
             });
             return;
           }
@@ -256,7 +545,7 @@ const _sfc_main = {
         });
         if (response == null ? void 0 : response.data) {
           common_vendor.index.navigateTo({
-            url: `/pages/chat/index?sessionId=${response.data.id}&type=LESSON&lessonId=${lessonId}&sessionName=${response.data.name}`
+            url: `/pages/chat/index?sessionId=${response.data.id}&type=LESSON&lessonId=${lessonId}&sessionName=${currentChapterName.value}`
           });
         } else {
           throw new Error("创建会话失败");
@@ -284,9 +573,13 @@ const _sfc_main = {
       toggleSidebar,
       goToPage,
       pages,
+      chapters,
       goToChatPage,
-      hasValidSentences
+      hasValidSentences,
       // 添加这一行
+      playAllSentences,
+      isPlaying,
+      currentChapterName
     };
   }
 };
@@ -298,12 +591,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: common_vendor.t($setup.isSidebarOpen ? "收起目录" : "展开目录"),
     b: common_vendor.o((...args) => $setup.toggleSidebar && $setup.toggleSidebar(...args)),
-    c: common_vendor.f($setup.pages, (page, index, i0) => {
+    c: common_vendor.f($setup.chapters, (page, index, i0) => {
       return {
-        a: common_vendor.t(index + 1),
-        b: index,
-        c: common_vendor.o(($event) => $setup.goToPage(index), index),
-        d: $setup.currentPageIndex === index ? 1 : ""
+        a: common_vendor.t(page.chapterName),
+        b: common_vendor.t(page.groups[0].str_page - 1),
+        c: index,
+        d: common_vendor.o(($event) => $setup.goToPage(page.groups[0].str_page - 2), index),
+        e: $setup.currentPageIndex === page.groups[0].str_page - 2 ? 1 : ""
       };
     }),
     d: $setup.isSidebarOpen ? 1 : "",
@@ -322,16 +616,22 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         f: common_vendor.o(($event) => $setup.playAudio($setup.getSentenceText(sentence.res_id)), sentence.res_id)
       };
     }),
-    i: $setup.currentPageIndex === 0 ? 1 : "",
-    j: common_vendor.o((...args) => $setup.prevPage && $setup.prevPage(...args)),
-    k: common_vendor.t($setup.currentPageIndex + 1),
-    l: common_vendor.t($setup.pages.length),
-    m: $setup.currentPageIndex === $setup.pages.length - 1 ? 1 : "",
-    n: common_vendor.o((...args) => $setup.nextPage && $setup.nextPage(...args)),
-    o: $setup.hasValidSentences
+    i: $setup.hasValidSentences
   }, $setup.hasValidSentences ? {
-    p: common_vendor.o((...args) => $setup.goToChatPage && $setup.goToChatPage(...args))
-  } : {});
+    j: common_vendor.o((...args) => $setup.goToChatPage && $setup.goToChatPage(...args))
+  } : {}, {
+    k: $setup.currentPageSentences.length > 1
+  }, $setup.currentPageSentences.length > 1 ? {
+    l: common_vendor.t($setup.isPlaying ? "停止" : "连读"),
+    m: common_vendor.o((...args) => $setup.playAllSentences && $setup.playAllSentences(...args))
+  } : {}, {
+    n: $setup.currentPageIndex === 0 ? 1 : "",
+    o: common_vendor.o((...args) => $setup.prevPage && $setup.prevPage(...args)),
+    p: common_vendor.t($setup.currentPageIndex + 1),
+    q: common_vendor.t($setup.pages.length),
+    r: $setup.currentPageIndex === $setup.pages.length - 1 ? 1 : "",
+    s: common_vendor.o((...args) => $setup.nextPage && $setup.nextPage(...args))
+  });
 }
-const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-b93a630c"], ["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/pages/textbook/courses.vue"]]);
+const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-b93a630c"], ["__file", "/Users/zfp/Downloads/ai-speak/aispeak-frontend/src/pages/textbook/courses.vue"]]);
 wx.createPage(MiniProgramPage);

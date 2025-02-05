@@ -4,6 +4,7 @@
     "pages/index/index",
     "pages/textbook/index",
     "pages/textbook/courses",
+    "pages/textbook/books",
     "pages/textbook/lesson",
     "pages/index/switchRole",
     "pages/chat/index",

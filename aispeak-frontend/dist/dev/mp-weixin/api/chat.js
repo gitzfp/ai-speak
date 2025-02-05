@@ -10,8 +10,18 @@ const chatRequest = {
   sessionDetailsGet: (data) => {
     return axios_api.request("/sessions/" + data.sessionId, "GET", data, true);
   },
-  sessionInitGreeting: (sessionId) => {
-    return axios_api.request("/sessions/" + sessionId + "/greeting", "GET", {}, false);
+  sessionInitGreeting: (sessionId, taskTargets) => {
+    const data = taskTargets ? { task_targets: taskTargets } : {};
+    console.log("Sending greeting request:", { sessionId, data });
+    return axios_api.request(
+      `/sessions/${sessionId}/greeting`,
+      "POST",
+      data,
+      false
+    ).catch((error) => {
+      console.error("Greeting request failed:", error);
+      throw error;
+    });
   },
   sessionChatInvoke: (data) => {
     return axios_api.request(`/sessions/${data.sessionId}/chat`, "POST", data, false);

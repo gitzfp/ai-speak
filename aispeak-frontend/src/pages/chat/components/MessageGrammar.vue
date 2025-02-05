@@ -2,27 +2,36 @@
   <!-- 语法评估 -->
   <view class="grammar-box">
     <loading-round v-if="grammarAnalysisLoading" />
-    <view v-if="!grammarAnalysisLoading && grammarAnalysisResult" class="grammar-content">
+    <view
+      v-if="!grammarAnalysisLoading && grammarAnalysisResult"
+      class="grammar-content"
+    >
       <view v-if="grammarAnalysisResult.is_correct" class="handclap-box">
         <view class="handclap-text">Well done！</view>
       </view>
       <template v-else>
         <view class="tips-box">
-          <image class="grammar-icon-tips" src="https://api.zfpai.top/static/icon_incorrect.png"></image>
-          <view class="grammar-result-content red">{{ grammarAnalysisResult.original }}</view>
+          <image
+            class="grammar-icon-tips"
+            src="http://114.116.224.128:8097/static/icon_incorrect.png"
+          ></image>
+          <view class="grammar-result-content red">{{
+            grammarAnalysisResult.original
+          }}</view>
         </view>
         <view class="line"><!----></view>
         <view class="tips-box">
-          <image class="grammar-icon-tips" src="https://api.zfpai.top/static/icon_correct.png"></image>
+          <image
+            class="grammar-icon-tips"
+            src="http://114.116.224.128:8097/static/icon_correct.png"
+          ></image>
           <view class="grammar-result-content green">
             {{ grammarAnalysisResult.correct_content }}
           </view>
         </view>
       </template>
       <view v-if="grammarAnalysisResult.error_reason" class="reason-box">
-        <view class="error-tips sub-title">
-          错误点
-        </view>
+        <view class="error-tips sub-title"> 错误点 </view>
         <view class="reason">
           {{ grammarAnalysisResult.error_reason }}
         </view>
@@ -31,20 +40,34 @@
         <view class="">
           <view class="sub-title">你也可以说</view>
         </view>
-        <functional-text class="reason" :text="grammarAnalysisResult.better" :wordClickable="false" :sessionId="sessionId"
-          :translateShow="translateBetterContentShow" />
+        <functional-text
+          class="reason"
+          :text="grammarAnalysisResult.better"
+          :wordClickable="false"
+          :sessionId="sessionId"
+          :translateShow="translateBetterContentShow"
+        />
 
         <view class="action-box">
           <view class="translate-icon-box icon-box">
-            <image class="translate-icon icon" @tap="handleTranlate(grammarAnalysisResult.better)"
-              src="https://api.zfpai.top/static/icon_translate.png"></image>
+            <image
+              class="translate-icon icon"
+              @tap="handleTranlate(grammarAnalysisResult.better)"
+              src="http://114.116.224.128:8097/static/icon_translate.png"
+            ></image>
           </view>
           <view class="collect-icon-box icon-box">
-            <collect type="SENTENCE" :content="grammarAnalysisResult.better"></collect>
+            <collect
+              type="SENTENCE"
+              :content="grammarAnalysisResult.better"
+            ></collect>
           </view>
           <view class="copy-icon-box icon-box">
-            <image @tap="handleCopy(grammarAnalysisResult.better)" class="copy-icon icon"
-              src="https://api.zfpai.top/static/icon_copy_text.png"></image>
+            <image
+              @tap="handleCopy(grammarAnalysisResult.better)"
+              class="copy-icon icon"
+              src="http://114.116.224.128:8097/static/icon_copy_text.png"
+            ></image>
           </view>
         </view>
       </view>
@@ -52,52 +75,50 @@
   </view>
 </template>
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import FunctionalText from '@/components/FunctionalText.vue';
-import LoadingRound from "@/components/LoadingRound.vue";
-import Collect from '@/components/Collect.vue';
-import chatRequest from '@/api/chat';
+import { ref, reactive, onMounted } from "vue"
+import FunctionalText from "@/components/FunctionalText.vue"
+import LoadingRound from "@/components/LoadingRound.vue"
+import Collect from "@/components/Collect.vue"
+import chatRequest from "@/api/chat"
 
 const props = defineProps<{
-  sessionId: string;
-  messageId: string;
-}>();
+  sessionId: string
+  messageId: string
+}>()
 
-const grammarAnalysisLoading = ref(false);
-const grammarAnalysisResult = ref(null);
-const translateBetterContentShow = ref(false);
+const grammarAnalysisLoading = ref(false)
+const grammarAnalysisResult = ref(null)
+const translateBetterContentShow = ref(false)
 
-onMounted(() => {
-
-});
+onMounted(() => {})
 
 const initData = () => {
   console.log(props.sessionId)
   if (grammarAnalysisResult.value) {
-    return;
+    return
   }
-  grammarAnalysisLoading.value = true;
+  grammarAnalysisLoading.value = true
   chatRequest.grammarInvoke({ message_id: props.messageId }).then((data) => {
-    grammarAnalysisLoading.value = false;
-    grammarAnalysisResult.value = data.data;
-  });
-};
+    grammarAnalysisLoading.value = false
+    grammarAnalysisResult.value = data.data
+  })
+}
 
 const handleTranlate = (message: string) => {
-  translateBetterContentShow.value = !translateBetterContentShow.value;
-};
+  translateBetterContentShow.value = !translateBetterContentShow.value
+}
 
 const handleCopy = (message: string) => {
   uni.setClipboardData({
     data: message,
-    success: () => uni.showToast({ title: '复制成功' }),
-    fail: () => uni.showToast({ title: '复制失败', icon: 'none' })
-  });
-};
+    success: () => uni.showToast({ title: "复制成功" }),
+    fail: () => uni.showToast({ title: "复制失败", icon: "none" }),
+  })
+}
 
 defineExpose({
-  initData
-});
+  initData,
+})
 </script>
 <style lang="scss" scoped>
 .grammar-box {
@@ -114,7 +135,7 @@ defineExpose({
       .handclap-text {
         font-size: 28rpx;
         font-weight: 400;
-        color: #49CEB0;
+        color: #49ceb0;
         line-height: 40rpx;
       }
     }
@@ -162,7 +183,6 @@ defineExpose({
         background-color: rgba(230, 244, 240, 1);
       }
     }
-
   }
 }
 

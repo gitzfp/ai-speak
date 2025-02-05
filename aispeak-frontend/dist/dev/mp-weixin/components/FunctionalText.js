@@ -138,5 +138,5 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     };
   }
 });
-const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__scopeId", "data-v-5ba4dd5b"], ["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/components/FunctionalText.vue"]]);
+const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__scopeId", "data-v-5ba4dd5b"], ["__file", "/Users/zfp/Downloads/ai-speak/aispeak-frontend/src/components/FunctionalText.vue"]]);
 wx.createComponent(Component);

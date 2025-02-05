@@ -1,1 +1,11 @@
-<view class="data-v-234ce7e8"><common-header wx:if="{{a}}" u-s="{{['content']}}" class="header data-v-234ce7e8" u-i="234ce7e8-0" bind:__l="__l" u-p="{{a}}"><text class="data-v-234ce7e8" slot="content">联系我们</text></common-header><view class="contact data-v-234ce7e8"><view class="contact-text data-v-234ce7e8"><text class="data-v-234ce7e8">欢迎随时联系我们反馈产品体验</text></view><image class="contact-image data-v-234ce7e8" src="https://api.zfpai.top/static/contact_us.jpeg"/></view></view>
+<view class="data-v-234ce7e8">
+  <common-header wx:if="{{a}}" u-s="{{['content']}}" class="header data-v-234ce7e8" u-i="234ce7e8-0" bind:__l="__l" u-p="{{a}}">
+    <text class="data-v-234ce7e8" slot="content">联系我们</text>
+  </common-header>
+  <view class="contact data-v-234ce7e8">
+    <view class="contact-text data-v-234ce7e8">
+      <text class="data-v-234ce7e8">欢迎随时联系我们反馈产品体验</text>
+    </view>
+    <image class="contact-image data-v-234ce7e8" src="http://114.116.224.128:8097/static/contact_us.jpeg" />
+  </view>
+</view>

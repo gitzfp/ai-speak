@@ -7,6 +7,7 @@ if (!Math) {
   "./pages/index/index.js";
   "./pages/textbook/index.js";
   "./pages/textbook/courses.js";
+  "./pages/textbook/books.js";
   "./pages/textbook/lesson.js";
   "./pages/index/switchRole.js";
   "./pages/chat/index.js";
@@ -39,7 +40,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     };
   }
 });
-const App = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/App.vue"]]);
+const App = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__file", "/Users/zfp/Downloads/ai-speak/aispeak-frontend/src/App.vue"]]);
 const getHeight = (global) => {
   common_vendor.index.getSystemInfo({
     success: (e) => {

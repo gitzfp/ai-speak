@@ -9,22 +9,41 @@
       <view class="message-text-box" :class="{ 'own-text-box': message.owner }">
         <!-- AI消息 -->
         <view v-if="!message.owner" class="assistant-text-box">
-          <FunctionalText ref="functionalTextRef" :auto-play="message.auto_play || false" :messageId="message.id"
-            :wordClickable="true" :text="message.content" :fileName="message.file_name" :translateShow="translateShow"
-            :textShadow="textShadow" />
+          <FunctionalText
+            ref="functionalTextRef"
+            :auto-play="message.auto_play || false"
+            :messageId="message.id"
+            :wordClickable="true"
+            :text="message.content"
+            :fileName="message.file_name"
+            :translateShow="translateShow"
+            :textShadow="textShadow"
+          />
           <view class="divider"></view>
           <view class="action-container">
             <view class="btn-box" :class="{ active: translateShow }">
-              <image class="action-icon" @tap="handleTranslateText" src="https://api.zfpai.top/static/icon_translate.png" />
+              <image
+                class="action-icon"
+                @tap="handleTranslateText"
+                src="http://114.116.224.128:8097/static/icon_translate.png"
+              />
             </view>
             <view class="btn-box collect-btn-box">
               <Collect type="MESSAGE" :messageId="message.id || ''" />
             </view>
             <view class="btn-box">
-              <image class="action-icon" @tap="handleCopyText" src="https://api.zfpai.top/static/icon_copy_text.png" />
+              <image
+                class="action-icon"
+                @tap="handleCopyText"
+                src="http://114.116.224.128:8097/static/icon_copy_text.png"
+              />
             </view>
             <view class="btn-box" :class="{ active: textShadow }">
-              <image class="action-icon" @tap="handleHint" src="https://api.zfpai.top/static/icon_hint.png" />
+              <image
+                class="action-icon"
+                @tap="handleHint"
+                src="http://114.116.224.128:8097/static/icon_hint.png"
+              />
             </view>
           </view>
         </view>
@@ -32,7 +51,6 @@
         <!-- 用户消息 -->
         <view v-else class="account-text-container">
           <view class="account-text-box">
-
             <!-- 展示语音分析结果 -->
             <!-- <TextPronunciation v-if="message.pronunciation" :content="message.content" :pronunciation="message.pronunciation" @wordClick="handleWordDetail" />
             
@@ -50,13 +68,29 @@
       <!-- 语法 -->
       <view v-if="message.owner" class="grammar-outter-box">
         <LoadingRound v-if="grammarLoading" class="grammar-box" />
-        <view v-else-if="message.pronunciation" class="grammar-box" @tap="handleGrammar">
-          <image v-if="message.achieved_target === true" class="grammar-icon" src="https://api.zfpai.top/static/img/icons/star.png" />
-          <image class="grammar-icon" src="https://api.zfpai.top/static/icon_grammar.png" />
-          <text class="grammar-score">{{ utils.removeDecimal(message.pronunciation.pronunciation_score) }}</text>
+        <view
+          v-else-if="message.pronunciation"
+          class="grammar-box"
+          @tap="handleGrammar"
+        >
+          <image
+            v-if="message.achieved_target === true"
+            class="grammar-icon"
+            src="http://114.116.224.128:8097/static/img/icons/star.png"
+          />
+          <image
+            class="grammar-icon"
+            src="http://114.116.224.128:8097/static/icon_grammar.png"
+          />
+          <text class="grammar-score">{{
+            utils.removeDecimal(message.pronunciation.pronunciation_score)
+          }}</text>
         </view>
         <view v-else class="grammar-box" @tap="handleGrammar">
-          <image class="grammar-icon" src="https://api.zfpai.top/static/icon_grammar.png" />
+          <image
+            class="grammar-icon"
+            src="http://114.116.224.128:8097/static/icon_grammar.png"
+          />
           <text>语法</text>
         </view>
       </view>
@@ -65,47 +99,47 @@
   </view>
 </template>
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted } from "vue";
-import FunctionalText from "@/components/FunctionalText.vue";
-import AudioPlayer from "@/components/AudioPlayer.vue";
-import MessageGrammar from "./MessageGrammarPopup.vue";
-import Collect from "@/components/Collect.vue";
-import type { Message, MessagePage, Session } from "@/models/models";
-import Loading from "@/components/Loading.vue";
-import LoadingRound from "@/components/LoadingRound.vue";
-import chatRequest from "@/api/chat";
-import utils from "@/utils/utils";
+import { ref, computed, nextTick, onMounted } from "vue"
+import FunctionalText from "@/components/FunctionalText.vue"
+import AudioPlayer from "@/components/AudioPlayer.vue"
+import MessageGrammar from "./MessageGrammarPopup.vue"
+import Collect from "@/components/Collect.vue"
+import type { Message, MessagePage, Session } from "@/models/models"
+import Loading from "@/components/Loading.vue"
+import LoadingRound from "@/components/LoadingRound.vue"
+import chatRequest from "@/api/chat"
+import utils from "@/utils/utils"
 
-const functionalTextRef = ref(null);
-const messageGrammarRef = ref(null);
-const grammarLoading = ref(false);
-const translateShow = ref(false);
-const textShadow = ref(false);
+const functionalTextRef = ref(null)
+const messageGrammarRef = ref(null)
+const grammarLoading = ref(false)
+const translateShow = ref(false)
+const textShadow = ref(false)
 
 const props = defineProps<{
-  message: Message;
-}>();
+  message: Message
+}>()
 
 onMounted(() => {
   if (props.message.auto_hint && props.message.auto_hint === true) {
-    textShadow.value = true;
+    textShadow.value = true
   }
   if (props.message.auto_pronunciation) {
-    autoPronunciation();
+    autoPronunciation()
   }
-});
+})
 
 const ownerMessage = computed(() => {
-  return props.message.owner;
-});
+  return props.message.owner
+})
 const containerClass = computed(() => {
-  const messagePosition = props.message.owner ? "right" : "left";
-  return `${messagePosition}-content`;
-});
+  const messagePosition = props.message.owner ? "right" : "left"
+  return `${messagePosition}-content`
+})
 
 const handleTranslateText = () => {
-  translateShow.value = !translateShow.value;
-};
+  translateShow.value = !translateShow.value
+}
 
 const handleCopyText = () => {
   uni.setClipboardData({
@@ -114,19 +148,19 @@ const handleCopyText = () => {
       uni.showToast({
         title: "复制成功",
         icon: "none",
-      });
+      })
     },
-  });
-};
+  })
+}
 
 const handleHint = () => {
-  textShadow.value = !textShadow.value;
-};
+  textShadow.value = !textShadow.value
+}
 
 const handleGrammar = () => {
-  let type = "grammar";
+  let type = "grammar"
   if (props.message.file_name) {
-    type = "pronunciation";
+    type = "pronunciation"
   }
   messageGrammarRef.value.open(
     props.message.id,
@@ -134,41 +168,41 @@ const handleGrammar = () => {
     props.message.file_name,
     props.message.session_id,
     type
-  );
-};
+  )
+}
 
 /**
  * 用于显露到外面的方法，用于外部调用播放
  */
 const autoPlayAudio = () => {
   nextTick(() => {
-    functionalTextRef.value.autoPlayAudio();
-  });
-};
+    functionalTextRef.value.autoPlayAudio()
+  })
+}
 
 const autoPronunciation = () => {
-  grammarLoading.value = true;
+  grammarLoading.value = true
   chatRequest
     .pronunciationInvoke({ message_id: props.message.id })
     .then((data) => {
       // 更新message对象的pronunciation属性
-      props.message.pronunciation = data.data;
-      grammarLoading.value = false;
-    });
-};
+      props.message.pronunciation = data.data
+      grammarLoading.value = false
+    })
+}
 
 /**
  * 用于显露到外面的方法，用于外部调用模糊
  */
 const autoHandleHint = () => {
-  handleHint();
-};
+  handleHint()
+}
 
 defineExpose({
   autoPlayAudio,
   autoHandleHint,
   autoPronunciation,
-});
+})
 </script>
 <style lang="less" scoped>
 .speech-box {

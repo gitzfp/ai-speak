@@ -91,7 +91,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         e: common_vendor.o(($event) => tabChange("2")),
         f: common_vendor.f(wordList.value, (word, k0, i0) => {
           return {
-            a: "b58fe68c-1-" + i0,
+            a: "26e9f1da-1-" + i0,
             b: common_vendor.p({
               collect: word
             })
@@ -104,7 +104,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         j: common_vendor.o(onScroll),
         k: common_vendor.f(sentenceList.value, (sentence, k0, i0) => {
           return {
-            a: "b58fe68c-3-" + i0,
+            a: "26e9f1da-3-" + i0,
             b: common_vendor.p({
               collect: sentence,
               cannotCancel: false
@@ -119,5 +119,5 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     };
   }
 });
-const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/pages/practice/index.vue"]]);
+const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__file", "/Users/zfp/Downloads/ai-speak/aispeak-frontend/src/pages/practice/index.vue"]]);
 wx.createPage(MiniProgramPage);

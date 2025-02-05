@@ -1,7 +1,7 @@
-"use strict";
+"use strict"
 const __config = {
   // basePath: "http://192.168.0.102:8098/api/v1"
-  basePath: "http://localhost:8097/api/v1"
-  // basePath: "https://api.zfpai.top/api/v1"
-};
-exports.__config = __config;
+  // basePath: "http://localhost:8097/api/v1"
+  basePath: "http://114.116.224.128:8097/api/v1",
+}
+exports.__config = __config

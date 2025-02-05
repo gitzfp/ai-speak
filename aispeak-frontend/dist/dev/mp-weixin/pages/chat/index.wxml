@@ -1,1 +1,76 @@
-<view class="chat-box data-v-da04a0a0"><common-header wx:if="{{b}}" class="data-v-da04a0a0" u-s="{{['content']}}" u-i="da04a0a0-0" bind:__l="__l" u-p="{{b}}"><view class="ellipsis data-v-da04a0a0" slot="content">{{a}}</view></common-header><view class="chat-container data-v-da04a0a0"><block wx:for="{{c}}" wx:for-item="message" wx:key="d"><view class="message-content-item data-v-da04a0a0"><message-content wx:if="{{message.c}}" class="r-i-f data-v-da04a0a0" u-r="messageListRef" u-i="{{message.b}}" bind:__l="__l" u-p="{{message.c}}"></message-content></view></block></view><view wx:if="{{d}}" class="chat-bottom-container data-v-da04a0a0"><view wx:if="{{e}}" class="input-bottom-container data-v-da04a0a0" style="{{m}}"><view bindtap="{{f}}" class="voice-icon-box data-v-da04a0a0"><image class="voice-icon data-v-da04a0a0" src="https://api.zfpai.top/static/icon_voice_fixed.png"></image></view><view class="input-box data-v-da04a0a0"><input class="textarea data-v-da04a0a0" bindfocus="{{g}}" confirm-type="send" bindconfirm="{{h}}" style="padding-left:30rpx" bindinput="{{i}}" placeholder="在这里输入文字" value="{{j}}"/></view><view bindtap="{{k}}" class="{{['send-icon-box', 'data-v-da04a0a0', l && 'active']}}"><image class="send-icon data-v-da04a0a0" src="https://api.zfpai.top/static/icon_send.png"></image></view></view><view wx:if="{{n}}" class="data-v-da04a0a0"><prompt wx:if="{{o}}" class="data-v-da04a0a0" u-i="da04a0a0-2" bind:__l="__l" u-p="{{p}}"></prompt><view class="speech-box data-v-da04a0a0"><speech wx:if="{{s}}" class="data-v-da04a0a0" u-s="{{['leftMenu','rightMenu']}}" u-i="da04a0a0-3" bind:__l="__l" u-p="{{s}}"><image bindtap="{{q}}" class="keybord-icon data-v-da04a0a0" src="https://api.zfpai.top/static/icon_keybord.png" slot="leftMenu"></image><image bindtap="{{r}}" class="input-type-switch-btn data-v-da04a0a0" src="https://api.zfpai.top/static/icon_settings.png" slot="rightMenu"></image></speech></view></view></view><view wx:if="{{t}}" class="finish-buttons data-v-da04a0a0"><button class="practice-again data-v-da04a0a0" bindtap="{{v}}">再次练习</button><button class="feedback-button data-v-da04a0a0" bindtap="{{w}}">查看评分</button></view><view class="floating-button data-v-da04a0a0" bindtap="{{x}}"><image class="data-v-da04a0a0" src="https://api.zfpai.top/static/img/note.png" mode="aspectFit"/></view><uni-popup wx:if="{{C}}" class="r data-v-da04a0a0" u-s="{{['d']}}" u-r="popup" u-i="da04a0a0-4" bind:__l="__l" u-p="{{C}}"><view class="modal-content data-v-da04a0a0"><view class="clip data-v-da04a0a0"></view><view class="modal-body data-v-da04a0a0"><view class="section data-v-da04a0a0"><text class="section-title data-v-da04a0a0">情景描述：</text><text class="section-content data-v-da04a0a0">{{y}}</text></view><view class="section data-v-da04a0a0"><text class="section-title data-v-da04a0a0">任务描述：</text><text class="section-content data-v-da04a0a0">你需要在4轮之内完成以下任务，每完成一个，会获取⭐奖励（点击右下角提示随时查看任务）</text></view><view class="section data-v-da04a0a0"><text class="section-title data-v-da04a0a0">请完成以下目标：</text><view class="section-content data-v-da04a0a0"><view wx:for="{{z}}" wx:for-item="target" wx:key="d" class="target-item data-v-da04a0a0"><text class="star data-v-da04a0a0">⭐</text><view class="target-text data-v-da04a0a0"><text class="text-cn data-v-da04a0a0">{{target.a}}</text><text class="text-en data-v-da04a0a0">{{target.b}}</text><view class="audio-icon data-v-da04a0a0" bindtap="{{target.c}}"><image class="data-v-da04a0a0" src="https://api.zfpai.top/static/icon_audio.png" mode="aspectFit"></image></view></view></view></view></view></view><view class="modal-footer data-v-da04a0a0"><button class="btn-ok data-v-da04a0a0" bindtap="{{A}}">知道了</button></view></view></uni-popup></view>
+<view class="chat-box data-v-da04a0a0">
+  <common-header wx:if="{{b}}" class="data-v-da04a0a0" u-s="{{['content']}}" u-i="da04a0a0-0" bind:__l="__l" u-p="{{b}}">
+    <view class="ellipsis data-v-da04a0a0" slot="content">{{a}}</view>
+  </common-header>
+  <view class="chat-container data-v-da04a0a0">
+    <block wx:for="{{c}}" wx:for-item="message" wx:key="d">
+      <view class="message-content-item data-v-da04a0a0">
+        <message-content wx:if="{{message.c}}" class="r-i-f data-v-da04a0a0" u-r="messageListRef" u-i="{{message.b}}" bind:__l="__l" u-p="{{message.c}}"></message-content>
+      </view>
+    </block>
+  </view>
+  <view wx:if="{{d}}" class="chat-bottom-container data-v-da04a0a0">
+    <view wx:if="{{e}}" class="input-bottom-container data-v-da04a0a0" style="{{m}}">
+      <view bindtap="{{f}}" class="voice-icon-box data-v-da04a0a0">
+        <image class="voice-icon data-v-da04a0a0" src="http://114.116.224.128:8097/static/icon_voice_fixed.png"></image>
+      </view>
+      <view class="input-box data-v-da04a0a0">
+        <input class="textarea data-v-da04a0a0" bindfocus="{{g}}" confirm-type="send" bindconfirm="{{h}}" style="padding-left:30rpx" bindinput="{{i}}" placeholder="在这里输入文字" value="{{j}}" />
+      </view>
+      <view bindtap="{{k}}" class="{{['send-icon-box', 'data-v-da04a0a0', l && 'active']}}">
+        <image class="send-icon data-v-da04a0a0" src="http://114.116.224.128:8097/static/icon_send.png"></image>
+      </view>
+    </view>
+    <view wx:if="{{n}}" class="data-v-da04a0a0">
+      <prompt wx:if="{{o}}" class="data-v-da04a0a0" u-i="da04a0a0-2" bind:__l="__l" u-p="{{p}}"></prompt>
+      <view class="speech-box data-v-da04a0a0">
+        <speech wx:if="{{s}}" class="data-v-da04a0a0" u-s="{{['leftMenu','rightMenu']}}" u-i="da04a0a0-3" bind:__l="__l" u-p="{{s}}">
+          <image bindtap="{{q}}" class="keybord-icon data-v-da04a0a0" src="http://114.116.224.128:8097/static/icon_keybord.png" slot="leftMenu"></image>
+          <image bindtap="{{r}}" class="input-type-switch-btn data-v-da04a0a0" src="http://114.116.224.128:8097/static/icon_settings.png" slot="rightMenu"></image>
+        </speech>
+      </view>
+    </view>
+  </view>
+  <view wx:if="{{t}}" class="finish-buttons data-v-da04a0a0">
+    <button class="practice-again data-v-da04a0a0" bindtap="{{v}}">再次练习</button>
+    <button class="feedback-button data-v-da04a0a0" bindtap="{{w}}">查看评分</button>
+  </view>
+  <view class="floating-button data-v-da04a0a0" bindtap="{{x}}">
+    <image class="data-v-da04a0a0" src="http://114.116.224.128:8097/static/img/note.png" mode="aspectFit" />
+  </view>
+  <uni-popup wx:if="{{C}}" class="r data-v-da04a0a0" u-s="{{['d']}}" u-r="popup" u-i="da04a0a0-4" bind:__l="__l" u-p="{{C}}">
+    <view class="modal-content data-v-da04a0a0">
+      <view class="clip data-v-da04a0a0"></view>
+      <view class="modal-body data-v-da04a0a0">
+        <view class="section data-v-da04a0a0">
+          <text class="section-title data-v-da04a0a0">情景描述：</text>
+          <text class="section-content data-v-da04a0a0">{{y}}</text>
+        </view>
+        <view class="section data-v-da04a0a0">
+          <text class="section-title data-v-da04a0a0">任务描述：</text>
+          <text class="section-content data-v-da04a0a0">
+            你需要在4轮之内完成以下任务，每完成一个，会获取⭐奖励（点击右下角提示随时查看任务）
+          </text>
+        </view>
+        <view class="section data-v-da04a0a0">
+          <text class="section-title data-v-da04a0a0">请完成以下目标：</text>
+          <view class="section-content data-v-da04a0a0">
+            <view wx:for="{{z}}" wx:for-item="target" wx:key="d" class="target-item data-v-da04a0a0">
+              <text class="star data-v-da04a0a0">⭐</text>
+              <view class="target-text data-v-da04a0a0">
+                <text class="text-cn data-v-da04a0a0">{{target.a}}</text>
+                <text class="text-en data-v-da04a0a0">{{target.b}}</text>
+                <view class="audio-icon data-v-da04a0a0" bindtap="{{target.c}}">
+                  <image class="data-v-da04a0a0" src="http://114.116.224.128:8097/static/icon_audio.png" mode="aspectFit"></image>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="modal-footer data-v-da04a0a0">
+        <button class="btn-ok data-v-da04a0a0" bindtap="{{A}}">知道了</button>
+      </view>
+    </view>
+  </uni-popup>
+</view>

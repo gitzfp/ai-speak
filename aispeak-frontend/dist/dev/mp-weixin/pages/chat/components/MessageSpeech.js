@@ -18,11 +18,11 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     };
     return (_ctx, _cache) => {
       return {
-        a: common_vendor.sr("speechRef", "1242a7bb-0"),
+        a: common_vendor.sr("speechRef", "49dadf7c-0"),
         b: common_vendor.o(handleSuccess)
       };
     };
   }
 });
-const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/pages/chat/components/MessageSpeech.vue"]]);
+const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__file", "/Users/zfp/Downloads/ai-speak/aispeak-frontend/src/pages/chat/components/MessageSpeech.vue"]]);
 wx.createComponent(Component);

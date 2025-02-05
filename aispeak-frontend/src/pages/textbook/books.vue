@@ -476,10 +476,14 @@ async function fetchAndProcessData() {
     let jsonData = await unzipData(decryptedData)
     parseJsonData(jsonData, "Orginal")
     // 在后台处理资源
-    setTimeout(async () => {
-      jsonData = await processResources(jsonData)
-      await utils.uploadBinaryData(ossKey, jsonData)
-    }, 0)
+    console.log('isWechat:',utils.isWechat())
+    if(!utils.isWechat()){
+      setTimeout(async () => {
+        jsonData = await processResources(jsonData)
+        await utils.uploadBinaryData(ossKey, jsonData)
+      }, 0)
+    }
+   
   } catch (err) {
     console.error("Error:", err)
     error.value = "加载数据失败，请重试"

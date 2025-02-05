@@ -1,1 +1,31 @@
-<view class="topic-container data-v-ce3e018f"><view class="home-data data-v-ce3e018f"><view class="tab-box data-v-ce3e018f"><view class="{{['data-v-ce3e018f', a]}}" bindtap="{{b}}">角色扮演 </view></view><view class="type-box data-v-ce3e018f"><loading-round wx:if="{{c}}" class="data-v-ce3e018f" u-i="ce3e018f-0" bind:__l="__l"/><view wx:if="{{d}}" class="free-topic-box data-v-ce3e018f" bindtap="{{e}}"><view class="free-topic-title data-v-ce3e018f"> 自由畅聊 </view><view class="free-topic-description data-v-ce3e018f"> 写下你想要的场景，让你的角色扮演更加自由 </view></view><view class="group-box data-v-ce3e018f"><view wx:for="{{f}}" wx:for-item="group" wx:key="b" class="{{['data-v-ce3e018f', group.c]}}" bindtap="{{group.d}}"><view class="group-title data-v-ce3e018f">{{group.a}}</view></view></view><view class="topic-box data-v-ce3e018f"><view wx:for="{{g}}" wx:for-item="topic" wx:key="f" class="topic-item data-v-ce3e018f" bindtap="{{topic.g}}"><image wx:if="{{topic.a}}" class="topic-image data-v-ce3e018f" src="{{topic.b}}" mode="aspectFill"/><view class="topic-title data-v-ce3e018f">{{topic.c}}</view><view class="level-box data-v-ce3e018f"><image wx:for="{{topic.d}}" wx:for-item="index" wx:for-index="i1" wx:key="a" class="level-icon data-v-ce3e018f" src="https://api.zfpai.top/static/img/icons/star.png"/></view><view wx:if="{{topic.e}}" class="completed-box data-v-ce3e018f"><view class="completed-text data-v-ce3e018f"> 已学习 </view></view></view></view></view></view></view>
+<view class="topic-container data-v-ce3e018f">
+  <view class="home-data data-v-ce3e018f">
+    <view class="tab-box data-v-ce3e018f">
+      <view class="{{['data-v-ce3e018f', a]}}" bindtap="{{b}}">角色扮演</view>
+    </view>
+    <view class="type-box data-v-ce3e018f">
+      <loading-round wx:if="{{c}}" class="data-v-ce3e018f" u-i="ce3e018f-0" bind:__l="__l" />
+      <view wx:if="{{d}}" class="free-topic-box data-v-ce3e018f" bindtap="{{e}}">
+        <view class="free-topic-title data-v-ce3e018f">自由畅聊</view>
+        <view class="free-topic-description data-v-ce3e018f">写下你想要的场景，让你的角色扮演更加自由</view>
+      </view>
+      <view class="group-box data-v-ce3e018f">
+        <view wx:for="{{f}}" wx:for-item="group" wx:key="b" class="{{['data-v-ce3e018f', group.c]}}" bindtap="{{group.d}}">
+          <view class="group-title data-v-ce3e018f">{{group.a}}</view>
+        </view>
+      </view>
+      <view class="topic-box data-v-ce3e018f">
+        <view wx:for="{{g}}" wx:for-item="topic" wx:key="f" class="topic-item data-v-ce3e018f" bindtap="{{topic.g}}">
+          <image wx:if="{{topic.a}}" class="topic-image data-v-ce3e018f" src="{{topic.b}}" mode="aspectFill" />
+          <view class="topic-title data-v-ce3e018f">{{topic.c}}</view>
+          <view class="level-box data-v-ce3e018f">
+            <image wx:for="{{topic.d}}" wx:for-item="index" wx:for-index="i1" wx:key="a" class="level-icon data-v-ce3e018f" src="http://114.116.224.128:8097/static/img/icons/star.png" />
+          </view>
+          <view wx:if="{{topic.e}}" class="completed-box data-v-ce3e018f">
+            <view class="completed-text data-v-ce3e018f">已学习</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

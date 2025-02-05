@@ -1,6 +1,4 @@
 {
   "navigationBarTitleText": "课程列表",
-  "usingComponents": {
-    "uni-load-more": "../../uni_modules/uni-load-more/components/uni-load-more/uni-load-more"
-  }
+  "usingComponents": {}
 }

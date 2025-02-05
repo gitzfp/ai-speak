@@ -92,10 +92,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         console.error("Load lesson error:", e);
       }
     };
-    common_vendor.onLoad((option) => {
+    common_vendor.onLoad(async (option) => {
       if (option.type === "LESSON") {
         session.value.type = "LESSON";
-        loadLesson(option.lessonId);
+        await loadLesson(option.lessonId);
       }
       initData(option.sessionId, option.sessionName);
       common_vendor.index.setNavigationBarTitle({
@@ -238,6 +238,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     };
     const initData = (sessionId, sessionName) => {
       api_chat.chatRequest.sessionDetailsGet({ sessionId }).then((res) => {
+        var _a2;
         session.value = res.data;
         session.value.name = sessionName;
         session.value.completed = res.data.completed;
@@ -256,25 +257,38 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             auto_pronunciation: false
           };
           messages.value.push(aiMessage);
-          api_chat.chatRequest.sessionInitGreeting(sessionId).then((res2) => {
-            messages.value.pop();
-            session.value.messages.list.push(res2.data);
-            messages.value.push({
-              id: res2.data.id,
-              session_id: res2.data.session_id,
-              content: res2.data.content,
-              role: res2.data.role,
-              owner: res2.data.role === "USER",
-              auto_hint: accountSetting.value.auto_text_shadow == 1,
-              auto_play: accountSetting.value.auto_playing_voice == 1,
-              auto_pronunciation: false,
-              pronunciation: null
+          if ((_a2 = lessonData.value) == null ? void 0 : _a2.task_target) {
+            const formattedTargets = lessonData.value.task_target.map((target) => ({
+              id: target.id || "",
+              info_cn: target.info_cn || "",
+              info_en: target.info_en || ""
+            }));
+            api_chat.chatRequest.sessionInitGreeting(sessionId, formattedTargets).then((res2) => {
+              messages.value.pop();
+              session.value.messages.list.push(res2.data);
+              messages.value.push({
+                id: res2.data.id,
+                session_id: res2.data.session_id,
+                content: res2.data.content,
+                role: res2.data.role,
+                owner: res2.data.role === "USER",
+                auto_hint: accountSetting.value.auto_text_shadow == 1,
+                auto_play: accountSetting.value.auto_playing_voice == 1,
+                auto_pronunciation: false,
+                pronunciation: null
+              });
+              common_vendor.nextTick$1(() => {
+                scrollToBottom();
+              });
+            }).catch((error) => {
+              console.error("初始化对话失败:", error);
+              common_vendor.index.showToast({
+                title: "初始化对话失败",
+                icon: "none"
+              });
             });
-            common_vendor.nextTick$1(() => {
-              scrollToBottom();
-            });
-          });
-          return;
+            return;
+          }
         }
         session.value.messages.list.forEach((item) => {
           messages.value.push({
@@ -416,5 +430,5 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     };
   }
 });
-const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__scopeId", "data-v-da04a0a0"], ["__file", "/Users/fpz/Documents/GitHub/ai-speak/aispeak-frontend/src/pages/chat/index.vue"]]);
+const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["__scopeId", "data-v-da04a0a0"], ["__file", "/Users/zfp/Downloads/ai-speak/aispeak-frontend/src/pages/chat/index.vue"]]);
 wx.createPage(MiniProgramPage);
