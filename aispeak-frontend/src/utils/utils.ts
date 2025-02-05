@@ -41,7 +41,7 @@ const uploadFileToOSS = async (ossKey: string, fileData: any, retries = MAX_RETR
           content: fileData
         }
       });
-      console.log('JSON 数据上传成功:', data, fileData);
+      console.log('JSON 数据上传成功:', data);
       return data;
     }
 
@@ -186,13 +186,22 @@ export default {
   },
   checkFileInOSS: async (ossKey: string) => {
     try {
+      if(isWechat()){
+        const { data } = await wx.request({
+          url: `${baseUrl}/ali-oss/check-file/?oss_key=${ossKey}`,
+          method: 'GET',
+          enableHttpDNS: true,
+          httpDNSServiceId: "wxa410372c837a5f26",
+        });
+        return data
+      }
       const { data } = await uni.request({
         url: `${baseUrl}/ali-oss/check-file/?oss_key=${ossKey}`,
         method: 'GET'
       });
       return data;
     } catch (error) {
-      console.error('检查文件失败:', error);
+      console.error('检查文件失败:'+ossKey, error);
       return { exists: false };
     }
   },

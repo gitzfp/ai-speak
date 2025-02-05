@@ -165,7 +165,7 @@ const fetchSentences = async () => {
       sentences.value = data.list.flatMap((chapter) =>
         chapter.groups.flatMap((group) => group.sentences)
       )
-      console.log("句子数据获取成功（来自原接口）:"
+      console.log("句子数据获取成功（来自原接口）")
       // 将数据上传到阿里云 OSS
       const jsonString = JSON.stringify(data)
       await utils.uploadFileToOSS(ossKey, jsonString)
@@ -375,7 +375,7 @@ async function getBookUrl() {
   // 检查文件是否已存储在阿里云 OSS 中
   const ossKey = `proxy/book/${book_id.value}/getBookUrl.json`
   const checkResult = await utils.checkFileInOSS(ossKey)
-  if (checkResult?.data.exists) {
+  if (checkResult?.data?.exists) {
     // 如果已存储，直接从 FastAPI 获取文件 URL
     const data = await utils.getFileFromOSS(ossKey)
     console.log("books.json 已存储，直接从 FastAPI 获取文件 URL", data)
@@ -453,7 +453,7 @@ async function fetchAndProcessData() {
     const bookUrl = await getBookUrl()
     const ossKey = processOssKeyUrl(bookUrl)
     const checkResult = await utils.checkFileInOSS(ossKey)
-    if (checkResult?.data.exists) {
+    if (checkResult?.data?.exists) {
       // 如果已存储，直接从 FastAPI 获取文件 URL
       const data = await utils.getFileFromOSS(ossKey, true)
 
