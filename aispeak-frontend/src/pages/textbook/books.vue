@@ -70,14 +70,18 @@
 
       <!-- 复读模式选择框 -->
       <view v-if="showRepeatSelection" class="repeat-selection">
-        <view class="repeat-header">选择复读范围</view>
-        <picker
-          mode="selector"
-          :range="repeatOptions"
-          @change="handleRepeatSelection"
-        >
-          <view class="repeat-picker">选择复读段落</view>
-        </picker>
+        <view class="repeat-header">选择复读段落</view>
+        <view class="repeat-options">
+          <view
+            v-for="(option, index) in repeatOptions"
+            :key="index"
+            class="repeat-option"
+            :class="{ 'repeat-option-active': index === repeatStartIndex }"
+            @click="handleRepeatSelection({ detail: { value: index } })"
+          >
+            {{ option }}
+          </view>
+        </view>
         <view class="repeat-actions">
           <button @click="confirmRepeat">确认</button>
           <button @click="cancelRepeat">取消</button>
@@ -566,14 +570,13 @@ const debounceFlag = ref(false)
 
 // 修改后的翻页处理函数
 function handlePageChange(e) {
+  console.log('handlePageChange'+debounceFlag.value,e.detail) 
   if (debounceFlag.value) return
   debounceFlag.value = true
   // 立即停止当前页音频
   stopCurrentAudio()
-  
   // 使用nextTick确保更新顺序
-  uni.nextTick(() => {
-    currentPage.value = e.detail.current
+  currentPage.value = e.detail.current
     isPlaying.value = false
     
     // 更新标题逻辑
@@ -588,8 +591,7 @@ function handlePageChange(e) {
     // 防抖解除（可根据实际需求调整时间）
     setTimeout(() => {
       debounceFlag.value = false
-    }, 300)
-  })
+    }, 300) 
 }
 
 // 目录开关
@@ -715,16 +717,18 @@ function togglePlayCurrentPage() {
 // 开始复读模式
 function startRepeatMode() {
   showRepeatSelection.value = true
+  console.log("开始复读模式"+currentPage.value, bookPages.value[currentPage.value])
   // 生成复读段落选项
   repeatOptions.value = bookPages.value[currentPage.value].track_info.map(
-    (track, index) => `段落 ${index + 1}`
+    (track) => track.track_text || `段落 ${track.track_id}`
   )
 }
 
 // 处理复读段落选择
 function handleRepeatSelection(e) {
-  repeatStartIndex.value = e.detail.value
-  repeatEndIndex.value = e.detail.value
+  const selectedIndex = e.detail.value
+  repeatStartIndex.value = selectedIndex
+  repeatEndIndex.value = selectedIndex
 }
 
 // 确认复读
@@ -939,17 +943,16 @@ onBeforeUnmount(() => {
 
 .repeat-selection {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  bottom: 0;
+  width: 100%;
   background-color: #fff;
-  padding: 20px;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   z-index: 1000;
 }
 
 .repeat-header {
+  padding: 10px 10px 0px 10px;
   font-size: 18px;
   font-weight: bold;
   margin-bottom: 10px;
@@ -977,4 +980,25 @@ onBeforeUnmount(() => {
   border-radius: 20px;
   z-index: 1000;
 }
+
+.repeat-options {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+}
+
+.repeat-option {
+  padding: 12px;
+  border: 1px solid #eee;
+  margin: 5px 0;
+  border-radius: 5px;
+  background-color: #f8f8f8;
+}
+
+.repeat-option-active {
+  background-color: #007AFF;
+  color: white;
+  border-color: #007AFF;
+}
+
 </style>
