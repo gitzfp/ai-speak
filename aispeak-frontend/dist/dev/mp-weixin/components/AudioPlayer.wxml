@@ -1,9 +1,0 @@
-<view bindtap="{{e}}" class="speech-container data-v-9e3d83e8" title="{{f}}">
-  <view class="playing-ico data-v-9e3d83e8">
-    <loading-round wx:if="{{a}}" class="data-v-9e3d83e8" u-i="9e3d83e8-0" bind:__l="__l"></loading-round>
-    <block wx:else>
-      <image wx:if="{{b}}" style="width:36rpx;height:36rpx" class="{{['icon', 'message-playing-icon', 'play-ico', 'data-v-9e3d83e8', c && 'reverse']}}" src="http://114.116.224.128:8097/static/voice_playing.gif" mode="heightFix"></image>
-      <image wx:else style="width:36rpx;height:36rpx" class="{{['icon', 'message-playing-icon', 'playing-ico', 'data-v-9e3d83e8', d && 'reverse']}}" src="http://114.116.224.128:8097/static/voice_play.png" mode="heightFix"></image>
-    </block>
-  </view>
-</view>

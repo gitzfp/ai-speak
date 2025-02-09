@@ -1,1 +1,0 @@
-"use strict";const e=require("../common/vendor.js"),o=require("../api/chat.js"),t=e.ref(1),n=e.ref(!1);exports.useUserInfo=function(){const r=e.ref(1);return e.onMounted((()=>{n.value=!0,o.chatRequest.sessionDefaultGet({}).then((e=>{t.value=e.data})),n.value=!1})),{globalUserInfo:t,globalLoading:n,localCount:r}};

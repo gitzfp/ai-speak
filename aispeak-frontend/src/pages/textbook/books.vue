@@ -26,6 +26,9 @@
       <swiper
         class="swiper-container"
         :current="currentPage"
+        :skip-hidden-item-layout="true"  
+        :damping="200"  
+        :duration="300"
         @change="handlePageChange"
       >
         <swiper-item v-for="page in bookPages" :key="page.page_id">
@@ -262,6 +265,7 @@ function playAudio(track) {
   audio.src = track.track_url_source
   audio.play()
 }
+
 
 // Update stopCurrentAudio to clean up properly
 function stopCurrentAudio() {
@@ -557,22 +561,35 @@ function getTrackStyle(track, pageId) {
   }
 }
 
-// 翻页处理
+// 增加防抖控制
+const debounceFlag = ref(false)
+
+// 修改后的翻页处理函数
 function handlePageChange(e) {
-  currentPage.value = e.detail.current
-  stopCurrentAudio() // 翻页时停止音频
-  isPlaying.value = false // 重置播放状态
-  console.log("翻页处理", currentPage.value, catalogData.value)
-  // 更新页面标题
-  const currentChapter = catalogData.value.find(
-    (chapter) => chapter.page_no === currentPage.value
-  )
-  if (currentChapter?.title) {
-    pageTitle.value = currentChapter.title
-    uni.setNavigationBarTitle({
-      title: currentChapter.title,
-    })
-  }
+  if (debounceFlag.value) return
+  debounceFlag.value = true
+  // 立即停止当前页音频
+  stopCurrentAudio()
+  
+  // 使用nextTick确保更新顺序
+  uni.nextTick(() => {
+    currentPage.value = e.detail.current
+    isPlaying.value = false
+    
+    // 更新标题逻辑
+    const currentChapter = catalogData.value.find(
+      chapter => chapter.page_no === e.detail.current
+    )
+    if (currentChapter?.title) {
+      pageTitle.value = currentChapter.title
+      uni.setNavigationBarTitle({ title: currentChapter.title })
+    }
+    
+    // 防抖解除（可根据实际需求调整时间）
+    setTimeout(() => {
+      debounceFlag.value = false
+    }, 300)
+  })
 }
 
 // 目录开关

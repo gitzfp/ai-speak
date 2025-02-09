@@ -1,1 +1,0 @@
-<speech class="r" u-s="{{['leftMenu','rightMenu']}}" bindsuccess="{{b}}" u-r="speechRef" u-i="49dadf7c-0" bind:__l="__l"><view slot="leftMenu"><slot name="leftMenu"></slot></view><view slot="rightMenu"><slot name="rightMenu"></slot></view></speech>

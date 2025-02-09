@@ -1,9 +1,0 @@
-{
-  "component": true,
-  "usingComponents": {
-    "uni-popup": "../../../uni_modules/uni-popup/components/uni-popup/uni-popup",
-    "functional-text": "../../../components/FunctionalText",
-    "speech": "./MessageSpeech",
-    "loading-round": "../../../components/LoadingRound"
-  }
-}

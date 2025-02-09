@@ -2,5 +2,5 @@
 /aispeak-frontend/package-lock.json
 /aispeak-frontend/node_modules/*
 *.pyc
-/aispeak-uniapp/dist/
+/aispeak-frontend/dist/*
 /*/.idea/

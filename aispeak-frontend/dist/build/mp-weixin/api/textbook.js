@@ -1,1 +1,0 @@
-"use strict";const e=require("../axios/api.js"),t={getTextbookDetail:t=>e.request(`/textbook/${t}`,"GET"),getCourseDetail:(t,o)=>e.request(`/textbook/${t}/category/${o}/lessons`,"GET"),getLessonDetail:t=>e.request(`/textbook/lesson/${t}`,"GET")};exports.textbookRequest=t;
