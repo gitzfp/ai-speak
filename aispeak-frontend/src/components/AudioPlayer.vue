@@ -28,7 +28,7 @@
 /**
  * @description: 语音播放组件
  */
-import { ref, onMounted, inject } from "vue"
+import { ref, onMounted, inject,onUnmounted,getCurrentInstance} from "vue"
 import LoadingRound from "@/components/LoadingRound.vue"
 import { nextTick } from "vue"
 import utils from "@/utils/utils"
@@ -50,12 +50,24 @@ const props = defineProps<{
 const transformFileLoading = ref(false)
 const speechLoading = ref(false)
 const speechUrl = ref("")
+const $bus: any = getCurrentInstance()?.appContext.config.globalProperties.$bus
+
 
 onMounted(() => {
   if (props.autoPlay) {
     handleSpeech()
   }
+  $bus.on("autostopAudio", autostopAudio)
 })
+onUnmounted(() => {
+  $bus.off("autostopAudio", autostopAudio)
+  autostopAudio()
+})
+
+function autostopAudio() {
+  audioPlayer.stopAudio()
+}
+
 
 const handleSpeech = async () => {
   let audioUrl = ""

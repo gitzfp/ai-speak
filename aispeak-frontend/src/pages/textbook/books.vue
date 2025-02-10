@@ -512,7 +512,7 @@ onMounted(() => {
       if (imageInfo) {
         imageRatios.value[pageId] = {
           ...imageInfo,
-          containerWidth: uni.getSystemInfoSync().windowWidth,
+          containerWidth: uni.getWindowInfo().windowWidth,
         }
       }
     })
@@ -540,7 +540,7 @@ function onImageLoad(e, pageId) {
     width,
     height,
     ratio: height / width,
-    containerWidth: uni.getSystemInfoSync().windowWidth,
+    containerWidth: uni.getWindowInfo().windowWidth,
   }
 }
 
@@ -549,7 +549,7 @@ function getTrackStyle(track, pageId) {
   const imageInfo = imageRatios.value[pageId]
   if (!imageInfo) return {}
 
-  const containerWidth = uni.getSystemInfoSync().windowWidth
+  const containerWidth = uni.getWindowInfo().windowWidth
   const imageHeight = containerWidth * imageInfo.ratio
 
   // 如果容器宽度发生变化，更新存储的宽度
@@ -571,6 +571,13 @@ const debounceFlag = ref(false)
 // 修改后的翻页处理函数
 function handlePageChange(e) {
   console.log('handlePageChange'+debounceFlag.value,e.detail) 
+
+  //有复读的时候退出复读
+  if (isRepeatMode.value) {
+    exitRepeatMode()
+  }
+
+
   if (debounceFlag.value) return
   debounceFlag.value = true
   // 立即停止当前页音频

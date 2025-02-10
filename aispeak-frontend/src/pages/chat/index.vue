@@ -533,6 +533,7 @@ const initData = (sessionId: string, sessionName: string) => {
  * 回到主页面
  */
 const handleBackPage = () => {
+  $bus.emit("autostopAudio")
   // 如果是话题的话，提示用户是否结束些次话题
   if (session.value.type === "TOPIC" || session.value.type === "LESSON") {
     uni.showModal({
