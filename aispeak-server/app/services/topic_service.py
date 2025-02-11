@@ -65,7 +65,7 @@ class TopicService:
         )
         return topic_message_params
     
-    def get_lesson_message_params(self, session_id: str) -> AITopicMessageParams:
+    def get_lesson_message_params(self, session_id: str):
         """获取课程的prompt"""
         logging.info(f"Getting lesson message params for session: {session_id}")
         
@@ -105,7 +105,12 @@ class TopicService:
         } for target in task_targets]
         
         logging.info(f"Task targets: {json.dumps(task_target_list, ensure_ascii=False)}")
-        logging.info(f"Teacher entity: {teach_entity.__dict__}")
+        
+        # Add null check before accessing __dict__
+        if teach_entity:
+            logging.info(f"Teacher entity: {teach_entity.__dict__}")
+        else:
+            logging.warning("Teacher entity is None")
         
         styles = []
         if teach_entity.role_short_name:
