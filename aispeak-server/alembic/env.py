@@ -11,6 +11,7 @@ from app.db.sys_entities import *  # noqa: F401
 from app.db.account_entities import *  # noqa: F401
 from app.db.topic_entities import *
 from app.db.textbook_entities import *
+from app.db.words_entities import *
 
 target_metadata = Base.metadata
 print("Target Metadata Tables:", target_metadata.tables.keys())  # 输出所有表名
