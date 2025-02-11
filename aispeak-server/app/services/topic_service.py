@@ -111,19 +111,29 @@ class TopicService:
             logging.info(f"Teacher entity: {teach_entity.__dict__}")
         else:
             logging.warning("Teacher entity is None")
+            # Create default teacher parameters
+            return AITopicMessageParams(
+                name="Default Teacher",
+                language="en-US",
+                prompt="I am your English teacher.",
+                speech_role_name="en-US-JennyNeural",
+                styles=[],
+                task_target_list=task_target_list,
+                completed_targets=completed_targets
+            )
         
         styles = []
-        if teach_entity.role_short_name:
+        if teach_entity and teach_entity.role_short_name:  # Add null check here
             voice_role_config = get_azure_voice_role_by_short_name(
                 teach_entity.role_short_name
             )
             styles = voice_role_config["style_list"]
         
         topic_message_params = AITopicMessageParams(
-            name=teach_entity.name,
-            language=teach_entity.language,
-            prompt=teach_entity.prompt,
-            speech_role_name=teach_entity.role_short_name,
+            name=teach_entity.name if teach_entity else "Default Teacher",
+            language=teach_entity.language if teach_entity else "en-US",
+            prompt=teach_entity.prompt if teach_entity else "I am your English teacher.",
+            speech_role_name=teach_entity.role_short_name if teach_entity else "en-US-JennyNeural",
             styles=styles,
             task_target_list=task_target_list,
             completed_targets=completed_targets
