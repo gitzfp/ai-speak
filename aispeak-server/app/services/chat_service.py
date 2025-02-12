@@ -413,6 +413,28 @@ class ChatService:
         self.db.add(message_grammar)
         self.db.commit()
         return pronunciation_result
+    
+    def file_pronunciation(self, dto: FilePronunciationDTO, account_id: str):
+        """发单评估"""
+        file_full_path = voice_file_get_path(dto.file_name)
+        # 检查文件是否存在
+        if not os.path.exists(file_full_path):
+            raise UserAccessDeniedException("语音文件不存在")
+        target_language = self.account_service.get_account_target_language(account_id)
+        # 进行评分
+        try:
+            pronunciation_result = word_speech_pronunciation(
+                dto.content, file_full_path, language=target_language
+            )
+            logging.info("end")
+        except Exception as e:
+            # 输出错误信息
+            logging.exception(
+                f"file_full_path:{file_full_path}\n content:{dto.content}", e
+            )
+            raise UserAccessDeniedException("语音评估失败")
+
+        return pronunciation_result
 
     def message_speech_content(self, dto: TransformContentSpeechDTO, account_id: str):
         """如果file表中已经存在文件的保存，则直接返回，如果不存在，生成一份并保存"""

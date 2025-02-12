@@ -63,11 +63,16 @@
         <view class="tool-item" @click="startRepeatMode">
           <text>复读</text>
         </view>
+        <view class="tool-item" @click="goToassess">
+          <text>测评</text>
+        </view>
         <view class="tool-item" @click="goToChatPage">
           <text>口语</text>
         </view>
       </view>
 
+      <!-- 复读蒙版层 -->
+      <view v-if="showRepeatSelection" class="fdmask" @click="cancelRepeat"></view>
       <!-- 复读模式选择框 -->
       <view v-if="showRepeatSelection" class="repeat-selection">
         <view class="repeat-header">选择复读段落</view>
@@ -93,6 +98,9 @@
         <text>复读模式中...</text>
         <button @click="exitRepeatMode">退出复读</button>
       </view>
+
+      <AssessPopup :repeatOptions="repeatOptions" :showAssessSelection="showAssessSelection" @assessPopupHide="assessPopupHide" />
+
     </view>
   </view>
 </template>
@@ -103,9 +111,9 @@ import { onLoad } from "@dcloudio/uni-app"
 import CryptoJS from "crypto-js"
 import JSZip from "jszip"
 import utils from "@/utils/utils"
-import env from "@/config/env" // 导入 env.ts
+import env from "@/config/env" 
 import topicRequest from "@/api/topic"
-
+import AssessPopup from "./AssessPopup.vue"
 const baseUrl = env.basePath // 获取 basePath
 
 // 定义响应式数据
@@ -125,6 +133,9 @@ const isRepeatMode = ref(false) // 是否处于复读模式
 const repeatStartIndex = ref(0) // 复读起始段落
 const repeatEndIndex = ref(0) // 复读结束段落
 const repeatOptions = ref([]) // 复读段落选项
+
+const showAssessSelection = ref(false) // 测评 总弹窗显示控制
+
 
 // 获取页面参数中的 book_id
 const book_id = ref("")
@@ -730,6 +741,15 @@ function startRepeatMode() {
     (track) => track.track_text || `段落 ${track.track_id}`
   )
 }
+// 开始测评
+function goToassess() {
+  showAssessSelection.value = true
+  console.log("开始测评模式")
+  // 生成测评段落选项
+  repeatOptions.value = bookPages.value[currentPage.value].track_info.map(
+    (track) => track.track_text || `段落 ${track.track_id}`
+  )
+}
 
 // 处理复读段落选择
 function handleRepeatSelection(e) {
@@ -748,6 +768,12 @@ function confirmRepeat() {
 // 取消复读
 function cancelRepeat() {
   showRepeatSelection.value = false
+}
+
+function cancelRepeatByMask() {
+    // 防止点击穿透到下层元素
+      cancelRepeat();
+    
 }
 
 // 播放复读段落
@@ -794,6 +820,17 @@ onBeforeUnmount(() => {
   stopCurrentAudio()
   isPlaying.value = false
 })
+
+//-----测评用的方法-----开始------
+// 方法
+
+  const assessPopupHide = () => {
+    showAssessSelection.value = false;
+  }
+
+
+  //-----测评用的方法-----结束------
+
 </script>
 
 <style>
@@ -948,6 +985,17 @@ onBeforeUnmount(() => {
   margin-left: 10px;
 }
 
+/* 蒙版样式 */
+.fdmask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色 */
+  z-index: 999; /* 确保蒙版在最上层 */
+}
+
 .repeat-selection {
   position: fixed;
   bottom: 0;
@@ -1007,5 +1055,6 @@ onBeforeUnmount(() => {
   color: white;
   border-color: #007AFF;
 }
+
 
 </style>

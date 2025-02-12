@@ -80,6 +80,9 @@ export default {
   pronunciationInvoke: (data: any) => {
     return request("/message/pronunciation", "POST", data, false);
   },
+  pronunciationByFileInvoke: (data: {file_name: string, content: string}) => {
+    return request("/message/file-pronunciation", "POST", data, false);
+  },
   translateSettingLanguage: (data: any) => {
     return request("/message/translate-setting-language", "POST", data, false);
   },
