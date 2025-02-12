@@ -10,6 +10,7 @@ class Word(Base):
     id = Column(Integer, primary_key=True, index=True)
     word_id = Column(Integer, unique=True, index=True)
     lesson_id = Column(Integer, nullable=False)
+    book_id = Column(String(50), nullable=False)
     word = Column(String(100))
     chinese = Column(String(200))
     phonetic = Column(String(100))
