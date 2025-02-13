@@ -1,6 +1,7 @@
 from typing import Dict, List
 from sqlalchemy.orm import Session
 from app.db.textbook_entities import TextbookEntity, TextbookCategoryEntity, StepEntity, LessonEntity, LessonExplainEntity, LessonPointEntity, LessonPartEntity, ExerciseEntity, ExerciseOptionEntity, TaskTargetsEntity, CourseEntity, TeacherEntity
+from app.db.words_entities import Word  # 添加这行导入
 
 class TextbookService:
     def __init__(self, db: Session):
@@ -288,3 +289,44 @@ class TextbookService:
         }
         
         return result
+
+
+    def get_lesson_words(self, book_id: str, lesson_id: str = None) -> Dict:
+        """
+        获取课程单元的单词列表
+        """
+        try:
+            # 构建基础查询
+            query = self.db.query(Word).filter(Word.book_id == book_id)
+            
+            # 如果指定了 lesson_id，则只获取该章节的单词
+            if lesson_id:
+                query = query.filter(Word.lesson_id == int(lesson_id))
+                
+            # 获取所有单词并按单元和单词ID排序
+            words = query.order_by(Word.lesson_id.asc(), Word.word_id.asc()).all()
+        
+            # 构建单词列表
+            word_list = [{
+                "word_id": word.word_id,
+                "word": word.word,
+                "lesson_id": word.lesson_id,
+                "chinese": word.chinese,
+                "phonetic": word.phonetic,
+                "sound_path": word.sound_path,
+                "image_path": word.image_path,
+                "has_base": word.has_base
+            } for word in words]
+        
+            # 构建返回数据
+            result = {
+                "book_id": book_id,
+                "lesson_id": lesson_id if lesson_id else "all",
+                "words": word_list
+            }
+        
+            return result
+        
+        except Exception as e:
+            print(f"获取单词列表失败: {str(e)}")
+            return None

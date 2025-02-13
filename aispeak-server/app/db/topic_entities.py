@@ -21,7 +21,6 @@ class TopicGroupEntity(Base):
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)
     update_time = Column("update_time", DateTime, default=datetime.datetime.now)
 
-
 class TopicEntity(Base):
     """聊天话题表"""
 
@@ -89,7 +88,6 @@ class AccountTopicEntity(Base):
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)
     sequence = Column("sequence", Integer, nullable=False, default=1)
 
-
 # 话题目标表
 class TopicTargetEntity(Base):
     """话题目标表"""
@@ -139,8 +137,6 @@ class TopicPhraseEntity(Base):
 
     # topic_id 增加搜索索引
     topic_id_index = Index("topic_id_index", topic_id)
-
-
 
 class TopicHistoryEntity(Base):
     """话题历史记录表"""

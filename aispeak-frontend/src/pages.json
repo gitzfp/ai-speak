@@ -31,6 +31,12 @@
       }
     },
     {
+      "path": "pages/textbook/words",
+      "style": {
+        "navigationBarTitleText": "单词列表"
+      }
+    },
+    {
       "path": "pages/textbook/lesson",
       "style": {
         "navigationBarTitleText": "课程详情"
