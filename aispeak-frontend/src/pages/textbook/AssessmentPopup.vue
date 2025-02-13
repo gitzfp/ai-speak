@@ -26,7 +26,17 @@
             </view>
         </view>
         </view>
-
+        <view v-if="currentStep === 'submiting'" class="assess-selection">
+          <!-- 关闭按钮 -->
+          <view class="close-button" @click="resetAll">×</view>
+          <view class="assess-header">正在评估</view>
+          <view class="assess-options">
+            <view class="loading-container">
+              <view class="loading-spinner"></view>
+              <view class="loading-text">正在分析您的发音...</view>
+            </view>
+          </view>
+        </view>
         <!-- 测评结果弹窗 -->
         <view v-if="currentStep === 'result'" class="result-selection">
         <!-- 返回按钮 -->
@@ -39,9 +49,33 @@
         <view class="result-detail">
             <view class="result-text">{{ pronunciationResult.content }}</view>
             <view class="result-dimensions">
-            <view>流畅度 {{ pronunciationResult.fluency_score }}</view>
-            <view>准确度 {{ pronunciationResult.accuracy_score }}</view>
-            <view>完整度 {{ pronunciationResult.completeness_score }}</view>
+                <view class="dimension-item" :class="getScoreClass(pronunciationResult.fluency_score)">
+                    流畅度 {{ pronunciationResult.fluency_score }}
+                </view>
+                <view class="dimension-item" :class="getScoreClass(pronunciationResult.accuracy_score)">
+                    准确度 {{ pronunciationResult.accuracy_score }}
+                </view>
+                <view class="dimension-item" :class="getScoreClass(pronunciationResult.completeness_score)">
+                    完整度 {{ pronunciationResult.completeness_score }}
+                </view>
+            </view>
+            <!-- 单词评分详情 -->
+            <view class="word-details">
+                <view 
+                    v-for="(word, index) in pronunciationResult.words" 
+                    :key="index"
+                    class="word-item"
+                    :class="[
+                        {'word-error': word.error_type !== 'None'},
+                        getScoreClass(word.accuracy_score)
+                    ]"
+                >
+                    <view class="word-text">{{ word.word }}</view>
+                    <view class="word-score">{{ word.accuracy_score }}分</view>
+                    <view v-if="word.error_type !== 'None'" class="word-error-type">
+                        {{ word.error_type === 'Omission' ? '遗漏' : word.error_type }}
+                    </view>
+                </view>
             </view>
         </view>
 
@@ -54,7 +88,7 @@
     
 </template>
 <script setup>
-import { ref, defineEmits, onMounted } from "vue"
+import { ref, defineEmits } from "vue"
 import Speech from "./PronuciationSpeech.vue"
 import chatRequest from "@/api/chat";
 
@@ -73,7 +107,6 @@ const props = defineProps({
 
 const currentStep = ref('select') // 测评 步骤状态：select/result
 const assessStartIndex = ref(null) //测评 选中的段落索引
-const isRecording = ref(false) //测评 是否正在录音
 const initPronunciation = {
   accuracy_score: 0,
   completeness_score: 0,
@@ -82,16 +115,12 @@ const initPronunciation = {
   content: ''
 }
 const pronunciationResult = ref(initPronunciation)
-//录音用的对象
-const recorder = ref({
-  start: false,
-  processing: false,
-  completed: false,
-  voiceFileName: null,
-  remainingTime: 0,
-})
-
-
+const getScoreClass = (score) => {
+    if (score >= 90) return 'score-excellent'
+    if (score >= 80) return 'score-good'
+    if (score >= 60) return 'score-fair'
+    return 'score-poor'
+}
 //-----测评用的方法-----开始------
 // 方法
 const handleMaskClick = () => {
@@ -119,13 +148,16 @@ const handleMaskClick = () => {
 
   const submitRecording = (voice) => {
     console.log(voice, "录音对象")
+    currentStep.value = "submiting"; // 切换到结果页
     chatRequest
       .pronunciationByFileInvoke({ file_name: voice.fileName, content: props.repeatOptions[assessStartIndex.value]})
       .then((data) => {
         pronunciationResult.value = data.data;
+        currentStep.value = "result"; // 切换到结果页
+
       }).finally(() => {
+        currentStep.value = "result"; // 切换到结果页
       });
-      currentStep.value = "result"; // 切换到结果页
     }
     const handleReturn = () => {
       currentStep.value = "select"; // 返回选择页
@@ -295,7 +327,6 @@ const handleMaskClick = () => {
 .result-button {
   flex: 1;
   margin: 0 5px;
-  padding: 10px;
   border: 1px solid #007bff;
   border-radius: 5px;
   background: none;
@@ -330,5 +361,127 @@ const handleMaskClick = () => {
   font-size: 24px;
   cursor: pointer;
   color: #666;
+}
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite, pulse 2s ease-in-out infinite;
+}
+
+.loading-text {
+  margin-top: 15px;
+  color: #666;
+  font-size: 14px;
+  animation: fadeInOut 2s ease-in-out infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.1) rotate(180deg); }
+  100% { transform: scale(1) rotate(360deg); }
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+.word-details {
+    margin-top: 20px;
+    padding: 10px;
+    border-top: 1px solid #eee;
+    max-height: 200px; /* 设置最大高度 */
+    overflow-y: auto; /* 添加垂直滚动 */
+    -webkit-overflow-scrolling: touch; /* 在iOS上支持惯性滚动 */
+}
+
+.word-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+}
+
+.word-text {
+    flex: 1;
+    font-weight: 500;
+}
+
+.word-score {
+    margin: 0 10px;
+    color: #007bff;
+}
+
+.word-error-type {
+    color: #dc3545;
+    font-size: 12px;
+    padding: 2px 6px;
+    background-color: #fff;
+    border: 1px solid #dc3545;
+    border-radius: 3px;
+}
+
+.word-error {
+    background-color: #fff3f3;
+    border: 1px solid #ffebeb;
+}
+
+.dimension-item {
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.score-excellent {
+    color: #28a745;
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.score-good {
+    color: #007bff;
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.score-fair {
+    color: #ffc107;
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+.score-poor {
+    color: #dc3545;
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.word-item.score-excellent {
+    border-left: 3px solid #28a745;
+}
+
+.word-item.score-good {
+    border-left: 3px solid #007bff;
+}
+
+.word-item.score-fair {
+    border-left: 3px solid #ffc107;
+}
+
+.word-item.score-poor {
+    border-left: 3px solid #dc3545;
 }
 </style>

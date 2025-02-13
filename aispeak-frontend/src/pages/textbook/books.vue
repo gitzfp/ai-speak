@@ -99,7 +99,7 @@
         <button @click="exitRepeatMode">退出复读</button>
       </view>
 
-      <AssessPopup :repeatOptions="repeatOptions" :showAssessSelection="showAssessSelection" @assessPopupHide="assessPopupHide" />
+      <AssessmentPopup :repeatOptions="repeatOptions" :showAssessSelection="showAssessSelection" @assessPopupHide="assessPopupHide" />
 
     </view>
   </view>
@@ -113,7 +113,7 @@ import JSZip from "jszip"
 import utils from "@/utils/utils"
 import env from "@/config/env" 
 import topicRequest from "@/api/topic"
-import AssessPopup from "./AssessPopup.vue"
+import AssessmentPopup from "./AssessmentPopup.vue"
 const baseUrl = env.basePath // 获取 basePath
 
 // 定义响应式数据
