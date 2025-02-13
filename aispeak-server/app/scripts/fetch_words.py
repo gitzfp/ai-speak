@@ -5,6 +5,7 @@ import os
 from urllib.parse import urlparse
 import oss2
 import asyncio
+# 假设这里已经正确导入了阿里云 OSS 的相关模块
 
 # 添加阿里云OSS配置
 region = 'oss-cn-beijing'
@@ -15,23 +16,27 @@ bucket = oss2.Bucket(auth, endpoint, bucket_name)
 public_endpoint = f"https://books-bct.{region}.aliyuncs.com"
 
 
-async def download_and_upload_to_oss(url: str, bucket, public_endpoint: str, book_id: str, lesson_id: str) -> str:
+async def download_and_upload_to_oss(url: str, bucket: oss2.Bucket, public_endpoint: str, book_id: str, lesson_id: str) -> str:
     """下载文件并上传到阿里云OSS"""
     try:
-        # 下载文件
-        response = requests.get(url)
-        response.raise_for_status()
-        
         # 从URL中获取文件名
         parsed_url = urlparse(url)
         filename = os.path.basename(parsed_url.path)
-        
+
         # 构造OSS存储路径，包含book_id和lesson_id
         oss_key = f"words/book_{book_id}/lesson_{lesson_id}/{filename}"
-        
-        # 上传到OSS
-        bucket.put_object(oss_key, response.content)
-        
+
+        # 检查OSS中是否已经存在该对象
+        if bucket.object_exists(oss_key):
+            print(f"Object {oss_key} already exists in OSS, skipping upload.")
+        else:
+            # 下载文件
+            response = requests.get(url)
+            response.raise_for_status()
+
+            # 上传到OSS
+            bucket.put_object(oss_key, response.content)
+
         # 返回新的URL
         return f"{public_endpoint}/{oss_key}"
     except Exception as e:
