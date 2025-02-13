@@ -20,4 +20,12 @@ export default {
       "GET"
     );
   },
+
+  // 获取课程单元的单词列表
+  getLessonWords(bookId: string, lessonId?: string) {
+    const url = lessonId 
+      ? `/textbook/${bookId}/lesson/${lessonId}/words`
+      : `/textbook/${bookId}/words`;
+    return request(url, "GET");
+  },
 };

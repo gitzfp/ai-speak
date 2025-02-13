@@ -63,6 +63,9 @@
         <view class="tool-item" @click="startRepeatMode">
           <text>复读</text>
         </view>
+        <view class="tool-item" @click="goToWords">
+          <text>单词</text>
+        </view>
         <view class="tool-item" @click="goToassess">
           <text>测评</text>
         </view>
@@ -99,7 +102,7 @@
         <button @click="exitRepeatMode">退出复读</button>
       </view>
 
-      <AssessPopup :repeatOptions="repeatOptions" :showAssessSelection="showAssessSelection" @assessPopupHide="assessPopupHide" />
+      <AssessmentPopup :repeatOptions="repeatOptions" :showAssessSelection="showAssessSelection" @assessPopupHide="assessPopupHide" />
 
     </view>
   </view>
@@ -113,7 +116,7 @@ import JSZip from "jszip"
 import utils from "@/utils/utils"
 import env from "@/config/env" 
 import topicRequest from "@/api/topic"
-import AssessPopup from "./AssessPopup.vue"
+import AssessmentPopup from "./AssessmentPopup.vue"
 const baseUrl = env.basePath // 获取 basePath
 
 // 定义响应式数据
@@ -148,6 +151,30 @@ onLoad((options) => {
   fetchSentences()
 })
 
+const goToWords = () => {
+  // 查找当前页面所属的章节
+  console.log(currentPage.value+'章节数据:', catalogData.value)
+  let lessonId = 1
+  catalogData.value.map((chapter, index) => {
+    const currentPageNo = Number(currentPage.value);
+    const chapterPageNo = Number(chapter.page_no);
+    if(currentPageNo >= chapterPageNo){
+      lessonId = index + 1
+      console.log('当前章节:', chapter.page_no, '当前页码:', currentPageNo, '章节id:', index)
+    }
+  });
+
+  if (lessonId > 0) {
+    uni.navigateTo({
+      url: `/pages/textbook/words?bookId=${book_id.value}&lessonId=${lessonId}`
+    });
+  } else {
+    uni.showToast({
+      title: '当前页面无单词列表',
+      icon: 'none'
+    });
+  }
+}
 const fetchSentences = async () => {
   const ossKey = `json_files/${book_id.value}_sentence.json`
   // 检查文件是否已存储在阿里云 OSS 中
@@ -447,7 +474,7 @@ async function getBookUrl() {
 const parseJsonData = (data, comeFrom = "OSS") => {
   try {
     let jsonData = JSON.parse(data)
-    console.log(`页面数据获取成功（来自 ${comeFrom}）:`)
+    console.log(`页面数据获取成功（来自 ${comeFrom}）:`, jsonData)
     // 更新页面数据
     bookPages.value = jsonData.bookpage
     catalogData.value =

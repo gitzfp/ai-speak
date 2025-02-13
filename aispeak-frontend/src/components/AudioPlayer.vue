@@ -72,9 +72,15 @@ function autostopAudio() {
 const handleSpeech = async () => {
   let audioUrl = ""
   if (props.fileName) {
-    // 语音文件直接播放
-    audioUrl = utils.getVoiceFileUrl(props.fileName)
-  } else {
+    // 如果是完整的 URL（以 http 或 https 开头），直接使用
+    if (props.fileName.startsWith('http') || props.fileName.startsWith('https')) {
+      audioUrl = props.fileName
+    } else {
+      // 否则才使用 utils.getVoiceFileUrl
+      audioUrl = utils.getVoiceFileUrl(props.fileName)
+    }
+  }
+  else {
     if (props.messageId) {
       // 聊天信息转换成语音文件再播放
       transformFileLoading.value = true
