@@ -38,14 +38,21 @@ async def download_and_upload_to_oss(url: str, bucket, public_endpoint: str, boo
         print(f"Error uploading file {url} to OSS: {str(e)}")
         return url  # 如果上传失败，返回原始URL
 
-async def fetch_words_data():
-    url = 'https://api.suyang123.com/api/syh5/yy/words/list'
-    base_params = {
-        'stage_tag': 'xiaoxue',
-        'version_tag': 'rjbp',
-        'grade_tag': 'yinianji',
-        'term_tag': 'shangce'
+async def fetch_words_data(params: dict):
+    """
+    params 格式示例:
+    {
+        'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=yinianji&term_tag=xiace',
+        'book_id': '1212001101247'
     }
+    """
+    url = params.get('url', 'https://api.suyang123.com/api/syh5/yy/words/list')
+    book_id = params.get('book_id', '1212001101247')
+    
+    # 从 URL 中解析查询参数
+    parsed_url = urlparse(url)
+    base_params = dict(param.split('=') for param in parsed_url.query.split('&')) if parsed_url.query else {}
+    url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
     
     headers = {
         'accept': 'application/json, text/plain, */*',
@@ -79,7 +86,6 @@ async def fetch_words_data():
                 if lesson_data['code'] == 200 and 'data' in lesson_data:
                     db = SessionLocal()
                     try:
-                        book_id = '1212001101247'
                         lesson_id = int(lesson_data['data']['info']['lesson_id'])
                         words_data = lesson_data['data']['lesson_words']['words']
 
@@ -89,7 +95,7 @@ async def fetch_words_data():
                                 word_data['sound_path'], 
                                 bucket, 
                                 public_endpoint,
-                                str(book_id),
+                                str(book_id),  # 使用从参数传入的 book_id
                                 str(lesson_id)
                             )
                             image_path = await download_and_upload_to_oss(
@@ -129,4 +135,18 @@ async def fetch_words_data():
 
 
 if __name__ == "__main__":
-    asyncio.run(fetch_words_data())
+    # 示例用法
+    params_list = [
+        {
+            'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=yinianji&term_tag=shangce',
+            'book_id': '1212001101247'
+        },
+        {
+            'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=yinianji&term_tag=xiace',
+            'book_id': '1212001102247'
+        }
+    ]
+    
+    for params in params_list:
+        print(f"\n开始处理 book_id: {params['book_id']} 的数据...")
+        asyncio.run(fetch_words_data(params))
