@@ -19,6 +19,13 @@
       }
     },
     {
+      "path": "pages/textbook/index2",
+      "style": {
+        "navigationBarTitleText": "教材详情",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/textbook/courses",
       "style": {
         "navigationBarTitleText": "课程列表"
@@ -126,6 +133,12 @@
     "borderStyle": "white",
     "backgroundColor": "#ffffff",
     "list": [
+      {
+        "pagePath": "pages/textbook/index2",
+        "text": "首页2",
+        "selectedIconPath": "static/home_select.png",
+        "iconPath": "static/home.png"
+      },
       {
         "pagePath": "pages/textbook/index",
         "text": "首页",
