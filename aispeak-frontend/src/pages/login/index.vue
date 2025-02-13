@@ -135,7 +135,7 @@ const loginSuccess = (data: any) => {
 const loginSucessByToken = (storageToken: string) => {
   uni.setStorageSync("x-token", storageToken)
   uni.switchTab({
-    url: "/pages/textbook/index",
+    url: "/pages/textbook/index2",
   })
 }
 </script>
