@@ -11,61 +11,137 @@
         <text>已同步新教材，正版权威更可靠</text>
       </view>
       <view class="book-info">
-        <!-- <image src="/static/images/book-cover.png" mode="widthFix"></image> -->
-        <view class="book-details">
-          <text>一年级上册</text>
-          <text>人教版PEP</text>
+        <view class="leftcontent">
+          <image :src="book.icon_url" class="book-cover" />
         </view>
-      </view>
-      <view class="buttons">
-        <button @click="switchBook">切换教材</button>
-        <button @click="shareToClass">分享到班级</button>
-      </view>
+        <view class="rightcontent">
+          <view class="book-details">
+            <view class="book-subtitle">{{ book.grade }} {{ book.term }}</view>
+            <view class="book-title">{{ book.book_name }}</view>
+          </view>
+          <view class="book-buttons">
+            <view class="qiuhuan" @click="switchBook">⥦ 切换教材</view>
+            <view class="fenxiang" @click="shareToClass">分享到班级</view>
+          </view>
+        </view>
+     </view>
+      
     </view>
     <!-- 功能按钮区域 -->
     <view class="function-buttons">
-      <view class="button-row">
-        <button class="function-button" @click="textbookSync">
-          <!-- <Icon name="listening" color="red" size="24" /> -->
+      <view class="button-tit">
+        <image class="buttontit-icon" src="@/assets/icons/preparation_book.svg"></image>
+          课本同步学
+      </view>
+      <view class="button-row button-line">
+        <view class="function-button" @click="textbookSync">
+          <image class="button-icon" src="@/assets/icons/listening.svg"></image>
           听课文
-        </button>
-        <button class="function-button" @click="sentenceFollow">
-          <!-- <image class="button-icon" src=""></image> -->
+        </view>
+        <view class="function-button" @click="sentenceFollow">
+          <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
           句子跟读
-        </button>
-        <button class="function-button" @click="reciteTest">
-          <!-- <image class="button-icon" src="../../static/icons/book_r.png"></image> -->
+        </view>
+        <view class="function-button" @click="reciteTest">
+          <image class="button-icon" src="@/assets/icons/recitation_pattern.svg"></image>
           背诵测评
-        </button>
-        <button class="function-button" @click="vocabularyReinforcement">
-          <!-- <image class="button-icon" src="../../static/icons/book_r.png"></image> -->
+        </view>
+        <view class="function-button" @click="vocabularyReinforcement">
+          <image class="button-icon" src="@/assets/icons/word.svg"></image>
+          学单词
+        </view>
+        <view class="function-button" @click="listenWrite">
+          <image class="button-icon" src="@/assets/icons/recite.svg"></image>
+          课本点读
+        </view>
+      </view>
+      <view class="button-tit">
+        <image class="buttontit-icon" src="@/assets/icons/five-star.svg"></image>
           单词强化
-        </button>
-        <button class="function-button" @click="listenWrite">
-          <!-- <image class="button-icon" src="../../static/icons/book_r.png"></image> -->
-          听写练习
-        </button>
       </view>
       <view class="button-row">
-        <button class="function-button" @click="wordTricks">单词巧记</button>
-        <button class="function-button" @click="earTraining">磨耳朵</button>
-        <button class="function-button" @click="pronunciationTest">发音测评</button>
-        <button class="function-button" @click="wordListenWrite">单词听写</button>
-        <button class="function-button" @click="eliminationGame">消消乐</button>
+        <view class="function-button" @click="wordTricks">
+          <image class="button-icon" src="@/assets/icons/verify-code2.svg"></image>
+          单词巧记
+        </view>
+        <view class="function-button" @click="earTraining">
+          <image class="button-icon" src="@/assets/icons/ear_grinding.svg"></image>
+          磨耳朵
+        </view>
+        <view class="function-button" @click="pronunciationTest">
+          <image class="button-icon" src="@/assets/icons/tk-ivr.svg"></image>
+          发音测评
+        </view>
+        <view class="function-button" @click="wordListenWrite">
+          <image class="button-icon" src="@/assets/icons/word_dictation.svg"></image>
+          单词听写
+        </view>
+        <view class="function-button" @click="eliminationGame">
+          <image class="button-icon" src="@/assets/icons/abacus_flat.svg"></image>
+          消消乐
+        </view>
       </view>
     </view>
+    <view class="intermediate-part">
+      <view class="subscribe">
+          <view class="subscribe-tit">
+            <image class="buttontit-icon" src="@/assets/icons/bell.svg"></image>
+            <view>订阅学习报告，及时掌握孩子学习情况！</view>
+          </view>
+          <view class="subscribe-bnt">
+            去订阅
+          </view>
+      </view>
+      <view class="recitation-plan">
+          <view class="recitation-tit">
+            <view class="recitation-left">
+              <image class="recitation-icon1" src="@/assets/icons/en.svg"></image>
+              <view>今日背词计划 </view>
+              <image class="recitation-icon2" src="@/assets/icons/left_arrow.svg"></image>
+            </view>
+            <view class="recitation-right">
+              已背0/595
+            </view>
+          </view>
+          <view class="button-container">
+            <view class="spacer"></view>
+            <view class="button-left">
+              <image class="container-icon" src="@/assets/icons/toeng.svg"></image>
+              <view class="container-tit">需新学习5词 </view>
+            </view>
+            <view class="spacer"></view>
+            <view class="button-right">
+              <image class="container-icon" src="@/assets/icons/toeng2.svg"></image>
+              <view class="container-tit">需复习0词 </view>
+            </view>
+            <view class="spacer"></view>
+          </view>
+      </view>
+    </view>
+
+
+
     <bookSelector ref="bookSelectors" v-if="isPopupOpen" :books="books" @switchbookSuccess="switchbookSuccess" @closePopup="togglePopup" />
   </view>
 </template>
 
 <script setup>
-import { ref,nextTick,onMounted} from 'vue';
+import { ref,nextTick,onMounted, Text} from 'vue';
 import bookSelector from './bookSelector.vue';
 // 引入 Icon 组件
 // import Icon from "@/components/Icon.vue";
 
 const isPopupOpen = ref(false)
 const bookSelectors = ref(null);
+const book = ref({
+  book_id:'',
+  book_name:'',
+grade:'',
+icon_url: '',
+subject_id:0,
+term:'',
+version_type:''
+})
 
 // 书籍数据
 const books = ref([])
@@ -81,13 +157,16 @@ onMounted(() => {
     fetchBooks(false)
 })
 
-const switchbookSuccess = (book) => {
-  console.log("book=====")
-    console.log(book)
+const switchbookSuccess = (newbook) => {
+  console.log("newbook=====")
+    console.log(newbook)
+    book.value = {...newbook}
+    console.log(book.value.term)
 }
 
 
 const switchBook = () => {
+
 
   if (books.value.length) {
     isPopupOpen.value = true;
@@ -137,6 +216,8 @@ const fetchBooks = (isSwitch) => {
               }
         });
         } else {
+        //  book.value = books.value[0]
+         book.value = { ...books.value[0] };
           console.log("一开始请求")
         }
         
@@ -167,10 +248,18 @@ const reciteTest = () => {
 
 const vocabularyReinforcement = () => {
   console.log('Learn Words');
+  const objStr = JSON.stringify(book.value);
+  sessionStorage.setItem('currentBook', objStr);
+  uni.navigateTo({
+      url: `/pages/textbook/Learnwords?objId=currentBook`
+    });
 };
 
 const listenWrite = () => {
   console.log('Text Point Read');
+  uni.navigateTo({
+        url: `/pages/textbook/books?book_id=${book.value.book_id}`,
+      })
 };
 
 const wordTricks = () => {
@@ -192,19 +281,20 @@ const wordListenWrite = () => {
 const eliminationGame = () => {
   console.log('Elimination Game');
 };
-</script>
+</script >
 
-<style scoped>
+<style  scoped lang="less">
 .container {
   background-color: #59C160;
-  padding: 10px;
+  padding-top:10px;
 }
 
 .header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
+  margin:15px;
 }
 
 .title {
@@ -217,13 +307,13 @@ const eliminationGame = () => {
 .subtitle {
   font-size: 20px;
   color: #408F4C;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   width: 100%;
 }
 .highlight-text {
   font-size: 25px;
   /* background-color: #5cb85c; */
-  padding: 5px 10px;
+  /* padding: 5px 10px; */
   border-radius: 10px;
   
   color: #408F4C; /* 文字颜色 */
@@ -237,30 +327,83 @@ const eliminationGame = () => {
 }
 
 .description {
-  background-color: #cfe8d9;
+
   padding: 10px;
   border-radius: 10px;
-  width: 50%;
-  text-align: center;
+  width: 100%;
   margin-bottom: 20px;
+  color: #fff;
+  text-align: left;
+}
+.description text {
+  background-color: #5ECB80;
+  padding: 10px;
+  border-radius: 5px;
 }
 
 .book-info {
   display: flex;
   align-items: center;
-  margin-bottom: 20px;
+  /* margin-bottom: 20px; */
+  /* background-color: red; */
+  width: 100%;;
+
 }
+.leftcontent {
+  width: 120px; /* 设置.leftcontent宽度为120px */
+  display: flex;
+  justify-content: center;
+  align-items: center; /* 垂直居中 */
+}
+.rightcontent {
+  flex-grow: 1; /* 让.rightcontent占据剩余的空间 */
+}
+.book-details {
+  height: 74px;
+}
+.book-subtitle {
+  line-height: 45px;
+  color: #fff;
+  font-size: 25px;
+  font-weight: bold;
+}
+.book-title {
+  line-height: 20px;
+  font-size: 16px;
+  color: #73E0FF;
+}
+.book-buttons {
+  height: 74px;
+  display: flex;
+  justify-content: space-between;
+}
+.book-buttons .qiuhuan {
+  margin-top: 10px;
+  background-color: #fff;
+  color: #6FDBA7;
+  height: 30px;
+  line-height: 30px;
+  padding: 0 20px;
+  border-radius: 15px;
+  font-size: 13px;
+}
+
+.book-buttons .fenxiang {
+  margin-top: 10px;
+  background-color: #FBE6CE;
+  color: #E6A65D;
+  height: 30px;
+  line-height: 30px;
+  padding: 0 20px;
+  border-radius: 15px;
+  font-size: 13px;
+}
+
 
 .book-cover {
-  width: 100px;
-  height: 150px;
+  width: 103px;
+  height: 148px;
   margin-right: 20px;
-}
-
-.book-details {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 .buttons {
@@ -270,36 +413,183 @@ const eliminationGame = () => {
   margin-bottom: 20px;
 }
 
+.button-tit {
+  padding-top: 5px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: grey;
+}
+.buttontit-icon {
+  width: 15px; /* 根据实际图标的大小调整 */
+  height: 15px; /* 根据实际图标的大小调整 */
+  margin: 5px;
+
+}
+
 .button-row {
   display: flex;
   justify-content: space-around;
-  margin-bottom: 20px;
+  padding-bottom: 10px;
+}
+.button-line {
+  border-bottom: 0.5px solid gainsboro;
 }
 
 .function-buttons {
-  background-color: #F5FEF5;
+  background-color: #F4FFF5;
   border-radius: 10px;
+  margin:0 15px;
 }
 
 .function-button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: none;
+  /* background-color: #F4FFF5; */
   border-radius: 10px;
+  border: 0;
+  outline: none;
   padding: 10px;
   /* margin: 5px; */
   width: 100px;
   text-align: center;
   font-size: 12px;
   color: #333;
+  font-weight: bold;
 }
-.function-button button {
-  background: none;
-}
+
 .button-icon {
   width: 40px; /* 根据实际图标的大小调整 */
   height: 40px; /* 根据实际图标的大小调整 */
   margin-bottom: 5px;
 }
+
+.intermediate-part {
+  width: 100%;
+  margin-top: 15px;
+  padding-top: 15px;
+  background-color: white;
+  .subscribe {
+    background-color: #fdf3e8;
+    margin:0 15px;
+    border-radius: 25px;
+    height: 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .subscribe-tit {
+      display: flex;
+      align-items: center;
+      image {
+        margin-left: 25px;
+        width: 20px;
+        height: 20px;
+      }
+      view {
+        font-size: 13px;
+        font-weight: bold;
+      }
+    }
+    .subscribe-bnt {
+      background-color: #e98f36;
+      color: #fff;
+      font-size: 12px;
+      margin-right: 15px;
+      height: 25px;
+      border-radius: 17.5px;
+      padding: 5px 15px;
+      line-height: 25px;
+    }
+  }
+
+  .recitation-plan {
+    margin: 15px;
+    border-radius: 10px;
+    height: 100px;
+    background: white;
+    border: 1px solid #f5f5f5; /* 添加边框，替换 #yourBorderColor 为你想要的边框颜色 */
+    box-shadow: 0 0.5px 3px rgba(0,0,0,0.1); /* 添加阴影效果，可根据需要调整 */
+    padding-bottom: 15px;
+    .recitation-tit {
+
+      margin:0 15px;
+      border-radius: 25px;
+      height: 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .recitation-left {
+        display: flex;
+        align-items: center;
+        .recitation-icon1 {
+          width: 20px;
+          height: 20px;
+          margin-right: 5px;
+        }
+        .recitation-icon2 {
+          width: 15px;
+          height: 15px;
+        }
+        view {
+          font-size: 15px;
+          font-weight: bold;
+          margin-right: 5px;
+        }
+      }
+      .recitation-right {
+        font-size: 13px;
+        margin-right: 5px;
+      }
+
+      
+    }
+  
+    .button-container {
+      display: flex;
+      align-items: center; /* 垂直居中对齐 */
+      .spacer {
+        flex-grow: 1; /* 让这些间隔占据剩余空间 */
+      }
+      .button-left {
+        /* 确保按钮间没有额外的间距 */
+        margin: 0;
+        width: 35%;
+        height: 45px;
+        background: #e98f36;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 22.5px;
+      }
+      .button-right {
+        /* 确保按钮间没有额外的间距 */
+        margin: 0;
+        width: 35%;
+        height: 45px;
+        background-color: #EE6838;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 22.5px;
+      }
+
+      .container-icon {
+        width: 20px;
+        height: 20px;
+        margin-right: 5px;
+      }
+      .container-tit {
+        font-size: 15px;
+        font-weight: 300;
+        color: #fff;
+      }
+    }
+
+  }
+
+}
+
+
 </style>

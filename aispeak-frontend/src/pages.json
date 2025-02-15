@@ -12,12 +12,12 @@
         "navigationStyle": "custom"
       }
     },
-    {
-      "path": "pages/textbook/index",
-      "style": {
-        "navigationBarTitleText": "教材详情"
-      }
-    },
+    // {
+    //   "path": "pages/textbook/index",
+    //   "style": {
+    //     "navigationBarTitleText": "教材详情"
+    //   }
+    // },
     {
       "path": "pages/textbook/index2",
       "style": {
@@ -41,6 +41,12 @@
       "path": "pages/textbook/words",
       "style": {
         "navigationBarTitleText": "单词列表"
+      }
+    },
+    {
+      "path": "pages/textbook/Learnwords",
+      "style": {
+        "navigationStyle": "custom"
       }
     },
     {
@@ -141,16 +147,16 @@
     "list": [
       {
         "pagePath": "pages/textbook/index2",
-        "text": "首页2",
-        "selectedIconPath": "static/home_select.png",
-        "iconPath": "static/home.png"
-      },
-      {
-        "pagePath": "pages/textbook/index",
         "text": "首页",
         "selectedIconPath": "static/home_select.png",
         "iconPath": "static/home.png"
       },
+      // {
+      //   "pagePath": "pages/textbook/index",
+      //   "text": "首页",
+      //   "selectedIconPath": "static/home_select.png",
+      //   "iconPath": "static/home.png"
+      // },
       {
         "pagePath": "pages/practice/index",
         "text": "练习",
