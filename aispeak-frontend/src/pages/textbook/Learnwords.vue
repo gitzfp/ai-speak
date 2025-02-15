@@ -42,7 +42,7 @@
         <!-- 单元标题 -->
         <view class="unit-header">
             <view class="unit-title">
-              <view @click="toggleUnitSelection(group)" class="unit-left">
+              <view @tap="toggleUnitSelection(group)" class="unit-left">
                 <image class="left-icon" :src="group.isUnitSelected ? selectIcon : unselectIcon"></image>
                 <view class="unit-left-tit">Unit {{ group.lesson_id }} </view>
               </view>
@@ -52,7 +52,7 @@
             </view>
         </view>
         <!-- 单词项 -->
-        <view @click="toggleWordSelection(word,group)" class="word-item" v-for="word in group.words" :key="word.word_id">
+        <view @tap="toggleWordSelection(word,group)" class="word-item" v-for="word in group.words" :key="word.word_id">
           <image class="left-icon" :src="word.isSelected ? selectIcon : unselectIcon"></image>
           <view class="word-content">
               <view class="word-text">{{ word.word }}</view>
@@ -65,69 +65,66 @@
           
 
       <!-- 在template末尾添加按钮容器 -->
-      <view v-if="!showActionBar" class="button-bar">
-        <!-- 按钮1 -->
+      <!-- <view v-if="!showActionBar" class="button-bar">
         <view class="button-item green" @tap="handleButtonClick(1)">
           <image class="button-icon" src="@/assets/icons/brush_words.svg"></image>
           <text>刷词</text>
         </view>
-
-        <!-- 按钮2 -->
         <view class="button-item orange" @tap="handleButtonClick(2)">
           <image class="button-icon" src="@/assets/icons/ear_grinding.svg"></image>
           <text>磨耳朵</text>
         </view>
-
-        <!-- 按钮3 -->
         <view class="button-item blue" @tap="handleButtonClick(3)">
           <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
           <text>跟读</text>
         </view>
 
-        <!-- 按钮4 -->
+
         <view class="button-item purple" @tap="handleButtonClick(4)">
           <image class="button-icon" src="@/assets/icons/word_dictation.svg"></image>
           <text>听写</text>
         </view>
 
-        <!-- 按钮5 -->
         <view class="button-item red" @tap="handleButtonClick(5)">
           <image class="button-icon" src="@/assets/icons/abacus_flat.svg"></image>
           <text>消消乐</text>
         </view>
-
-        <!-- 新增按钮6 -->
         <view class="button-item pink" @tap="handleButtonClick(6)">
           <image class="button-icon" src="@/assets/icons/verify-code2.svg"></image>
           <text>单词巧记</text>
         </view>
-      </view>
-
+      </view>  -->
+    
 
 
     <!-- 操作栏（全选/已选词/开始学习） -->
-    <view class="action-bar" v-if="showActionBar">
+    <view class="action-bar">
       <view class="action-content">
-        <text class="select-all" @tap="selectAll">全选</text>
-        <text class="selected-count">已选{{ selectedCount }}词</text>
-        <text class="start-learn" @tap="startLearning">开始学习</text>
+        <view class="action-bar-left" @tap="toggleSelectAll">
+          <image class="left-icon" :src="isselectAll ? selectIcon : unselectIcon"></image>
+          <view class="actionbar-titcontent">
+              <view class="actionbar-text">全选</view>
+              <view class="actionbar-translation">已选{{selectedCount}}词</view>
+          </view>
+        </view>
+        <view class="start-learn" @tap="startLearning">开始学习</view>
       </view>
     </view>
     <!-- 独立关闭按钮 -->
-    <view 
+    <!-- <view 
       class="close-btn" 
       v-if="showActionBar"
       @tap="closeActionBar"
     >
         <text class="close-icon">×</text>
-     </view>
+     </view> -->
 
      
     </view>
   </template>
   
   <script setup>
-  import { ref , onMounted,nextTick} from 'vue'
+  import { ref , onMounted,nextTick,computed} from 'vue'
   import { onLoad } from '@dcloudio/uni-app'
   import textbook from '@/api/textbook'
   import CommonHeader from "@/components/CommonHeader.vue"
@@ -148,11 +145,71 @@
         version_type:''
       }
       ) // 添加 currentBook
-  
-      const scrollToUnitId = ref('') // 新增响应式变量用于存储要滚动到的单元id
 
+      const scrollToUnitId = ref('') // 新增响应式变量用于存储要滚动到的单元id
       // 控制显示哪个底部区域
       const showActionBar = ref(false)
+      const isselectAll = ref(false)
+
+      // 计算选中的单词数量
+      const selectedCount = computed(() => {
+        let count = 0
+        groupedWords.value.forEach(group => {
+          group.words.forEach(word => {
+            if (word.isSelected) {
+              count++
+            }
+          })
+        })
+        return count
+      })
+
+      // 切换全选状态
+    const toggleSelectAll = () => {
+      isselectAll.value = !isselectAll.value;
+
+      // 更新所有单词的选中状态
+      groupedWords.value.forEach(group => {
+        group.words.forEach(word => {
+          word.isSelected = isselectAll.value;
+        });
+
+        // 更新单元的选中状态
+        group.isUnitSelected = isselectAll.value;
+      });
+    };
+  
+      // 开始学习
+    const startLearning = () => {
+      // 获取所有选中的单词
+      const selectedWords = [];
+      groupedWords.value.forEach(group => {
+        group.words.forEach(word => {
+          if (word.isSelected) {
+            selectedWords.push(word);
+          }
+        });
+      });
+
+      // 如果没有选中任何单词，提示用户
+      if (selectedWords.length === 0) {
+        uni.showToast({
+          title: '请至少选择一个单词',
+          icon: 'none',
+        });
+        return;
+      }
+
+      // 将选中的单词数据存储到本地缓存中
+      const sessionKey = 'selectedWords'; // 缓存键名
+      sessionStorage.setItem(sessionKey, JSON.stringify(selectedWords));
+
+      // 跳转到学习页面
+      uni.navigateTo({
+        url: `/pages/learning-page?sessionKey=${sessionKey}`, // 将缓存键名传递给学习页面
+      });
+    };
+      
 
       // 初始化时默认选中第一个单元
       onMounted(() => {
@@ -512,30 +569,37 @@
   padding: 0 30rpx;
   z-index: 999;    // 确保在关闭按钮下方
 
+
   .action-content {
     display: flex;
     align-items: center;
     gap: 40rpx;
     width: 100%;
+    justify-content: space-between;
 
-    .select-all {
-      color: #4CAF50;
-      font-size: 28rpx;
-      font-weight: bold;
+    .action-bar-left {
+      display: flex;
+      align-items: center;
+      .actionbar-titcontent {
+        margin-left: 10rpx;
+        .actionbar-text {
+          font-weight: bold;
+          font-size: 40rpx;
+        }
+        .actionbar-translation {
+          color: gray;
+          font-size: 30rpx;
+        }
+      }
+      
     }
-
-    .selected-count {
-      color: #666;
-      font-size: 24rpx;
-      flex-grow: 1;
-    }
-
     .start-learn {
       background: #4CAF50;
       color: #fff;
       padding: 16rpx 48rpx;
       border-radius: 40rpx;
       font-size: 28rpx;
+      margin-right: 20rpx; // 与右边保持20rpx的距离
     }
   }
 }
