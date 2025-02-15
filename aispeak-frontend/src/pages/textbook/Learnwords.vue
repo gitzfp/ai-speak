@@ -65,7 +65,7 @@
           
 
       <!-- 在template末尾添加按钮容器 -->
-      <view class="button-bar">
+      <view v-if="!showActionBar" class="button-bar">
         <!-- 按钮1 -->
         <view class="button-item green" @tap="handleButtonClick(1)">
           <image class="button-icon" src="@/assets/icons/brush_words.svg"></image>
@@ -105,6 +105,23 @@
 
 
 
+    <!-- 操作栏（全选/已选词/开始学习） -->
+    <view class="action-bar" v-if="showActionBar">
+      <view class="action-content">
+        <text class="select-all" @tap="selectAll">全选</text>
+        <text class="selected-count">已选{{ selectedCount }}词</text>
+        <text class="start-learn" @tap="startLearning">开始学习</text>
+      </view>
+    </view>
+    <!-- 独立关闭按钮 -->
+    <view 
+      class="close-btn" 
+      v-if="showActionBar"
+      @tap="closeActionBar"
+    >
+        <text class="close-icon">×</text>
+     </view>
+
      
     </view>
   </template>
@@ -120,7 +137,7 @@
   
       const groupedWords = ref([])
       const units = ref([])
-      const currentLessonId = ref('')
+      const currentLessonId = ref('1')
       const currentBook = ref({
         book_id:'',
         book_name:'',
@@ -134,6 +151,8 @@
   
       const scrollToUnitId = ref('') // 新增响应式变量用于存储要滚动到的单元id
 
+      // 控制显示哪个底部区域
+      const showActionBar = ref(false)
 
       // 初始化时默认选中第一个单元
       onMounted(() => {
@@ -272,12 +291,18 @@
       // 在script中添加点击处理
       const handleButtonClick = (index) => {
         console.log(`点击按钮${index}`)
-        uni.showToast({
-          title: `按钮${index}被点击`,
-          icon: 'none'
-        })
+        // uni.showToast({
+        //   title: `按钮${index}被点击`,
+        //   icon: 'none'
+        // })
+        console.log(`点击按钮${index}`)
+        showActionBar.value = true // 显示 action-bar
       }
 
+      // 点击“X”按钮时关闭 action-bar，恢复六个按钮
+      const closeActionBar = () => {
+        showActionBar.value = false // 隐藏 action-bar
+      }
 
       
   
@@ -288,7 +313,7 @@
     background-color: #f5f5f5;
   }
   .unit-view {
-    padding-bottom: 10px;
+    padding-bottom: 20rpx;
     background-color: #f5f5f5;
   }
   
@@ -296,7 +321,7 @@
     // text-align: center;
     // margin-bottom: 20rpx;
     background-color: #fdfdfd;
-    padding: 5px;
+    padding: 10rpx;
   }
   
   .unit-title {
@@ -308,7 +333,7 @@
     .unit-left {
       width: 50%;
       text-align: left;
-      padding-left: 10px;
+      padding-left: 20rpx;
       display: flex;
       align-items: center;
       // .unit-left-tit {
@@ -325,9 +350,9 @@
   }
   
   .left-icon {
-      width: 20px;
-      height: 20px;
-      margin-right: 5px;
+      width: 40rpx;
+      height: 40rpx;
+      margin-right: 10rpx;
   }
 
   .download-tip {
@@ -341,7 +366,7 @@
   //   //  gap: 20rpx;
   // }
     .word-list {
-      height: calc(100vh - 300px); /* 根据实际布局调整 */
+      height: calc(100vh - 580rpx); /* 根据实际布局调整 */
       // overflow-y: auto;
     }
   
@@ -359,7 +384,7 @@
     // justify-content: space-between;
     // align-items: center;
     // margin-bottom: 10rpx;
-    margin-left: 10px;
+    margin-left: 20rpx;
   }
   
   .word-text {
@@ -439,7 +464,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 100px;
+    height: 180rpx;
     display: flex;
     background: #fff;
     box-shadow: 0 -4rpx 12rpx rgba(0,0,0,0.1);
@@ -461,8 +486,8 @@
       }
 
       .button-icon {
-        width: 40px; /* 根据实际图标的大小调整 */
-        height: 40px; /* 根据实际图标的大小调整 */
+        width: 80rpx; /* 根据实际图标的大小调整 */
+        height: 80rpx; /* 根据实际图标的大小调整 */
         margin-bottom: 5px;
       }
 
@@ -472,6 +497,76 @@
   }
 
 
+
+  /* 操作栏样式调整 */
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 180rpx;  // 与按钮栏高度一致
+  background: #fff;
+  box-shadow: 0 -4rpx 12rpx rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  padding: 0 30rpx;
+  z-index: 999;    // 确保在关闭按钮下方
+
+  .action-content {
+    display: flex;
+    align-items: center;
+    gap: 40rpx;
+    width: 100%;
+
+    .select-all {
+      color: #4CAF50;
+      font-size: 28rpx;
+      font-weight: bold;
+    }
+
+    .selected-count {
+      color: #666;
+      font-size: 24rpx;
+      flex-grow: 1;
+    }
+
+    .start-learn {
+      background: #4CAF50;
+      color: #fff;
+      padding: 16rpx 48rpx;
+      border-radius: 40rpx;
+      font-size: 28rpx;
+    }
+  }
+}
+
+/* 关闭按钮定位 */
+.close-btn {
+  position: fixed;
+  right: 30rpx;
+  bottom: 180rpx;  // 位于操作栏上方20rpx（120rpx高度+20rpx间距）
+  z-index: 1000;   // 确保在最上层
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.2);
+
+  .close-icon {
+    color: #fff;
+    font-size: 40rpx;
+    line-height: 1;
+    margin-top: -4rpx; // 视觉居中微调
+  }
+
+  &:active {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+}
 
 
   </style>
