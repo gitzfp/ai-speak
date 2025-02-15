@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [uni()],
   server: {
     host: "0.0.0.0",
-    port: 5174,
+    port: 5173,
     proxy: {
        '/ap33': {
         target: 'https://api.mypep.com.cn', // 目标服务器地址
