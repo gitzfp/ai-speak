@@ -52,3 +52,4 @@ pycryptodome
 m3u8
 aiohttp
 ffmpeg-python
+beautifulsoup4

@@ -1,7 +1,7 @@
 from typing import Dict, List
 from sqlalchemy.orm import Session
 from app.db.textbook_entities import TextbookEntity, TextbookCategoryEntity, StepEntity, LessonEntity, LessonExplainEntity, LessonPointEntity, LessonPartEntity, ExerciseEntity, ExerciseOptionEntity, TaskTargetsEntity, CourseEntity, TeacherEntity
-from app.db.words_entities import Word  # 添加这行导入
+from app.db.words_entities import Word, WordSyllable, Syllable  # 添加这行导入
 
 class TextbookService:
     def __init__(self, db: Session):
@@ -329,4 +329,80 @@ class TextbookService:
         
         except Exception as e:
             print(f"获取单词列表失败: {str(e)}")
+            return None
+
+    def get_words_with_syllables(self, book_id: str, word_list: List[str]) -> Dict:
+        """
+        获取指定单词列表的详细信息和音节信息
+        """
+        try:
+            # 获取单词信息
+            words = self.db.query(Word).filter(
+                Word.book_id == book_id,
+                Word.word_id.in_(word_list)
+            ).all()
+
+            # 获取这些单词的音节关联信息
+            word_ids = [word.word_id for word in words]
+            word_syllables = self.db.query(WordSyllable).filter(
+                WordSyllable.word_id.in_(word_ids)
+            ).order_by(WordSyllable.word_id, WordSyllable.position).all()
+
+            # 获取相关的音节信息
+            syllable_ids = [ws.syllable_id for ws in word_syllables]
+            syllables = self.db.query(Syllable).filter(
+                Syllable.id.in_(syllable_ids)
+            ).all()
+            
+            # 构建音节字典以便快速查找
+            syllable_dict = {s.id: s for s in syllables}
+            
+            # 构建单词音节映射
+            word_syllable_map = {}
+            for ws in word_syllables:
+                if ws.word_id not in word_syllable_map:
+                    word_syllable_map[ws.word_id] = []
+                syllable = syllable_dict.get(ws.syllable_id)
+                if syllable:
+                    word_syllable_map[ws.word_id].append({
+                        "position": ws.position,
+                        "letter": syllable.letter,
+                        "content": syllable.content,
+                        "sound_path": syllable.sound_path,
+                        "phonetic": syllable.phonetic
+                    })
+
+            # 构建返回数据
+            word_list = []
+            for word in words:
+                word_data = {
+                    "word_id": word.word_id,
+                    "word": word.word,
+                    "lesson_id": word.lesson_id,
+                    "chinese": word.chinese,
+                    "phonetic": word.phonetic,
+                    "uk_phonetic": word.uk_phonetic,
+                    "us_phonetic": word.us_phonetic,
+                    "sound_path": word.sound_path,
+                    "uk_sound_path": word.uk_sound_path,
+                    "us_sound_path": word.us_sound_path,
+                    "image_path": word.image_path,
+                    "has_base": word.has_base,
+                    "paraphrase": word.paraphrase,
+                    "phonics": word.phonics,
+                    "word_tense": word.word_tense,
+                    "example_sentence": word.example_sentence,
+                    "phrase": word.phrase,
+                    "synonym": word.synonym,
+                    "syllables": word_syllable_map.get(word.word_id, [])
+                }
+                word_list.append(word_data)
+
+            return {
+                "book_id": book_id,
+                "words": word_list
+            }
+
+        except Exception as e:
+            print(f"获取单词详情失败: {str(e)}")
             return None

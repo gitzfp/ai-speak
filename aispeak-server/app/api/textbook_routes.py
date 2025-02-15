@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from app.services.textbook_service import TextbookService
 from app.db import get_db
 from app.models.response import ApiResponse
+from typing import List
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -96,6 +98,30 @@ def get_lesson_words(
 
         if result is None:
             return ApiResponse.error("未找到单词列表")
+
+        return ApiResponse.success(result)
+
+    except Exception as e:
+        return ApiResponse.system_error(str(e))
+
+class WordListRequest(BaseModel):
+    words: List[str]
+
+@router.post("/textbook/{book_id}/words/details", response_model=ApiResponse)
+def get_words_details(
+    book_id: str,
+    word_list: WordListRequest,
+    db: Session = Depends(get_db)
+) -> ApiResponse:
+    """
+    获取指定单词列表的详细信息和音节信息
+    """
+    try:
+        service = TextbookService(db)
+        result = service.get_words_with_syllables(book_id, word_list.words)
+
+        if result is None:
+            return ApiResponse.error("未找到单词信息")
 
         return ApiResponse.success(result)
 

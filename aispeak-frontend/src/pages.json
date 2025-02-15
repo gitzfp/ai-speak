@@ -19,7 +19,7 @@
     //   }
     // },
     {
-      "path": "pages/textbook/index2",
+      "path": "pages/textbook/index",
       "style": {
         "navigationBarTitleText": "教材详情",
         "navigationStyle": "custom"

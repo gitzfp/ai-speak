@@ -236,11 +236,11 @@
       }
   
       onLoad((options) => {
-        const { objId } = options
+        const { objId, bookId } = options
         const objStr = sessionStorage.getItem(objId)
         const obj = JSON.parse(objStr);
         currentBook.value = { ...obj}
-        fetchWords(currentBook.value.book_id)
+        fetchWords(currentBook.value.book_id || bookId)
         
       })
   

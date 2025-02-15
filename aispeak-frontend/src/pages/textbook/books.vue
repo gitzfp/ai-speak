@@ -166,7 +166,7 @@ const goToWords = () => {
 
   if (lessonId > 0) {
     uni.navigateTo({
-      url: `/pages/textbook/words?bookId=${book_id.value}&lessonId=${lessonId}`
+      url: `/pages/textbook/Learnwords?bookId=${book_id.value}&lessonId=${lessonId}`
     });
   } else {
     uni.showToast({
