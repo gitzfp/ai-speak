@@ -46,14 +46,12 @@ class TextbookPageEntity(Base):
                          onupdate=datetime.datetime.now)  # 更新时间
 
 
-# 创建表
-Base.metadata.create_all(engine)
 class TextbookSentence(Base):
     """教材句子表"""
 
     __tablename__ = "textbook_sentences"
 
-    id = Column("id", String(80), primary_key=True)  # 句子ID
+    id = Column("id", Integer, primary_key=True, autoincrement=True)  # 句子ID
     book_id = Column("book_id", String(80), nullable=False)  # 关联的书籍ID
     page_no = Column("page_no", Integer, nullable=False)  # 页码
     sentence = Column("sentence", Text, nullable=False)  # 句子内容
@@ -69,32 +67,35 @@ class TextbookSentence(Base):
     track_top = Column("track_top", Float, nullable=True)  # 顶部位置
     track_left = Column("track_left", Float, nullable=True)  # 左侧位置
     track_url = Column("track_url", String(500), nullable=True)  # 音频URL
-    track_id = Column("track_id", Integer, nullable=False)  # 音频ID
+    track_id = Column("track_id", Integer, nullable=True)  # 音频ID
     is_evaluation = Column("is_evaluation", Integer, default=0)  # 是否评估
     track_name = Column("track_name", String(200), nullable=True)  # 音频名称
-    track_genre = Column("track_genre", String(200), nullable=True)  # 音频类型
+    track_genre = Column("track_genre", String(1200), nullable=True)  # 音频类型
     track_duration = Column("track_duration", Float, nullable=True)  # 音频时长
     track_index = Column("track_index", Integer, nullable=False)  # 音频索引
-    track_text = Column("track_text", String(500), nullable=True)  # 音频文本
+    track_text = Column("track_text", String(1500), nullable=True)  # 音频文本
     track_evaluation = Column(
-        "track_evaluation", String(500), nullable=True)  # 音频评估
+        "track_evaluation", String(1500), nullable=True)  # 音频评估
     track_bottom = Column("track_bottom", Float, nullable=True)  # 底部位置
 
 
 class TaskTargetsEntity(Base):
     """任务目标表"""
-    
+
     __tablename__ = "task_target"
-    
+
     id = Column("id", Integer, primary_key=True)  # 任务目标ID
     info_cn = Column("info_cn", String(200), nullable=False)  # 中文描述
     info_en = Column("info_en", String(200), nullable=True)  # 英文描述
     lesson_id = Column("lesson_id", String(500), nullable=False)  # 所属课程ID
-    info_en_audio = Column("info_en_audio", String(500), nullable=True)  # 英文音频链接
+    info_en_audio = Column("info_en_audio", String(500),
+                           nullable=True)  # 英文音频链接
     match_type = Column("match_type", Integer, nullable=False)  # 匹配类型
     status = Column("status", Integer, default=1)  # 状态
-    create_time = Column("create_time", DateTime, default=datetime.datetime.now)  # 创建时间
-    update_time = Column("update_time", DateTime, default=datetime.datetime.now)  # 更新时间
+    create_time = Column("create_time", DateTime,
+                         default=datetime.datetime.now)  # 创建时间
+    update_time = Column("update_time", DateTime,
+                         default=datetime.datetime.now)  # 更新时间
 
 
 class LessonEntity(Base):
@@ -120,3 +121,5 @@ class LessonEntity(Base):
     ext_id = Column("ext_id", String(200), nullable=True)  # 关联的第三方id
 
 
+# 创建表
+Base.metadata.create_all(engine)

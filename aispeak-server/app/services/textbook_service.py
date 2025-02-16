@@ -490,7 +490,21 @@ class TextbookService:
         创建教材页面和句子
         """
         try:
+            # 打印输入数据结构
+            print("Input pages data:", pages)
+            
             for page in pages:
+                print(f"\nProcessing page: {page.get('page_id')}")
+                print("Page data:", page)
+                
+                # 检查 track_info 是否存在
+                if "track_info" not in page:
+                    print(f"Warning: track_info not found in page data: {page}")
+                    continue
+                    
+                # 打印 track_info 内容
+                print(f"track_info content: {page['track_info']}")
+
                 # 创建 TextbookPageEntity 实例
                 textbook_page = TextbookPageEntity(
                     id=str(page["page_id"]),
@@ -504,11 +518,15 @@ class TextbookService:
                     update_time=datetime.datetime.now()
                 )
                 self.db.add(textbook_page)
+                print(f"Created textbook page with ID: {textbook_page.id}")
 
                 # 创建 TextbookSentence 实例
                 for track in page["track_info"]:
+                    print(f"\nProcessing track: {track.get('track_id')}")
+                    print("Track data:", track)
+                    
                     textbook_sentence = TextbookSentence(
-                        id=str(track["track_id"]),
+                        track_id=str(track["track_id"]),
                         book_id=textbook_page.id,
                         page_no=textbook_page.page_no,
                         sentence=track["track_text"],
@@ -529,6 +547,7 @@ class TextbookService:
                         is_evaluation=track["is_evaluation"]
                     )
                     self.db.add(textbook_sentence)
+                    print(f"Created textbook sentence with ID: {textbook_sentence.id}")
 
             self.db.commit()
             return "教材页面和句子创建成功"
@@ -536,6 +555,10 @@ class TextbookService:
         except Exception as e:
             self.db.rollback()
             print(f"创建教材页面和句子失败: {str(e)}")
+            # 打印详细的错误追踪
+            import traceback
+            print("Detailed error traceback:")
+            print(traceback.format_exc())
             return str(e)
 
 
