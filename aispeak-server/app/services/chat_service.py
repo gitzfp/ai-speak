@@ -525,10 +525,10 @@ class ChatService:
             .first()
         )
         
-        # Set default target language if account_settings is None
+        # Set default values if account_settings is None
         target_language = account_settings.target_language if account_settings else "en"  # Default to English
-        voice_name = account_settings.speech_role_name
-        speech_speed = account_settings.playing_voice_speed
+        voice_name = account_settings.speech_role_name if account_settings else "default_voice"  # Default voice name
+        speech_speed = account_settings.playing_voice_speed if account_settings else "1.0"  # Default speech speed
         filename = f"message_{message.id}_{voice_name}_{speech_speed}.wav"
         full_file_name = voice_file_get_path(filename)
         voice_role_style = ""
