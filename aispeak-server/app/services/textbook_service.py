@@ -521,6 +521,7 @@ class TextbookService:
                     existing_page.update_time = datetime.datetime.now()  # 更新修改时间
 
                     print(f"Updated textbook page with ID: {existing_page.id}")
+                    textbook_page = existing_page  # 将 textbook_page 指向已更新的记录
                 else:
                     # 创建新的记录
                     textbook_page = TextbookPageEntity(
@@ -562,6 +563,7 @@ class TextbookService:
                         existing_sentence.track_genre = track["track_genre"]
                         existing_sentence.track_duration = track["track_duration"]
                         existing_sentence.track_index = track["track_index"]
+                        existing_sentence.track_text = track["track_text"]
                         existing_sentence.track_evaluation = track["track_evaluation"]
                         existing_sentence.track_bottom = track["track_bottom"]
                         existing_sentence.is_evaluation = track["is_evaluation"]
