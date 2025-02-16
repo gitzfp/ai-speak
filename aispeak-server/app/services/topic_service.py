@@ -14,6 +14,7 @@ from app.core.logging import logging
 from app.ai import chat_ai
 from app.core.azure_voice import *
 from app.models.chat_models import *
+from app.core.utils import short_uuid  # Adjust the import path as necessary
 
 
 class TopicService:
