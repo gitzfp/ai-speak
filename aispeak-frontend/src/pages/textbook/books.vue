@@ -123,6 +123,7 @@ import utils from "@/utils/utils"
 import env from "@/config/env" 
 import topicRequest from "@/api/topic"
 import AssessmentPopup from "./AssessmentPopup.vue"
+import textbook from "@/api/textbook"
 const baseUrl = env.basePath // 获取 basePath
 
 // 定义响应式数据
@@ -431,9 +432,8 @@ async function getBookUrl() {
   }
 }
 
-const parseJsonData = (data, comeFrom = "OSS") => {
+const parseJsonData = (jsonData, comeFrom = "OSS") => {
   try {
-    let jsonData = JSON.parse(data)
     console.log(`页面数据获取成功（来自 ${comeFrom}）:`, jsonData)
     // 更新页面数据
     bookPages.value = jsonData.bookpage
@@ -446,6 +446,11 @@ const parseJsonData = (data, comeFrom = "OSS") => {
       title: catalogData.value[0].title, // 你想要显示的标题
     })
     loading.value = false
+    textbook.createTextbookPages(book_id.value ,jsonData.bookpage).then(res => {
+      console.log("存储教材页面接口响应", res); 
+    }).catch(err => {
+        console.log("存储教材页面失败", err); 
+    });
     return jsonData
   } catch (error) {
     console.error("Error parsing JSON data:", error)
@@ -468,7 +473,7 @@ async function fetchAndProcessData() {
       const content = await zip.loadAsync(data, { base64: true })
       const files = Object.keys(content.files)
       const unzippedData = await content.files[files[0]].async("text")
-      const result = parseJsonData(unzippedData)
+      const result = parseJsonData(JSON.parse(unzippedData))
       if (result) {
         return
       }
@@ -481,12 +486,11 @@ async function fetchAndProcessData() {
     const decryptedData = decrypt(new Uint8Array(response.data))
     let jsonData = await unzipData(decryptedData)
     parseJsonData(jsonData, "Orginal")
-    // 在后台处理资源
-    console.log('isWechat:',utils.isWechat())
+    
     if(!utils.isWechat()){
       setTimeout(async () => {
         jsonData = await processResources(jsonData)
-        await utils.uploadBinaryData(ossKey, jsonData)
+        // await utils.uploadBinaryData(ossKey, jsonData)
       }, 0)
     }
    

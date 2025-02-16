@@ -31,4 +31,9 @@ export default {
       : `/textbook/${bookId}/words`;
     return request(url, "GET");
   },
+
+  // 创建教材页面和句子
+  createTextbookPages(book_id: string, pages: Array<object>) {
+    return request(`/textbook/${book_id}/pages`, "POST", pages);
+  },
 };

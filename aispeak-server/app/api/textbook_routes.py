@@ -146,8 +146,9 @@ def get_words_details(
     except Exception as e:
         return ApiResponse.system_error(str(e))
 
-@router.post("/textbook/pages", response_model=ApiResponse)
+@router.post("/textbook/{book_id}/pages", response_model=ApiResponse)
 def create_textbook_pages(
+    book_id: str,
     pages: List[dict],
     db: Session = Depends(get_db)
 ) -> ApiResponse:
@@ -156,7 +157,7 @@ def create_textbook_pages(
     """
     try:
         service = TextbookService(db)
-        result = service.create_textbook_pages(pages)
+        result = service.create_textbook_pages(book_id, pages)
         return ApiResponse.success(result)
 
     except Exception as e:

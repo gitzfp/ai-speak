@@ -485,7 +485,7 @@ class TextbookService:
             print(f"获取单词详情失败: {str(e)}")
             return None
 
-    def create_textbook_pages(self, pages: List[dict]) -> str:
+    def create_textbook_pages(self, book_id, pages: List[dict]) -> str:
         """
         创建教材页面和句子
         """
@@ -512,7 +512,7 @@ class TextbookService:
 
                 if existing_page:
                     # 更新已存在的记录
-                    existing_page.book_id = page["version"][0]  # 假设 book_id 是 version 的第一个元素
+                    existing_page.book_id = book_id  # 假设 book_id 是 version 的第一个元素
                     existing_page.page_name = page["page_name"]
                     existing_page.page_no = page["page_no"]
                     existing_page.page_no_v2 = page.get("page_no_v2")
@@ -526,7 +526,7 @@ class TextbookService:
                     # 创建新的记录
                     textbook_page = TextbookPageEntity(
                         id=str(page["page_id"]),
-                        book_id=page["version"][0],  # 假设 book_id 是 version 的第一个元素
+                        book_id=book_id,  # 假设 book_id 是 version 的第一个元素
                         page_name=page["page_name"],
                         page_no=page["page_no"],
                         page_no_v2=page.get("page_no_v2"),
@@ -545,7 +545,7 @@ class TextbookService:
                     
                     # 尝试查找现有的 TextbookSentence 记录
                     existing_sentence = self.db.query(TextbookSentence).filter(
-                        TextbookSentence.book_id == textbook_page.id,
+                        TextbookSentence.book_id == book_id,
                         TextbookSentence.page_no == textbook_page.page_no,
                         TextbookSentence.track_text == track["track_text"]  # 使用其他字段进行匹配
                     ).first()
@@ -572,7 +572,7 @@ class TextbookService:
                     else:
                         # 创建新的记录
                         textbook_sentence = TextbookSentence(
-                            book_id=textbook_page.id,
+                            book_id=book_id,
                             page_no=textbook_page.page_no,
                             sentence=track["track_text"],
                             is_recite=track["is_recite"],
