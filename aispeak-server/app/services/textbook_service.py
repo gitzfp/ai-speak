@@ -1,7 +1,8 @@
 from typing import Dict, List
 from sqlalchemy.orm import Session
-from app.db.textbook_entities import TextbookEntity,  LessonEntity, TaskTargetsEntity
+from app.db.textbook_entities import TextbookEntity,  LessonEntity, TaskTargetsEntity, TextbookPageEntity, TextbookSentence
 from app.db.words_entities import Word, WordSyllable, Syllable  # 添加这行导入
+import datetime
 
 class TextbookService:
     def __init__(self, db: Session):
@@ -483,5 +484,58 @@ class TextbookService:
         except Exception as e:
             print(f"获取单词详情失败: {str(e)}")
             return None
+
+    def create_textbook_pages(self, pages: List[dict]) -> str:
+        """
+        创建教材页面和句子
+        """
+        try:
+            for page in pages:
+                # 创建 TextbookPageEntity 实例
+                textbook_page = TextbookPageEntity(
+                    id=str(page["page_id"]),
+                    book_id=page["version"][0],  # 假设 book_id 是 version 的第一个元素
+                    page_name=page["page_name"],
+                    page_no=page["page_no"],
+                    page_no_v2=page.get("page_no_v2"),
+                    page_url=page["page_url"],
+                    page_url_source=page["page_url_source"],
+                    create_time=datetime.datetime.now(),
+                    update_time=datetime.datetime.now()
+                )
+                self.db.add(textbook_page)
+
+                # 创建 TextbookSentence 实例
+                for track in page["track_info"]:
+                    textbook_sentence = TextbookSentence(
+                        id=str(track["track_id"]),
+                        book_id=textbook_page.id,
+                        page_no=textbook_page.page_no,
+                        sentence=track["track_text"],
+                        is_recite=track["is_recite"],
+                        is_ai_dub=track["is_ai_dub"],
+                        track_continue_play_id=track.get("track_continue_play_id"),
+                        track_url_source=track["track_url_source"],
+                        track_right=track["track_right"],
+                        track_top=track["track_top"],
+                        track_left=track["track_left"],
+                        track_url=track["track_url"],
+                        track_genre=track["track_genre"],
+                        track_duration=track["track_duration"],
+                        track_index=track["track_index"],
+                        track_text=track["track_text"],
+                        track_evaluation=track["track_evaluation"],
+                        track_bottom=track["track_bottom"],
+                        is_evaluation=track["is_evaluation"]
+                    )
+                    self.db.add(textbook_sentence)
+
+            self.db.commit()
+            return "教材页面和句子创建成功"
+
+        except Exception as e:
+            self.db.rollback()
+            print(f"创建教材页面和句子失败: {str(e)}")
+            return str(e)
 
 

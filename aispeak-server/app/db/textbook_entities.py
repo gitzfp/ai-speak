@@ -26,6 +26,28 @@ class TextbookEntity(Base):
                          default=datetime.datetime.now)  # 更新时间
 
 
+class TextbookPageEntity(Base):
+    """教材页面表"""
+
+    __tablename__ = "textbook_page"
+
+    id = Column("id", String(80), primary_key=True)  # 页面ID
+    book_id = Column("book_id", String(80), nullable=False)  # 关联的书籍ID
+    page_name = Column("page_name", String(200), nullable=False)  # 页面名称
+    page_no = Column("page_no", Integer, nullable=False)  # 页码
+    page_no_v2 = Column("page_no_v2", String(50), nullable=True)  # 页码版本
+    page_url = Column("page_url", String(500), nullable=True)  # 页面URL
+    page_url_source = Column(
+        "page_url_source", String(500), nullable=True)  # 页面源URL
+    version = Column("version", String(50), nullable=True)  # 版本
+    create_time = Column("create_time", DateTime,
+                         default=datetime.datetime.now)  # 创建时间
+    update_time = Column("update_time", DateTime, default=datetime.datetime.now,
+                         onupdate=datetime.datetime.now)  # 更新时间
+
+
+# 创建表
+Base.metadata.create_all(engine)
 class TextbookSentence(Base):
     """教材句子表"""
 
@@ -33,7 +55,7 @@ class TextbookSentence(Base):
 
     id = Column("id", String(80), primary_key=True)  # 句子ID
     book_id = Column("book_id", String(80), nullable=False)  # 关联的书籍ID
-    page_number = Column("page_number", Integer, nullable=False)  # 页码
+    page_no = Column("page_no", Integer, nullable=False)  # 页码
     sentence = Column("sentence", Text, nullable=False)  # 句子内容
 
     # 新增字段
@@ -98,5 +120,3 @@ class LessonEntity(Base):
     ext_id = Column("ext_id", String(200), nullable=True)  # 关联的第三方id
 
 
-# 创建表
-Base.metadata.create_all(engine)
