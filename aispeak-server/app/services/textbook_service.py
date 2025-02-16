@@ -1,6 +1,6 @@
 from typing import Dict, List
 from sqlalchemy.orm import Session
-from app.db.textbook_entities import TextbookEntity, TextbookCategoryEntity, StepEntity, LessonEntity, LessonExplainEntity, LessonPointEntity, LessonPartEntity, ExerciseEntity, ExerciseOptionEntity, TaskTargetsEntity, CourseEntity, TeacherEntity
+from app.db.textbook_entities import TextbookEntity,  LessonEntity, TaskTargetsEntity
 from app.db.words_entities import Word, WordSyllable, Syllable  # 添加这行导入
 
 class TextbookService:
