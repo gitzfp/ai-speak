@@ -1,7 +1,7 @@
 import json
 from app.db.textbook_entities import TextbookEntity, Base, engine
 from sqlalchemy.orm import Session
-from app.scripts.utils.Util import download_and_upload_to_oss  
+from app.scripts.utils.utils import download_and_upload_to_oss  
 import asyncio
 
 
