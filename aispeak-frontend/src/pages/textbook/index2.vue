@@ -249,7 +249,8 @@ const reciteTest = () => {
 const vocabularyReinforcement = () => {
   console.log('Learn Words');
   const objStr = JSON.stringify(book.value);
-  sessionStorage.setItem('currentBook', objStr);
+  uni.setStorage('currentBook', objStr);
+
   uni.navigateTo({
       url: `/pages/textbook/Learnwords?objId=currentBook`
     });

@@ -202,8 +202,7 @@
 
       // 将选中的单词数据存储到本地缓存中
       const sessionKey = 'selectedWords'; // 缓存键名
-      sessionStorage.setItem(sessionKey, JSON.stringify(selectedWords));
-
+      uni.setStorage(sessionKey, JSON.stringify(selectedWords))
       // 跳转到学习页面
       uni.navigateTo({
         url: `/pages/learning-page?sessionKey=${sessionKey}`, // 将缓存键名传递给学习页面
@@ -292,13 +291,9 @@
         }
       }
   
-      onLoad((options) => {
-        const { objId, bookId } = options
-        const objStr = sessionStorage.getItem(objId)
-        const obj = JSON.parse(objStr);
-        currentBook.value = { ...obj}
-        fetchWords(currentBook.value.book_id || bookId)
-        
+      onLoad(async (options) => {
+        const {bookId } = options
+        fetchWords(bookId)
       })
   
       const showDetails = (word) => {

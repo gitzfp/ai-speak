@@ -1,6 +1,9 @@
 <template>
   <view class="container">
-    <view v-if="loading">加载中...</view>
+    <view v-if="loading" class="loading-container">
+      <view class="loading-spinner"></view>
+      <!-- <text class="loading-text">加载中...</text> -->
+    </view>
     <view v-else-if="error">{{ error }}</view>
     <view v-else>
       <!-- 遮罩层 -->
@@ -52,11 +55,13 @@
         </swiper-item>
       </swiper>
 
-      <!-- 底部工具栏 -->
+      <!-- 添加悬浮目录按钮 -->
+      <view class="floating-catalog-btn" @click="toggleCatalog">
+        <text>目录</text>
+      </view>
+
+      <!-- 修改底部工具栏，移除目录按钮 -->
       <view class="toolbar">
-        <view class="tool-item" @click="toggleCatalog">
-          <text>目录</text>
-        </view>
         <view class="tool-item" @click="togglePlayCurrentPage">
           <text>{{ isPlaying ? "暂停" : "连读" }}</text>
         </view>
@@ -1083,5 +1088,76 @@ onBeforeUnmount(() => {
   border-color: #007AFF;
 }
 
+/* 添加悬浮目录按钮样式 */
+.floating-catalog-btn {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 15px 10px;
+  border-radius: 0 20px 20px 0;
+  z-index: 997;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* 修改工具栏样式以适应5个按钮 */
+.toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background-color: #fff;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-top: 1px solid #eee;
+}
+
+.tool-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+/* 加载动画样式 */
+.loading-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #fff;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+.loading-text {
+  color: #666;
+  font-size: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 
 </style>
