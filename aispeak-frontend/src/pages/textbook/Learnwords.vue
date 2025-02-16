@@ -7,7 +7,8 @@
       title="单词列表"
     >
       <template v-slot:content>
-        <view class="ellipsis">{{ currentBook.grade }} {{ currentBook.term }}</view>
+        <view v-if="currentBook.grade != ''>0" class="ellipsis">{{ currentBook.grade }} {{ currentBook.term }}</view>
+        <view v-else class="ellipsis">单词列表</view>
       </template>
     </CommonHeader>
 
