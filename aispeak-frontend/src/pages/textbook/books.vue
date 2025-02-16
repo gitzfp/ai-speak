@@ -42,11 +42,16 @@
               :src="shouldLoadImage(index) ? page.page_url_source :  ''"
               mode="widthFix"
               class="page-image"
-              >
-              <view v-if="!loadedPages.has(index)" class="image-loading">
-                <text>加载中...</text>
-              </view>
-            </image>
+              @error="(e) => handleImageError(e, page)"
+              @load="(e) => onImageLoad(e, page.page_id)"
+            />
+            <view
+              v-for="track in page.track_info"
+              :key="track.track_id"
+              class="track-area"
+              :style="getTrackStyle(track, page.page_id)"
+              @click="playAudio(track)"
+            ></view>
           </view>
         </swiper-item>
       </swiper> 
@@ -64,11 +69,11 @@
         <view class="tool-item" @click="startRepeatMode">
           <text>复读</text>
         </view>
+        <view class="tool-item" @click="goToassess">
+          <text>跟读</text>
+        </view>
         <view class="tool-item" @click="goToWords">
           <text>单词</text>
-        </view>
-        <view class="tool-item" @click="goToassess">
-          <text>测评</text>
         </view>
         <view class="tool-item" @click="goToChatPage">
           <text>口语</text>
@@ -535,6 +540,8 @@ function onImageLoad(e, pageId) {
     ratio: height / width,
     containerWidth: uni.getWindowInfo().windowWidth,
   }
+   // 添加当前页面到 loadedPages
+  loadedPages.value.add(pageId) // 添加此行
 }
 
 // 修改计算音频区域样式的函数

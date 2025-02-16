@@ -122,7 +122,10 @@ class ChatGPTAI(ChatAI):
         
         message_style = None
         if "message_style" in resp:
-            message_style = resp["message_style"][0] if isinstance(resp["message_style"], list) else resp["message_style"]
+            if isinstance(resp["message_style"], list) and resp["message_style"]:
+                message_style = resp["message_style"][0]
+            else:
+                message_style = resp["message_style"]
 
         completed = False
         if "lesson_completed" in resp:
