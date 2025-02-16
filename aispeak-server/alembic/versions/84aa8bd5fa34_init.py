@@ -1,8 +1,8 @@
-"""db init
+"""init
 
-Revision ID: c6704481cdd9
+Revision ID: 84aa8bd5fa34
 Revises: 
-Create Date: 2025-02-16 17:32:41.689253
+Create Date: 2025-02-17 00:49:05.852729
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'c6704481cdd9'
+revision: str = '84aa8bd5fa34'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -84,6 +84,23 @@ def upgrade() -> None:
     sa.Column('deleted', sa.Integer(), nullable=True),
     sa.Column('created_by', sa.String(length=80), nullable=False),
     sa.Column('create_time', sa.DateTime(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('lesson',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('textbook_id', sa.String(length=80), nullable=True),
+    sa.Column('category_id', sa.String(length=80), nullable=True),
+    sa.Column('lesson_id', sa.String(length=80), nullable=False),
+    sa.Column('title', sa.String(length=200), nullable=False),
+    sa.Column('sub_title', sa.String(length=200), nullable=True),
+    sa.Column('pic', sa.String(length=500), nullable=True),
+    sa.Column('feature', sa.Integer(), nullable=True),
+    sa.Column('is_audition', sa.Integer(), nullable=True),
+    sa.Column('max_score', sa.Integer(), nullable=True),
+    sa.Column('create_time', sa.DateTime(), nullable=True),
+    sa.Column('update_time', sa.DateTime(), nullable=True),
+    sa.Column('icon_url', sa.String(length=500), nullable=True),
+    sa.Column('ext_id', sa.String(length=200), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('message',
@@ -220,6 +237,18 @@ def upgrade() -> None:
     sa.Column('create_time', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('task_target',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('info_cn', sa.String(length=200), nullable=False),
+    sa.Column('info_en', sa.String(length=200), nullable=True),
+    sa.Column('lesson_id', sa.String(length=500), nullable=False),
+    sa.Column('info_en_audio', sa.String(length=500), nullable=True),
+    sa.Column('match_type', sa.Integer(), nullable=False),
+    sa.Column('status', sa.Integer(), nullable=True),
+    sa.Column('create_time', sa.DateTime(), nullable=True),
+    sa.Column('update_time', sa.DateTime(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('textbook',
     sa.Column('id', sa.String(length=80), nullable=False),
     sa.Column('name', sa.String(length=200), nullable=False),
@@ -233,10 +262,23 @@ def upgrade() -> None:
     sa.Column('update_time', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('textbook_sentences',
+    op.create_table('textbook_page',
     sa.Column('id', sa.String(length=80), nullable=False),
     sa.Column('book_id', sa.String(length=80), nullable=False),
-    sa.Column('page_number', sa.Integer(), nullable=False),
+    sa.Column('page_name', sa.String(length=200), nullable=False),
+    sa.Column('page_no', sa.Integer(), nullable=False),
+    sa.Column('page_no_v2', sa.String(length=50), nullable=True),
+    sa.Column('page_url', sa.String(length=500), nullable=True),
+    sa.Column('page_url_source', sa.String(length=500), nullable=True),
+    sa.Column('version', sa.String(length=50), nullable=True),
+    sa.Column('create_time', sa.DateTime(), nullable=True),
+    sa.Column('update_time', sa.DateTime(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('textbook_sentences',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('book_id', sa.String(length=80), nullable=False),
+    sa.Column('page_no', sa.Integer(), nullable=False),
     sa.Column('sentence', sa.Text(), nullable=False),
     sa.Column('is_recite', sa.Integer(), nullable=True),
     sa.Column('is_ai_dub', sa.Boolean(), nullable=True),
@@ -246,14 +288,14 @@ def upgrade() -> None:
     sa.Column('track_top', sa.Float(), nullable=True),
     sa.Column('track_left', sa.Float(), nullable=True),
     sa.Column('track_url', sa.String(length=500), nullable=True),
-    sa.Column('track_id', sa.Integer(), nullable=False),
+    sa.Column('track_id', sa.Integer(), nullable=True),
     sa.Column('is_evaluation', sa.Integer(), nullable=True),
     sa.Column('track_name', sa.String(length=200), nullable=True),
-    sa.Column('track_genre', sa.String(length=200), nullable=True),
+    sa.Column('track_genre', sa.String(length=1200), nullable=True),
     sa.Column('track_duration', sa.Float(), nullable=True),
     sa.Column('track_index', sa.Integer(), nullable=False),
-    sa.Column('track_text', sa.String(length=500), nullable=True),
-    sa.Column('track_evaluation', sa.String(length=500), nullable=True),
+    sa.Column('track_text', sa.String(length=1500), nullable=True),
+    sa.Column('track_evaluation', sa.String(length=1500), nullable=True),
     sa.Column('track_bottom', sa.Float(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
@@ -416,7 +458,9 @@ def downgrade() -> None:
     op.drop_index('created_by_index', table_name='topic')
     op.drop_table('topic')
     op.drop_table('textbook_sentences')
+    op.drop_table('textbook_page')
     op.drop_table('textbook')
+    op.drop_table('task_target')
     op.drop_table('sys_feedback')
     op.drop_table('sys_dict_type')
     op.drop_table('sys_dict_data')
@@ -430,6 +474,7 @@ def downgrade() -> None:
     op.drop_table('message_session')
     op.drop_table('message_grammar')
     op.drop_table('message')
+    op.drop_table('lesson')
     op.drop_table('file_detail')
     op.drop_table('account_topic')
     op.drop_table('account_settings')
