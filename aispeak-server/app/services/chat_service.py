@@ -445,7 +445,9 @@ class ChatService:
             .filter_by(account_id=account_id)
             .first()
         )
-        target_language = account_settings.target_language
+        
+        # Set default target language if account_settings is None
+        target_language = account_settings.target_language if account_settings else "en"  # Default to English
         set_speech_role_name = None
         set_speech_role_style = ""
         if dto.speech_role_name:
@@ -522,7 +524,9 @@ class ChatService:
             .filter_by(account_id=account_id)
             .first()
         )
-        target_language = account_settings.target_language
+        
+        # Set default target language if account_settings is None
+        target_language = account_settings.target_language if account_settings else "en"  # Default to English
         voice_name = account_settings.speech_role_name
         speech_speed = account_settings.playing_voice_speed
         filename = f"message_{message.id}_{voice_name}_{speech_speed}.wav"
