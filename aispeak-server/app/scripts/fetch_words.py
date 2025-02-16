@@ -119,21 +119,55 @@ def parse_word_data(word: str) -> dict:
     }
 
 
-def parse_word_html(word: str) -> dict:
-    """解析单词HTML页面"""
-    url = f"https://yy.suyang123.com/words/{word}.html"
-    response = requests.get(url)
-    response.encoding = 'utf-8'
-    soup = BeautifulSoup(response.text, 'html.parser')
+async def parse_word_html(word_data: any, book_id: str, lesson_id: str) -> dict:
 
+    """解析单词HTML页面"""
     data = {
         "paraphrase": "",
         "phonics": "",
         "word_tense": "",
         "example_sentence": "",
         "phrase": "",
-        "synonym": ""
+        "synonym": "",
+        "uk_phonetic": "",
+        "us_phonetic": "",
+        "uk_sound_path": f"https://ywld-1315558954.51jiaoxi.com/yy-static/word/mp3/3002240/{word_data['id']}_0.mp3",
+        "us_sound_path": f"https://ywld-1315558954.51jiaoxi.com/yy-static/word/mp3/3002240/{word_data['id']}_1.mp3"
     }
+
+    uk_sound_path = await download_and_upload_to_oss(
+        data['uk_sound_path'],
+        bucket,
+        public_endpoint,
+        str(book_id),
+        f"{str(lesson_id)}_uk"
+    ) if data['uk_sound_path'] else ""
+
+    us_sound_path = await download_and_upload_to_oss(
+        data['us_sound_path'],
+        bucket,
+        public_endpoint,
+        str(book_id),
+        f"{str(lesson_id)}_us"
+    ) if data['us_sound_path'] else ""
+
+    # 获取HTML内容
+    url = f"https://yy.suyang123.com/words/{word_data['word']}.html"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # 提取音标
+    phonetics = soup.find('div', class_='word-phonetics')
+    if phonetics:
+        items = phonetics.find_all('div', class_='item')
+        for item in items:
+            type_div = item.find('div', class_='item-type')
+            text_div = item.find('div', class_='item-text')
+            if type_div and text_div:
+                if type_div.text.strip() == '英':
+                    data["uk_phonetic"] = text_div.text.strip()
+                elif type_div.text.strip() == '美':
+                    data["us_phonetic"] = text_div.text.strip()
 
     # 提取释义
     paraphrase = soup.find('div', class_='paraphrase-list')
@@ -165,32 +199,36 @@ def parse_word_html(word: str) -> dict:
     if synonym:
         data["synonym"] = synonym.get_text(strip=True)
 
+    if uk_sound_path or us_sound_path:
+        data["uk_sound_path"] = uk_sound_path
+        data["us_sound_path"] = us_sound_path
     return data
 
 
-def get_word_data(word: str) -> dict:
+async def get_word_data(word_data: any, book_id: str, lesson_id: str) -> dict:
     """获取单词数据（结合API和HTML解析）"""
-    # 获取API数据
-    api_data = parse_word_data(word)
-    # 获取HTML数据
-    html_data = parse_word_html(word)
-    
+
     # 打印API返回的原始数据
-    print(f"\nAPI data for word '{word}':")
-    print("API Response:", api_data)
+    print(f"\nAPI data for word '{word_data}':")
+    # 获取API数据
+    # html_data = parse_word_data(word_data)
+    # 获取HTML数据
+    html_data = await parse_word_html(word_data, book_id, lesson_id)
+
+    print("API Response:", html_data)
     
     # 合并数据，优先使用API数据，缺失则使用HTML数据
     return {
-        "paraphrase": api_data["paraphrase"] or html_data["paraphrase"],
+        "paraphrase": html_data["paraphrase"],
         "phonics": html_data["phonics"],  # 只从HTML获取自然拼读信息
         "word_tense": html_data["word_tense"],  # 只从HTML获取词态信息
-        "example_sentence": api_data["example_sentence"] or html_data["example_sentence"],
-        "phrase": api_data["phrase"] or html_data["phrase"],
-        "synonym": api_data["synonym"] or html_data["synonym"],
-        "uk_phonetic": api_data["uk_phonetic"],
-        "us_phonetic": api_data["us_phonetic"],
-        "uk_sound_path": api_data["uk_sound_path"],
-        "us_sound_path": api_data["us_sound_path"]
+        "example_sentence": html_data["example_sentence"],
+        "phrase": html_data["phrase"],
+        "synonym":  html_data["synonym"],
+        "uk_phonetic": html_data["uk_phonetic"],
+        "us_phonetic": html_data["us_phonetic"],
+        "uk_sound_path": html_data["uk_sound_path"],
+        "us_sound_path": html_data["us_sound_path"]
     }
 
 
@@ -250,7 +288,7 @@ async def fetch_words_data(params: dict):
 
                         for word_data in words_data:
                             # 在获取merged_data之后添加调试日志
-                            merged_data = get_word_data(word_data['word'])
+                            merged_data = await get_word_data(word_data, book_id, lesson_id)
                             print(f"\nProcessing word: {word_data['word']}")
                             print(f"Phonics data: {merged_data['phonics']}")
                             

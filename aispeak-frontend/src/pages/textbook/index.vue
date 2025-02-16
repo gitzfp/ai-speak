@@ -59,7 +59,7 @@
         class="book-card"
         @tap="goToCourse(book)"
       >
-        <image :src="book.icon_url" mode="aspectFit" class="book-cover" />
+        <image :src="book.icon_url" mode="aspectFit" class="book-cover" @error="handleImageError" />
         <view class="book-info">
           <text class="book-title">{{ book.book_name }}</text>
           <text class="book-subtitle">{{ book.grade }} {{ book.term }}</text>
@@ -70,8 +70,8 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from "vue"
-
+import { ref, computed, onMounted, watch } from "vue"
+import textbook from "@/api/textbook";
 export default {
   setup() {
     // 版本、年级和册次选项
@@ -99,39 +99,56 @@ export default {
     const books = ref([])
 
     // 从接口获取数据
-    const fetchBooks = () => {
-      uni.request({
-        url: "https://diandu.mypep.cn/static/textbook/bookList_pep_click_subject_web_1_0_0.json",
-        success: (res) => {
-          // 过滤出英语科目的书籍
-          const englishSubject = res.data.booklist.find(
-            (subject) => subject.subject_name === "英语"
-          )
-          if (englishSubject) {
-            // 将所有版本的书籍合并到一个数组中
-            books.value = englishSubject.versions.flatMap(
-              (version) => version.textbooks
-            )
-          }
-        },
-        fail: (err) => {
-          console.error("Failed to fetch books:", err)
-        },
-      })
+    const fetchBooks = async () => {
+      try {
+        const response = await textbook.getTextbooks(
+          selectedVersion.value,
+          selectedGrade.value,
+          selectedTerm.value
+        );
+        if (response.data && response.data.booklist && response.data.booklist[0]?.versions) {
+          books.value = response.data.booklist[0].versions;
+        } else {
+          books.value = [];
+        }
+      } catch (err) {
+        console.error("Failed to fetch books:", err);
+        uni.showToast({
+          title: '获取教材列表失败',
+          icon: 'error'
+        });
+      }
     }
+
+    // 监听筛选条件变化，重新获取数据
+    watch(
+      [selectedVersion, selectedGrade, selectedTerm],
+      () => {
+        fetchBooks();
+      }
+    );
 
     // 根据选中的版本、年级和册次过滤书籍
     const filteredBooks = computed(() => {
-      return books.value.filter((book) => {
-        const matchVersion =
-          selectedVersion.value === "全部" ||
-          book.version_type === selectedVersion.value
-        const matchGrade =
-          selectedGrade.value === "全部" || book.grade === selectedGrade.value
-        const matchTerm =
-          selectedTerm.value === "全部" || book.term === selectedTerm.value
-        return matchVersion && matchGrade && matchTerm
-      })
+      if (!Array.isArray(books.value)) {
+        return [];
+      }
+      
+      let result = [];
+      books.value.forEach(versionGroup => {
+        if (selectedVersion.value === "全部" || versionGroup.version_type === selectedVersion.value) {
+          if (Array.isArray(versionGroup.textbooks)) {
+            const filteredTextbooks = versionGroup.textbooks.filter(book => {
+              const matchGrade = selectedGrade.value === "全部" || book.grade === selectedGrade.value;
+              const matchTerm = selectedTerm.value === "全部" || book.term === selectedTerm.value;
+              return matchGrade && matchTerm;
+            });
+            result = result.concat(filteredTextbooks);
+          }
+        }
+      });
+      
+      return result;
     })
 
     // 组件挂载时获取数据
@@ -154,6 +171,12 @@ export default {
       })
     }
 
+    const handleImageError = (e) => {
+      console.error('Image load error:', e);
+      // 可选：设置默认图片
+      // e.target.src = '/static/default-book.png';
+    }
+
     return {
       versions,
       grades,
@@ -163,7 +186,8 @@ export default {
       selectedTerm,
       filteredBooks,
       handleBuy,
-      goToCourse, // 添加这一行
+      goToCourse,
+      handleImageError,
     }
   },
 }
@@ -244,6 +268,7 @@ export default {
   width: 100%;
   height: 300rpx;
   background-color: #f8f8f8;
+  object-fit: cover;
 }
 
 .book-info {

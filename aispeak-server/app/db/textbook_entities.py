@@ -7,15 +7,21 @@ class TextbookEntity(Base):
     
     __tablename__ = "textbook"
     
-    id = Column("id", String(80), primary_key=True)
-    title = Column("title", String(200), nullable=False)
-    sub_title = Column("sub_title", String(200), nullable=True)
-    dif_level = Column("dif_level", String(50), nullable=False)
-    pic = Column("pic", String(500), nullable=True)
-    sort = Column("sort", Integer, default=0)
-    total_star_nums = Column("total_star_nums", Integer, default=0)
-    create_time = Column("create_time", DateTime, default=datetime.datetime.now)
-    update_time = Column("update_time", DateTime, default=datetime.datetime.now)
+    id = Column("id", String(80), primary_key=True)  # 教材ID，对应 book_id
+    name = Column("name", String(200), nullable=False)  # 教材名称，如"英语精通"
+    subject_id = Column("subject_id", Integer, nullable=False)  # 学科ID，如12表示英语
+    version_type = Column("version_type", String(50), nullable=False)  # 版本类型，如"精通"
+    
+    grade = Column("grade", String(50), nullable=False)  # 年级名称，如"一年级"
+    term = Column("term", String(50), nullable=False)  # 学期，如"上册"
+    
+    icon_url = Column("icon_url", String(500), nullable=True)  # 教材图标URL
+    ext_id = Column("ext_id", String(200), nullable=True)  # 关联的第三方id 
+    
+    create_time = Column("create_time", DateTime, default=datetime.datetime.now)  # 创建时间
+    update_time = Column("update_time", DateTime, default=datetime.datetime.now)  # 更新时间
+    
+
 
 class TextbookCategoryEntity(Base):
     """教材分类表"""

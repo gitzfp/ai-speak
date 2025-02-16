@@ -7,6 +7,83 @@ class TextbookService:
     def __init__(self, db: Session):
         self.db = db
 
+    def get_all_textbooks(self, version: str = "全部", grade: str = "全部", term: str = "全部") -> Dict:
+        # 构建返回数据结构
+        result = {"booklist": []}
+
+        # 获取所有教材基本信息并按subject_id分组
+        query = self.db.query(TextbookEntity).order_by(TextbookEntity.subject_id)
+        
+        # 添加筛选条件
+        if version != "全部":
+            query = query.filter(TextbookEntity.version_type == version)
+        if grade != "全部":
+            query = query.filter(TextbookEntity.grade == grade)
+        if term != "全部":
+            query = query.filter(TextbookEntity.term == term)
+            
+        textbooks = query.all()
+
+        # 按学科分组处理数据
+        current_subject = None
+        current_subject_data = None
+        current_version = None
+        current_version_data = None
+
+        for textbook in textbooks:
+            # 如果是新的学科
+            if current_subject != textbook.subject_id:
+                # 保存前一个版本(如果存在)
+                if current_version_data and current_subject_data:
+                    current_subject_data["versions"].append(
+                        current_version_data)
+
+                # 保存前一个学科(如果存在)
+                if current_subject_data:
+                    result["booklist"].append(current_subject_data)
+
+                # 创建新的学科数据
+                current_subject = textbook.subject_id
+                current_subject_data = {
+                    "subject_id": str(textbook.subject_id),
+                    "versions": []
+                }
+                current_version = None
+
+            # 如果是新的版本
+            if current_version != textbook.version_type:
+                # 保存前一个版本(如果存在)
+                if current_version_data:
+                    current_subject_data["versions"].append(
+                        current_version_data)
+
+                # 创建新的版本数据
+                current_version = textbook.version_type
+                current_version_data = {
+                    "version_type": textbook.version_type,
+                    "textbooks": []
+                }
+
+            # 添加教材信息到当前版本
+            textbook_data = {
+                "icon_url": textbook.icon_url,
+                "subject_id": str(textbook.subject_id),
+                "version_type": textbook.version_type,
+                "book_id": textbook.id,
+                "book_name": textbook.name,
+                "grade": textbook.grade,
+                "term": textbook.term
+            }
+            current_version_data["textbooks"].append(textbook_data)
+
+        # 保存最后一个版本和学科
+        if current_version_data and current_subject_data:
+            current_subject_data["versions"].append(current_version_data)
+        if current_subject_data:
+            result["booklist"].append(current_subject_data)
+
+        return result
+
     def get_textbook_detail(self, textbook_id: str) -> Dict:
         # 获取教材基本信息
         textbook = self.db.query(TextbookEntity).filter(TextbookEntity.id == textbook_id).first()
@@ -406,3 +483,5 @@ class TextbookService:
         except Exception as e:
             print(f"获取单词详情失败: {str(e)}")
             return None
+
+

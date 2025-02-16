@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.services.textbook_service import TextbookService
 from app.db import get_db
@@ -7,6 +7,23 @@ from typing import List
 from pydantic import BaseModel
 
 router = APIRouter()
+
+
+@router.get("/textbooks", response_model=ApiResponse)
+def get_textbooks(
+    version: str = Query("全部"),
+    grade: str = Query("全部"),
+    term: str = Query("全部"),
+    db: Session = Depends(get_db)
+) -> ApiResponse:
+    try:
+        service = TextbookService(db)
+        result = service.get_all_textbooks(version, grade, term)
+        if result is None:
+            return ApiResponse.error("未找到教材列表")
+        return ApiResponse.success(result)
+    except Exception as e:
+        return ApiResponse.system_error(str(e))
 
 @router.get("/textbook/{textbook_id}", response_model=ApiResponse)
 def get_textbook_detail(
@@ -24,6 +41,7 @@ def get_textbook_detail(
 
     except Exception as e:
         return ApiResponse.system_error(str(e))
+    
 
 @router.get("/textbook/{textbook_id}/category/{category_id}/courses", response_model=ApiResponse)
 def get_course_detail(
