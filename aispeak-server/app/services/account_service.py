@@ -295,16 +295,6 @@ class AccountService:
         )
         if not settings:
             settings = self.db.query(AccountSettingsEntity).first()
-
-
-
-
-
-
-
-
-
-
             # 如果还是没有找到设置，使用默认值
             if not settings:
                 settings = type('DefaultSettings', (object,), {
@@ -316,15 +306,15 @@ class AccountService:
                     "target_language": None
                 })()
 
-            # 设置 vo dict，里面的值与settings中的值一致
-            vo = {
-                "auto_playing_voice": settings.auto_playing_voice,
-                "playing_voice_speed": settings.playing_voice_speed,
-                "auto_text_shadow": settings.auto_text_shadow,
-                "auto_pronunciation": settings.auto_pronunciation,
-                "speech_role_name": settings.speech_role_name,
-                "target_language": settings.target_language,
-            }
+        # 设置 vo dict，里面的值与settings中的值一致
+        vo = {
+            "auto_playing_voice": settings.auto_playing_voice,
+            "playing_voice_speed": settings.playing_voice_speed,
+            "auto_text_shadow": settings.auto_text_shadow,
+            "auto_pronunciation": settings.auto_pronunciation,
+            "speech_role_name": settings.speech_role_name,
+            "target_language": settings.target_language,
+        }
 
         # 如果存在 speech_role_name，则从azure_voice_configs_group获取对应值，取local_name
         if settings.speech_role_name:
