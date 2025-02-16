@@ -505,49 +505,92 @@ class TextbookService:
                 # 打印 track_info 内容
                 print(f"track_info content: {page['track_info']}")
 
-                # 创建 TextbookPageEntity 实例
-                textbook_page = TextbookPageEntity(
-                    id=str(page["page_id"]),
-                    book_id=page["version"][0],  # 假设 book_id 是 version 的第一个元素
-                    page_name=page["page_name"],
-                    page_no=page["page_no"],
-                    page_no_v2=page.get("page_no_v2"),
-                    page_url=page["page_url"],
-                    page_url_source=page["page_url_source"],
-                    create_time=datetime.datetime.now(),
-                    update_time=datetime.datetime.now()
-                )
-                self.db.add(textbook_page)
-                print(f"Created textbook page with ID: {textbook_page.id}")
+                # 检查是否已存在相应的 TextbookPageEntity
+                existing_page = self.db.query(TextbookPageEntity).filter(
+                    TextbookPageEntity.id == str(page["page_id"])
+                ).first()
 
-                # 创建 TextbookSentence 实例
+                if existing_page:
+                    # 更新已存在的记录
+                    existing_page.book_id = page["version"][0]  # 假设 book_id 是 version 的第一个元素
+                    existing_page.page_name = page["page_name"]
+                    existing_page.page_no = page["page_no"]
+                    existing_page.page_no_v2 = page.get("page_no_v2")
+                    existing_page.page_url = page["page_url"]
+                    existing_page.page_url_source = page["page_url_source"]
+                    existing_page.update_time = datetime.datetime.now()  # 更新修改时间
+
+                    print(f"Updated textbook page with ID: {existing_page.id}")
+                else:
+                    # 创建新的记录
+                    textbook_page = TextbookPageEntity(
+                        id=str(page["page_id"]),
+                        book_id=page["version"][0],  # 假设 book_id 是 version 的第一个元素
+                        page_name=page["page_name"],
+                        page_no=page["page_no"],
+                        page_no_v2=page.get("page_no_v2"),
+                        page_url=page["page_url"],
+                        page_url_source=page["page_url_source"],
+                        create_time=datetime.datetime.now(),
+                        update_time=datetime.datetime.now()
+                    )
+                    self.db.add(textbook_page)
+                    print(f"Created textbook page with ID: {textbook_page.id}")
+
+                # 创建或更新 TextbookSentence 实例
                 for track in page["track_info"]:
                     print(f"\nProcessing track: {track.get('track_id')}")
                     print("Track data:", track)
                     
-                    textbook_sentence = TextbookSentence(
-                        track_id=str(track["track_id"]),
-                        book_id=textbook_page.id,
-                        page_no=textbook_page.page_no,
-                        sentence=track["track_text"],
-                        is_recite=track["is_recite"],
-                        is_ai_dub=track["is_ai_dub"],
-                        track_continue_play_id=track.get("track_continue_play_id"),
-                        track_url_source=track["track_url_source"],
-                        track_right=track["track_right"],
-                        track_top=track["track_top"],
-                        track_left=track["track_left"],
-                        track_url=track["track_url"],
-                        track_genre=track["track_genre"],
-                        track_duration=track["track_duration"],
-                        track_index=track["track_index"],
-                        track_text=track["track_text"],
-                        track_evaluation=track["track_evaluation"],
-                        track_bottom=track["track_bottom"],
-                        is_evaluation=track["is_evaluation"]
-                    )
-                    self.db.add(textbook_sentence)
-                    print(f"Created textbook sentence with ID: {textbook_sentence.id}")
+                    # 尝试查找现有的 TextbookSentence 记录
+                    existing_sentence = self.db.query(TextbookSentence).filter(
+                        TextbookSentence.book_id == textbook_page.id,
+                        TextbookSentence.page_no == textbook_page.page_no,
+                        TextbookSentence.track_text == track["track_text"]  # 使用其他字段进行匹配
+                    ).first()
+
+                    if existing_sentence:
+                        # 更新已存在的记录
+                        existing_sentence.is_recite = track["is_recite"]
+                        existing_sentence.is_ai_dub = track["is_ai_dub"]
+                        existing_sentence.track_continue_play_id = track.get("track_continue_play_id")
+                        existing_sentence.track_url_source = track["track_url_source"]
+                        existing_sentence.track_right = track["track_right"]
+                        existing_sentence.track_top = track["track_top"]
+                        existing_sentence.track_left = track["track_left"]
+                        existing_sentence.track_url = track["track_url"]
+                        existing_sentence.track_genre = track["track_genre"]
+                        existing_sentence.track_duration = track["track_duration"]
+                        existing_sentence.track_index = track["track_index"]
+                        existing_sentence.track_evaluation = track["track_evaluation"]
+                        existing_sentence.track_bottom = track["track_bottom"]
+                        existing_sentence.is_evaluation = track["is_evaluation"]
+                        
+                        print(f"Updated textbook sentence with ID: {existing_sentence.id}")
+                    else:
+                        # 创建新的记录
+                        textbook_sentence = TextbookSentence(
+                            book_id=textbook_page.id,
+                            page_no=textbook_page.page_no,
+                            sentence=track["track_text"],
+                            is_recite=track["is_recite"],
+                            is_ai_dub=track["is_ai_dub"],
+                            track_continue_play_id=track.get("track_continue_play_id"),
+                            track_url_source=track["track_url_source"],
+                            track_right=track["track_right"],
+                            track_top=track["track_top"],
+                            track_left=track["track_left"],
+                            track_url=track["track_url"],
+                            track_genre=track["track_genre"],
+                            track_duration=track["track_duration"],
+                            track_index=track["track_index"],
+                            track_text=track["track_text"],
+                            track_evaluation=track["track_evaluation"],
+                            track_bottom=track["track_bottom"],
+                            is_evaluation=track["is_evaluation"]
+                        )
+                        self.db.add(textbook_sentence)
+                        print(f"Created textbook sentence with ID: {textbook_sentence.id}")
 
             self.db.commit()
             return "教材页面和句子创建成功"
