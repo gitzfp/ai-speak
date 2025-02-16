@@ -129,7 +129,6 @@ const loading = ref(true)
 const error = ref("")
 const bookPages = ref([])
 const catalogData = ref([])
-const sentences = ref([])
 const pageTitle = ref("")
 const imageRatios = ref({})
 const currentPage = ref(0)
@@ -153,7 +152,6 @@ onLoad((options) => {
   // 页面加载时调用
 
   fetchAndProcessData()
-  fetchSentences()
 })
 
 const goToWords = () => {
@@ -178,50 +176,6 @@ const goToWords = () => {
       title: '当前页面无单词列表',
       icon: 'none'
     });
-  }
-}
-const fetchSentences = async () => {
-  const ossKey = `json_files/${book_id.value}_sentence.json`
-  // 检查文件是否已存储在阿里云 OSS 中
-  const checkResult = await utils.checkFileInOSS(ossKey)
-  console.log("检查文件是否存在:", checkResult)
-  if (checkResult?.data?.exists) {
-    // 如果已存储，直接从 FastAPI 获取文件 URL
-    let data = await utils.getFileFromOSS(ossKey)
-    data = JSON.parse(data)
-    sentences.value = data.list.flatMap((chapter) =>
-      chapter.groups.flatMap((group) => group.sentences)
-    )
-    console.log("句子数据获取成功（来OSS）")
-  } else {
-    // 如果未存储，调用原有接口获取数据
-    try {
-      const url = `https://diandu.mypep.cn/static/textbook/chapter/${book_id.value}_sentence.json`
-      const response = await new Promise((resolve, reject) => {
-        uni.request({
-          url: url,
-          method: "GET",
-          enableHttpDNS: true,
-          httpDNSServiceId: "wxa410372c837a5f26",
-          success: (res) => {
-            resolve(res)
-          },
-          fail: (err) => {
-            reject(err)
-          },
-        })
-      })
-      const data = await response.data
-      sentences.value = data.list.flatMap((chapter) =>
-        chapter.groups.flatMap((group) => group.sentences)
-      )
-      console.log("句子数据获取成功（来自原接口）")
-      // 将数据上传到阿里云 OSS
-      const jsonString = JSON.stringify(data)
-      await utils.uploadFileToOSS(ossKey, jsonString)
-    } catch (error) {
-      console.error("句子数据获取失败:", error)
-    }
   }
 }
 
@@ -657,13 +611,11 @@ function goToPage(index) {
 
 // 获取当前页面所有句子的文本
 const getCurrentPageSentence = () => {
-  const practiceSentences = sentences.value.filter(
-    (sentence) => sentence.jump_page == currentPage.value
-  )
+  const sentences = bookPages.value[currentPage.value].track_info
   console.log(sentences.value, currentPage.value, "practiceSentences")
-  return practiceSentences.map((sentence) => ({
-    info_en: sentence.text,
-    info_cn: sentence.translate,
+  return sentences.filter((track) => track.is_recite == 1).map((sentence) => ({
+    info_en: sentence.track_text,
+    info_cn: sentence.track_genre,
   }))
 }
 
