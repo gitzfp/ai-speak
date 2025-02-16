@@ -9,7 +9,7 @@ from app.db.account_entities import *
 from app.ai.models import *
 from app.models.topic_models import *
 from typing import List
-from app.db.textbook_entities import TaskTargetsEntity, TeacherEntity, LessonEntity
+from app.db.textbook_entities import TaskTargetsEntity,  LessonEntity
 from app.core.logging import logging
 from app.ai import chat_ai
 from app.core.azure_voice import *
@@ -72,18 +72,7 @@ class TopicService:
         topic_session_relation = (
             self.db.query(TopicSessionRelation).filter_by(session_id=session_id).first()
         )
-        # 获取教师信息，如果没有对应的记录则获取一条默认记录
-        teach_entity = (
-            self.db.query(TeacherEntity)
-            .filter(TeacherEntity.lesson_id == topic_session_relation.topic_id)
-            .first()
-        )
-        logging.info(f"First query teacher result: {teach_entity}")
-        
-        if teach_entity is None:
-            logging.info("No specific teacher found, trying to get default teacher")
-            teach_entity = self.db.query(TeacherEntity).first()
-            logging.info(f"Default teacher query result: {teach_entity}")
+       
         # 获取当前用户已经完成的目标
         completed_targets = (
             self.db.query(MessageSessionEntity)
@@ -105,41 +94,17 @@ class TopicService:
         
         logging.info(f"Task targets: {json.dumps(task_target_list, ensure_ascii=False)}")
         
-        # Add null check before accessing __dict__
-        if teach_entity:
-            logging.info(f"Teacher entity: {teach_entity.__dict__}")
-        else:
-            logging.warning("Teacher entity is None")
-            # Create default teacher parameters
-            return AITopicMessageParams(
-                name="Default Teacher",
-                language="en-US",
-                prompt="I am your English teacher.",
-                speech_role_name="en-US-JennyNeural",
-                styles=[],
-                task_target_list=task_target_list,
-                completed_targets=completed_targets
-            )
-        
-        styles = []
-        if teach_entity and teach_entity.role_short_name:  # Add null check here
-            voice_role_config = get_azure_voice_role_by_short_name(
-                teach_entity.role_short_name
-            )
-            styles = voice_role_config["style_list"]
-        
-        topic_message_params = AITopicMessageParams(
-            name=teach_entity.name if teach_entity else "Default Teacher",
-            language=teach_entity.language if teach_entity else "en-US",
-            prompt=teach_entity.prompt if teach_entity else "I am your English teacher.",
-            speech_role_name=teach_entity.role_short_name if teach_entity else "en-US-JennyNeural",
-            styles=styles,
+
+        return AITopicMessageParams(
+            name="Default Teacher",
+            language="en-US",
+            prompt="I am your English teacher.",
+            speech_role_name="en-US-JennyNeural",
+            styles=[],
             task_target_list=task_target_list,
             completed_targets=completed_targets
         )
-        
-        logging.info(f"Final message params: {topic_message_params.__dict__}")
-        return topic_message_params
+
 
     def get_all_topics(self, type: str, account_id: str):
         """获取所有话题组与话题"""
