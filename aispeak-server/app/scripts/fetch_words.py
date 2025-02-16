@@ -402,34 +402,39 @@ async def fetch_words_data(params: dict):
 
 
 def get_syllables(phonics: str) -> list:
-    """解析音节列表，每个音节包含字母和其对应的音标"""
+    """解析音节列表，返回原始字母音标配对和合并后的音节，合并后的音节按顺序插入"""
     if not phonics:
         return []
 
-    syllables = []
-    parts = phonics.split('/')
-    i = 0
-    
-    while i < len(parts):
-        if not parts[i]:  # 跳过空字符串
-            i += 1
-            continue
-            
-        # 获取字母部分
-        letter = parts[i]
-        i += 1
-        
-        # 获取音标部分（下一个非空部分）
-        while i < len(parts) and not parts[i]:
-            i += 1
-            
-        if i < len(parts):
-            sound = parts[i]
-            syllables.append({'letter': letter, 'sound': sound})
-            i += 1
-    print(f"======", syllables)
-    return syllables
+    # 最终结果列表
+    result = []
 
+    # 按空格分割音节部分
+    syllable_parts = phonics.strip().split(' ')
+
+    for part in syllable_parts:
+        # 分割每个音节部分并过滤空元素
+        elements = list(filter(None, part.split('/')))
+        current_merged_syllable = {'letter': '', 'sound': ''}
+
+        # 处理每个字母和音标对
+        i = 0
+        while i < len(elements):
+            letter = elements[i]
+            sound = elements[i + 1] if i + 1 < len(elements) else ''
+            # 添加原始字母音标配对
+            result.append({'letter': letter, 'sound': sound})
+            # 合并到当前音节
+            current_merged_syllable['letter'] += letter
+            current_merged_syllable['sound'] += sound
+            i += 2  # 每次跳两个元素处理下一个字母
+
+        # 添加合并后的音节
+        if current_merged_syllable['letter']:
+            result.append(current_merged_syllable)
+
+    print(f"========音节数据====={result}")
+    return result
 
 async def process_syllables(phonics_text: str, db, bucket: oss2.Bucket, public_endpoint: str, word_id: int = None) -> None:
     """处理音节信息并存储到数据库"""
@@ -533,7 +538,9 @@ async def process_syllables(phonics_text: str, db, bucket: oss2.Bucket, public_e
 
 
 if __name__ == "__main__":
-    # 示例用法
+    # sylleble = "h/h/e/ə/l/ /l/l/o/əʊ/"
+    # get_syllables(sylleble)
+    # # 示例用法
     params_list = [
         {
             'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=yinianji&term_tag=shangce',

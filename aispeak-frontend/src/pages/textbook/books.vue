@@ -26,34 +26,30 @@
       </view>
 
       <!-- 主要内容区域 -->
-      <swiper
-        class="swiper-container"
+      <swiper 
+        class="swiper-container" 
         :current="currentPage"
-        :skip-hidden-item-layout="true"  
-        :damping="200"  
-        :duration="300"
+        lazy-load
         @change="handlePageChange"
       >
-        <swiper-item v-for="page in bookPages" :key="page.page_id">
+        <swiper-item 
+          v-for="(page, index) in bookPages" 
+          :key="page.page_id"
+          :class="{ 'swiper-lazy': index !== currentPage }"
+        >
           <view class="image-wrapper">
             <image
-              :src="page.page_url_source"
+              :src="shouldLoadImage(index) ? page.page_url_source :  ''"
               mode="widthFix"
               class="page-image"
-              @error="(e) => handleImageError(e, page)"
-              @load="(e) => onImageLoad(e, page.page_id)"
-            />
-            <view
-              v-for="track in page.track_info"
-              :key="track.track_id"
-              class="track-area"
-              :style="getTrackStyle(track, page.page_id)"
-              @click="playAudio(track)"
-            >
-            </view>
+              >
+              <view v-if="!loadedPages.has(index)" class="image-loading">
+                <text>加载中...</text>
+              </view>
+            </image>
           </view>
         </swiper-item>
-      </swiper>
+      </swiper> 
 
       <!-- 添加悬浮目录按钮 -->
       <view class="floating-catalog-btn" @click="toggleCatalog">
@@ -565,8 +561,24 @@ function getTrackStyle(track, pageId) {
 // 增加防抖控制
 const debounceFlag = ref(false)
 
-// 修改后的翻页处理函数
-function handlePageChange(e) {
+// 缓存已加载页面索引
+const loadedPages = ref(new Set())
+
+// 判断是否需要加载图片
+const shouldLoadImage = (index) => {
+  return (
+    loadedPages.value.has(index) || 
+    Math.abs(index - currentPage.value) <= 1 // 预加载相邻页
+  )
+}
+
+// 修改翻页处理
+const handlePageChange = (e) => {
+  const newPage = e.detail.current
+  // 记录已加载页面
+  loadedPages.value.add(newPage)
+  loadedPages.value.add(newPage - 1)
+  loadedPages.value.add(newPage + 1)
   console.log('handlePageChange'+debounceFlag.value,e.detail) 
 
   //有复读的时候退出复读
@@ -612,10 +624,10 @@ function goToPage(index) {
 // 获取当前页面所有句子的文本
 const getCurrentPageSentence = () => {
   const sentences = bookPages.value[currentPage.value].track_info
-  console.log(sentences.value, currentPage.value, "practiceSentences")
-  return sentences.filter((track) => track.is_recite == 1).map((sentence) => ({
+  return sentences?.filter((track) => track.is_recite == 1).map((sentence) => ({
     info_en: sentence.track_text,
     info_cn: sentence.track_genre,
+    audio_url: sentence.track_url_source
   }))
 }
 
@@ -728,9 +740,9 @@ function startRepeatMode() {
 // 开始测评
 function goToassess() {
   showAssessSelection.value = true
-  console.log("开始测评模式")
+  console.log("开始测评模式", bookPages.value[currentPage.value])
   // 生成测评段落选项
-  repeatOptions.value = bookPages.value[currentPage.value].track_info.map(
+  repeatOptions.value = bookPages.value[currentPage.value].track_info?.map(
     (track) => track.track_text || `段落 ${track.track_id}`
   )
 }
@@ -869,6 +881,25 @@ onBeforeUnmount(() => {
 .swiper-container {
   width: 100%;
   height: calc(100vh - 100px); /* 减去工具栏高度 */
+}
+
+.swiper-lazy {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.swiper-lazy-loaded {
+  opacity: 1;
+}
+
+.image-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.5);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 .catalog-drawer {
