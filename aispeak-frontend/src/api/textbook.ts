@@ -36,4 +36,13 @@ export default {
   createTextbookPages(book_id: string, pages: Array<object>) {
     return request(`/textbook/${book_id}/pages`, "POST", pages);
   },
+
+    // 创建教材页面和句子
+  createTextbookChapters(book_id: string, chapters: Array<object>) {
+    return request(`/textbook/${book_id}/chapters`, "POST", chapters);
+  },
+
+  getTextbookDetails(book_id: string) {
+    return request(`/textbook/${book_id}/details`, "GET");
+  },
 };

@@ -3,11 +3,12 @@ from sqlalchemy.orm import Session
 from app.services.textbook_service import TextbookService
 from app.db import get_db
 from app.models.response import ApiResponse
-from typing import List
+from typing import List, Dict
 from pydantic import BaseModel
 
-router = APIRouter()
 
+
+router = APIRouter()
 
 @router.get("/textbooks", response_model=ApiResponse)
 def get_textbooks(
@@ -158,6 +159,43 @@ def create_textbook_pages(
     try:
         service = TextbookService(db)
         result = service.create_textbook_pages(book_id, pages)
+        return ApiResponse.success(result)
+
+    except Exception as e:
+        return ApiResponse.system_error(str(e))
+    
+
+@router.post("/textbook/{book_id}/chapters", response_model=ApiResponse)
+def create_textbook_chapters(
+    book_id: str,
+    chapters: List[dict],
+    db: Session = Depends(get_db)
+) -> ApiResponse:
+    """
+    创建教材章节目录
+    """
+    try:
+        service = TextbookService(db)
+        result = service.create_textbook_chapters(book_id, chapters)
+        return ApiResponse.success(result)
+
+    except Exception as e:
+        return ApiResponse.system_error(str(e))
+@router.get("/textbook/{book_id}/details", response_model=ApiResponse)
+def get_textbook_pages(
+    book_id: str,
+    db: Session = Depends(get_db)
+) -> ApiResponse:
+    """
+    获取教材页面和音频信息
+    """
+    try:
+        service = TextbookService(db)
+        result = service.get_textbook_details(book_id)
+        
+        if result is None:
+            return ApiResponse.error("未找到教材页面信息")
+
         return ApiResponse.success(result)
 
     except Exception as e:

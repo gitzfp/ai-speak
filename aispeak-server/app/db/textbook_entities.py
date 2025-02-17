@@ -75,7 +75,7 @@ class TextbookSentence(Base):
     track_index = Column("track_index", Integer, nullable=False)  # 音频索引
     track_text = Column("track_text", String(1500), nullable=True)  # 音频文本
     track_evaluation = Column(
-        "track_evaluation", String(1500), nullable=True)  # 音频评估
+        "track_evaluation", Text, nullable=True)  # 音频评估
     track_bottom = Column("track_bottom", Float, nullable=True)  # 底部位置
 
 
@@ -119,6 +119,23 @@ class LessonEntity(Base):
                          default=datetime.datetime.now)  # 更新时间
     icon_url = Column("icon_url", String(500), nullable=True)  # 教材图标URL
     ext_id = Column("ext_id", String(200), nullable=True)  # 关联的第三方id
+
+
+class ChapterEntity(Base):
+    """章节目录表"""
+    
+    __tablename__ = "textbook_chapter"
+    
+    id = Column("id", Integer, primary_key=True, autoincrement=True)  # 章节ID
+    title = Column("title", String(200), nullable=False)  # 章节标题
+    book_id = Column("book_id", String(80), nullable=False)  # 关联的教材ID
+    parent_id = Column("parent_id", Integer, nullable=True)  # 父章节ID，顶级章节为null
+    
+    page_id = Column("page_id", Integer, nullable=True)  # 页面ID
+    page_no = Column("page_no", Integer, nullable=True)  # 页码
+
+    create_time = Column("create_time", DateTime, default=datetime.datetime.now)  # 创建时间
+    update_time = Column("update_time", DateTime, default=datetime.datetime.now)  # 更新时间
 
 
 # 创建表

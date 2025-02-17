@@ -1,6 +1,6 @@
 from typing import Dict, List
 from sqlalchemy.orm import Session
-from app.db.textbook_entities import TextbookEntity,  LessonEntity, TaskTargetsEntity, TextbookPageEntity, TextbookSentence
+from app.db.textbook_entities import TextbookEntity,  LessonEntity, TaskTargetsEntity, TextbookPageEntity, TextbookSentence, ChapterEntity
 from app.db.words_entities import Word, WordSyllable, Syllable  # 添加这行导入
 import datetime
 
@@ -218,7 +218,6 @@ class TextbookService:
             "courses": course_list
         }
         return result
-
 
     def get_lesson_detail(self, lesson_id: str) -> Dict:
         # 添加日志
@@ -485,6 +484,60 @@ class TextbookService:
             print(f"获取单词详情失败: {str(e)}")
             return None
 
+    def create_textbook_chapters(self, book_id: str, chapters: List[dict]) -> str:
+        """
+        创建或更新教材章节目录
+        """
+        try:
+            def process_chapter(chapter: dict, parent_id: int = None, sort_order: int = 0):
+                # 查找是否存在相同的章节记录
+                existing_chapter = self.db.query(ChapterEntity).filter(
+                    ChapterEntity.book_id == book_id,
+                    ChapterEntity.title == chapter["title"],
+                    ChapterEntity.page_id == chapter["page_id"]
+                ).first()
+
+                if existing_chapter:
+                    # 更新已存在的章节
+                    existing_chapter.parent_id = parent_id
+                    existing_chapter.page_no = chapter["page_no"]
+                    existing_chapter.update_time = datetime.datetime.now()
+                    chapter_id = existing_chapter.id
+                    print(f"Updated chapter: {existing_chapter.title}")
+                else:
+                    # 创建新的章节记录
+                    db_chapter = ChapterEntity(
+                        title=chapter["title"],
+                        book_id=book_id,
+                        parent_id=parent_id,
+                        page_id=chapter["page_id"],
+                        page_no=chapter["page_no"]
+                    )
+                    self.db.add(db_chapter)
+                    self.db.flush()  # 获取新插入记录的ID
+                    chapter_id = db_chapter.id
+                    print(f"Created new chapter: {db_chapter.title}")
+
+                # 如果有子章节，递归处理
+                if "children" in chapter and chapter["children"]:
+                    for idx, child in enumerate(chapter["children"]):
+                        process_chapter(child, chapter_id, idx)
+
+            # 处理所有顶级章节
+            for idx, chapter in enumerate(chapters):
+                process_chapter(chapter, None, idx)
+
+            self.db.commit()
+            return "教材章节目录创建/更新成功"
+
+        except Exception as e:
+            self.db.rollback()
+            print(f"创建/更新教材章节目录失败: {str(e)}")
+            import traceback
+            print("Detailed error traceback:")
+            print(traceback.format_exc())
+            raise e
+
     def create_textbook_pages(self, book_id, pages: List[dict]) -> str:
         """
         创建教材页面和句子
@@ -512,13 +565,22 @@ class TextbookService:
 
                 if existing_page:
                     # 更新已存在的记录
-                    existing_page.book_id = book_id  # 假设 book_id 是 version 的第一个元素
+                    existing_page.book_id = book_id
                     existing_page.page_name = page["page_name"]
-                    existing_page.page_no = page["page_no"]
-                    existing_page.page_no_v2 = page.get("page_no_v2")
+                    # 确保 page_no 不为空，如果为空则使用一个默认值或其他替代值
+                    page_no = page.get("page_no")
+                    if page_no is None:
+                        # 尝试从 page_no_v2 获取数字部分，或使用 page_id 作为备选
+                        page_no_v2 = page.get("page_no_v2", "")
+                        if page_no_v2.isdigit():
+                            page_no = int(page_no_v2)
+                        else:
+                            # 如果都没有，使用 page_id 作为页码
+                            page_no = int(page["page_id"])
+                    existing_page.page_no = page_no
                     existing_page.page_url = page["page_url"]
                     existing_page.page_url_source = page["page_url_source"]
-                    existing_page.update_time = datetime.datetime.now()  # 更新修改时间
+                    existing_page.update_time = datetime.datetime.now()
 
                     print(f"Updated textbook page with ID: {existing_page.id}")
                     textbook_page = existing_page  # 将 textbook_page 指向已更新的记录
@@ -529,7 +591,6 @@ class TextbookService:
                         book_id=book_id,  # 假设 book_id 是 version 的第一个元素
                         page_name=page["page_name"],
                         page_no=page["page_no"],
-                        page_no_v2=page.get("page_no_v2"),
                         page_url=page["page_url"],
                         page_url_source=page["page_url_source"],
                         create_time=datetime.datetime.now(),
@@ -541,7 +602,6 @@ class TextbookService:
                 # 创建或更新 TextbookSentence 实例
                 for track in page["track_info"]:
                     print(f"\nProcessing track: {track.get('track_id')}")
-                    print("Track data:", track)
                     
                     # 尝试查找现有的 TextbookSentence 记录
                     existing_sentence = self.db.query(TextbookSentence).filter(
@@ -552,6 +612,7 @@ class TextbookService:
 
                     if existing_sentence:
                         # 更新已存在的记录
+                        existing_sentence.track_id = track["track_id"]
                         existing_sentence.is_recite = track["is_recite"]
                         existing_sentence.is_ai_dub = track["is_ai_dub"]
                         existing_sentence.track_continue_play_id = track.get("track_continue_play_id")
@@ -583,6 +644,7 @@ class TextbookService:
                             track_top=track["track_top"],
                             track_left=track["track_left"],
                             track_url=track["track_url"],
+                            track_id=track["track_id"],
                             track_genre=track["track_genre"],
                             track_duration=track["track_duration"],
                             track_index=track["track_index"],
@@ -606,4 +668,87 @@ class TextbookService:
             print(traceback.format_exc())
             return str(e)
 
+    def get_textbook_details(self, book_id: str) -> Dict:
+        """
+        获取教材页面和音频信息
+        """
+        try:
+            # 获取所有页面
+            pages = self.db.query(TextbookPageEntity).filter(
+                TextbookPageEntity.book_id == book_id
+            ).order_by(TextbookPageEntity.page_no).all()
 
+            # 获取所有句子
+            sentences = self.db.query(TextbookSentence).filter(
+                TextbookSentence.book_id == book_id
+            ).order_by(TextbookSentence.page_no, TextbookSentence.track_index).all()
+
+            # 获取所有章节
+            chapters = self.db.query(ChapterEntity).filter(
+                ChapterEntity.book_id == book_id
+            ).order_by(ChapterEntity.id).all()
+
+            # 构建章节树
+            def build_chapter_tree(parent_id=None):
+                tree = []
+                for chapter in chapters:
+                    if chapter.parent_id == parent_id:
+                        children = build_chapter_tree(chapter.id)
+                        chapter_data = {
+                            "id": chapter.id,
+                            "title": chapter.title,
+                            "page_id": chapter.page_id,
+                            "page_no": chapter.page_no
+                        }
+                        if children:
+                            chapter_data["children"] = children
+                        tree.append(chapter_data)
+                return tree
+
+            # 按页面组织句子
+            page_sentences = {}
+            for sentence in sentences:
+                if sentence.page_no not in page_sentences:
+                    page_sentences[sentence.page_no] = []
+                
+                track_info = {
+                    "is_recite": sentence.is_recite,
+                    "is_ai_dub": sentence.is_ai_dub,
+                    "track_continue_play_id": sentence.track_continue_play_id,
+                    "track_url_source": sentence.track_url_source,
+                    "track_right": sentence.track_right,
+                    "track_top": sentence.track_top,
+                    "track_left": sentence.track_left,
+                    "track_url": sentence.track_url,
+                    "track_id": sentence.track_id,
+                    "is_evaluation": sentence.is_evaluation,
+                    "track_name": sentence.track_name,
+                    "track_genre": sentence.track_genre,
+                    "track_duration": sentence.track_duration,
+                    "track_index": sentence.track_index,
+                    "track_text": sentence.track_text,
+                    "track_evaluation": sentence.track_evaluation,
+                    "track_bottom": sentence.track_bottom
+                }
+                page_sentences[sentence.page_no].append(track_info)
+
+            # 构建返回数据
+            bookpages = []
+            for page in pages:
+                page_data = {
+                    "version": ["标准版", "高级版"],  # 这里可以根据实际需求从数据库获取
+                    "page_name": page.page_name,
+                    "page_url_source": page.page_url_source,
+                    "page_id": page.page_no,
+                    "track_info": page_sentences.get(page.page_no, [])
+                }
+                bookpages.append(page_data)
+
+            return {
+                "bookpages": bookpages,
+                "chapters": build_chapter_tree()  # 添加章节目录树
+            }
+
+        except Exception as e:
+            print(f"获取教材页面信息失败: {str(e)}")
+            return None

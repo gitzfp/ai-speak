@@ -432,24 +432,32 @@ async function getBookUrl() {
   }
 }
 
+
+const refreshUI = (pages, catalogs, title) => {
+    bookPages.value = pages
+    catalogData.value = catalogs 
+    pageTitle.value = title 
+    uni.setNavigationBarTitle({
+      title: title, // 你想要显示的标题
+    })
+    loading.value = false
+    console.log(bookPages.value, "页面数据", catalogData)
+}
+
 const parseJsonData = (jsonData, comeFrom = "OSS") => {
   try {
     console.log(`页面数据获取成功（来自 ${comeFrom}）:`, jsonData)
-    // 更新页面数据
-    bookPages.value = jsonData.bookpage
-    catalogData.value =
-      jsonData.bookaudio_v3?.length > 0
-        ? jsonData.bookaudio_v3
-        : jsonData.bookaudio_v2
-    pageTitle.value = catalogData.value[0].title
-    uni.setNavigationBarTitle({
-      title: catalogData.value[0].title, // 你想要显示的标题
-    })
-    loading.value = false
+    refreshUI(jsonData.bookpage, jsonData.bookaudio_v3, jsonData.bookaudio_v3[0].title)
+
     textbook.createTextbookPages(book_id.value ,jsonData.bookpage).then(res => {
       console.log("存储教材页面接口响应", res); 
     }).catch(err => {
         console.log("存储教材页面失败", err); 
+    });
+    textbook.createTextbookChapters(book_id.value ,jsonData.bookaudio_v3).then(res => {
+      console.log("存储教材章节接口响应", res); 
+    }).catch(err => {
+        console.log("存储教材章节失败", err); 
     });
     return jsonData
   } catch (error) {
@@ -461,8 +469,22 @@ const parseJsonData = (jsonData, comeFrom = "OSS") => {
 // 获取数据并处理
 async function fetchAndProcessData() {
   try {
+
+    //1.先从数据库取，有直接返回
+    const res = await textbook.getTextbookDetails(book_id.value).then(response => {
+      return response
+    });
+    if(res?.data?.bookpages?.length > 0 && res?.data?.chapters?.length > 0) {
+        refreshUI(res.data.bookpages, res.data.chapters, res.data.chapters[0].title)
+        console.log("从数据库获取教材详情成功上", res.data)
+        return
+    }
+    console.log("从数据库获取教材详情成功下", res.data)
+
     const bookUrl = await getBookUrl()
     const ossKey = processOssKeyUrl(bookUrl)
+
+    //2.再从阿里云取，有直接返回
     const checkResult = await utils.checkFileInOSS(ossKey)
     if (checkResult?.data?.exists) {
       // 如果已存储，直接从 FastAPI 获取文件 URL
@@ -478,6 +500,8 @@ async function fetchAndProcessData() {
         return
       }
     }
+
+    //3.最后从第三方网站取，有直接返回
     const response = await uni.request({
       url: `https://pdpd.mypep.cn/${ossKey}`,
       responseType: "arraybuffer",
