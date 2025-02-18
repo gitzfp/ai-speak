@@ -70,10 +70,10 @@ class TextbookSentence(Base):
     track_id = Column("track_id", Integer, nullable=True)  # 音频ID
     is_evaluation = Column("is_evaluation", Integer, default=0)  # 是否评估
     track_name = Column("track_name", String(200), nullable=True)  # 音频名称
-    track_genre = Column("track_genre", String(1200), nullable=True)  # 音频类型
+    track_genre = Column("track_genre", Text, nullable=True)  # 音频类型
     track_duration = Column("track_duration", Float, nullable=True)  # 音频时长
     track_index = Column("track_index", Integer, nullable=False)  # 音频索引
-    track_text = Column("track_text", String(1500), nullable=True)  # 音频文本
+    track_text = Column("track_text", Text, nullable=True)  # 音频文本
     track_evaluation = Column(
         "track_evaluation", Text, nullable=True)  # 音频评估
     track_bottom = Column("track_bottom", Float, nullable=True)  # 底部位置
