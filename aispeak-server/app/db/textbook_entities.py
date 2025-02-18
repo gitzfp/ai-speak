@@ -1,6 +1,12 @@
 import datetime
 from sqlalchemy import Column, String, DateTime, Integer, Text, Float, Boolean
 from app.db import Base, engine
+from enum import Enum
+
+
+class Publisher(Enum):
+    PEP = "pep"  # 人教版
+    FLTRP = "fltrp"  # 外研社
 
 
 class TextbookEntity(Base):
@@ -13,6 +19,7 @@ class TextbookEntity(Base):
     subject_id = Column("subject_id", Integer, nullable=False)  # 学科ID，如12表示英语
     version_type = Column("version_type", String(50),
                           nullable=False)  # 版本类型，如"精通"
+    publisher = Column("publisher", String(50), nullable=False, default=Publisher.PEP.value)  # 出版社
 
     grade = Column("grade", String(50), nullable=False)  # 年级名称，如"一年级"
     term = Column("term", String(50), nullable=False)  # 学期，如"上册"
@@ -70,10 +77,10 @@ class TextbookSentence(Base):
     track_id = Column("track_id", Integer, nullable=True)  # 音频ID
     is_evaluation = Column("is_evaluation", Integer, default=0)  # 是否评估
     track_name = Column("track_name", String(200), nullable=True)  # 音频名称
-    track_genre = Column("track_genre", String(1200), nullable=True)  # 音频类型
+    track_genre = Column("track_genre", Text, nullable=True)  # 音频类型
     track_duration = Column("track_duration", Float, nullable=True)  # 音频时长
     track_index = Column("track_index", Integer, nullable=False)  # 音频索引
-    track_text = Column("track_text", String(1500), nullable=True)  # 音频文本
+    track_text = Column("track_text", Text, nullable=True)  # 音频文本
     track_evaluation = Column(
         "track_evaluation", Text, nullable=True)  # 音频评估
     track_bottom = Column("track_bottom", Float, nullable=True)  # 底部位置

@@ -546,7 +546,7 @@ class TextbookService:
             # 打印输入数据结构
             print("Input pages data:", pages)
             
-            for page in pages:
+            for page_index, page in enumerate(pages):
                 print(f"\nProcessing page: {page.get('page_id')}")
                 print("Page data:", page)
                 
@@ -562,21 +562,19 @@ class TextbookService:
                 existing_page = self.db.query(TextbookPageEntity).filter(
                     TextbookPageEntity.id == str(page["page_id"])
                 ).first()
-
+                # 确保 page_no 不为空，如果为空则使用数组长度
+                page_no = page.get("page_no")
+                if page_no is None:
+                    # 尝试从 page_no_v2 获取数字部分，如果也没有则使用数组索引+1
+                    page_no_v2 = page.get("page_no_v2", "")
+                    if page_no_v2.isdigit():
+                        page_no = int(page_no_v2)
+                    else:
+                        page_no = page_index + 2
                 if existing_page:
                     # 更新已存在的记录
                     existing_page.book_id = book_id
                     existing_page.page_name = page["page_name"]
-                    # 确保 page_no 不为空，如果为空则使用一个默认值或其他替代值
-                    page_no = page.get("page_no")
-                    if page_no is None:
-                        # 尝试从 page_no_v2 获取数字部分，或使用 page_id 作为备选
-                        page_no_v2 = page.get("page_no_v2", "")
-                        if page_no_v2.isdigit():
-                            page_no = int(page_no_v2)
-                        else:
-                            # 如果都没有，使用 page_id 作为页码
-                            page_no = int(page["page_id"])
                     existing_page.page_no = page_no
                     existing_page.page_url = page["page_url"]
                     existing_page.page_url_source = page["page_url_source"]
@@ -590,7 +588,7 @@ class TextbookService:
                         id=str(page["page_id"]),
                         book_id=book_id,  # 假设 book_id 是 version 的第一个元素
                         page_name=page["page_name"],
-                        page_no=page["page_no"],
+                        page_no=page_no,
                         page_url=page["page_url"],
                         page_url_source=page["page_url_source"],
                         create_time=datetime.datetime.now(),
