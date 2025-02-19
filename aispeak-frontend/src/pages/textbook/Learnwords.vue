@@ -183,14 +183,17 @@
       // 开始学习
     const startLearning = () => {
       // 获取所有选中的单词
-      const selectedWords = [];
-      groupedWords.value.forEach(group => {
-        group.words.forEach(word => {
-          if (word.isSelected) {
-            selectedWords.push(word);
-          }
-        });
-      });
+      // const selectedWords = [];
+      // groupedWords.value.forEach(group => {
+      //   group.words.forEach(word => {
+      //     if (word.isSelected) {
+      //       selectedWords.push(String(word.word_id));
+      //     }
+      //   });
+      // });
+
+
+      const selectedWords = ["712290","712291"]
 
       // 如果没有选中任何单词，提示用户
       if (selectedWords.length === 0) {
@@ -203,13 +206,29 @@
 
       // 将选中的单词数据存储到本地缓存中
       const sessionKey = 'selectedWords'; // 缓存键名
-      uni.setStorage(sessionKey, JSON.stringify(selectedWords))
-      // 跳转到学习页面
-      uni.navigateTo({
-        url: `/pages/learning-page?sessionKey=${sessionKey}`, // 将缓存键名传递给学习页面
-      });
-    };
       
+      // const bookId = currentBook.value.book_id
+
+
+      const bookId = "1212001101247"
+
+
+      uni.setStorage({
+      key: sessionKey,
+      data: JSON.stringify(selectedWords),
+      success: function () {
+        // console.log('数据存储成功');
+        // 跳转到学习页面
+        uni.navigateTo({
+          url: `/pages/textbook/worddetails?sessionKey=${sessionKey}&bookId=${bookId}`, // 将缓存键名传递给学习页面
+        });
+      },
+      fail: function (err) {
+        console.log('数据存储失败', err);
+      }
+    });
+
+    };
 
       // 初始化时默认选中第一个单元
       onMounted(() => {
@@ -294,6 +313,7 @@
   
       onLoad(async (options) => {
         const {bookId } = options
+        currentBook.value.book_id = bookId
         fetchWords(bookId)
       })
   

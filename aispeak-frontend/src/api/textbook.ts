@@ -45,4 +45,15 @@ export default {
   getTextbookDetails(book_id: string) {
     return request(`/textbook/${book_id}/details`, "GET");
   },
+   // 获取课程单元的单词列表
+   getWordsDetail(bookId: string, words: string[]) {
+    const url = `/textbook/${bookId}/words/details`;
+    // 打印请求 URL 和请求体，方便调试
+    // console.log("请求URL:", url);
+    // console.log("请求体:", requestBody);
+
+    return request(url, "POST", { words }); // 传递 words 作为请求体
+   },
+   
+
 };
