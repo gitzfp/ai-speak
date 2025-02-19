@@ -1,8 +1,8 @@
-"""init data
+"""data init
 
-Revision ID: 3f3ea486211d
+Revision ID: 176619c6a6c4
 Revises: 
-Create Date: 2025-02-17 22:24:12.421453
+Create Date: 2025-02-18 23:53:03.042187
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '3f3ea486211d'
+revision: str = '176619c6a6c4'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -254,6 +254,7 @@ def upgrade() -> None:
     sa.Column('name', sa.String(length=200), nullable=False),
     sa.Column('subject_id', sa.Integer(), nullable=False),
     sa.Column('version_type', sa.String(length=50), nullable=False),
+    sa.Column('publisher', sa.String(length=50), nullable=False),
     sa.Column('grade', sa.String(length=50), nullable=False),
     sa.Column('term', sa.String(length=50), nullable=False),
     sa.Column('icon_url', sa.String(length=500), nullable=True),
@@ -302,10 +303,10 @@ def upgrade() -> None:
     sa.Column('track_id', sa.Integer(), nullable=True),
     sa.Column('is_evaluation', sa.Integer(), nullable=True),
     sa.Column('track_name', sa.String(length=200), nullable=True),
-    sa.Column('track_genre', sa.String(length=1200), nullable=True),
+    sa.Column('track_genre', sa.Text(), nullable=True),
     sa.Column('track_duration', sa.Float(), nullable=True),
     sa.Column('track_index', sa.Integer(), nullable=False),
-    sa.Column('track_text', sa.String(length=1500), nullable=True),
+    sa.Column('track_text', sa.Text(), nullable=True),
     sa.Column('track_evaluation', sa.Text(), nullable=True),
     sa.Column('track_bottom', sa.Float(), nullable=True),
     sa.PrimaryKeyConstraint('id')

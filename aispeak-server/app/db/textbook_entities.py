@@ -1,6 +1,12 @@
 import datetime
 from sqlalchemy import Column, String, DateTime, Integer, Text, Float, Boolean
 from app.db import Base, engine
+from enum import Enum
+
+
+class Publisher(Enum):
+    PEP = "pep"  # 人教版
+    FLTRP = "fltrp"  # 外研社
 
 
 class TextbookEntity(Base):
@@ -13,6 +19,7 @@ class TextbookEntity(Base):
     subject_id = Column("subject_id", Integer, nullable=False)  # 学科ID，如12表示英语
     version_type = Column("version_type", String(50),
                           nullable=False)  # 版本类型，如"精通"
+    publisher = Column("publisher", String(50), nullable=False, default=Publisher.PEP.value)  # 出版社
 
     grade = Column("grade", String(50), nullable=False)  # 年级名称，如"一年级"
     term = Column("term", String(50), nullable=False)  # 学期，如"上册"
