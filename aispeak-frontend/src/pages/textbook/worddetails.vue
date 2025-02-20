@@ -27,7 +27,7 @@
                         <text>生词本</text>
                       </view>
                     </view>
-                    <wordcard ref="wordcardRef" @redefineSettingsParentC="redefineSettingsParentControl" :fulldisplayNum="fulldisplayNum" @fullDisplayRecovery="fullDisplayRecovery" :word="word" />
+                    <wordcard ref="wordcardRef" @redefineSettingsParentC="redefineSettingsParentControl" :volume=volume :fulldisplayNum="fulldisplayNum" @fullDisplayRecovery="fullDisplayRecovery" :word="word" />
                     <!-- 功能按钮 -->
                     <view @tap="showEvaluationModal" class="action-buttons">
                         <view class="pronunciation-btn">
@@ -37,10 +37,11 @@
                     </view>
                     
                   </view>
-
                 </scroll-view>
-                
             </swiper-item>
+			<swiper-item>
+				<wordsharepageVue :allWords=allWords v-if="allWords.length" class="card"></wordsharepageVue>
+			</swiper-item>
         </swiper>
         
       </view>
@@ -58,7 +59,7 @@
         <!-- 中间：播放按钮 -->
         <view @tap="playbuttonclick" class="middle-section">
           <view>
-            <template v-if="ispagePlaying">
+            <template v-if="!ispagePlaying">
               <image src="@/assets/icons/play_word.svg" alt="Play Button" class="play-button-image" />
             </template>
             <template v-else>
@@ -143,8 +144,10 @@
    import jiahao from '@/assets/icons/word_jiahao.svg';
    import dagou from '@/assets/icons/word_dagou.svg';
 
+	import wordsharepageVue from './wordsharepage.vue';
+	
 
-const circular = true;
+const circular = ref(false);
 const duration = 500; // 滑动动画时长
   
 
@@ -176,6 +179,7 @@ const duration = 500; // 滑动动画时长
       phonicsState:true,
       annotationSate:true
    })
+   const volume = ref(1)
 
 
 
@@ -187,7 +191,7 @@ const duration = 500; // 滑动动画时长
     console.log(miaonum)
 
     autoSwipeInterval = setInterval(() => {
-      if (currentPage.value < allWords.value.length) {
+      if (currentPage.value <= allWords.value.length) {
         currentPage.value += 1; // 向右滑动
       } else {
         // currentPage.value = 1; // 回到第一页
@@ -209,10 +213,10 @@ const duration = 500; // 滑动动画时长
 //   startAutoSwipe();
 // });
 
-// // 组件卸载时停止自动滑动
-// onUnmounted(() => {
-//   stopAutoSwipe();
-// });
+	// 组件卸载时停止自动滑动
+	onUnmounted(() => {
+	  stopAutoSwipe();
+	});
 
 
   function wordsNotebookclick() {
@@ -247,8 +251,8 @@ const duration = 500; // 滑动动画时长
 
    const playNext = () => {
 
-
       wordcardRef.value[currentPage.value-1].redefineSettings()
+	  
       if (!ispagePlaying.value) {
         stopAutoSwipe()
         return
@@ -274,6 +278,8 @@ const duration = 500; // 滑动动画时长
       
           //设置播放倍速 没作用
           audio.playbackRate = playsettingobject.value.multiple
+		  //设置是否声音
+		  audio.volume = volume.value
       
           audio.src = track
           audio.onEnded(() => {
@@ -293,7 +299,7 @@ const duration = 500; // 滑动动画时长
         
       } else {
 
-        if (currentPage.value < allWords.value.length) {
+        if (currentPage.value <= allWords.value.length) {
           // ispagePlaying.value = false
           currentTrackIndex.value = -1
           startAutoSwipe()
@@ -328,44 +334,75 @@ const duration = 500; // 滑动动画时长
     }
   }
 
+	
+	const isdaluan = ref(false)
 
    function sequenceclick() {
-    issequence.value = !issequence.value
+	   
+	   if (!isdaluan.value) {
+		   isdaluan.value = true
+		  issequence.value = !issequence.value
+		  if (!issequence.value) {
+		  	uni.showToast({
+		  	        title: '数据已打乱',
+		  	      });
+		  // 如果是顺序播放，打乱顺序;
+		    allWords.value = [...shuffleArray(originalOrder.value)];
+		    
+		  } else {
+		  	uni.showToast({
+		  	        title: '数据还原',
+		  	      });
+		    // 如果是随机播放，恢复原始顺序
+		    allWords.value = [...originalOrder.value];
+		  }
+		  
+		  
+		  
+		      wordcardRef.value.forEach((item) => {
+		            item.redefineSettings()
+		        });
+		  
+		      stopAutoSwipe()
+		      stopCurrentAudio()
+		  
+		      setTimeout(() => {
+				  isdaluan.value = false
+		        currentTrackIndex.value = 0
+		        playNext()
+		        // 在这里添加延迟执行的代码
+		      }, 1000); 
+	   }
 
-    if (issequence.value) {
-    // 如果是顺序播放，打乱顺序
-      shuffleArray(allWords.value);
-    } else {
-      // 如果是随机播放，恢复原始顺序
-      allWords.value = [...originalOrder.value];
-    }
-
-        wordcardRef.value.forEach((item) => {
-              item.redefineSettings()
-          });
-
-        stopAutoSwipe()
-        stopCurrentAudio()
-
-        setTimeout(() => {
-          currentTrackIndex.value = 0
-          playNext()
-          // 在这里添加延迟执行的代码
-        }, 1000);
-
+	
    }
 
    // 打乱数组顺序的函数
   function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
+    // for (let i = array.length - 1; i > 0; i--) {
+    //   const j = Math.floor(Math.random() * (i + 1));
+    //   [array[i], array[j]] = [array[j], array[i]];
+    // }
+	const shuffledArray = [...array]; // 复制数组以避免修改原始数组
+	  for (let i = shuffledArray.length - 1; i > 0; i--) {
+	    const j = Math.floor(Math.random() * (i + 1));
+	    [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+	  }
+	  return shuffledArray;
   }
 
 
    function phonicclick() {
     isphonic.value = !isphonic.value
+	
+	volume.value = isphonic.value?1:0
+	var tstit = isphonic.value?"设置有声了":"设置无声了"
+	
+	uni.showToast({
+	        title: tstit,
+	      });
+	
+	
    }
 
    function playsettingSuccess(newSettings) {
@@ -725,7 +762,7 @@ const duration = 500; // 滑动动画时长
             allWords.value = response.data.words
 
             originalOrder.value = [...allWords.value]; // 保存原始顺序
-            
+
         } catch (error) {
             console.error('获取单词列表失败:', error);
             uni.showToast({
@@ -739,24 +776,39 @@ const duration = 500; // 滑动动画时长
     const onSwiperChange = (event) => {
         currentPage.value = event.detail.current + 1
 
-        wordcardRef.value.forEach((item) => {
-          item.redefineSettings()
-      });
+		if (currentPage.value<=allWords.value.length) {
+			
+			wordcardRef.value.forEach((item) => {
+				item.redefineSettings()
+			});
+		} else {
+			ispagePlaying.value = false
+		}
+		
+		// 如果滑动到最后一页，允许循环滑动
+		  if (currentPage.value === allWords.value.length) {
+		    circular.value = true;
+		  }
 
         stopAutoSwipe()
         stopCurrentAudio()
 
-        setTimeout(() => {
-          currentTrackIndex.value = 0
-          playNext()
-          // 在这里添加延迟执行的代码
-        }, 1000);
+		if (currentPage.value<=allWords.value.length) {
+			setTimeout(() => {
+			  currentTrackIndex.value = 0
+			  playNext()
+			  // 在这里添加延迟执行的代码
+			}, 1000);
+		}
+        
 
         
     }
   </script>
   
   <style scoped lang="scss">
+ 
+  
   .container {
     position: fixed; // 使用 fixed 布局
     top: 0;
@@ -817,7 +869,24 @@ const duration = 500; // 滑动动画时长
     background: #fff;
     border-radius: 24rpx;
     padding: 32rpx;
-    margin: 0 20;
+    // margin: 0 20;
+    position: absolute;
+    left: 20rpx;
+    top: 0;
+    right: 20rpx;
+    bottom: 50rpx;
+    overflow: scroll;
+	
+	
+	/* 隐藏滚动条 */
+	  &::-webkit-scrollbar {
+	    display: none; /* 隐藏滚动条 */
+	  }
+	  /* 兼容 Firefox */
+	  scrollbar-width: none; /* Firefox */
+	  -ms-overflow-style: none; /* IE 和 Edge */
+    
+
     // box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.05);
     // border: 2rpx solid #E8E8E8;
     // box-shadow: 0rpx -2rpx 4rpx 0rpx #c4c4c4;
@@ -844,10 +913,12 @@ const duration = 500; // 滑动动画时长
 
   
   .action-buttons {
+    position: absolute;
+    bottom: 30rpx;
+    width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    
     .pronunciation-btn {
       padding: 20rpx 40rpx;
       border-radius: 48rpx;

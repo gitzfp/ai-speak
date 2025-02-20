@@ -48,7 +48,14 @@
       "style": {
         "navigationStyle": "custom"
       }
-    },
+    }
+	,
+	{
+		"path": "pages/textbook/WordRecitationHome",
+		"style": {
+		  "navigationBarTitleText": "背单词"
+		}
+	},
     {
       "path": "pages/textbook/lesson",
       "style": {

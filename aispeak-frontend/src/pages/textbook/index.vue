@@ -1,6 +1,7 @@
 <template>
   <view class="container">
     <!-- 头部筛选区 -->
+<!-- 	<view @click="wordRecitationHomeclick" style="margin: 10px;">点击背单词</view -->
     <view class="filter-container">
       <view class="filter-section">
         <text class="filter-title">版本</text>
@@ -170,6 +171,15 @@ export default {
         url: `/pages/textbook/books?book_id=${book.book_id}`,
       })
     }
+	
+	// 背单词入口
+	const wordRecitationHomeclick = () => {
+		console.log("别单词")
+	  uni.navigateTo({
+	    url: `/pages/textbook/WordRecitationHome`,
+	  })
+	}
+	
 
     const handleImageError = (e) => {
       console.error('Image load error:', e);
@@ -188,6 +198,7 @@ export default {
       handleBuy,
       goToCourse,
       handleImageError,
+	  wordRecitationHomeclick
     }
   },
 }

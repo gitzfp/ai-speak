@@ -83,7 +83,10 @@ const props = defineProps({
     },
     fulldisplayNum: {
       type: Number
-    }
+    },
+	volume: {
+	   type: Number
+	}
 })
 const currentPlayingPhonetic = ref(null);
 const currentPlayingPosition = ref(null);
@@ -149,6 +152,9 @@ const phonetic_content = computed(() => {
         result.push(soundoj);
         // 添加原始的音节列表
         result.push(...props.word.syllables);
+		
+	
+		
         return result;
     })
 
@@ -189,6 +195,8 @@ function phonicsbegins() {
         const audio = uni.createInnerAudioContext()
         currentAudio.value = audio
         audio.src = track.sound_path
+		//设置是否声音
+		audio.volume = props.volume
         audio.onEnded(() => {
           currentTrackIndex.value++
           playNext()
@@ -240,6 +248,8 @@ function stopCurrentAudio() {
     const audio = uni.createInnerAudioContext()
     currentAudio.value = audio
     audio.src = audioUrl
+	//设置是否声音
+	audio.volume = props.volume
     audio.onEnded(() => {
       // 播放结束后清除状态
       currentPlayingPhonetic.value = null; // 设置当前播放的音标
@@ -405,7 +415,7 @@ function stopCurrentAudio() {
     padding: 24rpx;
     border-radius: 12rpx;
     margin-bottom: 32rpx;
-    height: 200rpx;
+    // height: 200rpx;
     
     .label {
       font-size: 28rpx;
@@ -421,10 +431,12 @@ function stopCurrentAudio() {
 
   .definition_xs {
     color: #707070;
-    height: 200rpx;
-    line-height: 200rpx;
+    // height: 200rpx;
+    // line-height: 200rpx;
     text-align: center;
     font-size: 22rpx;
+    padding: 24rpx;
+    margin-bottom: 32rpx;
   }
 
   .showWordView {
