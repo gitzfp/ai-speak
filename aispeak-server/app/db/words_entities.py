@@ -19,7 +19,7 @@ class Word(Base):
     __tablename__ = "words"
 
     id = Column(Integer, primary_key=True, index=True, comment="主键ID")
-    word_id = Column(Integer, unique=True, index=True, nullable=False, comment="单词唯一标识ID")
+    word_id = Column(Integer, nullable=False, comment="单词唯一标识ID")
     lesson_id = Column(Integer, nullable=False, comment="所属课时ID")
     book_id = Column(String(50), nullable=False, comment="所属书籍ID")
     word = Column(String(100), comment="单词内容")
