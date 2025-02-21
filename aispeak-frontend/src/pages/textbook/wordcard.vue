@@ -9,7 +9,7 @@
         <view class="phonics-image">
         <image 
             :src="word.image_path"
-            mode="widthFix"
+			 mode="widthFix"
             class="phonics-img"
         />
         </view>
