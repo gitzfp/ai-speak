@@ -141,6 +141,7 @@ async def parse_word_html(word_data: any, book_info: any, book_id: str, lesson_i
         "us_sound_path": f"https://ywld-1315558954.51jiaoxi.com/yy-static/word/mp3/{book_info['book_id']}/{word_data['id']}_1.mp3"
     }
 
+    # 尝试上传主要音频源
     uk_sound_path = await download_and_upload_to_oss(
         data['uk_sound_path'],
         bucket,
@@ -156,6 +157,31 @@ async def parse_word_html(word_data: any, book_info: any, book_id: str, lesson_i
         str(book_id),
         f"{str(lesson_id)}_us"
     ) if data['us_sound_path'] else ""
+
+    # 如果上传后的路径仍然是原始域名，尝试备用音频源
+    if uk_sound_path.startswith('https://ywld-1315558954.51jiaoxi.com'):
+        # 将单词中的空格替换为连字符
+        formatted_word = word_data['word'].replace(' ', '-')
+        backup_uk_url = f"https://ywld-1315558954.51jiaoxi.com/yy-static/word/mp3/audio/{formatted_word}-0.mp3"
+        uk_sound_path = await download_and_upload_to_oss(
+            backup_uk_url,
+            bucket,
+            public_endpoint,
+            str(book_id),
+            f"{str(lesson_id)}_uk_backup"
+        )
+
+    if us_sound_path.startswith('https://ywld-1315558954.51jiaoxi.com'):
+        # 将单词中的空格替换为连字符
+        formatted_word = word_data['word'].replace(' ', '-')
+        backup_us_url = f"https://ywld-1315558954.51jiaoxi.com/yy-static/word/mp3/audio/{formatted_word}-1.mp3"
+        us_sound_path = await download_and_upload_to_oss(
+            backup_us_url,
+            bucket,
+            public_endpoint,
+            str(book_id),
+            f"{str(lesson_id)}_us_backup"
+        )
 
     # 获取HTML内容
     url = f"https://yy.suyang123.com/words/{word_data['word']}.html"
@@ -209,8 +235,6 @@ async def parse_word_html(word_data: any, book_info: any, book_id: str, lesson_i
         data["uk_sound_path"] = uk_sound_path
         data["us_sound_path"] = us_sound_path
     return data
-
-
 async def get_word_data(word_data: any,  book_info: any, book_id: str, lesson_id: str) -> dict:
     """获取单词数据（结合API和HTML解析）"""
 
@@ -581,7 +605,7 @@ async def process_syllables(phonics_text: str, db, bucket: oss2.Bucket, public_e
 
 if __name__ == "__main__":
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(current_dir, 'data', 'textbook_words_data.json')
+    json_path = os.path.join(current_dir, 'data', 'words_grade5.json')
 
     with open(json_path, 'r', encoding='utf-8') as file:
         json_data = json.loads(file.read())  # 解析 JSON 字符串为 Python 对象
