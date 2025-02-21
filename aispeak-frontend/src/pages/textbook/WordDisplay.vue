@@ -299,7 +299,7 @@ defineExpose({
         }
         .rightTit {
             display: flex;
-            align-content: center;
+            align-items: center;
         }
         .type-text {
             font-size: 25rpx;
