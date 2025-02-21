@@ -1,50 +1,9 @@
 <template>
     <view class="main-v">
       <template v-if="fulldisplayNum != 1">
-        <!-- 单词核心区 -->
-        <view class="word-section">
-            <text class="word">{{word.word}}</text>
-            <view class="phonetic">
-                <image class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
-                <view>[<text class="phonetic-text">{{phonetic_content}}</text>]</view>
-            </view>
-            
-        </view>
 
-        <!-- 音标分解模块 -->
-        <view class="phonetic-breakdown">
-            <view 
-                @tap="phoneticClick(item)"
-                v-for="(item, index) in filteredSyllables" 
-                :key="index" 
-                class="phonetic-item"
-            >
-                <text class="letter"
-                :class="{ playing: (currentPlayingPhonetic === item.letter && currentPlayingPosition === item.position) || (currentTrackIndex != - 1 && sound_pathLists[currentTrackIndex].position === item.position)}">
-                  {{ item.letter }}
-                </text>
-                <text class="symbol"
-                :class="{ playing: (currentPlayingPhonetic === item.letter && currentPlayingPosition === item.position || (currentTrackIndex != - 1 && sound_pathLists[currentTrackIndex].position === item.position))}"
-                >/{{ item.phonetic }}/</text>
-            </view>
-        </view>
-
-        <!-- 发音类型 -->
-        <view class="pronunciation-type">
-            <view class="pronunciation-text">
-                <view @tap="pronunciationSelect" class="leftTit">{{phonetic}} ⇌ |</view>
-                <view class="rightTit" @tap="phonicsbegins">
-                    <view class="type-text"> 自然拼读</view>
-                    <image v-if="isPhonicsReading" class="left-icon" src="http://114.116.224.128:8097/static/voice_playing.gif"></image>
-                    <image v-else class="left-icon" src="http://114.116.224.128:8097/static/voice_play.png"></image>
-                </view>
-                
-                <!-- <AudioPlayer class="left-icon"
-                    :file-name="phonetic_soundpath"
-                    :direction="'left'"
-                /> -->
-            </view>
-        </view>
+		<WordDisplay ref="wordDisplayref" :word="word"
+		        :volume="volume" @redefineSettingsParentC="redefineSettingsParentC" />
 
         <!-- 单词图片 -->
         <view class="phonics-image">
@@ -73,9 +32,11 @@
 <script setup>
   
   import { ref,computed,defineEmits} from 'vue';
+  import WordDisplay from './WordDisplay.vue'; // 引入新组件
 
-
-  const emit = defineEmits();
+	const wordDisplayref = ref(null)
+	const emit = defineEmits();
+	
 const props = defineProps({
     word: {
         type: Object, // 将 type 改为 Object
@@ -171,100 +132,14 @@ function   showWordViewclick() {
   emit("fullDisplayRecovery")
 }
    // 连续播放当前页面的所有音频
-function phonicsbegins() {
+function redefineSettingsParentC() {
 
   emit("redefineSettingsParentC")
-
-  if (!sound_pathLists.value || sound_pathLists.value.length <= 0) return
-  console.log(sound_pathLists.value, "新标记红", filteredSyllables.value)
-  stopCurrentAudio()
-  currentTrackIndex.value = 0
-  isPlaying.value = true
-
-  const playNext = () => {
-    if (!isPlaying.value) {
-      return
-    }
-
-    if (currentTrackIndex.value < sound_pathLists.value.length) {
-      const track = sound_pathLists.value[currentTrackIndex.value]
-      if (track.phonetic.length<=0) {
-        currentTrackIndex.value++
-        playNext()
-      } else {
-        const audio = uni.createInnerAudioContext()
-        currentAudio.value = audio
-        audio.src = track.sound_path
-		//设置是否声音
-		audio.volume = props.volume
-        audio.onEnded(() => {
-          currentTrackIndex.value++
-          playNext()
-        })
-        audio.play()
-      }
-      
-    } else {
-      isPlaying.value = false
-      currentTrackIndex.value = -1
-    }
-  }
-  playNext()
 }
-
-
-
-// Update stopCurrentAudio to clean up properly
-function stopCurrentAudio() {
-  if (currentAudio.value) {
-    currentAudio.value.pause()
-    isPlaying.value = false
-    try {
-      currentAudio.value.stop()
-      currentAudio.value.destroy()
-    } catch (error) {
-      console.error("Error stopping audio:", error)
-    }
-    currentAudio.value = null
-  }
-}
-  
-
-  
-
-   const phoneticClick = async (item) => {
-
-    emit("redefineSettingsParentC")
-    if (item.phonetic.length<=0) return 
-
-    stopCurrentAudio()
-
-
-    currentPlayingPhonetic.value = item.letter; // 设置当前播放的音标
-    currentPlayingPosition.value = item.position; 
-
-    var audioUrl = item.sound_path
-
-    const audio = uni.createInnerAudioContext()
-    currentAudio.value = audio
-    audio.src = audioUrl
-	//设置是否声音
-	audio.volume = props.volume
-    audio.onEnded(() => {
-      // 播放结束后清除状态
-      currentPlayingPhonetic.value = null; // 设置当前播放的音标
-     currentPlayingPosition.value = null; 
-    })
-    audio.play()
-
-    
-   };
 
 
    const redefineSettings =() => {
-    stopCurrentAudio()
-  currentTrackIndex.value = 0
-  isPlaying.value = true
+		wordDisplayref.value.redefineSettings()
    }
 
    // 将方法暴露给父组件

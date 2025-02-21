@@ -425,6 +425,11 @@ const duration = 500; // 滑动动画时长
     });
 
     const showEvaluationModal = () => {
+		
+			stopCurrentAudio()
+			ispagePlaying.value = false
+			wordcardRef.value[currentPage.value-1].redefineSettings()
+		
           if (wordassessPops.value && typeof wordassessPops.value.showPopup === 'function') {
             wordassessPops.value.showPopup(); // 调用子组件的方法
           }

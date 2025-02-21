@@ -13,11 +13,11 @@
 			<view class="replacementplan-title">重置计划</view>
 		</view>
 	  <view class="plan-section">
-		<image class="section-img"></image>
+		<image @click="switchBook" :src="book.icon_url" class="section-img"></image>
 		<view class="section-ct">
 			<view class="oneline">
 				<text class="oneline-subtitle">义务教育课程标准</text>
-				<view class="oneline_btn">
+				<view @click="switchBook" class="oneline_btn">
 					<image class="left-icon" src="@/assets/icons/parallel_double_arrow.svg"></image>
 					<text class="section-title">切换单词书</text>
 				</view>
@@ -34,8 +34,8 @@
 			 </view>
 			
 			<view class="threeline">
-				<view class="threeline-title"> <text style="color: red;">5</text>/505</view>
-				<view class="threeline-title"> 剩余<text style="color: red;">5</text>天</view>
+				<view class="threeline-title"> <text style="color: red;">{{finishLearningNum}}</text>/{{allWords.length}}</view>
+				<view class="threeline-title"> 剩余<text style="color: red;">{{remainingdays}}</text>天</view>
 			</view>
 			
 			
@@ -47,16 +47,16 @@
 		  <view class="progress-left">
 			<text class="progresslf">今日计划</text>
 			 <image class="left-icon" src="@/assets/icons/time_round.svg"></image>
-			 <text class="progressrt">预计需要<text style="color: red;">0</text>分钟</text> 
+			 <text class="progressrt">预计需要<text style="color: red;">{{numofday}}</text>分钟</text> 
 		  </view>
-		  <view class="modify-btn">
+		  <view @tap="modifyplan" class="modify-btn">
 			<image class="left-icon" src="@/assets/icons/edit_modify.svg"></image>
 			<text class="section-title">修改计划</text>
 		  </view>
 	  </view>
 
 	  <view class="task-section">
-		<view class="task-title"><text>需新学</text> <text class="numtit" style="color: #F08833;">0</text> <text>词</text></view>
+		<view class="task-title"><text>需新学</text> <text class="numtit" style="color: #F08833;">{{numofday}}</text> <text>词</text></view>
 		<view class="task-title"><text>需复习</text> <text class="numtit" style="color: #ED6C43;">0</text> <text>词</text></view>
 	  </view>
 	  
@@ -93,43 +93,53 @@
 			  <view :class="weekindext==index?'item_bottom_st':'item_bottom'"></view>
 		  </view>
 		</view>
+		
+		<view class="record-container">
+		    <view class="record-header">
+		      <text class="record-title">学习记录</text>
+		    </view>
+		    <view class="record-content">
+		      <view class="record-item">
+		        <view class="record-labelone"><text>0</text> 词</view>
+		        <view class="record-labeltwo">今日学习/复习</view>
+		      </view>
+		      <view class="record-item">
+		        <view class="record-labelone"><text>0</text> 词</view>
+		        <view class="record-labeltwo">累计掌握</view>
+		      </view>
+			</view>
+			<view class="record-content record-content-interstice">
+				<view class="record-item">
+				  <view class="record-labelone"><text>0</text> 分钟</view>
+				  <view class="record-labeltwo">今日学习时长</view>
+				</view>
+				<view class="record-item">
+				  <view class="record-labelone"><text>0</text> 分钟</view>
+				  <view class="record-labeltwo">累计学习时长</view>
+				</view>
+		    </view>
+		  </view>
+		
 	</view>
       
 
+    <bookSelector ref="bookSelectors" v-if="isPopupOpen" :books="books" @switchbookSuccess="switchbookSuccess" @closePopup="togglePopup" />
+
 		
-     <view class="record-section">
-        <text class="record-title">学习记录</text>
-        <view class="record-details">
-          <text class="detail">5 今日学习/复习</text>
-          <text class="detail">0 累计掌握</text>
-          <text class="detail">2 分钟</text>
-          <text class="detail">2 分钟</text>
-        </view>
-      </view>
-	  
-	  <view class="record-section">
-	     <text class="record-title">学习记录</text>
-	     <view class="record-details">
-	       <text class="detail">5 今日学习/复习</text>
-	       <text class="detail">0 累计掌握</text>
-	       <text class="detail">2 分钟</text>
-	       <text class="detail">2 分钟</text>
-	     </view>
-	   </view>
-	   
-	
-		
-		
-	
-	  
+	<ModifyPlanPopup :visible="isPlanPopupVisible" :currentPlan="numofday"
+		      @update:visible="isPlanPopupVisible = $event" @updatePlan="updatePlan"/>
 	  
     
   </view>
 </template>
 
 <script setup>
-	import { ref } from 'vue';
-	const progress = ref(20)
+	import { ref,onMounted,watch,nextTick,computed} from 'vue';
+	import bookSelector from './bookSelector.vue';
+	import textbook from '@/api/textbook';
+	import ModifyPlanPopup from './ModifyPlanPopup.vue'
+
+	
 	const weekstitList = ref([
 		{week:"周一",date:'17',isSelet:false},
 		{week:"周二",date:'18',isSelet:false},
@@ -140,9 +150,188 @@
 		{week:"周日",date:'23',isSelet:false},
 	])
 	const weekindext = ref(0)
-// 你可以在这里添加一些逻辑代码
+	const isPopupOpen = ref(false)
+	const bookSelectors = ref(null);
+	const book = ref({
+		book_id:'',
+		book_name:'',
+		grade:'',
+		icon_url: '',
+		subject_id:0,
+		term:'',
+		version_type:''
+	})
+	// 书籍数据
+	const books = ref([])
+	const allWords = ref([])
+	//学习完单词的个数
+	const finishLearningNum = ref(0)
+	//学习计划每天 学几个
+	const numofday = ref(5)
+	const isPlanPopupVisible = ref(false);
+	
+	//剩余多少天完成
+	const remainingdays = computed(() => {
+		if (allWords.value.length>0) {
+			let rgwords = allWords.value.length - finishLearningNum.value
+			//向上取整
+			let halfCeil = Math.ceil(rgwords / numofday.value);
+			return halfCeil
+		} else {
+			return 0
+		}
+	})
+	
+	
+	const progress = computed(() => {
+	       if (allWords.value.length>0) {
+			   let percentage = (finishLearningNum.value / allWords.value.length) * 100;
+			   return percentage
+		   } else {
+			  return 0 
+		   }
+	});
+	
+	// 监听 book_id 变化
+	watch(() => book.value.book_id, (newVal, oldVal) => {
+		console.log(`book_id 从 ${oldVal} 变更为 ${newVal}`);
+		// 在这里可以执行其他逻辑
+		if (newVal.length>0) {
+			fetchWords(newVal)
+		}
+	});
 
-	function calendarItemclick(index) {
+
+	// 组件挂载时获取数据
+	onMounted(() => {
+		let a = 7;
+		let b = 7;
+		let percentage = (a / b) * 100;
+		console.log("percentage"); 
+		console.log(percentage.toFixed(2));
+		
+		fetchBooks(false)
+	})
+	
+	const togglePopup = () => {
+	  console.log("删除")
+	  isPopupOpen.value = false;
+	};
+	
+	const switchbookSuccess = (newbook) => {
+	  console.log("newbook=====")
+	    console.log(newbook)
+	    book.value = {...newbook}
+	    console.log(book.value.term)
+	}
+	
+	//切换单词书
+	const switchBook = () => {
+	
+	  if (books.value.length) {
+	    isPopupOpen.value = true;
+	    console.log("isPopupOpen.value")
+	    console.log(isPopupOpen.value)
+	    // 使用 nextTick 确保 DOM 已经更新并且子组件已经挂载
+	    nextTick(() => {
+	          console.log("After DOM update:");
+	          console.log(bookSelectors.value); // 这里应该能够获取到子组件实例
+	          
+	          if (bookSelectors.value && typeof bookSelectors.value.showPopup === 'function') {
+	            bookSelectors.value.showPopup(); // 调用子组件的方法
+	          }
+	    });
+	  } else {
+	    fetchBooks(true)
+	  }
+	
+	};
+	
+	
+	const fetchWords = async (bookId, lessonId = null) => {
+	  try {
+	    const response = await textbook.getLessonWords(bookId)
+	    console.log('API Response:', response)
+	    
+	    if (response.code === 1000) {
+	      // 保存所有单词数据
+	      allWords.value = response.data.words
+		  
+		  //这些是随便先写了
+		  if (allWords.value.length>0) {
+			  let num = allWords.value.length;
+			  //向下取整
+			  let half = Math.floor(num / 2);
+			  finishLearningNum.value = half
+		  } else {
+			  finishLearningNum.value = 0
+		  }
+		  
+	      
+	    }
+	  } catch (error) {
+	    console.error('获取单词列表失败:', error)
+	    uni.showToast({
+	      title: '获取单词列表失败',
+	      icon: 'none'
+	    })
+	  }
+	}
+	
+	// 从接口获取数据
+	const fetchBooks = (isSwitch) => {
+	  console.log("数据库的边框和")
+	  uni.request({
+	    url: "https://diandu.mypep.cn/static/textbook/bookList_pep_click_subject_web_1_0_0.json",
+	    success: (res) => {
+	      // 过滤出英语科目的书籍
+	      const englishSubject = res.data.booklist.find(
+	        (subject) => subject.subject_name === "英语"
+	      )
+	      if (englishSubject) {
+	        // 将所有版本的书籍合并到一个数组中
+	        books.value = englishSubject.versions.flatMap(
+	          (version) => version.textbooks
+	        )
+	
+	        if (isSwitch) {
+	          isPopupOpen.value = true;
+	          console.log("点击切换请求进去")
+	        // 使用 nextTick 确保 DOM 已经更新并且子组件已经挂载
+	        nextTick(() => {
+	              console.log("After DOM update:");
+	              console.log(bookSelectors.value); // 这里应该能够获取到子组件实例
+	              
+	              if (bookSelectors.value && typeof bookSelectors.value.showPopup === 'function') {
+	                bookSelectors.value.showPopup(); // 调用子组件的方法
+	              }
+	        });
+	        } else {
+	        //  book.value = books.value[0]
+	         book.value = { ...books.value[0] };
+	          console.log("一开始请求")
+	        }
+	        
+	
+	      }
+	    },
+	    fail: (err) => {
+	      console.error("Failed to fetch books:", err)
+	    },
+	  })
+	}
+	
+
+	//修改计划
+	const modifyplan = () => {
+		console.log("修改计划")
+		isPlanPopupVisible.value = true;
+	}
+	
+	const updatePlan = (newPlan) => {
+	  numofday.value = newPlan;
+	};
+	const calendarItemclick = (index) =>  {
 		weekindext.value = index
 	}
 </script>
@@ -214,7 +403,7 @@
 			margin-top: 0;
 			width: 130rpx;
 			height: 200rpx;
-			background-color: orange;
+			// background-color: orange;
 			border-radius: 24rpx;
 		}
 		.section-ct {
@@ -476,7 +665,58 @@
 	}
 	
 	
+	.record-container {
+		margin: 20rpx;
+		.record-header {
+		  margin-bottom: 20rpx;
+		  .record-title {
+			font-size: 30rpx;
+			font-weight: bold;
+			color: #333;
+		  }
+		}
+		
+		.record-content {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			.record-item {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				.record-labelone {
+					text-align: center;
+					color: #666;
+					font-size: 20rpx;
+					text {
+						color: red;
+						font-size: 35rpx;
+						font-weight: bold;
+					}
+				}
+				.record-labeltwo {
+					margin-top:10rpx ;
+					text-align: center;
+					color: #666;
+					font-size: 23rpx;
+				}
+			}
+		}
+		.record-content-interstice {
+			margin-top: 20rpx;
+		}
+		
+	}
+	
+	
+
+	
 }
+
+
+
 
 .left-icon {
 	height: 20rpx;

@@ -66,7 +66,14 @@
 		                {{ word.error_type === 'Omission' ? '遗漏' : word.error_type }}
 		            </view>
 		        </view>
-		    </view>
+		    <view class="word-phonetic-mark">
+				<view class="word-phonetic-item" v-for="(phonetic, index) in phonemes" :key="index">
+					<view class="letter">{{phonetic.phoneme}}</view>
+					<view class="symbol">{{phonetic.accuracy_score}}</view>
+				</view>
+			</view>
+				
+			</view>
 		</view>
 		
 		<view class="result-actions">
@@ -80,7 +87,7 @@
 
 <script setup>
 
-    import { ref,defineEmits} from 'vue';
+    import { ref,defineEmits,computed} from 'vue';
     import Speech from "./PronuciationSpeech.vue"
 	import chatRequest from "@/api/chat";
 
@@ -99,7 +106,8 @@
 	  completeness_score: 0,
 	  fluency_score: 0,
 	  pronunciation_score: 0,
-	  content: ''
+	  content: '',
+	  words:[]
 	}
 	const pronunciationResult = ref(initPronunciation)
 	const getScoreClass = (score) => {
@@ -119,6 +127,16 @@
 		}
         
     };
+	
+	
+	const phonemes = computed(() => {
+		
+		const result = [];
+		if (pronunciationResult.value.words.length>0) {
+			result.push(...pronunciationResult.value.words[0].phonemes);
+		}
+		return result
+	});
 
 
     // 显示弹窗方法
@@ -148,6 +166,8 @@
 			  } else {
 				 currentStep.value = "result"; // 切换到结果页 
 			  }
+			  console.log("phonemes.value")
+			  console.log(phonemes.value)
 			  
 		  }
           
@@ -357,8 +377,8 @@
 .result-actions {
   display: flex;
   justify-content: space-between;
-  margin-top: 20px;
-  padding: 0 16px; /* 添加内边距，确保按钮不贴边 */
+  margin-top: 20rpx;
+  padding: 0 16rpx; /* 添加内边距，确保按钮不贴边 */
 }
 
 .result-button {
@@ -521,4 +541,58 @@
 .word-item.score-poor {
     border-left: 3px solid #dc3545;
 }
+
+.word-phonetic-mark {
+	display: flex;
+	flex-wrap: wrap;
+	margin-top: 24rpx;
+	// margin-bottom: 24rpx;
+	justify-content: center;
+	/* 紧凑间距 */
+	// margin: -8rpx -12rpx; // 外层负边距补偿
+	> .word-phonetic-item {
+	    margin: 8rpx 12rpx; // 实际间距
+	}
+	.word-phonetic-item {
+	    display: flex;
+	    flex-direction: column;
+	    align-items: center;
+	    min-width: 60rpx; // 更窄的宽度
+	    
+	    // border-radius: 8rpx; // 圆角
+	
+	    /* 字母样式 */
+	    .letter {
+	        padding: 6rpx 0;
+	        width: 100%;
+	        font-size: 30rpx;
+	        background-color: #e1ffef;
+	        color: #05c160; // 绿色字母
+	        font-weight: 500;
+	        // margin-bottom: 4rpx; // 更小的间距
+	        line-height: 1.2;
+	        text-align: center;
+	        border-top-left-radius: 10rpx;
+	        border-top-right-radius: 10rpx;
+	    }
+	
+	    /* 音标样式 */
+	    .symbol {
+	        padding: 6rpx 0;
+	        width: 100%;
+	        background-color: #BAFCD3;
+	        font-size: 23rpx;
+	        color: #05c160; // 灰色音标
+	        letter-spacing: 0.5rpx;
+	        text-align: center;
+	        border-bottom-left-radius: 10rpx;
+	        border-bottom-right-radius: 10rpx;
+	    }
+	
+	    .playing {
+	      color: #ff0000; // 播放时的颜色
+	    }
+	}
+}
+
 </style>

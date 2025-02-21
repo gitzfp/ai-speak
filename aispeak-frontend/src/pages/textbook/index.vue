@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <!-- 头部筛选区 -->
-<!-- 	<view @click="wordRecitationHomeclick" style="margin: 10px;">点击背单词</view -->
+	<view @click="wordRecitationHomeclick" style="margin: 10px;">点击背单词</view>
     <view class="filter-container">
       <view class="filter-section">
         <text class="filter-title">版本</text>
