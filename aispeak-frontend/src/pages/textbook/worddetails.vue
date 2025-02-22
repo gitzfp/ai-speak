@@ -130,7 +130,7 @@
   </template>
   
   <script setup>
-  import { ref,computed,onMounted, onUnmounted, Text} from 'vue';
+  import { ref,computed,onMounted, onUnmounted, Text,onUpdated} from 'vue';
     import { onLoad } from '@dcloudio/uni-app'
    import textbook from '@/api/textbook'
    import wordcard from './wordcard.vue';
@@ -248,11 +248,14 @@ const duration = 500; // 滑动动画时长
     playNext()
     
    }
+   
 
    const playNext = () => {
 
-      wordcardRef.value[currentPage.value-1].redefineSettings()
-	  
+
+	  wordcardRef.value[currentPage.value - 1].redefineSettings();
+	
+	
       if (!ispagePlaying.value) {
         stopAutoSwipe()
         return
@@ -358,6 +361,8 @@ const duration = 500; // 滑动动画时长
 		  }
 		  
 		  
+		  console.log("wordcardRef.value222")
+		  console.log(wordcardRef.value)
 		  
 		      wordcardRef.value.forEach((item) => {
 		            item.redefineSettings()
@@ -428,7 +433,11 @@ const duration = 500; // 滑动动画时长
 		
 			stopCurrentAudio()
 			ispagePlaying.value = false
+			
+
 			wordcardRef.value[currentPage.value-1].redefineSettings()
+			
+			
 		
           if (wordassessPops.value && typeof wordassessPops.value.showPopup === 'function') {
             wordassessPops.value.showPopup(); // 调用子组件的方法
@@ -782,7 +791,6 @@ const duration = 500; // 滑动动画时长
         currentPage.value = event.detail.current + 1
 
 		if (currentPage.value<=allWords.value.length) {
-			
 			wordcardRef.value.forEach((item) => {
 				item.redefineSettings()
 			});

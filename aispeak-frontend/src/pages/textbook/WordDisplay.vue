@@ -1,49 +1,54 @@
 <template>
   <view class="word-display">
-    <!-- 单词核心区 -->
-    <view class="word-section">
-      <text @tap="phonicsbegins" class="word">{{ word.word }}</text>
-      <view @tap="wordsectionclick" class="phonetic">
-        <image class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
-        <view>[<text class="phonetic-text">{{ phonetic_content }}</text>]</view>
-      </view>
-    </view>
-
-    <!-- 音标分解模块 -->
-    <view class="phonetic-breakdown">
-      <view 
-        @tap="phoneticClick(item)"
-        v-for="(item, index) in filteredSyllables" 
-        :key="index" 
-        class="phonetic-item"
-      >
-        <text class="letter"
-          :class="{ playing: (currentPlayingPhonetic === item.letter && currentPlayingPosition === item.position) || (currentTrackIndex != - 1 && sound_pathLists[currentTrackIndex].position === item.position) }">
-          {{ item.letter }}
-        </text>
-        <text class="symbol"
-          :class="{ playing: (currentPlayingPhonetic === item.letter && currentPlayingPosition === item.position || (currentTrackIndex != - 1 && sound_pathLists[currentTrackIndex].position === item.position)) }">
-          /{{ item.phonetic }}/
-        </text>
-      </view>
-    </view>
-
-    <!-- 发音类型 -->
-    <view class="pronunciation-type">
-      <view class="pronunciation-text">
-        <view @tap="pronunciationSelect" class="leftTit">{{ phonetic }} ⇌ |</view>
-        <view class="rightTit" @tap="phonicsbegins">
-          <view class="type-text"> 自然拼读</view>
-          <image v-if="isPhonicsReading" class="left-icon" src="http://114.116.224.128:8097/static/voice_playing.gif"></image>
-          <image v-else class="left-icon" src="http://114.116.224.128:8097/static/voice_play.png"></image>
-        </view>
-      </view>
-    </view>
+	<template v-if="fulldisplayNum != 1">
+		<!-- 单词核心区 -->
+		<view class="word-section">
+		  <text @tap="phonicsbegins" class="word">{{ word.word }}</text>
+		  <view @tap="wordsectionclick" class="phonetic">
+		    <image class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
+		    <view>[<text class="phonetic-text">{{ phonetic_content }}</text>]</view>
+		  </view>
+		</view>
+		
+		<!-- 音标分解模块 -->
+		<view class="phonetic-breakdown">
+		  <view 
+		    @tap="phoneticClick(item)"
+		    v-for="(item, index) in filteredSyllables" 
+		    :key="index" 
+		    class="phonetic-item"
+		  >
+		    <text class="letter"
+		      :class="{ playing: (currentPlayingPhonetic === item.letter && currentPlayingPosition === item.position) || (currentTrackIndex != - 1 && sound_pathLists[currentTrackIndex].position === item.position) }">
+		      {{ item.letter }}
+		    </text>
+		    <text class="symbol"
+		      :class="{ playing: (currentPlayingPhonetic === item.letter && currentPlayingPosition === item.position || (currentTrackIndex != - 1 && sound_pathLists[currentTrackIndex].position === item.position)) }">
+		      /{{ item.phonetic }}/
+		    </text>
+		  </view>
+		</view>
+		
+		<!-- 发音类型 -->
+		<view class="pronunciation-type">
+		  <view class="pronunciation-text">
+		    <view @tap="pronunciationSelect" class="leftTit">{{ phonetic }} ⇌ |</view>
+		    <view class="rightTit" @tap="phonicsbegins">
+		      <view class="type-text"> 自然拼读</view>
+		      <image v-if="isPhonicsReading" class="left-icon" src="http://114.116.224.128:8097/static/voice_playing.gif"></image>
+		      <image v-else class="left-icon" src="http://114.116.224.128:8097/static/voice_play.png"></image>
+		    </view>
+		  </view>
+		</view>
+	</template>
+	<view v-else @tap="showWordViewclick" class="showWordView">
+	  点击显示单词
+	</view>
   </view>
 </template>
 
 <script setup>
-import { ref, computed, defineEmits, defineProps } from 'vue';
+import { ref, computed, defineEmits, defineProps,onUnmounted ,onMounted} from 'vue';
 
 const emit = defineEmits();
 const props = defineProps({
@@ -51,9 +56,13 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
-
+  fulldisplayNum: {
+      type: Number,
+	  default: 0
+    },
   volume: {
-    type: Number
+    type: Number,
+	default: 1
   }
 });
 
@@ -70,7 +79,11 @@ const phonetic_soundpath = computed(() => {
 });
 
 const phonetic_content = computed(() => {
-  return phonetic.value === "美" ? props.word.us_phonetic.replace(/\//g, "") : props.word.uk_phonetic.replace(/\//g, "");
+	if (props.word.us_phonetic != undefined) {
+		return phonetic.value === "美" ? props.word.us_phonetic.replace(/\//g, "") : props.word.uk_phonetic.replace(/\//g, "");
+	} else {
+		return ''
+	}
 });
 
 const filteredSyllables = computed(() => {
@@ -120,6 +133,7 @@ const phonicsbegins = () => {
   emit("redefineSettingsParentC");
   if (!sound_pathLists.value || sound_pathLists.value.length <= 0) return;
   stopCurrentAudio();
+  isPhonicsReading.value = true
   currentTrackIndex.value = 0;
   isPlaying.value = true;
 
@@ -142,6 +156,7 @@ const phonicsbegins = () => {
         audio.play();
       }
     } else {
+	  isPhonicsReading.value = false;
       isPlaying.value = false;
       currentTrackIndex.value = -1;
     }
@@ -156,6 +171,7 @@ const stopCurrentAudio = () => {
 	  currentTrackIndex.value = -1;
     currentAudio.value.pause();
     isPlaying.value = false;
+	isPhonicsReading.value = false;
     try {
       currentAudio.value.stop();
       currentAudio.value.destroy();
@@ -183,14 +199,27 @@ const phoneticClick = async (item) => {
   audio.play();
 };
 
+const showWordViewclick = () => {
+  emit("showWordViewclick")
+}
+
 const redefineSettings = () => {
   stopCurrentAudio();
   currentTrackIndex.value = 0;
   isPlaying.value = true;
 };
 
+onMounted(()=>{
+	
+})
+// 组件卸载时停止自动滑动
+	onUnmounted(() => {
+		
+	});
+
 defineExpose({
-  redefineSettings
+  redefineSettings,
+  phonicsbegins
 });
 </script>
 
@@ -353,6 +382,6 @@ defineExpose({
     line-height: 600rpx;
     color: #707070;
   }
-  
+
 
 </style>

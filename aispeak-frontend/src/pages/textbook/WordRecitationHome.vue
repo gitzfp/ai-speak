@@ -62,7 +62,7 @@
 	  
 	  <view class="contentonebtn">
 		  <view class="btn-view">
-			  <view class="learn-btn">再学一组</view>
+			  <view @tap="startLearningword" class="learn-btn">再学一组</view>
 		  </view>
 		  <view class="btn-view">
 		  	<view class="review-btn">复习完成</view>		  
@@ -212,6 +212,36 @@
 		
 		fetchBooks(false)
 	})
+	
+	
+	const startLearningword = () => {
+	
+		let firstFive = allWords.value.slice(0, 7);
+		
+		let planWordsList = [];
+		firstFive.forEach(word => {
+		    planWordsList.push(String(word.word_id));
+		});
+		
+		
+		const planWords = 'planWords';
+		uni.setStorage({
+		  key: planWords,
+		  data: JSON.stringify(planWordsList),
+		  success: function () {
+			console.log('数据存储成功');
+			// 跳转到学习页面
+			uni.navigateTo({
+			  url: `/pages/textbook/WordplanDetail?planWords=${planWords}&bookId=${book.value.book_id}`, // 将缓存键名传递给学习页面
+			});
+		  },
+		  fail: function (err) {
+			console.log('数据存储失败', err);
+		  }
+		});
+		
+		
+	}
 	
 	const togglePopup = () => {
 	  console.log("删除")

@@ -68,6 +68,12 @@
 		  "navigationBarTitleText": "背单词"
 		}
 	},
+	{
+		"path": "pages/textbook/WordplanDetail",
+		"style": {
+		  "navigationBarTitleText": "背单词详情"
+		}
+	},
     {
       "path": "pages/textbook/lesson",
       "style": {

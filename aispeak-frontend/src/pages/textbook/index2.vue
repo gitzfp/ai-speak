@@ -83,7 +83,7 @@
             <view>订阅学习报告，及时掌握孩子学习情况！</view>
           </view>
       </view> -->
-      <view class="recitation-plan">
+      <view @tap="wordRecitationHomeclick" class="recitation-plan">
           <view class="recitation-tit">
             <view class="recitation-left">
               <image class="recitation-icon1" src="@/assets/icons/en.svg"></image>
@@ -255,6 +255,14 @@ const listenWrite = () => {
         url: `/pages/textbook/books?book_id=${book.value.book_id}`,
       })
 };
+
+// 背单词入口
+const wordRecitationHomeclick = () => {
+  uni.navigateTo({
+	url: `/pages/textbook/WordRecitationHome`,
+  })
+}
+
 
 const wordTricks = () => {
   console.log('Word Tricks');

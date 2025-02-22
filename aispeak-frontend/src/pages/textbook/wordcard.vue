@@ -1,22 +1,18 @@
 <template>
     <view class="main-v">
-      <template v-if="fulldisplayNum != 1">
-
-		<WordDisplay ref="wordDisplayref" :word="word"
-		        :volume="volume" @redefineSettingsParentC="redefineSettingsParentC" />
+		<WordDisplay ref="wordDisplayref" :fulldisplayNum="fulldisplayNum" :word="word"
+		        :volume="volume" @showWordViewclick="showWordViewclick"
+				 @redefineSettingsParentC="redefineSettingsParentC" />
 
         <!-- 单词图片 -->
-        <view class="phonics-image">
+        <view v-if="fulldisplayNum != 1" class="phonics-image">
         <image 
             :src="word.image_path"
 			 mode="widthFix"
             class="phonics-img"
         />
         </view>
-      </template>
-      <view @tap="showWordViewclick" class="showWordView" v-else>
-        点击显示单词
-      </view>
+   
         
 
         <!-- 释义区域 -->
@@ -139,7 +135,10 @@ function redefineSettingsParentC() {
 
 
    const redefineSettings =() => {
-		wordDisplayref.value.redefineSettings()
+	   if (wordDisplayref.value) {
+		   wordDisplayref.value.redefineSettings()
+	   }
+		
    }
 
    // 将方法暴露给父组件
