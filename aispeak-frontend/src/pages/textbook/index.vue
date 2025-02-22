@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <!-- 头部筛选区 -->
-	<view @click="wordRecitationHomeclick" style="margin: 10px;">点击背单词</view>
+    <view @click="wordRecitationHomeclick" style="margin: 10px;">点击背单词</view>
     <view class="filter-container">
       <view class="filter-section">
         <text class="filter-title">版本</text>
@@ -60,7 +60,12 @@
         class="book-card"
         @tap="goToCourse(book)"
       >
-        <image :src="book.icon_url" mode="aspectFit" class="book-cover" @error="handleImageError" />
+        <image
+          :src="book.icon_url"
+          mode="aspectFit"
+          class="book-cover"
+          @error="handleImageError"
+        />
         <view class="book-info">
           <text class="book-title">{{ book.book_name }}</text>
           <text class="book-subtitle">{{ book.grade }} {{ book.term }}</text>
@@ -71,12 +76,22 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from "vue"
+import { ref, computed, onMounted, watch } from "vue";
 import textbook from "@/api/textbook";
+
+
 export default {
   setup() {
     // 版本、年级和册次选项
-    const versions = ref(["全部", "PEP", "精通", "新起点", "初中"])
+    const versions = ref([
+      "全部",
+      "PEP",
+      "精通",
+      "新起点",
+      "外研社（一起）",
+      // "外研社三起",
+      "初中",
+    ]);
     const grades = ref([
       "全部",
       "一年级",
@@ -88,16 +103,16 @@ export default {
       "七年级",
       "八年级",
       "九年级",
-    ])
-    const terms = ref(["全部", "上册", "下册", "全一册"])
+    ]);
+    const terms = ref(["全部", "上册", "下册", "全一册"]);
 
     // 当前选中的版本、年级和册次
-    const selectedVersion = ref("全部")
-    const selectedGrade = ref("全部")
-    const selectedTerm = ref("全部")
+    const selectedVersion = ref("全部");
+    const selectedGrade = ref("全部");
+    const selectedTerm = ref("全部");
 
     // 书籍数据
-    const books = ref([])
+    const books = ref([]);
 
     // 从接口获取数据
     const fetchBooks = async () => {
@@ -107,7 +122,11 @@ export default {
           selectedGrade.value,
           selectedTerm.value
         );
-        if (response.data && response.data.booklist && response.data.booklist[0]?.versions) {
+        if (
+          response.data &&
+          response.data.booklist &&
+          response.data.booklist[0]?.versions
+        ) {
           books.value = response.data.booklist[0].versions;
         } else {
           books.value = [];
@@ -115,40 +134,44 @@ export default {
       } catch (err) {
         console.error("Failed to fetch books:", err);
         uni.showToast({
-          title: '获取教材列表失败',
-          icon: 'error'
+          title: "获取教材列表失败",
+          icon: "error",
         });
       }
-    }
+    };
 
     // 监听筛选条件变化，重新获取数据
-    watch(
-      [selectedVersion, selectedGrade, selectedTerm],
-      () => {
-        fetchBooks();
-      }
-    );
+    watch([selectedVersion, selectedGrade, selectedTerm], () => {
+      fetchBooks();
+    });
 
     // 根据选中的版本、年级和册次过滤书籍
     const filteredBooks = computed(() => {
       if (!Array.isArray(books.value)) {
         return [];
       }
-      
+
       let result = [];
-      books.value.forEach(versionGroup => {
-        if (selectedVersion.value === "全部" || versionGroup.version_type === selectedVersion.value) {
+      books.value.forEach((versionGroup) => {
+        if (
+          selectedVersion.value === "全部" ||
+          versionGroup.version_type === selectedVersion.value
+        ) {
           if (Array.isArray(versionGroup.textbooks)) {
-            const filteredTextbooks = versionGroup.textbooks.filter(book => {
-              const matchGrade = selectedGrade.value === "全部" || book.grade === selectedGrade.value;
-              const matchTerm = selectedTerm.value === "全部" || book.term === selectedTerm.value;
+            const filteredTextbooks = versionGroup.textbooks.filter((book) => {
+              const matchGrade =
+                selectedGrade.value === "全部" ||
+                book.grade === selectedGrade.value;
+              const matchTerm =
+                selectedTerm.value === "全部" ||
+                book.term === selectedTerm.value;
               return matchGrade && matchTerm;
             });
             result = result.concat(filteredTextbooks);
           }
         }
       });
-      
+
       return result;
     })
 
@@ -171,15 +194,15 @@ export default {
         url: `/pages/textbook/books?book_id=${book.book_id}`,
       })
     }
-	
-	// 背单词入口
-	const wordRecitationHomeclick = () => {
-		console.log("别单词")
-	  uni.navigateTo({
-	    url: `/pages/textbook/WordRecitationHome`,
-	  })
-	}
-	
+
+    // 背单词入口
+    const wordRecitationHomeclick = () => {
+      console.log("别单词");
+      uni.navigateTo({
+        url: `/pages/textbook/WordRecitationHome`,
+      })
+    }
+
 
     const handleImageError = (e) => {
       console.error('Image load error:', e);
@@ -198,10 +221,10 @@ export default {
       handleBuy,
       goToCourse,
       handleImageError,
-	  wordRecitationHomeclick
-    }
+      wordRecitationHomeclick,
+    };
   },
-}
+};
 </script>
 
 <style>
