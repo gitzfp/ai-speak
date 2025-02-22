@@ -200,3 +200,23 @@ def get_textbook_pages(
 
     except Exception as e:
         return ApiResponse.system_error(str(e))
+
+@router.get("/textbook/{book_id}/lessons/sentences", response_model=ApiResponse)
+def get_textbook_lessons_and_sentences(
+    book_id: str,
+    db: Session = Depends(get_db)
+) -> ApiResponse:
+    """
+    获取教材下的所有课程和句子
+    """
+    try:
+        service = TextbookService(db)
+        result = service.get_textbook_lessons_and_sentences(book_id)
+        
+        if result is None:
+            return ApiResponse.error("未找到课程和句子信息")
+
+        return ApiResponse.success(result)
+
+    except Exception as e:
+        return ApiResponse.system_error(str(e))

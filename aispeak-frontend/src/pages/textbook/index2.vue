@@ -2,11 +2,6 @@
   <view class="container">
     <!-- 头部 -->
     <view class="header">
-      <!-- <image src="/static/images/logo.png" mode="widthFix"></image> -->
-      <text class="title">英语朗读宝</text>
-      <view class="subtitle">
-        <text class="highlight-text">课本同步学 英语进步快</text>
-      </view>
       <view class="description">
         <text>已同步新教材，正版权威更可靠</text>
       </view>
@@ -34,7 +29,7 @@
           课本同步学
       </view>
       <view class="button-row button-line">
-        <view class="function-button" @click="textbookSync">
+        <view class="function-button" @click="textbookListen">
           <image class="button-icon" src="@/assets/icons/listening.svg"></image>
           听课文
         </view>
@@ -42,14 +37,14 @@
           <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
           句子跟读
         </view>
-        <view class="function-button" @click="reciteTest">
+        <!-- <view class="function-button" @click="reciteTest">
           <image class="button-icon" src="@/assets/icons/recitation_pattern.svg"></image>
           背诵测评
-        </view>
-        <view class="function-button" @click="vocabularyReinforcement">
+        </view> -->
+        <!-- <view class="function-button" @click="vocabularyReinforcement">
           <image class="button-icon" src="@/assets/icons/word.svg"></image>
           学单词
-        </view>
+        </view> -->
         <view class="function-button" @click="listenWrite">
           <image class="button-icon" src="@/assets/icons/recite.svg"></image>
           课本点读
@@ -60,10 +55,10 @@
           单词强化
       </view>
       <view class="button-row">
-        <view class="function-button" @click="wordTricks">
+        <!-- <view class="function-button" @click="wordTricks">
           <image class="button-icon" src="@/assets/icons/verify-code2.svg"></image>
           单词巧记
-        </view>
+        </view> -->
         <view class="function-button" @click="earTraining">
           <image class="button-icon" src="@/assets/icons/ear_grinding.svg"></image>
           磨耳朵
@@ -76,22 +71,19 @@
           <image class="button-icon" src="@/assets/icons/word_dictation.svg"></image>
           单词听写
         </view>
-        <view class="function-button" @click="eliminationGame">
+        <!-- <view class="function-button" @click="eliminationGame">
           <image class="button-icon" src="@/assets/icons/abacus_flat.svg"></image>
           消消乐
-        </view>
+        </view> -->
       </view>
     </view>
     <view class="intermediate-part">
-      <view class="subscribe">
+      <!-- <view class="subscribe">
           <view class="subscribe-tit">
             <image class="buttontit-icon" src="@/assets/icons/bell.svg"></image>
             <view>订阅学习报告，及时掌握孩子学习情况！</view>
           </view>
-          <view class="subscribe-bnt">
-            去订阅
-          </view>
-      </view>
+      </view> -->
       <view class="recitation-plan">
           <view class="recitation-tit">
             <view class="recitation-left">
@@ -100,7 +92,7 @@
               <image class="recitation-icon2" src="@/assets/icons/left_arrow.svg"></image>
             </view>
             <view class="recitation-right">
-              已背0/595
+              已背 0/595
             </view>
           </view>
           <view class="button-container">
@@ -234,8 +226,10 @@ const shareToClass = () => {
   console.log('Share to Class');
 };
 
-const textbookSync = () => {
-  console.log('Listen Text');
+const textbookListen = () => {
+  uni.navigateTo({
+    url: `/pages/textbook/TextbookListen?book_id=${book.value.book_id}`,
+  })
 };
 
 const sentenceFollow = () => {
@@ -286,8 +280,10 @@ const eliminationGame = () => {
 
 <style  scoped lang="less">
 .container {
-  background-color: #59C160;
+  // background-color: #59C160;
+  background: linear-gradient(to bottom, #59C160 0%, #f8f9fa 100%);
   padding-top:10px;
+  height: 100vh;
 }
 
 .header {
@@ -461,21 +457,21 @@ const eliminationGame = () => {
 }
 
 .button-icon {
-  width: 40px; /* 根据实际图标的大小调整 */
-  height: 40px; /* 根据实际图标的大小调整 */
-  margin-bottom: 5px;
+  width: 40rpx; /* 根据实际图标的大小调整 */
+  height: 40rpx; /* 根据实际图标的大小调整 */
+  margin-bottom: 5rpx;
 }
 
 .intermediate-part {
+  margin-top: 30rpx;
   width: 100%;
-  margin-top: 15px;
-  padding-top: 15px;
+  padding: 10rpx 10rpx 10rpx 0;
   background-color: white;
   .subscribe {
     background-color: #fdf3e8;
-    margin:0 15px;
-    border-radius: 25px;
-    height: 50px;
+    margin:0 15rpx;
+    border-radius: 25rpx;
+    height: 50rpx;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -508,7 +504,6 @@ const eliminationGame = () => {
     margin: 15px;
     border-radius: 10px;
     height: 100px;
-    background: white;
     border: 1px solid #f5f5f5; /* 添加边框，替换 #yourBorderColor 为你想要的边框颜色 */
     box-shadow: 0 0.5px 3px rgba(0,0,0,0.1); /* 添加阴影效果，可根据需要调整 */
     padding-bottom: 15px;

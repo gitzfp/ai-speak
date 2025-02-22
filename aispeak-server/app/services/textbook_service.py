@@ -1,6 +1,6 @@
 from typing import Dict, List
 from sqlalchemy.orm import Session
-from app.db.textbook_entities import TextbookEntity,  LessonEntity, TaskTargetsEntity, TextbookPageEntity, TextbookSentence, ChapterEntity
+from app.db.textbook_entities import TextbookEntity,  LessonEntity, TaskTargetsEntity, TextbookPageEntity, TextbookSentence, ChapterEntity, LessonSentenceEntity
 from app.db.words_entities import Word, WordSyllable, Syllable  # 添加这行导入
 import datetime
 
@@ -750,3 +750,110 @@ class TextbookService:
         except Exception as e:
             print(f"获取教材页面信息失败: {str(e)}")
             return None
+
+    def get_textbook_lessons_and_sentences(self, book_id: str) -> dict:
+            """
+            获取教材下的所有课程和句子
+            """
+            try:
+                print(f"开始查询，book_id: {book_id}")
+
+                # 获取所有主课程
+                main_lessons = self.db.query(LessonEntity).filter(
+                    LessonEntity.book_id == book_id,
+                    LessonEntity.parent_id == None
+                ).all()
+
+                print(f"查询到的主课程数量: {len(main_lessons)}")
+                print("主课程详情:")
+                for lesson in main_lessons:
+                    print(
+                        f"ID: {lesson.id}, lesson_id: {lesson.lesson_id}, title: {lesson.title}")
+
+                result = []
+                for main_lesson in main_lessons:
+                    lesson_data = {
+                        "id": main_lesson.lesson_id,
+                        "title": main_lesson.title,
+                        "sub_lessons": []
+                    }
+
+                    # 获取子课程
+                    sub_lessons = self.db.query(LessonEntity).filter(
+                        LessonEntity.parent_id == main_lesson.lesson_id
+                    ).all()
+
+                    if not sub_lessons:
+                        # 如果没有子课程，直接获取主课程的句子
+                        sentences_query = self.db.query(LessonSentenceEntity).filter(
+                            LessonSentenceEntity.lesson_id == main_lesson.id
+                        )
+                        print(f"\n主课程 '{main_lesson.title}' 的SQL查询: {str(sentences_query)}")
+                        
+                        sentences = sentences_query.all()
+                        print(f"主课程找到的句子数量: {len(sentences)}")
+                        
+                        lesson_data["sentences"] = [
+                            {
+                                "english": sentence.english,
+                                "chinese": sentence.chinese,
+                                "audio_url": sentence.audio_url,
+                                "audio_start": sentence.audio_start,
+                                "audio_end": sentence.audio_end,
+                                "is_lock": sentence.is_lock
+                            }
+                            for sentence in sentences
+                        ]
+                    else:
+                        print(f"\n主课程 '{main_lesson.title}' 的子课程数量: {len(sub_lessons)}")
+                        for sub in sub_lessons:
+                            print(f"ID: {sub.id}, title: {sub.title}")
+
+                    for sub_lesson in sub_lessons:
+                        sub_lesson_data = {
+                            "id": sub_lesson.id,
+                            "title": sub_lesson.title,
+                            "sentences": []
+                        }
+
+                        # 获取句子
+                        sentences_query = self.db.query(LessonSentenceEntity).filter(
+                            LessonSentenceEntity.lesson_id == sub_lesson.id
+                        )
+                        print(
+                            f"\n子课程 '{sub_lesson.title}' 的SQL查询: {str(sentences_query)}")
+
+                        sentences = sentences_query.all()
+                        print(f"找到的句子数量: {len(sentences)}")
+                        if len(sentences) == 0:
+                            print(f"警告: 子课程 {sub_lesson.id} 没有找到任何句子")
+                            # 检查数据库中是否存在这个lesson_id的句子
+                            all_sentences = self.db.query(
+                                LessonSentenceEntity).all()
+                            print(
+                                f"数据库中所有句子的lesson_id列表: {[s.lesson_id for s in all_sentences]}")
+
+                        sub_lesson_data["sentences"] = [
+                            {
+                                "english": sentence.english,
+                                "chinese": sentence.chinese,
+                                "audio_url": sentence.audio_url,
+                                "audio_start": sentence.audio_start,
+                                "audio_end": sentence.audio_end,
+                                "is_lock": sentence.is_lock
+                            }
+                            for sentence in sentences
+                        ]
+
+                        lesson_data["sub_lessons"].append(sub_lesson_data)
+
+                    result.append(lesson_data)
+
+                return result
+
+            except Exception as e:
+                print(f"获取课程和句子失败: {str(e)}")
+                import traceback
+                print("详细错误信息:")
+                print(traceback.format_exc())
+                return None

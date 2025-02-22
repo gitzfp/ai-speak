@@ -46,8 +46,14 @@ export default {
   getTextbookDetails(book_id: string) {
     return request(`/textbook/${book_id}/details`, "GET");
   },
-   // 获取课程单元的单词列表
-   getWordsDetail(bookId: string, words: string[]) {
+
+  // 获取教材下的所有课程和句子
+  getTextbookLessonsAndSentences(book_id: string) {
+    return request(`/textbook/${book_id}/lessons/sentences`, "GET");
+  },
+
+  // 获取课程单元的单词列表
+  getWordsDetail(bookId: string, words: string[]) {
     const url = `/textbook/${bookId}/words/details`;
     // 打印请求 URL 和请求体，方便调试
     // console.log("请求URL:", url);

@@ -63,24 +63,51 @@ def save_lessons_and_sentences(data, book_id):
         try:
             # 保存课程数据
             for lesson in data["lessons"]:
-                # 保存主课程
-                parent_lesson = LessonEntity(
-                    lesson_id=str(lesson["id"]),
-                    book_id=book_id,
-                    title=lesson["title"],
-                    parent_id=None
-                )
-                session.add(parent_lesson)
+                # 查找或创建主课程
+                parent_lesson = session.query(LessonEntity).filter(
+                    LessonEntity.book_id == book_id,
+                    LessonEntity.lesson_id == str(lesson["id"])
+                ).first()
+                
+                if parent_lesson:
+                    # 更新主课程
+                    parent_lesson.title = lesson["title"]
+                    logger.info(f"更新主课程: {parent_lesson.title}")
+                else:
+                    # 创建主课程
+                    parent_lesson = LessonEntity(
+                        lesson_id=str(lesson["id"]),
+                        book_id=book_id,
+                        title=lesson["title"],
+                        parent_id=None
+                    )
+                    session.add(parent_lesson)
+                    logger.info(f"创建主课程: {parent_lesson.title}")
                 session.flush()
                 
-                # 保存子课程
+                # 处理子课程
                 for sub_title in lesson["sub_titles"]:
-                    sub_lesson = LessonEntity(
-                        book_id=book_id,
-                        title=sub_title,
-                        parent_id=parent_lesson.lesson_id
-                    )
-                    session.add(sub_lesson)
+                    # 查找或创建子课程
+                    sub_lesson = session.query(LessonEntity).filter(
+                        LessonEntity.book_id == book_id,
+                        LessonEntity.title == sub_title,
+                        LessonEntity.parent_id == parent_lesson.lesson_id
+                    ).first()
+                    
+                    if sub_lesson:
+                        # 更新子课程
+                        sub_lesson.parent_id = parent_lesson.lesson_id
+                        logger.info(f"更新子课程: {sub_lesson.title}")
+                    else:
+                        # 创建子课程，生成lesson_id
+                        sub_lesson = LessonEntity(
+                            lesson_id=f"{parent_lesson.lesson_id}_{sub_title.replace(' ', '_')}",  # 生成唯一的lesson_id
+                            book_id=book_id,
+                            title=sub_title,
+                            parent_id=parent_lesson.lesson_id
+                        )
+                        session.add(sub_lesson)
+                        logger.info(f"创建子课程: {sub_lesson.title}")
                 
                 # 获取该课程的句子数据
                 lesson_data = fetch_sentences(
@@ -100,10 +127,27 @@ def save_lessons_and_sentences(data, book_id):
                             LessonEntity.title == lesson_sentences["title"]
                         ).first()
                         
-                        if sub_lesson:
-                            for sentence in lesson_sentences["sentences"]:
+                        target_lesson_id = sub_lesson.id if sub_lesson else parent_lesson.id
+                        
+                        for sentence in lesson_sentences["sentences"]:
+                            # 查找现有句子
+                            existing_sentence = session.query(LessonSentenceEntity).filter(
+                                LessonSentenceEntity.lesson_id == target_lesson_id,
+                                LessonSentenceEntity.english == sentence["english"]
+                            ).first()
+                            
+                            if existing_sentence:
+                                # 更新现有句子
+                                existing_sentence.chinese = sentence["chinese"]
+                                existing_sentence.audio_url = lesson_sentences.get("audio_url")
+                                existing_sentence.audio_start = sentence.get("audio_start")
+                                existing_sentence.audio_end = sentence.get("audio_end")
+                                existing_sentence.is_lock = lesson_sentences.get("is_lock", 0)
+                                logger.info(f"更新句子: {existing_sentence.english}")
+                            else:
+                                # 创建新句子
                                 sentence_entity = LessonSentenceEntity(
-                                    lesson_id=sub_lesson.lesson_id,
+                                    lesson_id=target_lesson_id,
                                     english=sentence["english"],
                                     chinese=sentence["chinese"],
                                     audio_url=lesson_sentences.get("audio_url"),
@@ -112,6 +156,7 @@ def save_lessons_and_sentences(data, book_id):
                                     is_lock=lesson_sentences.get("is_lock", 0)
                                 )
                                 session.add(sentence_entity)
+                                logger.info(f"创建句子: {sentence_entity.english}")
                 else:
                     logger.error(f"获取课程 {lesson['title']} 的句子数据失败")
         except Exception as e:

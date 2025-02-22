@@ -13,6 +13,18 @@
       }
     },
     {
+      "path": "pages/textbook/index2",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/textbook/TextbookListen",
+      "style": {
+        "navigationBarTitleText": "听课文"
+      }
+    },
+    {
       "path": "pages/textbook/worddetails",
       "style": {
         "navigationBarTitleText": "单词详情"
@@ -153,7 +165,7 @@
     "backgroundColor": "#ffffff",
     "list": [
       {
-        "pagePath": "pages/textbook/index",
+        "pagePath": "pages/textbook/index2",
         "text": "首页",
         "selectedIconPath": "static/home_select.png",
         "iconPath": "static/home.png"
