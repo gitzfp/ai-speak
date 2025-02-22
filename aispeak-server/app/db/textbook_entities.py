@@ -110,24 +110,37 @@ class LessonEntity(Base):
 
     __tablename__ = "lesson"
 
-    id = Column("id", Integer, primary_key=True)  # 课程单元ID
-    textbook_id = Column("textbook_id", String(80), nullable=True)  # 所属教材ID
-    category_id = Column("category_id", String(80), nullable=True)  # 所属分类ID
-    lesson_id = Column("lesson_id", String(80), nullable=False)  #
+    id = Column("id", Integer, primary_key=True, autoincrement=True)  # 课程ID
+    lesson_id = Column("lesson_id", String(80), nullable=False)
+    book_id = Column("book_id", String(80), nullable=False)  # 关联的教材ID
     title = Column("title", String(200), nullable=False)  # 单元标题
-    sub_title = Column("sub_title", String(200), nullable=True)  # 单元副标题
-    pic = Column("pic", String(500), nullable=True)  # 单元图片链接
-    feature = Column("feature", Integer, default=1)  # 单元特性
-    is_audition = Column("is_audition", Integer, default=0)  # 是否试听
-    max_score = Column("max_score", Integer, nullable=True)  # 最高得分
+    parent_id = Column("parent_id", Integer, nullable=True)  # 父级ID，顶级单元为null
+
+    create_time = Column("create_time", DateTime, default=datetime.datetime.now)  # 创建时间
+    update_time = Column("update_time", DateTime, default=datetime.datetime.now)  # 更新时间
+
+
+class LessonSentenceEntity(Base):
+    """课程句子表"""
+
+    __tablename__ = "lesson_sentence"
+
+    id = Column("id", Integer, primary_key=True, autoincrement=True)  # 句子ID
+    lesson_id = Column("lesson_id", Integer, nullable=False)  # 关联的课程ID
+    english = Column("english", Text, nullable=False)  # 英文内容
+    chinese = Column("chinese", Text, nullable=False)  # 中文内容
+
+    # 音频相关
+    audio_url = Column("audio_url", String(500), nullable=True)  # 音频URL
+    audio_start = Column("audio_start", Integer, nullable=True)  # 音频开始时间（毫秒）
+    audio_end = Column("audio_end", Integer, nullable=True)  # 音频结束时间（毫秒）
+    is_lock = Column("is_lock", Integer, default=0)  # 是否锁定
+
     create_time = Column("create_time", DateTime,
                          default=datetime.datetime.now)  # 创建时间
     update_time = Column("update_time", DateTime,
                          default=datetime.datetime.now)  # 更新时间
-    icon_url = Column("icon_url", String(500), nullable=True)  # 教材图标URL
-    ext_id = Column("ext_id", String(200), nullable=True)  # 关联的第三方id
-
-
+    
 class ChapterEntity(Base):
     """章节目录表"""
     

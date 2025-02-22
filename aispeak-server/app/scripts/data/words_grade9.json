@@ -1,0 +1,23 @@
+[
+    {
+        "book_id": 168,
+        "stage_id": 1,
+        "stage": "初中",
+        "stage_tag": "chuzhong",
+        "version_id": 21,
+        "version": "人教新目标版",
+        "version_tag": "rjxmbb",
+        "grade_id": 9,
+        "grade": "九年级",
+        "grade_tag": "jiunianji",
+        "term_tag": "quance",
+        "book_name": "九年级全一册",
+        "publisher": "人民教育出版社",
+        "cover": "https://ywld-1315558954.51jiaoxi.com/yy-static/images/book/fdc62e20-39cb-11eb-8958-b90a73209327.png",
+        "has_sentence": 1,
+        "has_word": 1,
+        "lesson_id": "1",
+        "lesson_name": "Unit 1 How can we become good learners?",
+        "textbook_id": "1312001303141"
+    }
+]

@@ -1,4 +1,5 @@
 import requests
+import json
 from bs4 import BeautifulSoup
 from app.db.words_entities import Word, Syllable, WordSyllable
 from app.db import SessionLocal
@@ -234,8 +235,6 @@ async def parse_word_html(word_data: any, book_info: any, book_id: str, lesson_i
         data["uk_sound_path"] = uk_sound_path
         data["us_sound_path"] = us_sound_path
     return data
-
-
 async def get_word_data(word_data: any,  book_info: any, book_id: str, lesson_id: str) -> dict:
     """获取单词数据（结合API和HTML解析）"""
 
@@ -275,14 +274,13 @@ async def update_textbook_ext_id(db: Session, book_id: str, ext_id: str) -> None
         textbook = db.query(TextbookEntity).filter(
             TextbookEntity.id == book_id
         ).first()
-
+        
         if textbook and ext_id:
             textbook.ext_id = str(ext_id)
             db.commit()
             print(f"Updated textbook ext_id to: {ext_id}")
         else:
-            print(
-                f"Textbook not found or ext_id is empty: book_id={book_id}, ext_id={ext_id}")
+            print(f"Textbook not found or ext_id is empty: book_id={book_id}, ext_id={ext_id}")
     except Exception as e:
         db.rollback()
         print(f"Error updating textbook ext_id: {str(e)}")
@@ -326,7 +324,7 @@ async def fetch_words_data(params: dict):
             Base.metadata.create_all(bind=engine)
 
             for lesson in lessons:
-                print(f"Processing Unit {lesson['id']}...")
+                print(f"\n=================== 开始处理 Unit {lesson['id']} ===================")
                 current_params = base_params.copy()
                 current_params['lesson_id'] = str(lesson['id'])
 
@@ -338,8 +336,7 @@ async def fetch_words_data(params: dict):
                 if lesson_data['code'] == 200 and 'data' in lesson_data:
                     db = SessionLocal()
                     try:
-                        lesson_id = int(
-                            lesson_data['data']['info']['lesson_id'])
+                        lesson_id = int(lesson_data['data']['info']['lesson_id'])
                         words_data = lesson_data['data']['lesson_words']['words']
                         book_info = lesson_data['data']['info']
                         # 通过book_id, 把book_info里面的book_id更新到textbook_entities里面的ext_id
@@ -607,71 +604,34 @@ async def process_syllables(phonics_text: str, db, bucket: oss2.Bucket, public_e
 
 
 if __name__ == "__main__":
-    # sylleble = "h/h/e/ə/l/ /l/l/o/əʊ/"
-    # get_syllables(sylleble)
-    # # 示例用法
-    params_list = [
-        # {
-        #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=yinianji&term_tag=shangce',
-        #     'name': '人教版PEP一年级上册'
-        #     'book_id': '1212001101247'
-        # },
-        # {
-        #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=yinianji&term_tag=xiace',
-        #     'name': '人教版PEP一年级下册',
-        #     'book_id': '1212001102247'
-        # },
-        # {
-        #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbxqd&grade_tag=yinianji&term_tag=shangce',
-        #     'name': '人教材新起点一年级上册',
-        #     'book_id': '1212001101123',
-        # },
-        # {
-        #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbxqd&grade_tag=yinianji&term_tag=xiace',
-        #     'name': '人教材新起点一年级下册',
-        #     'book_id': '1212001102123'
-        # },
-        # {
-        #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjjtb&grade_tag=yinianji&term_tag=shangce',
-        #     'name': '人教精通版一年级上册',
-        #     'book_id': '1212001101244'
-        # },
-        # {
-        #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjjtb&grade_tag=yinianji&term_tag=shangce',
-        #     'name': '人教精通版一年级下册',
-        #     'book_id': '1212001102244'
-        # },
-        {
-            'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=ernianji&term_tag=shangce',
-            'name': '人教版PEP二年级上册',
-            'book_id': '1212001201247'
-        },
-        {
-            'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=ernianji&term_tag=xiace',
-            'name': '人教版PEP二年级下册',
-            'book_id': '1212001202247'
-        },
-        {
-            'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbxqd&grade_tag=ernianji&term_tag=shangce',
-            'name': '人教材新起点二年级上册',
-            'book_id': '1212001201133'
-        },
-        {
-            'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbxqd&grade_tag=ernianji&term_tag=xiace',
-            'name': '人教材新起点二年级下册',
-            'book_id': '1212001202133'
-        },
-        {
-            'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjjtb&grade_tag=ernianji&term_tag=shangce',
-            'name': '人教精通版二年级上册',
-            'book_id': '1212001201244'
-        },
-        {
-            'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjjtb&grade_tag=ernianji&term_tag=shangce',
-            'name': '人教精通版二年级下册',
-            'book_id': '1212001202244'
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    json_path = os.path.join(current_dir, 'data', 'words_grade6.json')
+
+    with open(json_path, 'r', encoding='utf-8') as file:
+        json_data = json.loads(file.read())  # 解析 JSON 字符串为 Python 对象
+    
+    print(f"==========json_data======={json_data}")
+    
+    # 从 json_data 生成 params_list
+    params_list = []
+    for book in json_data:  # 现在 json_data 是一个列表
+        base_url = "https://api.suyang123.com/api/syh5/yy/words/list"
+        params = {
+            'stage_tag': book['stage_tag'],
+            'lesson_id': '1',
+            'version_tag': book['version_tag'],
+            'grade_tag': book['grade_tag'],
+            'term_tag': book['term_tag']
         }
-    ]
+        
+        # 构建完整的URL
+        url = f"{base_url}?stage_tag={params['stage_tag']}&lesson_id={params['lesson_id']}&version_tag={params['version_tag']}&grade_tag={params['grade_tag']}&term_tag={params['term_tag']}"
+        
+        params_list.append({
+            'url': url,
+            'name': f"{book['version']}{book['grade']}{book['term_tag']}",
+            'book_id': book['textbook_id']
+        })
 
     for params in params_list:
         print(f"\n开始处理 book_id: {params['book_id']} 的数据...")

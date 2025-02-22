@@ -12,12 +12,12 @@
         "navigationStyle": "custom"
       }
     },
-    // {
-    //   "path": "pages/textbook/index",
-    //   "style": {
-    //     "navigationBarTitleText": "教材详情"
-    //   }
-    // },
+    {
+      "path": "pages/textbook/worddetails",
+      "style": {
+        "navigationBarTitleText": "单词详情"
+      }
+    },
     {
       "path": "pages/textbook/index",
       "style": {
@@ -48,7 +48,14 @@
       "style": {
         "navigationStyle": "custom"
       }
-    },
+    }
+	,
+	{
+		"path": "pages/textbook/WordRecitationHome",
+		"style": {
+		  "navigationBarTitleText": "背单词"
+		}
+	},
     {
       "path": "pages/textbook/lesson",
       "style": {
@@ -151,12 +158,6 @@
         "selectedIconPath": "static/home_select.png",
         "iconPath": "static/home.png"
       },
-      // {
-      //   "pagePath": "pages/textbook/index",
-      //   "text": "首页",
-      //   "selectedIconPath": "static/home_select.png",
-      //   "iconPath": "static/home.png"
-      // },
       {
         "pagePath": "pages/practice/index",
         "text": "练习",

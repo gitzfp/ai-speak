@@ -32,7 +32,6 @@
       class="word-list" 
       :scroll-into-view="scrollToUnitId"
       @scroll="handleScroll"
-      style="height: calc(100vh - 200px); overflow-y: auto;"
     >
         <view
         v-for="group in groupedWords" 
@@ -187,10 +186,11 @@
       groupedWords.value.forEach(group => {
         group.words.forEach(word => {
           if (word.isSelected) {
-            selectedWords.push(word);
+            selectedWords.push(String(word.word_id));
           }
         });
       });
+
 
       // 如果没有选中任何单词，提示用户
       if (selectedWords.length === 0) {
@@ -203,13 +203,26 @@
 
       // 将选中的单词数据存储到本地缓存中
       const sessionKey = 'selectedWords'; // 缓存键名
-      uni.setStorage(sessionKey, JSON.stringify(selectedWords))
-      // 跳转到学习页面
-      uni.navigateTo({
-        url: `/pages/learning-page?sessionKey=${sessionKey}`, // 将缓存键名传递给学习页面
-      });
-    };
       
+      const bookId = currentBook.value.book_id
+
+
+      uni.setStorage({
+      key: sessionKey,
+      data: JSON.stringify(selectedWords),
+      success: function () {
+        // console.log('数据存储成功');
+        // 跳转到学习页面
+        uni.navigateTo({
+          url: `/pages/textbook/worddetails?sessionKey=${sessionKey}&bookId=${bookId}`, // 将缓存键名传递给学习页面
+        });
+      },
+      fail: function (err) {
+        console.log('数据存储失败', err);
+      }
+    });
+
+    };
 
       // 初始化时默认选中第一个单元
       onMounted(() => {
@@ -294,6 +307,7 @@
   
       onLoad(async (options) => {
         const {bookId } = options
+        currentBook.value.book_id = bookId
         fetchWords(bookId)
       })
   
@@ -419,8 +433,9 @@
   //   //  gap: 20rpx;
   // }
     .word-list {
-      height: calc(100vh - 580rpx); /* 根据实际布局调整 */
+      height: calc(100vh - 350rpx);; /* 根据实际布局调整 */
       // overflow-y: auto;
+	  width: 100%;
     }
   
   .word-item {
@@ -485,11 +500,13 @@
   }
   .unit-nav {
     white-space: nowrap;
-    padding: 20rpx;
+    // padding: 20rpx;
+	height: 90rpx;
     background-color: #fff;
     overflow-x: scroll; /* 允许横向滚动 */
     -ms-overflow-style: none;  /* Internet Explorer 10+ */
     scrollbar-width: none;  /* Firefox */
+	
   }
   .unit-nav::-webkit-scrollbar { 
   display: none;  /* Safari and Chrome */
@@ -503,6 +520,7 @@
     font-size: 28rpx;
     background-color: #f5f5f5;
     color: #666;
+	margin-top: 9rpx;
   }
   
   .unit-tab.active {

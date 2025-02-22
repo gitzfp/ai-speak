@@ -134,13 +134,13 @@ import bookSelector from './bookSelector.vue';
 const isPopupOpen = ref(false)
 const bookSelectors = ref(null);
 const book = ref({
-  book_id:'',
-  book_name:'',
-grade:'',
-icon_url: '',
-subject_id:0,
-term:'',
-version_type:''
+	book_id:'',
+	book_name:'',
+	grade:'',
+	icon_url: '',
+	subject_id:0,
+	term:'',
+	version_type:''
 })
 
 // 书籍数据
