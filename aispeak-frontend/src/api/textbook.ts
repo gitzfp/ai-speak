@@ -37,11 +37,12 @@ export default {
     return request(`/textbook/${book_id}/pages`, "POST", pages);
   },
 
-    // 创建教材页面和句子
+  // 创建教材目录
   createTextbookChapters(book_id: string, chapters: Array<object>) {
     return request(`/textbook/${book_id}/chapters`, "POST", chapters);
   },
 
+  // 获取教材详情
   getTextbookDetails(book_id: string) {
     return request(`/textbook/${book_id}/details`, "GET");
   },

@@ -320,7 +320,7 @@ class TextbookService:
         # 构建返回数据
         result = {
                 "detail": {
-                    "textbook_id": lesson.textbook_id,
+                    "textbook_id": lesson.book_id,
                     "category_id": lesson.category_id,
                     "title": lesson.title,
                     "sub_title": lesson.sub_title,
@@ -336,7 +336,7 @@ class TextbookService:
                     "lock": "1"
                 },
                 "book_detail": {
-                    "id": lesson.textbook_id,
+                    "id": lesson.book_id,
                     "title": "【精学版】人教版三起",
                     "sub_title": "PEP人教",
                     "part_info": "null",

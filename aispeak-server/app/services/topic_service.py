@@ -556,7 +556,7 @@ class TopicService:
         )
         self.db.add(session_lesson_relation)
         
-        lesson = self.db.query(LessonEntity).filter(LessonEntity.id == lesson_id).first()
+        lesson = self.db.query(LessonEntity).filter(LessonEntity.lesson_id == lesson_id).first()
 
         # 保存课程历史记录
         lesson_history_entity = TopicHistoryEntity(
