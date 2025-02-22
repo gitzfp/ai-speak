@@ -20,7 +20,6 @@
           </view>
         </view>
      </view>
-      
     </view>
     <!-- 功能按钮区域 -->
     <view class="function-buttons">
@@ -291,7 +290,7 @@ const eliminationGame = () => {
   flex-direction: column;
   align-items: center;
   margin-bottom: 10px;
-  margin:15px;
+  margin:60rpx 30rpx;
 }
 
 .title {
@@ -436,7 +435,7 @@ const eliminationGame = () => {
 .function-buttons {
   background-color: #F4FFF5;
   border-radius: 10px;
-  margin:0 15px;
+  margin:30rpx 0;
 }
 
 .function-button {
@@ -457,8 +456,8 @@ const eliminationGame = () => {
 }
 
 .button-icon {
-  width: 40rpx; /* 根据实际图标的大小调整 */
-  height: 40rpx; /* 根据实际图标的大小调整 */
+  width: 100rpx; /* 根据实际图标的大小调整 */
+  height: 100rpx; /* 根据实际图标的大小调整 */
   margin-bottom: 5rpx;
 }
 
