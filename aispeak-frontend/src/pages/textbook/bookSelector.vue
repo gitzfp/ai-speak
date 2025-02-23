@@ -110,7 +110,7 @@ const closePopup = () => {
 };
   
       // 版本、年级和册次选项
-      const versions = ref(["全部", "PEP", "精通", "新起点", "初中"])
+      const versions = ref(["全部", "PEP", "精通", "新起点", "外研社（一起）", "初中"])
       const grades = ref([
         "全部",
         "一年级",

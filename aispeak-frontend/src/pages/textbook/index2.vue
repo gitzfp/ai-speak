@@ -18,6 +18,8 @@
             <view class="qiuhuan" @click="switchBook">⥦ 切换教材</view>
             <view class="fenxiang" @click="shareToClass">分享到班级</view>
           </view>
+          <button class="upload-btn" @tap="uploadPages">上传外研社教材</button>
+          <button class="upload-btn" @tap="uploadChapters">上传外研社目录</button>
         </view>
      </view>
     </view>
@@ -121,6 +123,34 @@ import { ref,nextTick,onMounted, Text} from 'vue';
 import bookSelector from './bookSelector.vue';
 import env from "@/config/env"; // 导入 env.ts
 const baseUrl = env.basePath; // 获取 
+import textbook from "@/api/textbook";
+import bookPages1 from "./wys-textbook/1l1_V2.json";
+import bookPages2 from "./wys-textbook/1l2_V2.json";
+import bookPages3 from "./wys-textbook/1l3_V2.json";
+import bookPages4 from "./wys-textbook/241113SCCL_002052267526682daa78f0001151d8c.json";
+import bookPages5 from "./wys-textbook/1l5_V2.json";
+import bookPages6 from "./wys-textbook/241113SCCL_002055767579a011887c90001a3978a.json";
+import bookPages7 from "./wys-textbook/1l7_V2.json";
+import bookPages8 from "./wys-textbook/241113SCCL_00206046756bcbddaa78f0001c8efbd.json";
+import bookPages9 from "./wys-textbook/1l9_V2.json";
+import bookPages10 from "./wys-textbook/241115SCCL_00206486756c09f105ccd000197c45e.json";
+import bookPages11 from "./wys-textbook/1l11_V2.json";
+import bookPages12 from "./wys-textbook/241115SCCL_0020690675796941887c900019f87a4.json";
+import bookChapters1 from './wys-chapter/1l1_V2_chapters.json';
+import bookChapters2 from './wys-chapter/1l2_V2_chapters.json';
+import bookChapters3 from './wys-chapter/1l3_V2_chapters.json';
+import bookChapters4 from './wys-chapter/241113SCCL_002052267526682daa78f0001151d8c_chapters.json';
+import bookChapters5 from './wys-chapter/1l5_V2_chapters.json';
+import bookChapters6 from './wys-chapter/241113SCCL_002055767579a011887c90001a3978a_chapters.json';
+import bookChapters7 from './wys-chapter/1l7_V2_chapters.json';
+import bookChapters8 from './wys-chapter/241113SCCL_00206046756bcbddaa78f0001c8efbd_chapters.json';
+import bookChapters9 from './wys-chapter/1l9_V2_chapters.json';
+import bookChapters10 from './wys-chapter/241115SCCL_00206486756c09f105ccd000197c45e_chapters.json';
+import bookChapters11 from './wys-chapter/1l11_V2_chapters.json';
+import bookChapters12 from './wys-chapter/241115SCCL_0020690675796941887c900019f87a4_chapters.json';
+// 引入 Icon 组件
+// import Icon from "@/components/Icon.vue";
+
 const isPopupOpen = ref(false)
 const bookSelectors = ref(null);
 const book = ref({
@@ -135,6 +165,184 @@ const book = ref({
 
 // 书籍数据
 const books = ref([])
+
+// 添加上传方法
+    const uploadPages = async () => {
+      try {
+        const book1Id = "1l1_V2";   //一年级上
+        const book2Id = "1l2_V2"; // 一年级下
+        const book3Id = "1l3_V2"; // 二年级上
+        const book4Id = "241113SCCL_002052267526682daa78f0001151d8c"; // 二年级下
+        const book5Id = "1l5_V2"; // 三年级上
+        const book6Id = "241113SCCL_002055767579a011887c90001a3978a"; // 三年级下
+        const book7Id = "1l7_V2"; // 四年级上 
+        const book8Id = "241113SCCL_00206046756bcbddaa78f0001c8efbd"; // 四年级下 
+        const book9Id = "1l9_V2"; // 五年级上 
+        const book10Id = "241115SCCL_00206486756c09f105ccd000197c45e"; // 五年级下  
+        const book11Id = "1l11_V2"; // 六年级上 
+        const book12Id = "241115SCCL_0020690675796941887c900019f87a4"; // 六年级下
+        // 显示加载提示
+        uni.showLoading({
+          title: "正在上传...",
+        });
+        // ******** 注意需要放开下面的章节进行上传 ****************
+
+        // 调用已有的 createTextbookPages 方法
+        const response = await textbook.createTextbookPages(
+          book1Id,
+          bookPages1
+        );
+        const response2 = await textbook.createTextbookPages(
+          book2Id,
+          bookPages2
+        );
+        const response3 = await textbook.createTextbookPages(
+          book3Id,
+          bookPages3
+        );
+        const response4 = await textbook.createTextbookPages(
+          book4Id,
+          bookPages4
+        );
+        const response5 = await textbook.createTextbookPages(
+          book5Id,
+          bookPages5
+        );
+        const response6 = await textbook.createTextbookPages(
+          book6Id,
+          bookPages6
+        );
+        const response7 = await textbook.createTextbookPages(
+          book7Id,
+          bookPages7
+        );
+        const response8 = await textbook.createTextbookPages(
+          book8Id,
+          bookPages8
+        );
+        // const response9 = await textbook.createTextbookPages(
+        //   book9Id,
+        //   bookPages9
+        // );
+        // const response10 = await textbook.createTextbookPages(
+        //   book10Id,
+        //   bookPages10
+        // );
+        // const response11 = await textbook.createTextbookPages(
+        //   book11Id,
+        //   bookPages11
+        // );
+        // const response12 = await textbook.createTextbookPages(
+        //   book12Id,
+        //   bookPages12
+        // );
+        uni.hideLoading();
+        uni.showToast({
+          title: "上传成功",
+          icon: "success",
+          duration: 2000,
+        });
+      } catch (err) {
+        // 隐藏加载提示
+        uni.hideLoading();
+
+        console.error("上传失败:", err);
+        uni.showToast({
+          title: "上传失败",
+          icon: "error",
+          duration: 2000,
+        });
+      }
+    };
+
+    const uploadChapters = async () => {
+      try {
+        const bookId1 = '1l1_V2'
+        const bookId2 = '1l2_V2'
+        const bookId3 = '1l3_V2'
+        const bookId4 = '241113SCCL_002052267526682daa78f0001151d8c'
+        const bookId5 = '1l5_V2'
+        const bookId6 = '241113SCCL_002055767579a011887c90001a3978a'
+        const bookId7 = '1l7_V2'
+        const bookId8 = '241113SCCL_00206046756bcbddaa78f0001c8efbd'
+        const bookId9 = '1l9_V2'
+        const bookId10 = '241115SCCL_00206486756c09f105ccd000197c45e'
+        const bookId11 = '1l11_V2'
+        const bookId12 = '241115SCCL_0020690675796941887c900019f87a4'
+        
+        // 显示加载提示
+        uni.showLoading({
+          title: '正在上传章节...'
+        })
+        
+        // 调用 API 上传章节
+        const response1 = await textbook.createTextbookChapters(
+          bookId1,
+          bookChapters1
+        )
+        const response2 = await textbook.createTextbookChapters(
+          bookId2,
+          bookChapters2
+        )
+        const response3 = await textbook.createTextbookChapters(
+          bookId3,
+          bookChapters3
+        )
+        const response4 = await textbook.createTextbookChapters(
+          bookId4,
+          bookChapters4
+        )
+        const response5 = await textbook.createTextbookChapters(
+          bookId5,
+          bookChapters5
+        )
+        const response6 = await textbook.createTextbookChapters(
+          bookId6, 
+          bookChapters6
+        )
+        const response7 = await textbook.createTextbookChapters(
+          bookId7,
+          bookChapters7
+        )
+        const response8 = await textbook.createTextbookChapters(
+          bookId8,
+          bookChapters8
+        )
+        const response9 = await textbook.createTextbookChapters(
+          bookId9,
+          bookChapters9
+        )
+        const response10 = await textbook.createTextbookChapters(
+          bookId10,
+          bookChapters10
+        )
+        const response11 = await textbook.createTextbookChapters(
+          bookId11,
+          bookChapters11
+        )
+        const response12 = await textbook.createTextbookChapters(
+          bookId12,
+          bookChapters12
+        )
+        // 隐藏加载提示
+        uni.showToast({
+          title: '章节上传成功',
+          icon: 'success',
+          duration: 2000
+        })
+        
+      } catch (err) {
+        // 隐藏加载提示
+        uni.hideLoading()
+        
+        console.error('上传章节失败:', err)
+        uni.showToast({
+          title: '上传章节失败',
+          icon: 'error',
+          duration: 2000
+        })
+      }
+    }
 
 const togglePopup = () => {
   console.log("删除")
