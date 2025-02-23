@@ -9,21 +9,27 @@
       :key="index"
       class="sentence-item"
       :class="{ 'locked': sentence.is_lock === 1, 'playing': currentIndex === index }"
-      @tap="() => playSentence(sentence, sentences)"
+      @tap="() => changeCurrentIndex(index)"
     >
       <view class="sentence-content">
         <text class="english">{{ sentence.english }}</text>
         <text class="chinese">{{ sentence.chinese }}</text>
       </view>
-      <view class="controls">
+      <view class="controls" @tap="playSentence(sentence, sentences)">
         <text v-if="currentIndex === index && isPlaying" class="play-icon">⏸</text>
         <text v-else class="play-icon">▶</text>
         <text v-if="sentence.is_lock" class="lock-icon">🔒</text>
       </view>
     </view>
 
-    <!-- 增强后的控制栏 -->
-    <view class="control-bar">
+    <!-- 跟读模式按钮 -->
+    <view v-if="repeatAfter" class="repeat-btn" @tap="handleRepeat">
+      <text class="repeat-icon">🎤</text>
+      <text class="repeat-text">开始跟读</text>
+    </view>
+   
+    <!-- 控制栏，仅在非跟读模式显示 -->
+    <view v-else class="control-bar">
       <!-- 左侧：播放模式 -->
       <view class="control-group">
          <!-- 新增循环模式控制栏 -->
@@ -72,12 +78,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, watch, ref, watchEffect } from 'vue'
 import { useAudioPlayer } from '@/hooks/useAudioPlayer'
 import AssessmentPopup from "./AssessmentPopup.vue"
 // 原始选项数据
 const speedOptions = [0.5, 0.8, 1.0, 1.2, 1.5, 2.0]
-const repeatOptions = [0, 1, 3, 5, 10]
+const repeatOptions = ref([]) 
+const showAssessSelection = ref(false) // 测评 总弹窗显示控制
 
 interface Sentence {
   is_lock: number
@@ -86,6 +93,10 @@ interface Sentence {
   audio_url: string
   audio_start: number
   audio_end: number
+}
+
+const changeCurrentIndex = (index: number) => {
+    currentIndex.value = index
 }
 
 const loopModeText = computed(() => {
@@ -98,10 +109,24 @@ const loopModeText = computed(() => {
 
 const props = withDefaults(defineProps<{
   sentences?: Sentence[]
-  isReaptAfter?: boolean
+  repeatAfter?: boolean
 }>(), {
-  sentences: () => []
+  sentences: () => [],
+  repeatAfter: false
 })
+
+// 添加更多调试信息
+console.log('初始 props:', props)
+
+// 使用 watchEffect 替代 watch 来确保能捕获到变化
+watchEffect(() => {
+  console.log('watchEffect - repeatAfter:', props.repeatAfter)
+})
+
+// 保留原有的 watch
+watch(() => props.repeatAfter, (newVal, oldVal) => {
+  console.log('watch - repeatAfter changed:', { newVal, oldVal })
+}, { immediate: true, deep: true })
 
 // 添加监听器查看数据
 watch(() => props.sentences, (newVal) => {
@@ -111,7 +136,6 @@ watch(() => props.sentences, (newVal) => {
 const {
   isPlaying,
   playbackRate,
-  repeatCount,
   currentIndex,
   playSentence,
   playNextSentence,
@@ -132,15 +156,21 @@ const speedIndex = computed(() =>
   speedOptions.findIndex(v => v === playbackRate.value)
 )
 
-const repeatIndex = computed(() =>
-  repeatOptions.findIndex(v => v === repeatCount.value)
-)
 
 // 事件处理
 const onSpeedChange = (index: number) => {
   setPlaybackRate(speedOptions[index])
 }
 
+  const assessPopupHide = () => {
+    showAssessSelection.value = false;
+  }
+// 添加跟读处理函数
+const handleRepeat = () => {
+  showAssessSelection.value = true
+  repeatOptions.value = [props.sentences[currentIndex.value].english]
+  console.log('开始跟读练习')
+}
 </script>
 
 <style scoped>
@@ -297,5 +327,28 @@ const onSpeedChange = (index: number) => {
   display: flex;
   gap: 16rpx;
   justify-content: flex-end;
+}
+
+.repeat-btn {
+  position: fixed;
+  bottom: 40rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #4CAF50;
+  color: white;
+  padding: 24rpx 48rpx;
+  border-radius: 48rpx;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  box-shadow: 0 4rpx 12rpx rgba(76,175,80,0.3);
+}
+
+.repeat-icon {
+  font-size: 40rpx;
+}
+
+.repeat-text {
+  font-size: 32rpx;
 }
 </style>

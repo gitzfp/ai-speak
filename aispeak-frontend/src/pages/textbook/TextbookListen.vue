@@ -36,7 +36,7 @@
           </view>
           <!-- 直接显示句子列表 -->
           <view v-else>
-            <sentence-list :sentences="currentUnit.sentences" is-reapt-after="isReaptAfter"/>
+            <sentence-list :sentences="currentUnit.sentences" :repeat-after="isRepeatAfter === 'true'"/>
           </view>
         </view>
       </scroll-view>
@@ -54,7 +54,7 @@ const textbookData = ref([])
 const loading = ref(false)
 const error = ref('')
 const bookId = ref('')
-const isReaptAfter = ref(false)
+const isRepeatAfter = ref('false')
 const currentUnitId = ref('')
 
 // 计算当前显示的单元
@@ -71,7 +71,7 @@ onLoad((options: any) => {
   console.log('TextbookListen onLoad options:', options)
   const { book_id, repeat_after } = options
   bookId.value = book_id
-  isReaptAfter.value = repeat_after
+  isRepeatAfter.value = repeat_after
   fetchTextbookData()
 })
 
