@@ -447,7 +447,9 @@ const textbookListen = () => {
 };
 
 const sentenceFollow = () => {
-  console.log('Sentence Follow');
+   uni.navigateTo({
+    url: `/pages/textbook/TextbookListen?book_id=${book.value.book_id}&repeat_after=true`,
+  })
 };
 
 const reciteTest = () => {
