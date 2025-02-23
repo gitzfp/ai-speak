@@ -486,15 +486,24 @@ const wordTricks = () => {
 };
 
 const earTraining = () => {
-  console.log('Ear Training');
+  
+  uni.navigateTo({
+    url: `/pages/textbook/Learnwords?bookId=${book.value.book_id}&wordmode=1`
+  });
 };
 
 const pronunciationTest = () => {
   console.log('Pronunciation Test');
+  uni.navigateTo({
+    url: `/pages/textbook/Learnwords?bookId=${book.value.book_id}&wordmode=2`
+  });
 };
 
 const wordListenWrite = () => {
   console.log('Word Listen Write');
+  uni.navigateTo({
+    url: `/pages/textbook/Learnwords?bookId=${book.value.book_id}&wordmode=3`
+  });
 };
 
 const eliminationGame = () => {

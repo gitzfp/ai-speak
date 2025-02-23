@@ -7,7 +7,7 @@
 		<image v-else class="secondMode-icon" src="http://114.116.224.128:8097/static/voice_play.png"></image>
 	  </view>
 	  <view class="thirdMode" v-else>
-		  {{planWordsList[planWordindext].paraphrase}}山东科技发大水发不了尽快胜多负少的
+		  {{planWordsList[planWordindext].paraphrase}}
 	  </view>
       
       <OptionAreaPicture :planWordmode="planWordmode" :optionWords="optionAreaWords" @item-click="optionitemclick" />
