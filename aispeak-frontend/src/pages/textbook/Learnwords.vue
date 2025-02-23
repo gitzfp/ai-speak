@@ -248,22 +248,9 @@
       })
 
       // 处理滚动事件，根据滚动位置更新当前选中的单元
-      const handleScroll = (e) => {        
-        // 遍历所有单元，找到最接近顶部的那个单元
-        for (let i = 0; i < groupedWords.value.length; i++) {
-          const groupId = groupedWords.value[i].lesson_id;
-          uni.createSelectorQuery().in(this).select(`#unit-${groupId} .unit-header`).boundingClientRect((rect) => {
-            if (rect) {
-              // 当单元标题刚好进入可视区域顶部或非常接近顶部时
-              if (Math.abs(rect.top) <= 5 && Math.abs(rect.top) >= 0) { // 允许一定的误差范围
-                if (currentLessonId.value !== groupId) {
-                  currentLessonId.value = groupId
-                }
-              }
-            }
-          }).exec()
-        }
-      }
+      const handleScroll = (e) => {
+        
+      };
 
 
       // 修改switchUnit函数以支持滚动到选中的单元
@@ -449,17 +436,21 @@
     color: #666;
     font-size: 24rpx;
   }
+  /* #ifdef H5 */
+  .word-list {
+    height: calc(100vh - 350rpx); /* 根据实际布局调整 */
+    // overflow-y: auto;
+    width: 100%;
+  }
+  /* #endif */
   
-  // .word-list {
-  //   display: flex;
-  //   flex-direction: column;
-  //   //  gap: 20rpx;
-  // }
+ /* #ifdef MP-WEIXIN */
     .word-list {
-      height: calc(100vh - 350rpx);; /* 根据实际布局调整 */
+      height: calc(100vh - 430rpx); /* 根据实际布局调整 */
       // overflow-y: auto;
 	  width: 100%;
     }
+	 /* #endif */
   
   .word-item {
     display: flex;
