@@ -210,7 +210,7 @@ function stopCurrentAudio() {
   // 清理资源
   // 修改 onBeforeUnmount
   onBeforeUnmount(() => {
-    uni.showToast({title: '播放结束'})
+    // uni.showToast({title: '播放结束'})
     isPlaying.value = false
     stopCurrentAudio()
     updateCurrentIndex(0)
