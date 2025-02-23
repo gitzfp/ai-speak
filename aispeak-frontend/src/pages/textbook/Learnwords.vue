@@ -107,7 +107,7 @@
               <view class="actionbar-translation">已选{{selectedCount}}词</view>
           </view>
         </view>
-        <view class="start-learn" @tap="startLearning">开始学习</view>
+        <view class="start-learn" @tap="startLearning">{{btntit}}</view>
       </view>
     </view>
     <!-- 独立关闭按钮 -->
@@ -150,7 +150,22 @@
       // 控制显示哪个底部区域
       const showActionBar = ref(false)
       const isselectAll = ref(false)
+	  
+	  //0：默认  1.磨耳朵  2.发音测评  3.单词听写
+	  const wordmodeNum = ref(0)
 
+	  //按钮文字显示
+	  const btntit = computed(() => {
+		
+		if (wordmodeNum.value == 1) {
+			return '开始播放'
+		} else if (wordmodeNum.value == 2) {
+			return '开始测评'
+		} else if (wordmodeNum.value == 3) {
+			return '在线听写'
+		} 
+		return '开始学习'
+	  })
       // 计算选中的单词数量
       const selectedCount = computed(() => {
         let count = 0
@@ -206,6 +221,7 @@
       
       const bookId = currentBook.value.book_id
 
+	  const wordmode = wordmodeNum.value
 
       uni.setStorage({
 		  key: sessionKey,
@@ -214,7 +230,7 @@
 			// console.log('数据存储成功');
 			// 跳转到学习页面
 			uni.navigateTo({
-			  url: `/pages/textbook/worddetails?sessionKey=${sessionKey}&bookId=${bookId}`, // 将缓存键名传递给学习页面
+			  url: `/pages/textbook/worddetails?sessionKey=${sessionKey}&bookId=${bookId}&wordmode=${wordmode}`, // 将缓存键名传递给学习页面
 			});
 		  },
 		  fail: function (err) {
@@ -306,12 +322,19 @@
       }
   
       onLoad(async (options) => {
-        const {bookId } = options
+        const {bookId,wordmode} = options
+		
+		if (wordmode) {
+			wordmodeNum.value = wordmode
+		}
+		
+		
+	
         currentBook.value.book_id = bookId
         fetchWords(bookId)
       })
   
-      const showDetails = (word) => {
+      const showDetails = (word,wordmode) => {
         uni.navigateTo({
           url: `/pages/word-details?word=${word}`
         })
