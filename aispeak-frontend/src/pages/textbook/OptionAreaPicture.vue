@@ -85,11 +85,16 @@ const initseletnums =(indext,num) => {
 		ctseletnumtwo.value = 0
 		ctseletnumthree.value = num
 		ctseletnumfour.value = 0
-	} else {
+	}  else if (indext == 3) {
 		ctseletnumone.value = 0
 		ctseletnumtwo.value = 0
 		ctseletnumthree.value = 0
 		ctseletnumfour.value = num
+	} else {
+		ctseletnumone.value = 0
+		ctseletnumtwo.value = 0
+		ctseletnumthree.value = 0
+		ctseletnumfour.value = 0
 	}
 	
 }
@@ -134,6 +139,7 @@ const handleItemClick = (optionWord,indext) => {
 	  initseletnums(indext,num)
 	  if (num == 1) { //答对了
 		  setTimeout(() => {
+			  initseletnums(4,num)
 		    emit('item-click', optionWord);
 		    // 在这里添加延迟执行的代码
 		  }, 300);
