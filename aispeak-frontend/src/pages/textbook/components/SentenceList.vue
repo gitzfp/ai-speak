@@ -65,29 +65,16 @@
             </view>
           </picker>
         </view>
-
-        <!-- 重复控制 -->
-        <!-- <view class="control-item">
-          <picker
-            @change="onRepeatChange($event.detail.value)"
-            :range="repeatOptionsDisplay"
-            :value="repeatIndex"
-          >
-            <view class="picker-btn">
-              <text class="icon">🔁</text>
-              <text class="value">{{ repeatCount === 0 ? '关' : `${repeatCount}次` }}</text>
-            </view>
-          </picker>
-        </view> -->
       </view>
     </view>
+     <AssessmentPopup :repeatOptions="repeatOptions" :showAssessSelection="showAssessSelection" @assessPopupHide="assessPopupHide" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useAudioPlayer } from '@/hooks/useAudioPlayer'
-
+import AssessmentPopup from "./AssessmentPopup.vue"
 // 原始选项数据
 const speedOptions = [0.5, 0.8, 1.0, 1.2, 1.5, 2.0]
 const repeatOptions = [0, 1, 3, 5, 10]
@@ -101,15 +88,6 @@ interface Sentence {
   audio_end: number
 }
 
-// 新增循环模式相关计算属性
-const loopModeIcon = computed(() => {
-  switch(loopMode.value) {
-    case 'list': return '🔄'
-    case 'single': return '🔁'
-    default: return '❌'
-  }
-})
-
 const loopModeText = computed(() => {
   switch(loopMode.value) {
     case 'list': return '列表循环'
@@ -120,6 +98,7 @@ const loopModeText = computed(() => {
 
 const props = withDefaults(defineProps<{
   sentences?: Sentence[]
+  isReaptAfter?: boolean
 }>(), {
   sentences: () => []
 })
@@ -146,10 +125,6 @@ const {
 // 显示格式处理
 const speedOptionsDisplay = computed(() => 
   speedOptions.map(v => `${v}x`)
-)
-
-const repeatOptionsDisplay = computed(() =>
-  repeatOptions.map(v => v === 0 ? '关' : `${v}次`)
 )
 
 // 当前选中索引

@@ -166,33 +166,41 @@ def save_lessons_and_sentences(data, book_id):
 def main():
     # 使用相对路径获取 JSON 文件
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(current_dir, 'data', 'words_grade1.json')
+    json_path = os.path.join(current_dir, 'data', 'words_grade4.json')
 
     with open(json_path, 'r', encoding='utf-8') as file:
         textbooks = json.loads(file.read())
     
     for textbook in textbooks:
-        logger.info(f"处理教材: {textbook['book_name']}， 版本 {textbook['version_tag']}")
-        
-        # 获取句子数据
-        data = fetch_sentences(
-            stage_tag=textbook["stage_tag"],
-            lesson_id=textbook["lesson_id"],
-            version_tag=textbook["version_tag"],
-            grade_tag=textbook["grade_tag"],
-            term_tag=textbook["term_tag"]
-        )
-        
-        if data:
-            logger.info(f"获取到的数据结构: {data.keys()}")
-            try:
-                save_lessons_and_sentences(data, textbook["textbook_id"])
-                logger.info(f"保存成功: {textbook['book_name']}")
-            except Exception as e:
-                logger.error(f"保存失败: {textbook['book_name']}, 错误: {str(e)}")
-                logger.error(f"错误详情: {data}")
-        else:
-            logger.error(f"获取数据失败: {textbook['book_name']}")
+        try:
+            logger.info(f"处理教材: {textbook['book_name']}， 版本 {textbook['version_tag']}")
+            
+            # 获取句子数据
+            data = fetch_sentences(
+                stage_tag=textbook["stage_tag"],
+                lesson_id=textbook["lesson_id"],
+                version_tag=textbook["version_tag"],
+                grade_tag=textbook["grade_tag"],
+                term_tag=textbook["term_tag"]
+            )
+            
+            if data:
+                logger.info(f"获取到的数据结构: {data.keys()}")
+                try:
+                    save_lessons_and_sentences(data, textbook["textbook_id"])
+                    logger.info(f"保存成功: {textbook['book_name']}")
+                except Exception as e:
+                    logger.error(f"保存失败: {textbook['book_name']}, 错误: {str(e)}")
+                    logger.error(f"错误详情: {data}")
+                    continue  # 继续处理下一个教材
+            else:
+                logger.error(f"获取数据失败: {textbook['book_name']}")
+                continue  # 继续处理下一个教材
+        except Exception as e:
+            logger.error(f"处理教材 {textbook.get('book_name', '未知')} 时发生未预期的错误: {str(e)}")
+            continue  # 继续处理下一个教材
+
+    logger.info("所有教材处理完成")
 
 if __name__ == "__main__":
     main()

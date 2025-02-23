@@ -122,7 +122,7 @@ import JSZip from "jszip"
 import utils from "@/utils/utils"
 import env from "@/config/env" 
 import topicRequest from "@/api/topic"
-import AssessmentPopup from "./AssessmentPopup.vue"
+import AssessmentPopup from "./components/AssessmentPopup.vue"
 import textbook from "@/api/textbook"
 const baseUrl = env.basePath // 获取 basePath
 
@@ -799,12 +799,6 @@ function confirmRepeat() {
 // 取消复读
 function cancelRepeat() {
   showRepeatSelection.value = false
-}
-
-function cancelRepeatByMask() {
-    // 防止点击穿透到下层元素
-      cancelRepeat();
-    
 }
 
 // 播放复读段落
