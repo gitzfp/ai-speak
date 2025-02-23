@@ -18,8 +18,8 @@
             <view class="qiuhuan" @click="switchBook">切换教材</view>
             <view class="fenxiang" @click="shareToClass">分享班级</view>
           </view>
-       <button class="upload-btn" @tap="uploadPages">上传外研社教材</button>
-          <button class="upload-btn" @tap="uploadChapters">上传外研社目录</button>
+          <!-- <button class="upload-btn" @tap="uploadPages">上传外研社教材</button>
+          <button class="upload-btn" @tap="uploadChapters">上传外研社目录</button> -->
         </view>
      </view>
     </view>
