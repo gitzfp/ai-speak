@@ -135,8 +135,8 @@ const handleItemClick = (optionWord,indext) => {
 	currentAudio.value = audio;
 	audio.src = audioStr;
 	// audio.volume = props.volume;
+	initseletnums(indext,num)
 	audio.onEnded(() => {
-	  initseletnums(indext,num)
 	  if (num == 1) { //答对了
 		  setTimeout(() => {
 			  initseletnums(4,num)
