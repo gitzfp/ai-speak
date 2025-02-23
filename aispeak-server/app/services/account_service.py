@@ -450,3 +450,27 @@ class AccountService:
             )
             self.db.add(settings)
             self.db.commit()
+
+    def get_wx_access_token(self):
+        """获取微信 access_token"""
+        url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={Config.WECHAT_APP_ID}&secret={Config.WX_APP_SECRET}"
+        response = requests.get(url)
+        data = response.json()
+
+        if "errcode" in data:
+            raise Exception(f"获取access_token失败: {data['errmsg']}")
+
+        return data["access_token"]
+
+
+    def get_wx_jsapi_ticket(self):
+        """获取微信 JSAPI_TICKET"""
+        access_token = self.get_wx_access_token()
+        url = f"https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token={access_token}&type=jsapi"
+        response = requests.get(url)
+        data = response.json()
+
+        if data["errcode"] != 0:
+            raise Exception(f"获取jsapi_ticket失败: {data['errmsg']}")
+
+        return data["ticket"]

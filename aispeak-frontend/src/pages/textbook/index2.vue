@@ -119,9 +119,8 @@
 <script setup>
 import { ref,nextTick,onMounted, Text} from 'vue';
 import bookSelector from './bookSelector.vue';
-// 引入 Icon 组件
-// import Icon from "@/components/Icon.vue";
-
+import env from "@/config/env"; // 导入 env.ts
+const baseUrl = env.basePath; // 获取 
 const isPopupOpen = ref(false)
 const bookSelectors = ref(null);
 const book = ref({
@@ -221,10 +220,68 @@ const fetchBooks = (isSwitch) => {
   })
 }
 
-const shareToClass = () => {
-  console.log('Share to Class');
+// 添加获取微信分享配置的方法
+const getWxShareConfig = async (url) => {
+  try {
+    const response = await uni.request({
+      url: `${baseUrl}/api/wx/share/sign`,
+      method: 'GET',
+      data: {
+        url: url
+      }
+    });
+    
+    if (response.data.success) {
+      const config = response.data.data;
+      // 配置微信分享
+      wx.config({
+        debug: false,
+        appId: config.appId,
+        timestamp: config.timestamp,
+        nonceStr: config.nonceStr,
+        signature: config.signature,
+        jsApiList: ['updateAppMessageShareData', 'updateTimelineShareData']
+      });
+      
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('获取微信分享配置失败:', error);
+    return false;
+  }
 };
 
+// 修改分享方法
+import WxShare from '@/utils/wxShare'
+
+// 修改分享方法
+const shareToClass = async () => {
+  try {
+    await WxShare.init({
+      title: `【班级共享】${book.value.book_name}`,
+      desc: `正在学习《${book.value.book_name}》教材`,
+      imgUrl: book.value.icon_url,
+      success: () => {
+        uni.showToast({
+          title: '分享成功',
+          icon: 'success'
+        });
+      },
+      cancel: () => {
+        uni.showToast({
+          title: '取消分享',
+          icon: 'none'
+        });
+      }
+    });
+  } catch (error) {
+    uni.showToast({
+      title: '分享失败',
+      icon: 'none'
+    });
+  }
+};
 const textbookListen = () => {
   uni.navigateTo({
     url: `/pages/textbook/TextbookListen?book_id=${book.value.book_id}`,
@@ -331,7 +388,6 @@ const eliminationGame = () => {
 }
 
 .description {
-
   padding: 10px;
   border-radius: 10px;
   width: 100%;
@@ -372,9 +428,10 @@ const eliminationGame = () => {
   font-weight: bold;
 }
 .book-title {
-  line-height: 20px;
-  font-size: 16px;
-  color: #73E0FF;
+  line-height: 40rpx;
+  font-size: 26rpx;
+  color: #fff;
+  margin-left: 10rpx;
 }
 .book-buttons {
   height: 74px;
@@ -382,27 +439,26 @@ const eliminationGame = () => {
   justify-content: space-between;
 }
 .book-buttons .qiuhuan {
-  margin-top: 10px;
+  margin-top: 30rpx;
   background-color: #fff;
   color: #6FDBA7;
-  height: 30px;
-  line-height: 30px;
-  padding: 0 20px;
-  border-radius: 15px;
-  font-size: 13px;
+  height: 60rpx;
+  line-height: 60rpx;
+  padding: 0 40rpx;
+  border-radius: 30rpx;
+  font-size: 26rpx;
 }
 
 .book-buttons .fenxiang {
-  margin-top: 10px;
-  background-color: #FBE6CE;
+  margin-top: 30rpx;
+  background-color: #FBE6CE;;
   color: #E6A65D;
-  height: 30px;
-  line-height: 30px;
-  padding: 0 20px;
-  border-radius: 15px;
-  font-size: 13px;
+  height: 60rpx;
+  line-height: 60rpx;
+  padding: 0 40rpx;
+  border-radius: 30rpx;
+  font-size: 26rpx;
 }
-
 
 .book-cover {
   width: 103px;

@@ -1,6 +1,7 @@
 import { createSSRApp } from "vue";
 import App from "./App.vue";
 import EventBus from "@/utils/bus";
+import WxShare from '@/utils/wxShare'
 
 const getHeight = (global: any) => {
   uni.getSystemInfo({
@@ -27,12 +28,31 @@ const getHeight = (global: any) => {
     },
   });
 };
+
 export function createApp() {
   const $bus = new EventBus();
   const app = createSSRApp(App);
   app.provide("$bus", $bus);
   app.config.globalProperties.$bus = $bus;
   getHeight(app.config.globalProperties);
+
+  // 初始化微信分享
+  // #ifdef H5
+  if (process.env.NODE_ENV === 'production') {
+    // 延迟执行，确保页面完全加载
+    setTimeout(() => {
+      WxShare.init();
+    }, 100);
+
+    // 监听路由变化，重新初始化微信分享
+    app.config.globalProperties.$bus.$on('route-change', () => {
+      setTimeout(() => {
+        WxShare.init();
+      }, 100);
+    });
+  }
+  // #endif
+
   return {
     app,
   };
