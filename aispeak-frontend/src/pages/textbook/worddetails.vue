@@ -253,10 +253,11 @@ const duration = 500; // 滑动动画时长
    }
    
 
-   const playNext = () => {
+   const playNext = (isone = false) => {
 
-
-	  wordcardRef.value[currentPage.value - 1].redefineSettings();
+		if (!isone) {
+			wordcardRef.value[currentPage.value - 1].redefineSettings();
+		}
 	
 	
       if (!ispagePlaying.value) {
@@ -346,7 +347,7 @@ const duration = 500; // 滑动动画时长
       // ispagePlaying.value = false
       try {
         currentAudio.value.stop()
-        currentAudio.value.destroy()
+		currentAudio.value.destroy()
       } catch (error) {
         console.error("Error stopping audio:", error)
       }
@@ -497,9 +498,10 @@ const duration = 500; // 滑动动画时长
 			nextTick(() => {
 			  if (allWords.value.length > 0) {
 				//让它一进来就播放
+				console.log("第一次进来")
 				ispagePlaying.value = true
 				currentTrackIndex.value = 0
-				playNext()
+				playNext(true)
 			  }
 			});
 			
@@ -560,6 +562,7 @@ const duration = 500; // 滑动动画时长
   
   <style scoped lang="scss">
  
+ /* #ifdef H5 */
   
   .container {
     position: fixed; // 使用 fixed 布局
@@ -903,6 +906,353 @@ const duration = 500; // 滑动动画时长
   .fullmodal-footer {
     text-align: right;
   }
+  /* #endif */
+
+
+ /* #ifdef MP-WEIXIN */
   
+  .container {
+    position: absolute; // 使用 fixed 布局
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #f8f9fa;
+    overflow: hidden; // 确保内容不会溢出
+  }
+  
+  .header {
+    // margin-bottom: 32rpx;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 24rpx;
+    z-index: 10; /* 确保头部在最上层 */
+    
+    .main-title {
+      font-size: 36rpx;
+      font-weight: 600;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+  
+    .sub-header {
+      display: flex;
+      align-items: center;
+      margin-top: 12rpx;
+      
+      .subtitle {
+        font-size: 26rpx;
+        color: #666;
+        margin-right: 8rpx;
+      }
+    }
+  }
+
+  .main-content {
+    // height: 75vh;
+    position: absolute;
+    top: 130rpx; /* 根据头部高度调整 */
+    bottom: 120rpx; /* 根据底部播放按钮高度调整 */
+    left: 0;
+    right: 0;
+    overflow: hidden;
+  }
+  
+  .pronassessment {
+	  bottom:30rpx
+  }
+  
+  
+  .swiper {
+    height: 100%;
+  }
+  .scroll-view {
+    height: 100%; /* 设置滚动区域的高度 */
+   }
+
+  .card {
+    background: #fff;
+    border-radius: 24rpx;
+    padding: 32rpx;
+    // margin: 0 20;
+    position: absolute;
+    left: 20rpx;
+    top: 0;
+    right: 20rpx;
+    bottom: 50rpx;
+    overflow: scroll;
+	
+	
+	/* 隐藏滚动条 */
+	  &::-webkit-scrollbar {
+	    display: none; /* 隐藏滚动条 */
+	  }
+	  /* 兼容 Firefox */
+	  scrollbar-width: none; /* Firefox */
+	  -ms-overflow-style: none; /* IE 和 Edge */
+    
+
+    // box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.05);
+    // border: 2rpx solid #E8E8E8;
+    // box-shadow: 0rpx -2rpx 4rpx 0rpx #c4c4c4;
+    // min-height: 80vh; /* 确保 card 有足够的高度 */
+  }
+  
+  .pagination {
+    margin-bottom: 20rpx;
+    font-size: 28rpx;
+    color: #999;
+    display: flex;
+    justify-content: space-between;
+    
+    .page-current {
+      color: #2b9939;
+      font-weight: 500;
+    }
+    .wordsNotebook {
+      display: flex;
+      align-items: center;
+      color: #2b9939;
+    }
+  }
+
+  
+  .action-buttons {
+    position: absolute;
+    bottom: 30rpx;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    .pronunciation-btn {
+      padding: 20rpx 40rpx;
+      border-radius: 48rpx;
+      display: flex;
+      flex-direction: column; /* 竖向排列 */
+      align-items: center;
+      .uniIcon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #2b9939;
+        width: 70rpx;
+        height: 70rpx;
+        border-radius: 35rpx;
+      }
+      .btn-text {
+        margin-top: 10rpx;
+        color:#666;
+        font-size: 28rpx;
+        margin-left: 12rpx;
+      }
+    }
+  
+    .display-toggle {
+      display: flex;
+      align-items: center;
+      
+      .toggle-text {
+        font-size: 28rpx;
+        color: #666;
+        margin-right: 8rpx;
+      }
+      
+      .page-indicator {
+        font-size: 28rpx;
+        color: #1a1a1a;
+        margin-left: 16rpx;
+      }
+    }
+  }
+
+
+  .phonics-image {
+    margin: 32rpx 0;
+    border-radius: 16rpx;
+    overflow: hidden;
+    box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.08);
+    width: 50%;
+    margin-left: 25%; 
+    .phonics-img {
+        width: 100%;
+        display: block;
+        background: #f8f9fa;
+    }
+  }
+
+  .left-icon {
+      width: 30rpx;
+      height: 30rpx;
+      margin-right: 10rpx;
+  }
+
+  .play-button-fixed {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between; /* 使左右两侧和中间部分均匀分布 */
+  align-items: center;
+  padding: 20rpx;
+  // background-color: #2b9939;
+  // box-shadow: 0 -4rpx 12rpx rgba(0,0,0,0.05);
+  z-index: 1000; /* 确保按钮在最上层 */
+    }
+
+    .left-section {
+      width: 33.33%;
+      background-color: #f8f9fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      .left-ct {
+        padding: 0rpx 30rpx;
+        background-color: #fff;
+        height: 80rpx;
+        border-radius: 40rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    .complete-text {
+        font-size: 28rpx;
+        color: #707070;
+        margin-right: 10rpx;
+    }
+    .page-indicator {
+        font-size: 28rpx;
+        color: #fff;
+        font-weight: bold;
+    }
+    }
+
+    .middle-section {
+      display: flex;
+      align-items: center;
+      width: 30%;
+      padding:0 20rpx;
+      view {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        background-color: #2b9939;
+        height: 80rpx;
+        border-radius: 40rpx;
+      }
+      .play-button-image {
+        width: 40rpx;
+        height: 40rpx;
+    }
+    }
+
+    .right-section {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    .right-section-button {
+        background-color: #fff;
+        border: none;
+        height: 80rpx;
+        width: 80rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 10rpx;
+        border-radius: 40rpx;
+    }
+    }
+
+    .left-icon {
+      width: 30rpx;
+      height: 30rpx;
+      margin-left: 10rpx;
+  }
+
+
+
+  .fullmodal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 1000;
+    transition: opacity 0.3s ease;
+  }
+  
+  .fullmodal-content {
+    background-color: white;
+    width: 100%;
+    border-top-left-radius: 20rpx;
+    border-top-right-radius: 20rpx;
+    padding: 32rpx 0 32rpx 32rpx;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .fullmodal-content-active {
+    transform: translateY(0);
+  }
+  
+  .fullmodal-title {
+    font-size: 32rpx;
+    // font-weight: bold;
+    margin-bottom: 20rpx;
+    padding: 10rpx 0;
+    text-align: center;
+  }
+  
+  .fullmodal-body {
+    margin-bottom: 20rpx;
+  }
+  
+  .fullsetting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25rpx 0;
+    // border-bottom: 1rpx solid #e8e8e8;
+  }
+  .fullsetting-itemright {
+    display: flex;
+    width: 100rpx;
+    height: 50rpx;
+    // background-color: red;
+    // justify-content: flex-end; /* 水平对齐：右对齐 */
+    justify-content:center;
+    align-items: center;       /* 垂直对齐：居中 */
+  }
+  .fullsetting-right {
+    display: flex;
+    align-items: center;
+  }
+  .fullControlsItem {
+    width: 50rpx;
+    height: 50rpx;
+    border-radius: 25rpx;
+    font-size: 35rpx;
+    background-color: #999;
+    color: #fff;
+    display: flex;
+    line-height: 40rpx;
+    justify-content: center;
+    // align-items: center;
+  }
+  .fullmiddlenum {
+    margin: 0 15rpx;
+  }
+  
+  .fullmodal-footer {
+    text-align: right;
+  }
+  /* #endif */
 
   </style>
