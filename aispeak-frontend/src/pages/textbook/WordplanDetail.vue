@@ -10,7 +10,7 @@
 		  {{planWordsList[planWordindext].paraphrase}}
 	  </view>
       
-      <OptionAreaPicture :planWordmode="planWordmode" :optionWords="optionAreaWords" @item-click="optionitemclick" />
+      <OptionAreaPicture :word="planWordsList[planWordindext]" :planWordmode="planWordmode" :optionWords="optionAreaWords" @item-click="optionitemclick" />
 	  
     </view>
   </view>
@@ -36,6 +36,10 @@
   })
   
   const optionitemclick = (optionWord) => {
+	  
+	  
+	  
+	  
     const mainContent = document.querySelector('.main-content');
     
     // 添加动画类
