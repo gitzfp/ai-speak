@@ -141,8 +141,8 @@ const terms = ref(["全部", "上册", "下册", "全一册"]);
 const publishers = ref(["全部", "人教版", "外研社"]); // 新增出版社选项
 
 // 当前选中的版本、年级、册次和出版社
-const selectedVersion = ref("全部");
-const selectedGrade = ref("全部");
+const selectedVersion = ref("PEP");
+const selectedGrade = ref("一年级");
 const selectedTerm = ref("全部");
 const selectedPublisher = ref("全部"); // 新增出版社选中状态
 
