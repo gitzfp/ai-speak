@@ -43,21 +43,24 @@ def fetch_sentences(stage_tag, lesson_id, version_tag, grade_tag, term_tag):
         # 检查API返回的错误码
         if data.get('code') == 616:  # 书籍课文不存在
             logger.warning(f"书籍课文不存在，跳过处理")
-            return None
+            return {}  # 返回空字典而不是 None
         elif data.get('code') != 200:
             logger.error(f"API返回错误: {data.get('msg')}")
-            return None
+            return {}  # 返回空字典而不是 None
             
         return data.get('data', {})
     except Exception as e:
         logger.error(f"获取句子数据失败: {e}")
-        return None
+        return {}  # 返回空字典而不是 None
 
 def save_lessons_and_sentences(data, book_id):
     """保存课程和句子数据"""
     if not data or "lessons" not in data:
         logger.error(f"数据结构错误，缺少 lessons 字段或数据为空: {data}")
         return
+    
+    logger.info(f"开始保存数据到数据库，book_id: {book_id}")
+    logger.info(f"课程数量: {len(data['lessons'])}")
             
     with session_scope() as session:
         try:
@@ -121,12 +124,15 @@ def save_lessons_and_sentences(data, book_id):
                 if lesson_data and "sentences" in lesson_data:
                     # 保存句子数据
                     for lesson_sentences in lesson_data["sentences"]:
-                        # 找到对应的lesson
+                        # 根据 title 查找对应的子课程
+                        current_title = lesson_sentences["title"]
                         sub_lesson = session.query(LessonEntity).filter(
                             LessonEntity.book_id == book_id,
-                            LessonEntity.title == lesson_sentences["title"]
+                            LessonEntity.title == current_title,
+                            LessonEntity.parent_id == parent_lesson.lesson_id
                         ).first()
-                        
+
+                        # 修改target_lesson_id获取方式
                         target_lesson_id = sub_lesson.id if sub_lesson else parent_lesson.id
                         
                         for sentence in lesson_sentences["sentences"]:
@@ -140,8 +146,8 @@ def save_lessons_and_sentences(data, book_id):
                                 # 更新现有句子
                                 existing_sentence.chinese = sentence["chinese"]
                                 existing_sentence.audio_url = lesson_sentences.get("audio_url")
-                                existing_sentence.audio_start = sentence.get("audio_start")
-                                existing_sentence.audio_end = sentence.get("audio_end")
+                                existing_sentence.audio_start = sentence.get("audio_start") or 0
+                                existing_sentence.audio_end = sentence.get("audio_end") or 99999
                                 existing_sentence.is_lock = lesson_sentences.get("is_lock", 0)
                                 logger.info(f"更新句子: {existing_sentence.english}")
                             else:
@@ -151,8 +157,8 @@ def save_lessons_and_sentences(data, book_id):
                                     english=sentence["english"],
                                     chinese=sentence["chinese"],
                                     audio_url=lesson_sentences.get("audio_url"),
-                                    audio_start=sentence.get("audio_start"),
-                                    audio_end=sentence.get("audio_end"),
+                                    audio_start=sentence.get("audio_start") or 0,
+                                    audio_end=sentence.get("audio_end") or 99999,
                                     is_lock=lesson_sentences.get("is_lock", 0)
                                 )
                                 session.add(sentence_entity)
@@ -161,19 +167,28 @@ def save_lessons_and_sentences(data, book_id):
                     logger.error(f"获取课程 {lesson['title']} 的句子数据失败")
         except Exception as e:
             logger.error(f"保存课程数据失败: {str(e)}")
+            logger.error(f"错误详情: book_id={book_id}")
+            session.rollback()  # 确保回滚事务
             raise
 
 def main():
     # 使用相对路径获取 JSON 文件
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(current_dir, 'data', 'words_grade4.json')
+    json_path = os.path.join(current_dir, 'data', 'words_grade8.json')
 
+    logger.info(f"开始读取文件: {json_path}")
     with open(json_path, 'r', encoding='utf-8') as file:
         textbooks = json.loads(file.read())
     
+    logger.info(f"读取到 {len(textbooks)} 个教材数据")
+    
+    success_count = 0
+    fail_count = 0
+    
     for textbook in textbooks:
         try:
-            logger.info(f"处理教材: {textbook['book_name']}， 版本 {textbook['version_tag']}")
+            logger.info(f"开始处理教材: {textbook['book_name']}， 版本 {textbook['version_tag']}")
+            logger.info(f"教材ID: {textbook['textbook_id']}")
             
             # 获取句子数据
             data = fetch_sentences(
@@ -186,21 +201,45 @@ def main():
             
             if data:
                 logger.info(f"获取到的数据结构: {data.keys()}")
+                logger.info(f"lessons数量: {len(data.get('lessons', []))}")
                 try:
                     save_lessons_and_sentences(data, textbook["textbook_id"])
                     logger.info(f"保存成功: {textbook['book_name']}")
+                    success_count += 1
                 except Exception as e:
                     logger.error(f"保存失败: {textbook['book_name']}, 错误: {str(e)}")
                     logger.error(f"错误详情: {data}")
-                    continue  # 继续处理下一个教材
+                    fail_count += 1
+                    continue
             else:
                 logger.error(f"获取数据失败: {textbook['book_name']}")
-                continue  # 继续处理下一个教材
+                fail_count += 1
+                continue
         except Exception as e:
             logger.error(f"处理教材 {textbook.get('book_name', '未知')} 时发生未预期的错误: {str(e)}")
-            continue  # 继续处理下一个教材
+            fail_count += 1
+            continue
+
+    logger.info(f"处理完成: 成功 {success_count} 个，失败 {fail_count} 个")
 
     logger.info("所有教材处理完成")
 
+# 在文件开头添加数据库连接测试
+def test_db_connection():
+    try:
+        with session_scope() as session:
+            from sqlalchemy import text
+            # 使用 text() 包装 SQL 语句
+            result = session.execute(text("SELECT 1")).scalar()
+            logger.info("数据库连接测试成功")
+            return True
+    except Exception as e:
+        logger.error(f"数据库连接测试失败: {str(e)}")
+        return False
+
+# 在 main 函数开头添加
 if __name__ == "__main__":
+    if not test_db_connection():
+        logger.error("数据库连接失败，程序退出")
+        exit(1)
     main()

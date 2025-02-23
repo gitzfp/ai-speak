@@ -761,23 +761,38 @@ class TextbookService:
                 LessonEntity.book_id == book_id,
                 LessonEntity.parent_id == None
             ).all()
-
+            print(f"\n=== 开始获取教材课程和句子，book_id: {book_id} ===")
+            
             # 2. 批量查询子课程
             main_lesson_ids = [m.lesson_id for m in main_lessons]
+            print(f"主课程IDs: {main_lesson_ids}")
+            
             sub_lessons = self.db.query(LessonEntity).filter(
-                LessonEntity.parent_id.in_(main_lesson_ids)
+                LessonEntity.parent_id.in_(main_lesson_ids),
+                LessonEntity.book_id == book_id
             ).all()
+            print(f"找到子课程数量: {len(sub_lessons)}")
+            for sl in sub_lessons:
+                print(f"子课程: id={sl.id}, lesson_id={sl.lesson_id}, parent_id={sl.parent_id}, title={sl.title}")
 
             # 3. 准备需要查询句子的课程ID
             parent_ids_with_subs = {s.parent_id for s in sub_lessons}
+            print(f"有子课程的父课程IDs: {parent_ids_with_subs}")
+            
             need_sentence_main = [m.id for m in main_lessons 
                             if m.lesson_id not in parent_ids_with_subs]
+            print(f"需要查询句子的主课程IDs: {need_sentence_main}")
+            
             lesson_ids_for_sentences = need_sentence_main + [s.id for s in sub_lessons]
+            print(f"所有需要查询句子的课程IDs: {lesson_ids_for_sentences}")
 
             # 4. 批量查询所有句子
             sentences = self.db.query(LessonSentenceEntity).filter(
                 LessonSentenceEntity.lesson_id.in_(lesson_ids_for_sentences)
             ).all()
+            print(f"找到句子数量: {len(sentences)}")
+            for s in sentences:
+                print(f"句子: lesson_id={s.lesson_id}, english={s.english[:30]}...")
 
             # 5. 构建数据结构
             from collections import defaultdict
@@ -788,10 +803,13 @@ class TextbookService:
             sentence_map = defaultdict(list)
             for s in sentences:
                 sentence_map[s.lesson_id].append(s)
+            print(f"句子映射表的大小: {len(sentence_map)}")
+            print(f"句子映射表的课程IDs: {list(sentence_map.keys())}")
 
             # 6. 组装结果
             result = []
             for main in main_lessons:
+                print(f"\n处理主课程: id={main.id}, lesson_id={main.lesson_id}, title={main.title}")
                 lesson_data = {
                     "id": main.lesson_id,
                     "title": main.title,
@@ -800,23 +818,33 @@ class TextbookService:
 
                 # 判断是否有子课程
                 subs = sub_map.get(main.lesson_id, [])
+                print(f"该主课程的子课程数量: {len(subs)}")
                 if not subs:
+                    main_sentences = sentence_map.get(main.id, [])
+                    print(f"主课程的句子数量: {len(main_sentences)}")
+                    print(f"查找句子使用的ID: {main.id}")
                     lesson_data["sentences"] = [
-                        {"english": s.english, "chinese": s.chinese, 
+                        {
+                        "id": s.id,
+                        "english": s.english, "chinese": s.chinese, 
                         "audio_url": s.audio_url, "audio_start": s.audio_start,
                         "audio_end": s.audio_end, "is_lock": s.is_lock}
-                        for s in sentence_map.get(main.id, [])
+                        for s in main_sentences
                     ]
                 else:
                     for sub in subs:
+                        print(f"处理子课程: id={sub.id}, lesson_id={sub.lesson_id}, title={sub.title}")
+                        sub_sentences = sentence_map.get(sub.id, [])
+                        print(f"子课程的句子数量: {len(sub_sentences)}")
+                        print(f"查找句子使用的ID: {sub.id}")
                         sub_lesson_data = {
                             "id": sub.id,
                             "title": sub.title,
                             "sentences": [
-                                {"english": s.english, "chinese": s.chinese,
+                                {"id": s.id, "english": s.english, "chinese": s.chinese,
                                 "audio_url": s.audio_url, "audio_start": s.audio_start,
                                 "audio_end": s.audio_end, "is_lock": s.is_lock}
-                                for s in sentence_map.get(sub.id, [])
+                                for s in sub_sentences
                             ]
                         }
                         lesson_data["sub_lessons"].append(sub_lesson_data)
@@ -827,4 +855,4 @@ class TextbookService:
 
         except Exception as e:
             print(f"Error: {str(e)}")
-            return None 
+            return None

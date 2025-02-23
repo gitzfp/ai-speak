@@ -9,7 +9,7 @@ type Sentence = {
   audio_end?: number
 }
 
-export function useAudioPlayer() {
+export function useAudioPlayer(onIndexChange?: (index: number) => void) {
   const currentAudio = ref<ReturnType<typeof getPlayer> | null>(null)
   const isPlaying = ref(false)
   const currentIndex = ref(0)
@@ -33,8 +33,8 @@ export function useAudioPlayer() {
   // 新增循环模式切换函数
   const toggleLoopMode = () => {
     const modes: ('none' | 'single' | 'list')[] = ['none', 'single', 'list']
-    const currentIndex = modes.indexOf(loopMode.value)
-    const nextIndex = (currentIndex + 1) % modes.length
+    const index = modes.indexOf(loopMode.value)
+    const nextIndex = (index + 1) % modes.length
     loopMode.value = modes[nextIndex]
     uni.showToast({
       title: `当前循环模式：${loopModeText.value}`,
@@ -51,42 +51,25 @@ export function useAudioPlayer() {
     }
   })
 
-  // 统一播放下一句
-  const playNextSentence = (sentences: Sentence[]) => {
-    if (!sentences || sentences.length === 0 || !isPlaying.value) return
-
-    let nextIndex: number
-
-    switch(loopMode.value) {
-      case 'list':
-        nextIndex = (currentIndex.value + 1) % sentences.length
-        playSentence(sentences[nextIndex], sentences)
-        break
-      case 'single':
-        nextIndex = currentIndex.value
-        playSentence(sentences[nextIndex], sentences)
-        break
-      default:
-    }
+  // 更新 currentIndex 并触发回调的辅助函数
+  const updateCurrentIndex = (newIndex: number) => {
+    currentIndex.value = newIndex
+    onIndexChange?.(newIndex)
   }
 
-    // 统一播放下一句
+  // 修改 playNextSentence
+  const playNextSentence = (sentences: Sentence[]) => {
+    const nextIndex = (currentIndex.value + 1) % sentences.length
+    updateCurrentIndex(nextIndex)
+    console.log('playNextSentence', currentIndex.value, sentences) 
+    playSentence(sentences[currentIndex.value], sentences)
+  }
+
+  // 修改 playPrevSentence
   const playPrevSentence = (sentences: Sentence[]) => {
-    if (!sentences || sentences.length === 0 || !isPlaying.value) return
-
-    let nextIndex: number
-
-    switch(loopMode.value) {
-      case 'list':
-        nextIndex = (currentIndex.value - 1) % sentences.length
-        playSentence(sentences[nextIndex], sentences)
-        break
-      case 'single':
-        nextIndex = currentIndex.value
-        playSentence(sentences[nextIndex], sentences)
-        break
-      default:
-    }
+    const prevIndex = (currentIndex.value - 1 + sentences.length) % sentences.length
+    updateCurrentIndex(prevIndex)
+    playSentence(sentences[currentIndex.value], sentences)
   }
 
   // 核心播放函数
@@ -103,17 +86,16 @@ export function useAudioPlayer() {
     audio.src = sentence.audio_url
     
     // 设置时间范围
-    if (sentence.audio_start && sentence.audio_end) {
+    if (sentence.audio_start !== undefined && sentence.audio_end !== undefined) {
       const startTime = sentence.audio_start / 1000
       const endTime = sentence.audio_end / 1000
       audio.startTime = startTime
       
       // 监听播放进度
       audio.onTimeUpdate(() => {
-        console.log('播放句子结束onTimeUpdate:', sentence) 
         if (audio.currentTime >= endTime - 0.1) { // 防止浮点误差
-          audio.stop()
-          // handlePlayEnd(sentences)  // 处理播放结束
+          // audio.stop()
+          handlePlayEnd(sentences)  // 处理播放结束
         }
       })
     }
@@ -129,7 +111,7 @@ export function useAudioPlayer() {
        console.log('播放句子结束onEnd:', sentence) 
       // 如果没有设置时间范围，或者播放到自然结束时触发
       // if (!sentence.audio_start || !sentence.audio_end) {
-        // handlePlayEnd(sentences)
+        handlePlayEnd(sentences)
       // }
     })
   
@@ -137,7 +119,7 @@ export function useAudioPlayer() {
       // 手动停止或到达指定结束时间时触发
       console.log('onStop:',  sentences) 
       isPlaying.value = false
-      handlePlayEnd(sentences)
+      // handlePlayEnd(sentences)
     })
     
     audio.playbackRate = playbackRate.value
@@ -147,7 +129,7 @@ export function useAudioPlayer() {
 
   // 播放结束处理
   const handlePlayEnd = (sentences?: Sentence[]) => {
-    console.log('播放句子结束handlePlayEnd:', sentences)
+    console.log('播放句子结束handlePlayEnd:', sentences, loopMode.value)
     if (!sentences) {
       stopCurrentAudio()
       return
@@ -173,6 +155,7 @@ export function useAudioPlayer() {
 
   // 切换播放状态
   const togglePlay = (sentences: Sentence[]) => {
+    console.log('播放togglePlay:', sentences, currentIndex.value)
     if (isPlaying.value) {
       stopCurrentAudio()
       isPlaying.value = false
@@ -208,6 +191,7 @@ function stopCurrentAudio() {
     const audio = currentAudio.value // Store reference before nullifying
     try {
       audio.stop()
+      console.log("Audio stopped successfully")
       // audio.destroy()
     } catch (error) {
       console.error("Error stopping audio:", error)
@@ -224,12 +208,12 @@ function stopCurrentAudio() {
   }
 
   // 清理资源
+  // 修改 onBeforeUnmount
   onBeforeUnmount(() => {
-    // 停止播放
+    uni.showToast({title: '播放结束'})
     isPlaying.value = false
     stopCurrentAudio()
-    // 重置状态
-    currentIndex.value = 0
+    updateCurrentIndex(0)
     playHistory.value = []
     currentRepeat.value = 0
   })

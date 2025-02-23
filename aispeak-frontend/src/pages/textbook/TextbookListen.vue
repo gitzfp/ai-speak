@@ -26,12 +26,12 @@
           <!-- 子课程内容 -->
           <view v-if="currentUnit.sub_lessons && currentUnit.sub_lessons.length > 0">
             <view 
-              v-for="lesson in currentUnit.sub_lessons" 
-              :key="lesson.id" 
-              class="lesson-section"
-            >
-              <view class="lesson-title">{{ lesson.title }}</view>
-              <sentence-list :sentences="lesson.sentences" />
+              class="lesson-section">
+              <view class="lesson-title">{{ currentUnit.title }}</view>
+              <sentence-list 
+                :sentences="getAllSentences(currentUnit.sub_lessons)" 
+                :repeat-after="isRepeatAfter === 'true'"
+              />
             </view>
           </view>
           <!-- 直接显示句子列表 -->
@@ -99,6 +99,16 @@ const fetchTextbookData = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// 添加一个方法来获取所有 sentences
+const getAllSentences = (lessons) => {
+  return lessons.reduce((acc, lesson) => {
+    if (lesson.sentences && Array.isArray(lesson.sentences)) {
+      return [...acc, ...lesson.sentences]
+    }
+    return acc
+  }, [])
 }
 </script>
 
