@@ -88,7 +88,7 @@
 <script setup>
 
     import { ref,defineEmits,computed} from 'vue';
-    import Speech from "./PronuciationSpeech.vue"
+    import Speech from "./components/PronuciationSpeech.vue"
 	import chatRequest from "@/api/chat";
 
     const props = defineProps({

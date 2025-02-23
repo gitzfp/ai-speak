@@ -208,7 +208,7 @@ function stopCurrentAudio() {
     const audio = currentAudio.value // Store reference before nullifying
     try {
       audio.stop()
-      audio.destroy()
+      // audio.destroy()
     } catch (error) {
       console.error("Error stopping audio:", error)
     } finally {
