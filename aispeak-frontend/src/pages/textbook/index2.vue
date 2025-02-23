@@ -15,8 +15,8 @@
             <view class="book-title">{{ book.book_name }}</view>
           </view>
           <view class="book-buttons">
-            <view class="qiuhuan" @click="switchBook">⥦ 切换教材</view>
-            <view class="fenxiang" @click="shareToClass">分享到班级</view>
+            <view class="qiuhuan" @click="switchBook">切换教材</view>
+            <view class="fenxiang" @click="shareToClass">分享班级</view>
           </view>
       </view>
      </view>
