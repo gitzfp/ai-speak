@@ -8,7 +8,7 @@ class TextbookService:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all_textbooks(self, version: str = "全部", grade: str = "全部", term: str = "全部") -> Dict:
+    def get_all_textbooks(self, version: str = "全部", grade: str = "全部", term: str = "全部", publisher: str = "全部") -> Dict:
         # 构建返回数据结构
         result = {"booklist": []}
 
@@ -22,6 +22,8 @@ class TextbookService:
             query = query.filter(TextbookEntity.grade == grade)
         if term != "全部":
             query = query.filter(TextbookEntity.term == term)
+        if publisher!= "全部":
+            query = query.filter(TextbookEntity.publisher == publisher)
             
         textbooks = query.all()
 
@@ -73,7 +75,8 @@ class TextbookService:
                 "book_id": textbook.id,
                 "book_name": textbook.name,
                 "grade": textbook.grade,
-                "term": textbook.term
+                "term": textbook.term,
+                "publisher": textbook.publisher,
             }
             current_version_data["textbooks"].append(textbook_data)
 

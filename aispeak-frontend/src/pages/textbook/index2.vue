@@ -18,9 +18,7 @@
             <view class="qiuhuan" @click="switchBook">⥦ 切换教材</view>
             <view class="fenxiang" @click="shareToClass">分享到班级</view>
           </view>
-          <button class="upload-btn" @tap="uploadPages">上传外研社教材</button>
-          <button class="upload-btn" @tap="uploadChapters">上传外研社目录</button>
-        </view>
+      </view>
      </view>
     </view>
     <!-- 功能按钮区域 -->
@@ -148,8 +146,13 @@ import bookChapters9 from './wys-chapter/1l9_V2_chapters.json';
 import bookChapters10 from './wys-chapter/241115SCCL_00206486756c09f105ccd000197c45e_chapters.json';
 import bookChapters11 from './wys-chapter/1l11_V2_chapters.json';
 import bookChapters12 from './wys-chapter/241115SCCL_0020690675796941887c900019f87a4_chapters.json';
+import useTextbookSelector from '@/hooks/useTextbookSelector';
 // 引入 Icon 组件
 // import Icon from "@/components/Icon.vue";
+ const {
+      fetchBooks: fetchTextbooks, // 重命名避免冲突 
+      filteredBooks: books
+    } = useTextbookSelector();
 
 const isPopupOpen = ref(false)
 const bookSelectors = ref(null);
@@ -163,8 +166,6 @@ const book = ref({
 	version_type:''
 })
 
-// 书籍数据
-const books = ref([])
 
 // 添加上传方法
     const uploadPages = async () => {
@@ -352,6 +353,8 @@ const togglePopup = () => {
 
 // 组件挂载时获取数据
 onMounted(() => {
+  console.log(books.value, "书籍数据")
+
     fetchBooks(false)
 })
 
@@ -365,16 +368,10 @@ const switchbookSuccess = (newbook) => {
 
 const switchBook = () => {
 
-
   if (books.value.length) {
     isPopupOpen.value = true;
-    console.log("isPopupOpen.value")
-    console.log(isPopupOpen.value)
     // 使用 nextTick 确保 DOM 已经更新并且子组件已经挂载
     nextTick(() => {
-          console.log("After DOM update:");
-          console.log(bookSelectors.value); // 这里应该能够获取到子组件实例
-          
           if (bookSelectors.value && typeof bookSelectors.value.showPopup === 'function') {
             bookSelectors.value.showPopup(); // 调用子组件的方法
           }
@@ -386,79 +383,32 @@ const switchBook = () => {
 };
 
 // 从接口获取数据
-const fetchBooks = (isSwitch) => {
-  console.log("数据库的边框和")
-  uni.request({
-    url: "https://diandu.mypep.cn/static/textbook/bookList_pep_click_subject_web_1_0_0.json",
-    success: (res) => {
-      // 过滤出英语科目的书籍
-      const englishSubject = res.data.booklist.find(
-        (subject) => subject.subject_name === "英语"
-      )
-      if (englishSubject) {
-        // 将所有版本的书籍合并到一个数组中
-        books.value = englishSubject.versions.flatMap(
-          (version) => version.textbooks
-        )
-
+const fetchBooks = async (isSwitch) => {
+       try {
+        await fetchTextbooks();
+         console.log(books.value, "书籍数据")
+        // 处理切换教材逻辑
         if (isSwitch) {
-          isPopupOpen.value = true;
-          console.log("点击切换请求进去")
-        // 使用 nextTick 确保 DOM 已经更新并且子组件已经挂载
-        nextTick(() => {
-              console.log("After DOM update:");
-              console.log(bookSelectors.value); // 这里应该能够获取到子组件实例
-              
-              if (bookSelectors.value && typeof bookSelectors.value.showPopup === 'function') {
-                bookSelectors.value.showPopup(); // 调用子组件的方法
-              }
-        });
+            isPopupOpen.value = true;
+            nextTick(() => {
+                if (bookSelectors.value?.showPopup) {
+                    bookSelectors.value.showPopup();
+                }
+            });
         } else {
-        //  book.value = books.value[0]
-         book.value = { ...books.value[0] };
-          console.log("一开始请求")
+            // 设置默认教材（需要确保 books 是响应式引用）
+            if (books.value.length > 0) {
+                book.value = { ...books.value[0] };
+            }
         }
-        
-
+      } catch (err) {
+        console.error("Failed to fetch books:", err);
+        uni.showToast({
+          title: "获取教材列表失败",
+          icon: "error",
+        });
       }
-    },
-    fail: (err) => {
-      console.error("Failed to fetch books:", err)
-    },
-  })
 }
-
-// 添加获取微信分享配置的方法
-const getWxShareConfig = async (url) => {
-  try {
-    const response = await uni.request({
-      url: `${baseUrl}/api/wx/share/sign`,
-      method: 'GET',
-      data: {
-        url: url
-      }
-    });
-    
-    if (response.data.success) {
-      const config = response.data.data;
-      // 配置微信分享
-      wx.config({
-        debug: false,
-        appId: config.appId,
-        timestamp: config.timestamp,
-        nonceStr: config.nonceStr,
-        signature: config.signature,
-        jsApiList: ['updateAppMessageShareData', 'updateTimelineShareData']
-      });
-      
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.error('获取微信分享配置失败:', error);
-    return false;
-  }
-};
 
 // 修改分享方法
 import WxShare from '@/utils/wxShare'

@@ -2,8 +2,8 @@ import request from "@/axios/api";
 
 export default {
   // 获取教材列表
-  getTextbooks(version = "全部", grade = "全部", term = "全部") {
-    return request(`/textbooks?version=${version}&grade=${grade}&term=${term}`, "GET");
+  getTextbooks(version = "全部", grade = "全部", term = "全部", publisher = "全部") {
+    return request(`/textbooks?version=${version}&grade=${grade}&term=${term}&publisher=${publisher}`, "GET");
   },
   // 获取教材详情
   getTextbookDetail(textbookId: string) {

@@ -15,11 +15,12 @@ def get_textbooks(
     version: str = Query("全部"),
     grade: str = Query("全部"),
     term: str = Query("全部"),
+    publisher: str = Query("全部"),
     db: Session = Depends(get_db)
 ) -> ApiResponse:
     try:
         service = TextbookService(db)
-        result = service.get_all_textbooks(version, grade, term)
+        result = service.get_all_textbooks(version, grade, term, publisher)
         if result is None:
             return ApiResponse.error("未找到教材列表")
         return ApiResponse.success(result)

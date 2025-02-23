@@ -1,4 +1,3 @@
-
 <template>
   <view>
     <!-- 蒙版 -->
@@ -7,91 +6,106 @@
     <!-- 弹窗内容 -->
     <view :class="['popup-container', { 'slide-in': isPopupVisible }]" @tap.stop>
       <!-- 头部筛选区 -->
-        <view class="filter-container">
-            <view class="filter-section">
-            <text class="filter-title">版本</text>
-            <scroll-view class="filter-row" scroll-x>
-                <view class="filter-list">
-                <view
-                    v-for="(item, index) in versions"
-                    :key="index"
-                    :class="['filter-item', selectedVersion === item ? 'active' : '']"
-                    @tap="selectedVersion = item"
-                >
-                    {{ item }}
-                </view>
-                </view>
-            </scroll-view>
-            </view>
-
-            <view class="filter-section">
-            <text class="filter-title">年级</text>
-            <scroll-view class="filter-row" scroll-x>
-                <view class="filter-list">
-                <view
-                    v-for="(grade, index) in grades"
-                    :key="index"
-                    :class="['filter-item', selectedGrade === grade ? 'active' : '']"
-                    @tap="selectedGrade = grade"
-                >
-                    {{ grade }}
-                </view>
-                </view>
-            </scroll-view>
-            </view>
-
-            <view class="filter-section">
-            <text class="filter-title">册次</text>
-            <scroll-view class="filter-row" scroll-x>
-                <view class="filter-list">
-                <view
-                    v-for="(term, index) in terms"
-                    :key="index"
-                    :class="['filter-item', selectedTerm === term ? 'active' : '']"
-                    @tap="selectedTerm = term"
-                >
-                    {{ term }}
-                </view>
-                </view>
-            </scroll-view>
-            </view>
-        </view>
-
-        <!-- 书籍列表 -->
-        <view class="book-grid">
-            <view
-            v-for="(book, index) in filteredBooks"
-            :key="index"
-            class="book-card"
-            @tap="goToCourse(book)"
-            >
-              <image :src="book.icon_url" mode="aspectFit" class="book-cover" />
-              <view class="book-info">
-                  <text class="book-title">{{ book.book_name }}</text>
-                  <text class="book-subtitle">{{ book.grade }} {{ book.term }}</text>
+      <view class="filter-container">
+        <view class="filter-section">
+          <text class="filter-title">版本</text>
+          <scroll-view class="filter-row" scroll-x>
+            <view class="filter-list">
+              <view
+                v-for="(item, index) in versions"
+                :key="index"
+                :class="['filter-item', selectedVersion === item ? 'active' : '']"
+                @tap="selectedVersion = item"
+              >
+                {{ item }}
               </view>
             </view>
+          </scroll-view>
         </view>
-        
 
+        <view class="filter-section">
+          <text class="filter-title">年级</text>
+          <scroll-view class="filter-row" scroll-x>
+            <view class="filter-list">
+              <view
+                v-for="(grade, index) in grades"
+                :key="index"
+                :class="['filter-item', selectedGrade === grade ? 'active' : '']"
+                @tap="selectedGrade = grade"
+              >
+                {{ grade }}
+              </view>
+            </view>
+          </scroll-view>
+        </view>
+
+        <view class="filter-section">
+          <text class="filter-title">册次</text>
+          <scroll-view class="filter-row" scroll-x>
+            <view class="filter-list">
+              <view
+                v-for="(term, index) in terms"
+                :key="index"
+                :class="['filter-item', selectedTerm === term ? 'active' : '']"
+                @tap="selectedTerm = term"
+              >
+                {{ term }}
+              </view>
+            </view>
+          </scroll-view>
+        </view>
+
+        <!-- 新增出版社筛选 -->
+        <view class="filter-section">
+          <text class="filter-title">出版社</text>
+          <scroll-view class="filter-row" scroll-x>
+            <view class="filter-list">
+              <view
+                v-for="(publisher, index) in publishers"
+                :key="index"
+                :class="['filter-item', selectedPublisher === publisher ? 'active' : '']"
+                @tap="selectedPublisher = publisher"
+              >
+                {{ publisher }}
+              </view>
+            </view>
+          </scroll-view>
+        </view>
+      </view>
+
+      <!-- 书籍列表 -->
+      <view class="book-grid">
+        <view
+          v-for="(book, index) in filteredBooks"
+          :key="index"
+          class="book-card"
+          @tap="goToCourse(book)"
+        >
+          <image :src="book.icon_url" mode="aspectFit" class="book-cover" />
+          <view class="book-info">
+            <text class="book-title">{{ book.book_name }}</text>
+            <text class="book-subtitle">{{ book.grade }} {{ book.term }}</text>
+          </view>
+        </view>
+      </view>
     </view>
   </view>
 </template>
-  
-  <script setup>
-  import { ref, computed, onMounted,defineEmits } from "vue"
 
-  const emit = defineEmits();
+<script setup>
+import { ref, computed, onMounted, defineEmits } from "vue";
 
-  const props = defineProps({
-    books: {
-    type: Array, // 修改为 Array 类型
-    default: () => [], // 使用函数返回默认值，以避免共享引用问题
-    },
-})
+const emit = defineEmits();
+
+const props = defineProps({
+  books: {
+    type: Array,
+    default: () => [],
+  },
+});
+
 // 控制弹窗显示状态
 const isPopupVisible = ref(true);
-  
 
 // 显示弹窗方法
 const showPopup = () => {
@@ -100,7 +114,7 @@ const showPopup = () => {
 
 // 将方法暴露给父组件
 defineExpose({
-  showPopup
+  showPopup,
 });
 
 // 关闭弹窗方法
@@ -108,63 +122,58 @@ const closePopup = () => {
   isPopupVisible.value = false;
   emit("closePopup");
 };
-  
-      // 版本、年级和册次选项
-      const versions = ref(["全部", "PEP", "精通", "新起点", "外研社（一起）", "初中"])
-      const grades = ref([
-        "全部",
-        "一年级",
-        "二年级",
-        "三年级",
-        "四年级",
-        "五年级",
-        "六年级",
-        "七年级",
-        "八年级",
-        "九年级",
-      ])
-      const terms = ref(["全部", "上册", "下册", "全一册"])
-  
-      // 当前选中的版本、年级和册次
-      const selectedVersion = ref("全部")
-      const selectedGrade = ref("全部")
-      const selectedTerm = ref("全部")
+
+// 版本、年级、册次和出版社选项
+const versions = ref(["全部", "PEP", "精通", "新起点", "外研社（一起）", "初中"]);
+const grades = ref([
+  "全部",
+  "一年级",
+  "二年级",
+  "三年级",
+  "四年级",
+  "五年级",
+  "六年级",
+  "七年级",
+  "八年级",
+  "九年级",
+]);
+const terms = ref(["全部", "上册", "下册", "全一册"]);
+const publishers = ref(["全部", "人教版", "外研社"]); // 新增出版社选项
+
+// 当前选中的版本、年级、册次和出版社
+const selectedVersion = ref("全部");
+const selectedGrade = ref("全部");
+const selectedTerm = ref("全部");
+const selectedPublisher = ref("全部"); // 新增出版社选中状态
+
+// 根据选中的版本、年级、册次和出版社过滤书籍
+const filteredBooks = computed(() => {
+  return props.books.filter((book) => {
+    const matchVersion =
+      selectedVersion.value === "全部" ||
+      book.version_type === selectedVersion.value;
+    const matchGrade =
+      selectedGrade.value === "全部" || book.grade === selectedGrade.value;
+    const matchTerm =
+      selectedTerm.value === "全部" || book.term === selectedTerm.value;
+    const matchPublisher =
+      selectedPublisher.value === "全部" || book.publisher === selectedPublisher.value; // 新增出版社匹配条件
+    return matchVersion && matchGrade && matchTerm && matchPublisher;
+  });
+});
+
+// 组件挂载时获取数据
+onMounted(() => {});
+
+// 添加跳转到课程页面的方法
+const goToCourse = (book) => {
+  emit("switchbookSuccess", book);
+  closePopup();
+};
+</script>
 
 
-  
-      // 根据选中的版本、年级和册次过滤书籍
-      const filteredBooks = computed(() => {
-
-        return props.books.filter((book) => {
-          const matchVersion =
-            selectedVersion.value === "全部" ||
-            book.version_type === selectedVersion.value
-          const matchGrade =
-            selectedGrade.value === "全部" || book.grade === selectedGrade.value
-          const matchTerm =
-            selectedTerm.value === "全部" || book.term === selectedTerm.value
-          return matchVersion && matchGrade && matchTerm
-        })
-      })
-  
-      // 组件挂载时获取数据
-      onMounted(() => {
-
-      })
-  
-  
-      // 添加跳转到课程页面的方法
-      const goToCourse = (book) => {
-        emit("switchbookSuccess",book)
-        closePopup()
-      }
-  
-    
-   
-  
-  </script>
-  
-  <style scoped>
+<style scoped>
 /* 蒙版 */
 .mask {
   position: fixed;
