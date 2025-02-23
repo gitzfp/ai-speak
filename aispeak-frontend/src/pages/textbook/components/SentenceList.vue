@@ -6,9 +6,9 @@
     <view 
       v-else
       v-for="(sentence, index) in sentences" 
-      :key="index"
+      :key="`${sentence.id}`"
       class="sentence-item"
-      :class="{ 'locked': sentence.is_lock === 1, 'playing': currentIndex === index }"
+      :class="{ 'locked': sentence.is_lock === 1, 'playing': currentPlaying(index) }"
       @tap="() => changeCurrentIndex(index)"
     >
       <view class="sentence-content">
@@ -48,7 +48,7 @@
         <view class="control-item" @tap="playPrevSentence(sentences)">
           <text class="icon">⏮</text>
         </view>
-        <view class="control-item play-btn" @tap="() => togglePlay(sentences)">
+        <view class="control-item play-btn" @tap="togglePlay(sentences)">
           <text class="icon">{{ isPlaying ? '⏸' : '▶' }}</text>
         </view>
         <view class="control-item" @tap="playNextSentence(sentences)">
@@ -87,6 +87,7 @@ const repeatOptions = ref([])
 const showAssessSelection = ref(false) // 测评 总弹窗显示控制
 
 interface Sentence {
+  id: number
   is_lock: number
   english: string
   chinese: string
@@ -144,7 +145,7 @@ const {
   setPlaybackRate,
   loopMode,
   toggleLoopMode
-} = useAudioPlayer()
+} = useAudioPlayer(changeCurrentIndex) 
 
 // 显示格式处理
 const speedOptionsDisplay = computed(() => 
@@ -162,7 +163,11 @@ const onSpeedChange = (index: number) => {
   setPlaybackRate(speedOptions[index])
 }
 
-  const assessPopupHide = () => {
+const currentPlaying = (index: number) => {
+  return currentIndex.value === index
+}
+
+const assessPopupHide = () => {
     showAssessSelection.value = false;
   }
 // 添加跟读处理函数

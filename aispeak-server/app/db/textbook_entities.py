@@ -114,7 +114,7 @@ class LessonEntity(Base):
     lesson_id = Column("lesson_id", String(80), nullable=False)
     book_id = Column("book_id", String(80), nullable=False)  # 关联的教材ID
     title = Column("title", String(200), nullable=False)  # 单元标题
-    parent_id = Column("parent_id", Integer, nullable=True)  # 父级ID，顶级单元为null
+    parent_id = Column("parent_id", String(80), nullable=True)  # 父级ID，顶级单元为null
 
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)  # 创建时间
     update_time = Column("update_time", DateTime, default=datetime.datetime.now)  # 更新时间
@@ -148,7 +148,7 @@ class ChapterEntity(Base):
     
     id = Column("id", Integer, primary_key=True, autoincrement=True)  # 章节ID
     title = Column("title", String(200), nullable=False)  # 章节标题
-    book_id = Column("book_id", String(80), nullable=False)  # 关联的教材ID
+    book_id = Column("book_id", String(100), nullable=False)  # 关联的教材ID
     parent_id = Column("parent_id", Integer, nullable=True)  # 父章节ID，顶级章节为null
     
     page_id = Column("page_id", Integer, nullable=True)  # 页面ID
