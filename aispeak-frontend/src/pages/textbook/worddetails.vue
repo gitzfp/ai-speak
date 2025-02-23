@@ -10,7 +10,7 @@
       </view>
   
       <!-- 主体内容 -->
-      <view class="main-content">
+      <view class="main-content" :class="{pronassessment:wordmodeNum==2}">
         <swiper :circular="circular" :duration="duration" class="swiper" :current="currentPage - 1" @change="onSwiperChange">
             <swiper-item v-for="(word, index) in allWords" :key="index">
                 <scroll-view scroll-y class="scroll-view">
@@ -29,7 +29,7 @@
                     </view>
                     <wordcard ref="wordcardRef" @redefineSettingsParentC="redefineSettingsParentControl" :volume=volume :fulldisplayNum="fulldisplayNum" @fullDisplayRecovery="fullDisplayRecovery" :word="word" />
                     <!-- 功能按钮 -->
-                    <view @tap="showEvaluationModal" class="action-buttons">
+                    <view v-if="wordmodeNum !=1" @tap="showEvaluationModal" class="action-buttons">
                         <view class="pronunciation-btn">
                         <uni-icons class="uniIcon" type="mic" size="20" color="#fff" />
                         <text class="btn-text">发音测评</text>
@@ -39,7 +39,7 @@
                   </view>
                 </scroll-view>
             </swiper-item>
-			<swiper-item>
+			<swiper-item v-if="wordmodeNum==0">
 				<wordsharepageVue :allWords=allWords v-if="allWords.length" class="card"></wordsharepageVue>
 			</swiper-item>
         </swiper>
@@ -47,7 +47,7 @@
       </view>
       
       <!-- 播放按钮 -->
-      <view class="play-button-fixed">
+      <view v-if="wordmodeNum !=2" class="play-button-fixed">
         <!-- 左侧：完整展示 -->
         <view class="left-section">
           <view @tap="fulldisplayclick" class="left-ct">
@@ -130,7 +130,7 @@
   </template>
   
   <script setup>
-  import { ref,computed,onMounted, onUnmounted, Text,onUpdated} from 'vue';
+  import { ref,computed,onMounted, onUnmounted, Text,onUpdated,nextTick} from 'vue';
     import { onLoad } from '@dcloudio/uni-app'
    import textbook from '@/api/textbook'
    import wordcard from './wordcard.vue';
@@ -182,6 +182,8 @@ const duration = 500; // 滑动动画时长
    const volume = ref(1)
 
 
+	//0：默认  1.磨耳朵  2.发音测评 
+	const wordmodeNum = ref(0)
 
    // 自动滑动函数
   const startAutoSwipe = () => {
@@ -209,9 +211,10 @@ const duration = 500; // 滑动动画时长
   };
 
   // 组件挂载时启动自动滑动
-// onMounted(() => {
-//   startAutoSwipe();
-// });
+	onMounted(() => {
+	  // startAutoSwipe();
+	   
+	});
 
 	// 组件卸载时停止自动滑动
 	onUnmounted(() => {
@@ -305,7 +308,21 @@ const duration = 500; // 滑动动画时长
         if (currentPage.value <= allWords.value.length) {
           // ispagePlaying.value = false
           currentTrackIndex.value = -1
-          startAutoSwipe()
+	
+		  if (wordmodeNum.value !=2) {
+			  if (wordmodeNum.value == 1 && currentPage.value==allWords.value.length) {
+				 ispagePlaying.value = false
+				 currentTrackIndex.value = -1
+				 stopAutoSwipe()  
+			  } else {
+				  startAutoSwipe() 
+			  }
+			 
+		  } else {
+			  ispagePlaying.value = false
+			  currentTrackIndex.value = -1
+			  stopAutoSwipe()
+		  }
         } else {
           ispagePlaying.value = false
           currentTrackIndex.value = -1
@@ -360,9 +377,6 @@ const duration = 500; // 滑动动画时长
 		    allWords.value = [...originalOrder.value];
 		  }
 		  
-		  
-		  console.log("wordcardRef.value222")
-		  console.log(wordcardRef.value)
 		  
 		      wordcardRef.value.forEach((item) => {
 		            item.redefineSettings()
@@ -447,11 +461,11 @@ const duration = 500; // 滑动动画时长
     
   
   onLoad(async (options) => {
-        const {bookId,sessionKey} = options
+        const {bookId,sessionKey,wordmode} = options
 
-        // console.log("playsettingobject")
-        // console.log(playsettingobject.value)
-  
+        if (wordmode) {
+        	wordmodeNum.value = wordmode
+        }
 
         // console.log("currentAudioList.value")
         // console.log(currentAudioList.value)
@@ -471,304 +485,6 @@ const duration = 500; // 滑动动画时长
     
    })
 
-   const jiashuju =() => {
-    const response = {
-        "code": 1000,
-        "message": "success",
-        "data": {
-            "book_id": "1212001101247",
-            "words": [
-                {
-                    "word_id": 712290,
-                    "word": "hello",
-                    "lesson_id": 1,
-                    "chinese": "你好",
-                    "phonetic": "",
-                    "uk_phonetic": "/ həˈləʊ /",
-                    "us_phonetic": "/ həˈləʊ /",
-                    "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1/712290_1.mp3",
-                    "uk_sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1_uk/712290_0.mp3",
-                    "us_sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1_us/712290_1.mp3",
-                    "image_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1/b97892dc-f4d6-11eb-babc-00163e135ac6.jpg",
-                    "has_base": true,
-                    "paraphrase": "int.喂；哈喽n.“喂”的招呼声或问候声",
-                    "phonics": "h/h/e/ə/l/ /l/l/o/əʊ/",
-                    "word_tense": "复数：hellos",
-                    "example_sentence": "Hello, John! How are you?喂，约翰！你好吗？Well,hellothere ! I haven’t seen you for ages.嗨，你好！好久不见了。Stanley, come and sayhelloto your nephew.斯坦利，过来和你的侄子打声招呼。",
-                    "phrase": "hello everyone大家好hello and welcome欢迎莅临hello again回魂妻（电影名称）say hello打招呼；问好",
-                    "synonym": "int.喂；哈罗halloholloo",
-                    "syllables": [
-                        {
-                            "position": 0,
-                            "letter": "h",
-                            "content": "h[h]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_h/h.mp3",
-                            "phonetic": "h"
-                        },
-                        {
-                            "position": 1,
-                            "letter": "e",
-                            "content": "e[ə]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_e/ə.mp3",
-                            "phonetic": "ə"
-                        },
-                        {
-                            "position": 2,
-                            "letter": "l",
-                            "content": "l[]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_l/.mp3",
-                            "phonetic": ""
-                        },
-                        {
-                            "position": 3,
-                            "letter": "hel",
-                            "content": "hel[hə]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_hel/hə.mp3",
-                            "phonetic": "hə"
-                        },
-                        {
-                            "position": 4,
-                            "letter": "l",
-                            "content": "l[l]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_l/l.mp3",
-                            "phonetic": "l"
-                        },
-                        {
-                            "position": 5,
-                            "letter": "o",
-                            "content": "o[əʊ]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_o/əʊ.mp3",
-                            "phonetic": "əʊ"
-                        },
-                        {
-                            "position": 6,
-                            "letter": "lo",
-                            "content": "lo[ləʊ]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_lo/ləʊ.mp3",
-                            "phonetic": "ləʊ"
-                        }
-                    ]
-                },
-                {
-                    "word_id": 712290,
-                    "word": "hello22",
-                    "lesson_id": 1,
-                    "chinese": "你好",
-                    "phonetic": "",
-                    "uk_phonetic": "/ həˈləʊ /",
-                    "us_phonetic": "/ həˈləʊ /",
-                    "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1/712290_1.mp3",
-                    "uk_sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1_uk/712290_0.mp3",
-                    "us_sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1_us/712290_1.mp3",
-                    "image_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1/b97892dc-f4d6-11eb-babc-00163e135ac6.jpg",
-                    "has_base": true,
-                    "paraphrase": "int.喂；哈喽n.“喂”的招呼声或问候声",
-                    "phonics": "h/h/e/ə/l/ /l/l/o/əʊ/",
-                    "word_tense": "复数：hellos",
-                    "example_sentence": "Hello, John! How are you?喂，约翰！你好吗？Well,hellothere ! I haven’t seen you for ages.嗨，你好！好久不见了。Stanley, come and sayhelloto your nephew.斯坦利，过来和你的侄子打声招呼。",
-                    "phrase": "hello everyone大家好hello and welcome欢迎莅临hello again回魂妻（电影名称）say hello打招呼；问好",
-                    "synonym": "int.喂；哈罗halloholloo",
-                    "syllables": [
-                        {
-                            "position": 0,
-                            "letter": "h",
-                            "content": "h[h]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_h/h.mp3",
-                            "phonetic": "h"
-                        },
-                        {
-                            "position": 1,
-                            "letter": "e",
-                            "content": "e[ə]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_e/ə.mp3",
-                            "phonetic": "ə"
-                        },
-                        {
-                            "position": 2,
-                            "letter": "l",
-                            "content": "l[]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_l/.mp3",
-                            "phonetic": ""
-                        },
-                        {
-                            "position": 3,
-                            "letter": "hel",
-                            "content": "hel[hə]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_hel/hə.mp3",
-                            "phonetic": "hə"
-                        },
-                        {
-                            "position": 4,
-                            "letter": "l",
-                            "content": "l[l]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_l/l.mp3",
-                            "phonetic": "l"
-                        },
-                        {
-                            "position": 5,
-                            "letter": "o",
-                            "content": "o[əʊ]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_o/əʊ.mp3",
-                            "phonetic": "əʊ"
-                        },
-                        {
-                            "position": 6,
-                            "letter": "lo",
-                            "content": "lo[ləʊ]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_lo/ləʊ.mp3",
-                            "phonetic": "ləʊ"
-                        }
-                    ]
-                },
-                {
-                    "word_id": 712290,
-                    "word": "hello33",
-                    "lesson_id": 1,
-                    "chinese": "你好",
-                    "phonetic": "",
-                    "uk_phonetic": "/ həˈləʊ /",
-                    "us_phonetic": "/ həˈləʊ /",
-                    "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1/712290_1.mp3",
-                    "uk_sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1_uk/712290_0.mp3",
-                    "us_sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1_us/712290_1.mp3",
-                    "image_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1/b97892dc-f4d6-11eb-babc-00163e135ac6.jpg",
-                    "has_base": true,
-                    "paraphrase": "int.喂；哈喽n.“喂”的招呼声或问候声",
-                    "phonics": "h/h/e/ə/l/ /l/l/o/əʊ/",
-                    "word_tense": "复数：hellos",
-                    "example_sentence": "Hello, John! How are you?喂，约翰！你好吗？Well,hellothere ! I haven’t seen you for ages.嗨，你好！好久不见了。Stanley, come and sayhelloto your nephew.斯坦利，过来和你的侄子打声招呼。",
-                    "phrase": "hello everyone大家好hello and welcome欢迎莅临hello again回魂妻（电影名称）say hello打招呼；问好",
-                    "synonym": "int.喂；哈罗halloholloo",
-                    "syllables": [
-                        {
-                            "position": 0,
-                            "letter": "h",
-                            "content": "h[h]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_h/h.mp3",
-                            "phonetic": "h"
-                        },
-                        {
-                            "position": 1,
-                            "letter": "e",
-                            "content": "e[ə]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_e/ə.mp3",
-                            "phonetic": "ə"
-                        },
-                        {
-                            "position": 2,
-                            "letter": "l",
-                            "content": "l[]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_l/.mp3",
-                            "phonetic": ""
-                        },
-                        {
-                            "position": 3,
-                            "letter": "hel",
-                            "content": "hel[hə]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_hel/hə.mp3",
-                            "phonetic": "hə"
-                        },
-                        {
-                            "position": 4,
-                            "letter": "l",
-                            "content": "l[l]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_l/l.mp3",
-                            "phonetic": "l"
-                        },
-                        {
-                            "position": 5,
-                            "letter": "o",
-                            "content": "o[əʊ]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_o/əʊ.mp3",
-                            "phonetic": "əʊ"
-                        },
-                        {
-                            "position": 6,
-                            "letter": "lo",
-                            "content": "lo[ləʊ]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_lo/ləʊ.mp3",
-                            "phonetic": "ləʊ"
-                        }
-                    ]
-                },
-                {
-                    "word_id": 712290,
-                    "word": "hello44",
-                    "lesson_id": 1,
-                    "chinese": "你好",
-                    "phonetic": "",
-                    "uk_phonetic": "/ həˈləʊ /",
-                    "us_phonetic": "/ həˈləʊ /",
-                    "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1/712290_1.mp3",
-                    "uk_sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1_uk/712290_0.mp3",
-                    "us_sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1_us/712290_1.mp3",
-                    "image_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_1212001101247/lesson_1/b97892dc-f4d6-11eb-babc-00163e135ac6.jpg",
-                    "has_base": true,
-                    "paraphrase": "int.喂；哈喽n.“喂”的招呼声或问候声",
-                    "phonics": "h/h/e/ə/l/ /l/l/o/əʊ/",
-                    "word_tense": "复数：hellos",
-                    "example_sentence": "Hello, John! How are you?喂，约翰！你好吗？Well,hellothere ! I haven’t seen you for ages.嗨，你好！好久不见了。Stanley, come and sayhelloto your nephew.斯坦利，过来和你的侄子打声招呼。",
-                    "phrase": "hello everyone大家好hello and welcome欢迎莅临hello again回魂妻（电影名称）say hello打招呼；问好",
-                    "synonym": "int.喂；哈罗halloholloo",
-                    "syllables": [
-                        {
-                            "position": 0,
-                            "letter": "h",
-                            "content": "h[h]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_h/h.mp3",
-                            "phonetic": "h"
-                        },
-                        {
-                            "position": 1,
-                            "letter": "e",
-                            "content": "e[ə]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_e/ə.mp3",
-                            "phonetic": "ə"
-                        },
-                        {
-                            "position": 2,
-                            "letter": "l",
-                            "content": "l[]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_l/.mp3",
-                            "phonetic": ""
-                        },
-                        {
-                            "position": 3,
-                            "letter": "hel",
-                            "content": "hel[hə]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_hel/hə.mp3",
-                            "phonetic": "hə"
-                        },
-                        {
-                            "position": 4,
-                            "letter": "l",
-                            "content": "l[l]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_l/l.mp3",
-                            "phonetic": "l"
-                        },
-                        {
-                            "position": 5,
-                            "letter": "o",
-                            "content": "o[əʊ]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_o/əʊ.mp3",
-                            "phonetic": "əʊ"
-                        },
-                        {
-                            "position": 6,
-                            "letter": "lo",
-                            "content": "lo[ləʊ]",
-                            "sound_path": "https://books-bct.oss-cn-beijing.aliyuncs.com/words/book_syllables/lesson_lo/ləʊ.mp3",
-                            "phonetic": "ləʊ"
-                        }
-                    ]
-                }
-            ]
-        },
-        "status": 200
-        }
-        allWords.value = response.data.words   
-   }
-
    const detailWords = async (bookId, words) => {
         try {
             const response = await textbook.getWordsDetail(bookId, words);
@@ -776,6 +492,17 @@ const duration = 500; // 滑动动画时长
             allWords.value = response.data.words
 
             originalOrder.value = [...allWords.value]; // 保存原始顺序
+			
+			// 使用 nextTick 确保 DOM 更新完成
+			nextTick(() => {
+			  if (allWords.value.length > 0) {
+				//让它一进来就播放
+				ispagePlaying.value = true
+				currentTrackIndex.value = 0
+				playNext()
+			  }
+			});
+			
 
         } catch (error) {
             console.error('获取单词列表失败:', error);
@@ -789,7 +516,7 @@ const duration = 500; // 滑动动画时长
   // swiper 切换时触发
     const onSwiperChange = (event) => {
         currentPage.value = event.detail.current + 1
-
+		
 		if (currentPage.value<=allWords.value.length) {
 			wordcardRef.value.forEach((item) => {
 				item.redefineSettings()
@@ -799,9 +526,17 @@ const duration = 500; // 滑动动画时长
 		}
 		
 		// 如果滑动到最后一页，允许循环滑动
-		  if (currentPage.value === allWords.value.length) {
-		    circular.value = true;
-		  }
+		if (wordmodeNum.value ==2 || wordmodeNum.value ==1) {
+			if (currentPage.value === allWords.value.length) {
+						
+			  circular.value = true;
+			}
+		} else {
+			if (currentPage.value === (allWords.value.length+1)) {
+			  circular.value = true;
+			}
+		}
+		  
 
         stopAutoSwipe()
         stopCurrentAudio()
@@ -809,6 +544,10 @@ const duration = 500; // 滑动动画时长
 		if (currentPage.value<=allWords.value.length) {
 			setTimeout(() => {
 			  currentTrackIndex.value = 0
+			  if (wordmodeNum.value ==2 && !ispagePlaying.value) { //是测评
+			  
+				  ispagePlaying.value = true
+			  }
 			  playNext()
 			  // 在这里添加延迟执行的代码
 			}, 1000);
@@ -870,6 +609,11 @@ const duration = 500; // 滑动动画时长
     right: 0;
     overflow: hidden;
   }
+  
+  .pronassessment {
+	  bottom:30rpx
+  }
+  
   
   .swiper {
     height: 100%;
