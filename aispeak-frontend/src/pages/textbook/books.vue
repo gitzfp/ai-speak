@@ -151,10 +151,8 @@ const book_id = ref("")
 onLoad((options) => {
   book_id.value = options.book_id
   console.log("Received book_id:", book_id.value)
-  // 页面加载时调用
-
-  fetchAndProcessData()
 })
+
 
 const goToWords = () => {
   // 查找当前页面所属的章节
@@ -467,11 +465,10 @@ const parseJsonData = (jsonData, comeFrom = "OSS") => {
 }
 
 // 获取数据并处理
-async function fetchAndProcessData() {
+const fetchAndProcessData = async() =>{
   try {
-
     //1.先从数据库取，有直接返回
-    const res = await textbook.getTextbookDetails(book_id.value).then(response => {
+    const res = await textbook?.getTextbookDetails(book_id.value).then(response => {
       return response
     });
     if(res?.data?.bookpages?.length > 0 && res?.data?.chapters?.length > 0) {
@@ -530,7 +527,11 @@ async function fetchAndProcessData() {
 let resizeObserver = null
 
 onMounted(() => {
+  fetchAndProcessData()
   // 创建 ResizeObserver 实例
+  if(utils.isWechat){
+    return
+  }
   resizeObserver = new ResizeObserver(() => {
     // 重新计算所有已加载图片的比例
     Object.keys(imageRatios.value).forEach((pageId) => {

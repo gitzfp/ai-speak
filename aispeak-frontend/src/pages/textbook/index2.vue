@@ -18,7 +18,9 @@
             <view class="qiuhuan" @click="switchBook">切换教材</view>
             <view class="fenxiang" @click="shareToClass">分享班级</view>
           </view>
-      </view>
+       <button class="upload-btn" @tap="uploadPages">上传外研社教材</button>
+          <button class="upload-btn" @tap="uploadChapters">上传外研社目录</button>
+        </view>
      </view>
     </view>
     <!-- 功能按钮区域 -->
@@ -189,54 +191,54 @@ const book = ref({
         // ******** 注意需要放开下面的章节进行上传 ****************
 
         // 调用已有的 createTextbookPages 方法
-        const response = await textbook.createTextbookPages(
-          book1Id,
-          bookPages1
-        );
-        const response2 = await textbook.createTextbookPages(
-          book2Id,
-          bookPages2
-        );
-        const response3 = await textbook.createTextbookPages(
-          book3Id,
-          bookPages3
-        );
-        const response4 = await textbook.createTextbookPages(
-          book4Id,
-          bookPages4
-        );
-        const response5 = await textbook.createTextbookPages(
-          book5Id,
-          bookPages5
-        );
-        const response6 = await textbook.createTextbookPages(
-          book6Id,
-          bookPages6
-        );
-        const response7 = await textbook.createTextbookPages(
-          book7Id,
-          bookPages7
-        );
-        const response8 = await textbook.createTextbookPages(
-          book8Id,
-          bookPages8
-        );
-        // const response9 = await textbook.createTextbookPages(
-        //   book9Id,
-        //   bookPages9
+        // const response = await textbook.createTextbookPages(
+        //   book1Id,
+        //   bookPages1
         // );
-        // const response10 = await textbook.createTextbookPages(
-        //   book10Id,
-        //   bookPages10
+        // const response2 = await textbook.createTextbookPages(
+        //   book2Id,
+        //   bookPages2
         // );
-        // const response11 = await textbook.createTextbookPages(
-        //   book11Id,
-        //   bookPages11
+        // const response3 = await textbook.createTextbookPages(
+        //   book3Id,
+        //   bookPages3
         // );
-        // const response12 = await textbook.createTextbookPages(
-        //   book12Id,
-        //   bookPages12
+        // const response4 = await textbook.createTextbookPages(
+        //   book4Id,
+        //   bookPages4
         // );
+        // const response5 = await textbook.createTextbookPages(
+        //   book5Id,
+        //   bookPages5
+        // );
+        // const response6 = await textbook.createTextbookPages(
+        //   book6Id,
+        //   bookPages6
+        // );
+        // const response7 = await textbook.createTextbookPages(
+        //   book7Id,
+        //   bookPages7
+        // );
+        // const response8 = await textbook.createTextbookPages(
+        //   book8Id,
+        //   bookPages8
+        // );
+        const response9 = await textbook.createTextbookPages(
+          book9Id,
+          bookPages9
+        );
+        const response10 = await textbook.createTextbookPages(
+          book10Id,
+          bookPages10
+        );
+        const response11 = await textbook.createTextbookPages(
+          book11Id,
+          bookPages11
+        );
+        const response12 = await textbook.createTextbookPages(
+          book12Id,
+          bookPages12
+        );
         uni.hideLoading();
         uni.showToast({
           title: "上传成功",
