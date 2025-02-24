@@ -22,7 +22,7 @@
                         <text class="page-divider">/</text>
                         <text class="page-total">{{ allWords.length }}</text>
                       </view>
-                       <view @tap="wordsNotebookclick" class="wordsNotebook">
+                       <view @tap="wordsNotebookclick(word)" class="wordsNotebook">
                         <image class="left-icon" :src="isUnfamiliarWord?jiahao:dagou"></image>
                         <text>生词本</text>
                       </view>
@@ -146,6 +146,8 @@
 
 	import wordsharepageVue from './wordsharepage.vue';
 	
+	import accountRequest from "@/api/account"
+	
 
 const circular = ref(false);
 const duration = 500; // 滑动动画时长
@@ -169,6 +171,8 @@ const duration = 500; // 滑动动画时长
    const wordcardRef = ref(null)
 
    const isUnfamiliarWord = ref(false)
+   
+   const book_id = ref('')
 
    let autoSwipeInterval = null; // 定时器
 
@@ -184,6 +188,9 @@ const duration = 500; // 滑动动画时长
 
 	//0：默认  1.磨耳朵  2.发音测评 
 	const wordmodeNum = ref(0)
+	
+	//生词本 数字
+	const notebookList = ref([])
 
    // 自动滑动函数
   const startAutoSwipe = () => {
@@ -222,8 +229,33 @@ const duration = 500; // 滑动动画时长
 	});
 
 
-  function wordsNotebookclick() {
+  function wordsNotebookclick(word) {
+	  
     isUnfamiliarWord.value = !isUnfamiliarWord.value
+	
+	let requestParams = {
+		content: word.word,
+		word_id: word.word_id,
+		type:"NEW_WORD",
+		book_id:book_id.value
+	}
+	
+	if (isUnfamiliarWord.value) {
+		accountRequest.collect(requestParams).then(() => {
+			uni.showToast({
+			        title: '成功加入生词本',
+			      });
+		})
+	} else {
+		accountRequest.cancelCollect(requestParams).then(() => {
+			uni.showToast({
+			        title: '移除生词本',
+			      });
+		})
+	}
+
+	
+	
   }
 
    function fullDisplayRecovery() {
@@ -467,6 +499,7 @@ const duration = 500; // 滑动动画时长
         if (wordmode) {
         	wordmodeNum.value = wordmode
         }
+		book_id.value = bookId
 
         // console.log("currentAudioList.value")
         // console.log(currentAudioList.value)
@@ -478,6 +511,9 @@ const duration = 500; // 滑动动画时长
             const words = JSON.parse(res.data);
             // console.log('获取到的数据:', words);
             detailWords(bookId,words)
+			
+			//获取生词本数组
+			collectsGetnotebook()
         },
         fail: function (err) {
             console.log('获取数据失败', err);
@@ -514,6 +550,37 @@ const duration = 500; // 滑动动画时长
             });
         }
     };
+
+	
+	const collectsGetnotebook = async () => {
+		
+		// const array = [
+		//     { id: 11, word: 4818, type: "NEW_WORD", content: "foot", translation: "脚", message_id: null, create_time: "2025-02-24 23:39:34" },
+		//     { id: 10, word: 1159, type: "NEW_WORD", content: "bye", translation: "再见", message_id: null, create_time: "2025-02-24 23:28:16" },
+		//     { id: 9, word: 1157, type: "NEW_WORD", content: "hello", translation: "你好", message_id: null, create_time: "2025-02-24 23:28:09" },
+		//     { id: 8, word: 1158, type: "NEW_WORD", content: "hi", translation: "嗨", message_id: null, create_time: "2025-02-24 23:27:48" }
+		// ];
+		
+		// const exists = array.some(item => item.word === 1150);
+
+		
+		try {
+			let requestParams = {
+				page: 1,
+				page_size: 1000,
+				type:"NEW_WORD",
+			}
+			accountRequest.collectsGet(requestParams).then((data) => {
+				notebookList.value = data.data.list;
+			});
+		} catch (error) {
+		    console.error('获取生词本失败:', error);
+		    uni.showToast({
+		        title: '获取生词本列表失败',
+		        icon: 'none'
+		    });
+		}
+	}
 
   // swiper 切换时触发
     const onSwiperChange = (event) => {
