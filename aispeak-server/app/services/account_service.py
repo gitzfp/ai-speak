@@ -148,6 +148,12 @@ class AccountService:
                 .filter_by(account_id=account_id, message_id=dto.message_id)
                 .first()
             )
+        elif dto.word_id:
+            collect = (
+                self.db.query(AccountCollectEntity)
+                .filter_by(account_id=account_id, word_id=dto.word_id)
+                .first()
+            )
         else:
             collect = (
                 self.db.query(AccountCollectEntity)
@@ -180,8 +186,11 @@ class AccountService:
             TranslateParams(target_language=source_language, content=content)
         )
 
-        # 如果没有任何符号且只有单独一个单词，则type为WORD，否则为 SENTENCE
-        if re.match(r"^[a-zA-Z]+$", content) and len(content.split(" ")) == 1:
+        # 如果存在 word_id，则 type 为 NEW_WORD
+        if dto.word_id:
+            type = "NEW_WORD"
+        # 如果没有任何符号且只有单独一个单词，则 type 为 WORD，否则为 SENTENCE
+        elif re.match(r"^[a-zA-Z]+$", content) and len(content.split(" ")) == 1:
             type = "WORD"
         else:
             type = "SENTENCE"
@@ -190,6 +199,7 @@ class AccountService:
             account_id=account_id,
             type=type,
             message_id=dto.message_id,
+            word_id=dto.word_id,
             content=content,
             translation=translation,
         )
@@ -250,6 +260,12 @@ class AccountService:
                 .filter_by(account_id=account_id, message_id=dto.message_id)
                 .first()
             )
+        elif dto.word_id:
+            collect = (
+                self.db.query(AccountCollectEntity)
+                .filter_by(account_id=account_id, word_id=dto.word_id)
+                .first()
+            )
         else:
             collect = (
                 self.db.query(AccountCollectEntity)
@@ -277,6 +293,7 @@ class AccountService:
             result.append(
                 {
                     "id": collect.id,
+                    "word": collect.word_id,
                     "type": collect.type,
                     "content": collect.content,
                     "translation": collect.translation,
