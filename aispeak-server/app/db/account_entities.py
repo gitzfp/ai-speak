@@ -48,6 +48,7 @@ class AccountCollectEntity(Base):
     account_id = Column("account_id", String(80), nullable=False)
     type = Column("type", String(80), nullable=False)
     content = Column("content", String(2500), nullable=True)
+    word_id = Column("word_id", Integer, nullable=True)
     translation = Column("translation", String(2500), nullable=True)
     deleted = Column("deleted", Integer, default="0")
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)

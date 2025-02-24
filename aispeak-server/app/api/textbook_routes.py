@@ -125,7 +125,7 @@ def get_lesson_words(
         return ApiResponse.system_error(str(e))
 
 class WordListRequest(BaseModel):
-    words: List[str]
+    words: List[int]
 
 @router.post("/textbook/{book_id}/words/details", response_model=ApiResponse)
 def get_words_details(
