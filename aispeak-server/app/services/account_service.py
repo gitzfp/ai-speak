@@ -294,7 +294,7 @@ class AccountService:
             result.append(
                 {
                     "id": collect.id,
-                    "word": collect.word_id,
+                    "word_id": collect.word_id,
                     "type": collect.type,
                     "content": collect.content,
                     "translation": collect.translation,
