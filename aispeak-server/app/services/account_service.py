@@ -187,8 +187,8 @@ class AccountService:
         )
 
         # 如果存在 word_id，则 type 为 NEW_WORD
-        if dto.word_id:
-            type = "NEW_WORD"
+        if dto.type:
+            type = dto.type
         # 如果没有任何符号且只有单独一个单词，则 type 为 WORD，否则为 SENTENCE
         elif re.match(r"^[a-zA-Z]+$", content) and len(content.split(" ")) == 1:
             type = "WORD"
@@ -200,6 +200,7 @@ class AccountService:
             type=type,
             message_id=dto.message_id,
             word_id=dto.word_id,
+            book_id=dto.book_id,
             content=content,
             translation=translation,
         )
