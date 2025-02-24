@@ -55,6 +55,12 @@
         "navigationBarTitleText": "单词列表"
       }
     },
+	{
+	  "path": "pages/textbook/WordDictation",
+	  "style": {
+	    "navigationBarTitleText": "单词听写"
+	  }
+	},
     {
       "path": "pages/textbook/Learnwords",
       "style": {
