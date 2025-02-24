@@ -88,6 +88,7 @@ class CollectDTO(BaseModel):
     type: constr(min_length=1)
     message_id: str = None
     content: str = None
+    word_id: str = None
 
 
 class PromptDTO(BaseModel):
