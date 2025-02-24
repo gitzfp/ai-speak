@@ -73,6 +73,7 @@ const phonicsbegins = () => {
 const stopCurrentAudio = () => {
   if (currentAudio.value) {
 	currentAudio.value.pause();
+	currentAudio.value.destroy()
 	currentAudio.value = null;
   }
 };

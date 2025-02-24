@@ -228,10 +228,18 @@
 		  data: JSON.stringify(selectedWords),
 		  success: function () {
 			// console.log('数据存储成功');
-			// 跳转到学习页面
-			uni.navigateTo({
-			  url: `/pages/textbook/worddetails?sessionKey=${sessionKey}&bookId=${bookId}&wordmode=${wordmode}`, // 将缓存键名传递给学习页面
-			});
+			if (wordmodeNum.value == 3) {
+				uni.navigateTo({
+				  url: `/pages/textbook/WordDictation?sessionKey=${sessionKey}&bookId=${bookId}&wordmode=${wordmode}`, // 将缓存键名传递给学习页面
+				});
+			} else {
+				uni.navigateTo({
+				  url: `/pages/textbook/worddetails?sessionKey=${sessionKey}&bookId=${bookId}&wordmode=${wordmode}`, // 将缓存键名传递给学习页面
+				});
+			}
+			
+			
+			
 		  },
 		  fail: function (err) {
 			console.log('数据存储失败', err);
