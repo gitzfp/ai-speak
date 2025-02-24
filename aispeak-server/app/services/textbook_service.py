@@ -388,7 +388,7 @@ class TextbookService:
         
             # 构建单词列表
             word_list = [{
-                "word_id": word.word_id,
+                "word_id": word.id,
                 "word": word.word,
                 "lesson_id": word.lesson_id,
                 "chinese": word.chinese,
@@ -411,7 +411,7 @@ class TextbookService:
             print(f"获取单词列表失败: {str(e)}")
             return None
 
-    def get_words_with_syllables(self, book_id: str, word_list: List[str]) -> Dict:
+    def get_words_with_syllables(self, book_id: str, word_list: List[int]) -> Dict:
         """
         获取指定单词列表的详细信息和音节信息
         """
@@ -419,7 +419,7 @@ class TextbookService:
             # 获取单词信息
             words = self.db.query(Word).filter(
                 Word.book_id == book_id,
-                Word.word_id.in_(word_list)
+                Word.id.in_(word_list)
             ).all()
 
             # 获取这些单词的音节关联信息
@@ -456,7 +456,7 @@ class TextbookService:
             word_list = []
             for word in words:
                 word_data = {
-                    "word_id": word.word_id,
+                    "word_id": word.id,
                     "word": word.word,
                     "lesson_id": word.lesson_id,
                     "chinese": word.chinese,
