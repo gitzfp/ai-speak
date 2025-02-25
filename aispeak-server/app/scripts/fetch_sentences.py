@@ -6,6 +6,7 @@ from app.db import engine
 from app.db.textbook_entities import LessonEntity, LessonSentenceEntity
 import logging
 from contextlib import contextmanager
+from app.scripts.utils.utils import download_and_upload_to_oss
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ def fetch_sentences(stage_tag, lesson_id, version_tag, grade_tag, term_tag):
         logger.error(f"获取句子数据失败: {e}")
         return {}  # 返回空字典而不是 None
 
-def save_lessons_and_sentences(data, book_id):
+async def save_lessons_and_sentences(data, book_id):
     """保存课程和句子数据"""
     if not data or "lessons" not in data:
         logger.error(f"数据结构错误，缺少 lessons 字段或数据为空: {data}")
@@ -145,7 +146,21 @@ def save_lessons_and_sentences(data, book_id):
                             if existing_sentence:
                                 # 更新现有句子
                                 existing_sentence.chinese = sentence["chinese"]
-                                existing_sentence.audio_url = lesson_sentences.get("audio_url")
+                                # 上传音频文件到阿里云OSS并获取访问URL
+                                audio_url = lesson_sentences.get("audio_url")
+                                if audio_url:
+                                    # 从 data 中获取所需的字段
+                                    stage_tag = data["info"]["stage_tag"]
+                                    lesson_id = lesson_sentences['lesson_id']  # 获取 lesson_id
+                                    version_tag = data["info"]["version_tag"]
+                                    grade_tag = data["info"]["grade_tag"]
+                                    term_tag = data["info"]["term_tag"]
+                                    
+                                    # 拼接 OSS Key，使用下划线作为分隔符
+                                    oss_key = f"audios/lesson_sentences/{version_tag}_{grade_tag}_{term_tag}/{lesson_id}_{audio_url.split('/')[-1]}"
+                                    existing_sentence.audio_url = await download_and_upload_to_oss(audio_url,  oss_key)
+                                else:
+                                    existing_sentence.audio_url = None
                                 existing_sentence.audio_start = sentence.get("audio_start") or 0
                                 existing_sentence.audio_end = sentence.get("audio_end") or 99999
                                 existing_sentence.is_lock = lesson_sentences.get("is_lock", 0)
@@ -174,7 +189,7 @@ def save_lessons_and_sentences(data, book_id):
 def main():
     # 使用相对路径获取 JSON 文件
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(current_dir, 'data', 'words_grade3.json')
+    json_path = os.path.join(current_dir, 'data', 'words_wy1.json')
 
     logger.info(f"开始读取文件: {json_path}")
     with open(json_path, 'r', encoding='utf-8') as file:

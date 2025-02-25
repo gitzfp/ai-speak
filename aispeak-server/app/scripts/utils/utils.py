@@ -13,7 +13,7 @@ OSS_BUCKET = oss2.Bucket(OSS_AUTH, OSS_ENDPOINT, OSS_BUCKET_NAME)
 OSS_PUBLIC_ENDPOINT = f"https://books-bct.{OSS_REGION}.aliyuncs.com"
 
 
-async def download_and_upload_to_oss(url: str, folder: str, filename: str, oss_key: str) -> str:
+async def download_and_upload_to_oss(url: str, oss_key: str) -> str:
     """
     下载文件并上传到阿里云OSS
     
