@@ -46,6 +46,7 @@ class AccountCollectEntity(Base):
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     message_id = Column("message_id", String(80), nullable=True)
     account_id = Column("account_id", String(80), nullable=False)
+    book_id = Column("book_id", String(80), nullable=True)
     type = Column("type", String(80), nullable=False)
     content = Column("content", String(2500), nullable=True)
     word_id = Column("word_id", Integer, nullable=True)
