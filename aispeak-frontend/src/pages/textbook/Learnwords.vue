@@ -201,7 +201,7 @@
       groupedWords.value.forEach(group => {
         group.words.forEach(word => {
           if (word.isSelected) {
-            selectedWords.push(String(word.word_id));
+            selectedWords.push(word.word_id);
           }
         });
       });
