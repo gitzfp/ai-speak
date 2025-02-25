@@ -220,7 +220,7 @@
 		
 		let planWordsList = [];
 		firstFive.forEach(word => {
-		    planWordsList.push(String(word.word_id));
+		    planWordsList.push(word.word_id);
 		});
 		
 		
