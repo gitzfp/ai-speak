@@ -1,0 +1,45 @@
+[
+    {
+        "book_id": 201,
+        "stage_id": 1,
+        "stage": "小学",
+        "stage_tag": "xiaoxue",
+        "version_id": 2,
+        "version": "外研版一起",
+        "version_tag": "wybyq",
+        "grade_id": 1,
+        "grade": "一年级",
+        "grade_tag": "yinianji",
+        "term_tag": "shangce",
+        "book_name": "一年级上册",
+        "publisher": "外语教学与研究出版社",
+        "cover": "https://ywld-1315558954.51jiaoxi.com/yy-static/images/book/201.png",
+        "has_sentence": 0,
+        "has_word": 1,
+        "lesson_id": "1",
+        "lesson_name": "Module 1",
+        "textbook_id": "1l1_V2"
+
+    },
+    {
+        "book_id": 202,
+        "stage_id": 1,
+        "stage": "小学",
+        "stage_tag": "xiaoxue",
+        "version_id": 2,
+        "version": "外研版一起",
+        "version_tag": "wybyq",
+        "grade_id": 1,
+        "grade": "一年级",
+        "grade_tag": "yinianji",
+        "term_tag": "xiace",
+        "book_name": "一年级下册",
+        "publisher": "外语教学与研究出版社",
+        "cover": "https://ywld-1315558954.51jiaoxi.com/yy-static/images/book/202.png",
+        "has_sentence": 0,
+        "has_word": 1,
+        "lesson_id": "2",
+        "lesson_name": "Module 2",
+        "textbook_id": "1l2_V2"
+    }
+]

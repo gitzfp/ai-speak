@@ -35,7 +35,7 @@ async def insert_english_textbooks(json_data):
             # Iterate through each textbook
             for book in version['textbooks']:
                 # Create new textbook entity
-                icon_url_oss = await download_and_upload_to_oss(book['icon_url'], 'textbook_icons', f"{book['book_id']}.jpg", f"textbook_icons/{book['book_id']}.jpg")
+                icon_url_oss = await download_and_upload_to_oss(book['icon_url'],  f"textbook_icons/{book['book_id']}.jpg")
                 textbook = TextbookEntity(
                     id=book['book_id'],
                     name=book['book_name'],

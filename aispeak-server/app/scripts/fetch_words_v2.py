@@ -605,7 +605,7 @@ async def process_syllables(phonics_text: str, db, bucket: oss2.Bucket, public_e
 
 if __name__ == "__main__":
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(current_dir, 'data', 'words_grade8.json')
+    json_path = os.path.join(current_dir, 'data', 'words_wy6.json')
 
     with open(json_path, 'r', encoding='utf-8') as file:
         json_data = json.loads(file.read())  # 解析 JSON 字符串为 Python 对象

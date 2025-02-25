@@ -766,8 +766,8 @@ function togglePlayCurrentPage() {
 
 // 开始复读模式
 function startRepeatMode() {
+  stopAndResetStatus()
   showRepeatSelection.value = true
-  console.log("开始复读模式"+currentPage.value, bookPages.value[currentPage.value])
   // 生成复读段落选项
   repeatOptions.value = bookPages.value[currentPage.value].track_info.map(
     (track) => track.track_text || `段落 ${track.track_id}`
@@ -837,14 +837,17 @@ function playRepeat() {
 // 退出复读模式
 function exitRepeatMode() {
   isRepeatMode.value = false
-  stopCurrentAudio()
-  isPlaying.value = false
+  stopAndResetStatus()
+}
+
+const stopAndResetStatus = () => {
+   stopCurrentAudio()
+   isPlaying.value = false
 }
 
 // 页面销毁时清理音频
 onBeforeUnmount(() => {
-  stopCurrentAudio()
-  isPlaying.value = false
+  stopAndResetStatus()
 })
 
 //-----测评用的方法-----开始------
