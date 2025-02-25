@@ -51,9 +51,15 @@
           课本点读
         </view>
       </view>
-      <view class="button-tit">
-        <image class="buttontit-icon" src="@/assets/icons/five-star.svg"></image>
-          单词强化
+      <view class="button-tittwo">
+		  <view class="button-tittwoItem">
+			<image class="buttontit-icon" src="@/assets/icons/five-star.svg"></image>
+			  单词强化  
+		  </view>
+		  <view @tap="newWordbookclick" class="button-tittwoItemright">
+			  生词本
+			  <image class="buttontit-icon" src="@/assets/icons/left_arrow_nw.svg"></image>
+		  </view>
       </view>
       <view class="button-row">
         <!-- <view class="function-button" @click="wordTricks">
@@ -482,6 +488,12 @@ const wordRecitationHomeclick = () => {
   })
 }
 
+//我的生词本
+const newWordbookclick = () => {
+  uni.navigateTo({
+	url: `/pages/textbook/newWordbook`,
+  })
+}
 
 const wordTricks = () => {
   console.log('Word Tricks');
@@ -650,6 +662,28 @@ const eliminationGame = () => {
   align-items: center;
   font-size: 12px;
   color: grey;
+}
+.button-tittwo {
+  padding-top: 5px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: grey;
+  justify-content: space-between;
+}
+.button-tittwoItem {
+	padding-top: 5px;
+	display: flex;
+	align-items: center;
+	font-size: 12px;
+	color: grey;
+}
+.button-tittwoItemright {
+	padding-top: 10rpx;
+	display: flex;
+	align-items: center;
+	font-size: 30rpx;
+	color: #ea9518;;
 }
 .buttontit-icon {
   width: 15px; /* 根据实际图标的大小调整 */

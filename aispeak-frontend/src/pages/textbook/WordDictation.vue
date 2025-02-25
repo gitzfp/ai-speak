@@ -8,7 +8,7 @@
 		      <text class="page-total">{{ allWords.length }}</text>
 		    </view>
 		     <view @tap="wordsNotebookclick" class="wordsNotebook">
-		      <image class="left-iconone" :src="isUnfamiliarWord?jiahao:dagou"></image>
+		      <image class="left-iconone" :src="isUnfamiliarWord()?dagou:jiahao"></image>
 		      <text>生词本</text>
 		    </view>
 		  </view>
@@ -79,12 +79,14 @@
 </template>
 
 <script setup>
-import { ref, watch,onMounted,computed,nextTick} from 'vue';
+import { ref, watch,onMounted,computed,nextTick,onUnmounted} from 'vue';
 import { onLoad } from '@dcloudio/uni-app'
 import { processZm } from '@/utils/stringUtils'
 import textbook from '@/api/textbook'
 import jiahao from '@/assets/icons/word_jiahao.svg';
 import dagou from '@/assets/icons/word_dagou.svg';
+
+import accountRequest from "@/api/account"
 
 // 动画数据
 const animationData = ref(null);
@@ -124,17 +126,23 @@ const iswordReveal = ref(false)
 
 const originalwordletters = ref([])
 
-const isUnfamiliarWord = ref(false)
-
-// 组件挂载时启动自动滑动
+const book_id = ref('')
+//生词本 数租
+const notebookList = ref([])
+	
+// 组件挂载
 	onMounted(() => {
-	  // startAutoSwipe();
+	 
 	 
 	});
+	onUnmounted(() => {
+		stopCurrentAudio()
+	})
 
 	onLoad(async (options) => {
         const {bookId,sessionKey} = options
 
+		book_id.value = bookId
         // 获取数据
         uni.getStorage({
         key: sessionKey,
@@ -142,6 +150,9 @@ const isUnfamiliarWord = ref(false)
             const words = JSON.parse(res.data);
             console.log('获取到的数据:', words);
             detailWords(bookId,words)
+			
+			//获取生词本数组
+			collectsGetnotebook()
         },
         fail: function (err) {
             console.log('获取数据失败', err);
@@ -250,17 +261,42 @@ const detailWords = async (bookId, words) => {
 	 }
 	
 
+
+const collectsGetnotebook = async () => {
+		
+
+		
+		try {
+			let requestParams = {
+				page: 1,
+				page_size: 1000,
+				type:"NEW_WORD",
+			}
+			accountRequest.collectsGet(requestParams).then((data) => {
+				notebookList.value = data.data.list;
+			});
+		} catch (error) {
+		    console.error('获取生词本失败:', error);
+		    uni.showToast({
+		        title: '获取生词本列表失败',
+		        icon: 'none'
+		    });
+		}
+	}
+
+
 function stopCurrentAudio() {
     if (currentAudio.value) {
       currentAudio.value.pause()
       // ispagePlaying.value = false
       try {
         currentAudio.value.stop()
-		currentAudio.value.destroy()
+		// currentAudio.value?.destroy()
+		currentAudio.value = null
       } catch (error) {
         console.error("Error stopping audio:", error)
       }
-      currentAudio.value = null
+      // currentAudio.value = null
     }
   }
 
@@ -407,9 +443,45 @@ const inspectclick =()=> {
 	}
 }
 
+
+const isUnfamiliarWord =()=> {
+	if (notebookList.value.length>0 && currentWord.value) {
+		const exists = notebookList.value.some(item => item.word_id === currentWord.value.word_id);
+		return exists
+	}
+	
+	return false
+}
+
 const wordsNotebookclick =()=> {
-    isUnfamiliarWord.value = !isUnfamiliarWord.value
+    if (currentWord.value) {
+		var word = currentWord.value
+		let requestParams = {
+			content: word.word,
+			word_id: word.word_id,
+			type:"NEW_WORD",
+			book_id:book_id.value
+		}
+		
+		if (!isUnfamiliarWord()) {
+			accountRequest.collect(requestParams).then(() => {
+				uni.showToast({
+				        title: '成功加入生词本',
+				      });
+				collectsGetnotebook()
+			})
+		} else {
+			accountRequest.cancelCollect(requestParams).then(() => {
+				uni.showToast({
+				        title: '移除生词本',
+				      });
+			})
+			notebookList.value = notebookList.value.filter(item => item.word_id !== word.word_id);
+		}
+	}
   }
+  
+  
 
 </script>
 

@@ -137,13 +137,13 @@ const handleItemClick = (optionWord,indext) => {
 	// audio.volume = props.volume;
 	initseletnums(indext,num)
 	audio.onEnded(() => {
-	  if (num == 1) { //答对了
-		  setTimeout(() => {
-			  initseletnums(4,num)
-		    emit('item-click', optionWord);
-		    // 在这里添加延迟执行的代码
-		  }, 300);
-	  }
+	
+	  setTimeout(() => {
+		  initseletnums(4,num)
+		emit('item-click', num);
+		// 在这里添加延迟执行的代码
+	  }, 300);
+	  
 	});
 	audio.play();
 	

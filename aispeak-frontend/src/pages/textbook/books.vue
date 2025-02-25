@@ -274,7 +274,7 @@ function stopCurrentAudio() {
     uni.hideToast() // Hide any existing toast
     try {
       currentAudio.value.stop()
-      currentAudio.value.destroy()
+      currentAudio.value?.destroy()
     } catch (error) {
       console.error("Error stopping audio:", error)
     }
