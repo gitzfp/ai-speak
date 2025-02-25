@@ -174,7 +174,7 @@ const stopCurrentAudio = () => {
 	isPhonicsReading.value = false;
     try {
       currentAudio.value.stop();
-      currentAudio.value.destroy();
+      currentAudio.value?.destroy();
     } catch (error) {
       console.error("Error stopping audio:", error);
     }
@@ -214,7 +214,7 @@ onMounted(()=>{
 })
 // 组件卸载时停止自动滑动
 	onUnmounted(() => {
-		
+		stopCurrentAudio();
 	});
 
 defineExpose({

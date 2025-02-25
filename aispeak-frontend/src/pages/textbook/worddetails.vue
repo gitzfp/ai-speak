@@ -23,7 +23,7 @@
                         <text class="page-total">{{ allWords.length }}</text>
                       </view>
                        <view @tap="wordsNotebookclick(word)" class="wordsNotebook">
-                        <image class="left-icon" :src="isUnfamiliarWord?jiahao:dagou"></image>
+                        <image class="left-icon" :src="isUnfamiliarWord(word)?dagou:jiahao"></image>
                         <text>生词本</text>
                       </view>
                     </view>
@@ -170,7 +170,6 @@ const duration = 500; // 滑动动画时长
    const currentAudio = ref(null)
    const wordcardRef = ref(null)
 
-   const isUnfamiliarWord = ref(false)
    
    const book_id = ref('')
 
@@ -189,7 +188,7 @@ const duration = 500; // 滑动动画时长
 	//0：默认  1.磨耳朵  2.发音测评 
 	const wordmodeNum = ref(0)
 	
-	//生词本 数字
+	//生词本 数租
 	const notebookList = ref([])
 
    // 自动滑动函数
@@ -228,10 +227,17 @@ const duration = 500; // 滑动动画时长
 	  stopAutoSwipe();
 	});
 
+const isUnfamiliarWord =(word)=> {
+	if (notebookList.value.length>0) {
+		const exists = notebookList.value.some(item => item.word_id === word.word_id);
+		return exists
+	}
+	
+	return false
+}
 
-  function wordsNotebookclick(word) {
+  const wordsNotebookclick =(word) => {
 	  
-    isUnfamiliarWord.value = !isUnfamiliarWord.value
 	
 	let requestParams = {
 		content: word.word,
@@ -240,11 +246,12 @@ const duration = 500; // 滑动动画时长
 		book_id:book_id.value
 	}
 	
-	if (isUnfamiliarWord.value) {
+	if (!isUnfamiliarWord(word)) {
 		accountRequest.collect(requestParams).then(() => {
 			uni.showToast({
 			        title: '成功加入生词本',
 			      });
+			collectsGetnotebook()
 		})
 	} else {
 		accountRequest.cancelCollect(requestParams).then(() => {
@@ -252,6 +259,7 @@ const duration = 500; // 滑动动画时长
 			        title: '移除生词本',
 			      });
 		})
+		notebookList.value = notebookList.value.filter(item => item.word_id !== word.word_id);
 	}
 
 	
@@ -379,7 +387,7 @@ const duration = 500; // 滑动动画时长
       // ispagePlaying.value = false
       try {
         currentAudio.value.stop()
-		currentAudio.value.destroy()
+		currentAudio.value?.destroy()
       } catch (error) {
         console.error("Error stopping audio:", error)
       }
@@ -554,14 +562,6 @@ const duration = 500; // 滑动动画时长
 	
 	const collectsGetnotebook = async () => {
 		
-		// const array = [
-		//     { id: 11, word: 4818, type: "NEW_WORD", content: "foot", translation: "脚", message_id: null, create_time: "2025-02-24 23:39:34" },
-		//     { id: 10, word: 1159, type: "NEW_WORD", content: "bye", translation: "再见", message_id: null, create_time: "2025-02-24 23:28:16" },
-		//     { id: 9, word: 1157, type: "NEW_WORD", content: "hello", translation: "你好", message_id: null, create_time: "2025-02-24 23:28:09" },
-		//     { id: 8, word: 1158, type: "NEW_WORD", content: "hi", translation: "嗨", message_id: null, create_time: "2025-02-24 23:27:48" }
-		// ];
-		
-		// const exists = array.some(item => item.word === 1150);
 
 		
 		try {

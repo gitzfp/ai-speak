@@ -61,6 +61,12 @@
 	    "navigationBarTitleText": "单词听写"
 	  }
 	},
+	{
+	  "path": "pages/textbook/newWordbook",
+	  "style": {
+	    "navigationBarTitleText": "我的生词本"
+	  }
+	},
     {
       "path": "pages/textbook/Learnwords",
       "style": {
