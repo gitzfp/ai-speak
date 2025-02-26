@@ -12,17 +12,17 @@
       <!-- 目录抽屉 -->
       <view class="catalog-drawer" :class="{ 'drawer-open': showCatalog }">
         <view class="catalog-header">目录</view>
-        <view
-          class="catalog-item"
-          v-for="(chapter, index) in catalogData"
-          :key="chapter.audio_id"
-          @click="goToPage(chapter.page_no || index)"
-        >
-          <text class="catalog-title">{{ chapter.title }}</text>
-          <text class="catalog-page"
-            >第{{ chapter.page_no || index + 1 }}页</text
+        <scroll-view class="catalog-content" scroll-y>
+          <view
+            class="catalog-item"
+            v-for="(chapter, index) in catalogData"
+            :key="chapter.audio_id"
+            @click="goToPage(chapter.page_no || index)"
           >
-        </view>
+            <text class="catalog-title">{{ chapter.title }}</text>
+            <text class="catalog-page">第{{ chapter.page_no || index + 1 }}页</text>
+          </view>
+        </scroll-view>
       </view>
 
       <!-- 主要内容区域 -->
@@ -945,10 +945,28 @@ onBeforeUnmount(() => {
   z-index: 999;
   transition: all 0.3s;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column; /* 改为纵向布局 */
 }
 
 .drawer-open {
   left: 0;
+}
+
+.catalog-header {
+  padding: 20px 15px;
+  font-size: 18px;
+  font-weight: bold;
+  border-bottom: 1px solid #eee;
+  background-color: #f8f8f8;
+  flex-shrink: 0; /* 防止头部被压缩 */
+}
+
+/* 新增目录内容区域样式 */
+.catalog-content {
+  flex: 1; /* 占据剩余空间 */
+  overflow-y: auto; /* 允许垂直滚动 */
+  -webkit-overflow-scrolling: touch; /* 增加 iOS 滚动惯性 */
 }
 
 .catalog-item {
@@ -962,12 +980,13 @@ onBeforeUnmount(() => {
 .catalog-title {
   flex: 1;
   font-size: 14px;
+  padding-right: 10px; /* 防止文字与页码重叠 */
 }
 
 .catalog-page {
   color: #666;
   font-size: 12px;
-  margin-left: 10px;
+  white-space: nowrap; /* 防止页码换行 */
 }
 
 .toolbar {
