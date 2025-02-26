@@ -154,7 +154,23 @@ import bookChapters9 from './wys-chapter/1l9_V2_chapters.json';
 import bookChapters10 from './wys-chapter/241115SCCL_00206486756c09f105ccd000197c45e_chapters.json';
 import bookChapters11 from './wys-chapter/1l11_V2_chapters.json';
 import bookChapters12 from './wys-chapter/241115SCCL_0020690675796941887c900019f87a4_chapters.json';
+import bookChapters_start3_3_first from './wys-from3-chapter/3l1_V2_chapters.json'; // 三起 三上
+import bookChapters_start3_3_second from './wys-from3-chapter/3l2_V2_chapters.json'; // 三起 三下
+import bookChapters_start3_4_first from './wys-from3-chapter/3l3_V2_chapters.json'; // 三起 四上
+import bookChapters_start3_4_second from './wys-from3-chapter/241111SCCL_002042267565986e341470001a5164f_chapters.json'; // 三起 四下
+import bookChapters_start3_5_first from './wys-from3-chapter/3l5_V2_chapters.json'; // 三起 五上
+import bookChapters_start3_5_second from './wys-from3-chapter/241112SCCL_002048367579bad105ccd0001178859_chapters.json'; // 三起 五下
+import bookChapters_start3_6_first from './wys-from3-chapter/3l7_V2_chapters.json'; // 三起 六上
+import bookChapters_start3_6_second from './wys-from3-chapter/241112SCCL_00204626756c4671887c90001242e2d_chapters.json'; // 三起 六下
 import useTextbookSelector from '@/hooks/useTextbookSelector';
+import bookTextbook_start3_3_first from './wys-from3-textbook/3l1_V2.json'; // 三起 三上
+import bookTextbook_start3_3_second from './wys-from3-textbook/3l2_V2.json'; // 三起 三下
+import bookTextbook_start3_4_first from './wys-from3-textbook/3l3_V2.json'; // 三起 四上
+import bookTextbook_start3_4_second from './wys-from3-textbook/241111SCCL_002042267565986e341470001a5164f.json'; // 三起 四下
+import bookTextbook_start3_5_first from './wys-from3-textbook/3l5_V2.json'; // 三起 五上
+import bookTextbook_start3_5_second from './wys-from3-textbook/241112SCCL_002048367579bad105ccd0001178859.json'; // 三起 五下
+import bookTextbook_start3_6_first from './wys-from3-textbook/3l7_V2.json'; // 三起 六上
+import bookTextbook_start3_6_second from './wys-from3-textbook/241112SCCL_00204626756c4671887c90001242e2d.json';  // 三起 六下
 // 引入 Icon 组件
 // import Icon from "@/components/Icon.vue";
  const {
@@ -178,18 +194,38 @@ const book = ref({
 // 添加上传方法
     const uploadPages = async () => {
       try {
-        const book1Id = "1l1_V2";   //一年级上
-        const book2Id = "1l2_V2"; // 一年级下
-        const book3Id = "1l3_V2"; // 二年级上
-        const book4Id = "241113SCCL_002052267526682daa78f0001151d8c"; // 二年级下
-        const book5Id = "1l5_V2"; // 三年级上
-        const book6Id = "241113SCCL_002055767579a011887c90001a3978a"; // 三年级下
-        const book7Id = "1l7_V2"; // 四年级上 
-        const book8Id = "241113SCCL_00206046756bcbddaa78f0001c8efbd"; // 四年级下 
-        const book9Id = "1l9_V2"; // 五年级上 
-        const book10Id = "241115SCCL_00206486756c09f105ccd000197c45e"; // 五年级下  
-        const book11Id = "1l11_V2"; // 六年级上 
-        const book12Id = "241115SCCL_0020690675796941887c900019f87a4"; // 六年级下
+        // const book1Id = "1l1_V2";   //一年级上
+        // const book2Id = "1l2_V2"; // 一年级下
+        // const book3Id = "1l3_V2"; // 二年级上
+        // const book4Id = "241113SCCL_002052267526682daa78f0001151d8c"; // 二年级下
+        // const book5Id = "1l5_V2"; // 三年级上
+        // const book6Id = "241113SCCL_002055767579a011887c90001a3978a"; // 三年级下
+        // const book7Id = "1l7_V2"; // 四年级上 
+        // const book8Id = "241113SCCL_00206046756bcbddaa78f0001c8efbd"; // 四年级下 
+        // const book9Id = "1l9_V2"; // 五年级上 
+        // const book10Id = "241115SCCL_00206486756c09f105ccd000197c45e"; // 五年级下  
+        // const book11Id = "1l11_V2"; // 六年级上 
+        // const book12Id = "241115SCCL_0020690675796941887c900019f87a4"; // 六年级下
+        const bookIds = [
+          '3l1_V2',
+          '3l2_V2',
+          '3l3_V2',
+          '241111SCCL_002042267565986e341470001a5164f',
+          '3l5_V2',
+          '241112SCCL_002048367579bad105ccd0001178859',
+          '3l7_V2',
+          '241112SCCL_00204626756c4671887c90001242e2d',
+        ]
+        const bookTextbooks = [
+          bookTextbook_start3_3_first,
+          bookTextbook_start3_3_second,
+          bookTextbook_start3_4_first,
+          bookTextbook_start3_4_second,
+          bookTextbook_start3_5_first,
+          bookTextbook_start3_5_second,
+          bookTextbook_start3_6_first,
+          bookTextbook_start3_6_second,
+        ]
         // 显示加载提示
         uni.showLoading({
           title: "正在上传...",
@@ -229,22 +265,30 @@ const book = ref({
         //   book8Id,
         //   bookPages8
         // );
-        const response9 = await textbook.createTextbookPages(
-          book9Id,
-          bookPages9
-        );
-        const response10 = await textbook.createTextbookPages(
-          book10Id,
-          bookPages10
-        );
-        const response11 = await textbook.createTextbookPages(
-          book11Id,
-          bookPages11
-        );
-        const response12 = await textbook.createTextbookPages(
-          book12Id,
-          bookPages12
-        );
+        // const response9 = await textbook.createTextbookPages(
+        //   book9Id,
+        //   bookPages9
+        // );
+        // const response10 = await textbook.createTextbookPages(
+        //   book10Id,
+        //   bookPages10
+        // );
+        // const response11 = await textbook.createTextbookPages(
+        //   book11Id,
+        //   bookPages11
+        // );
+        // const response12 = await textbook.createTextbookPages(
+        //   book12Id,
+        //   bookPages12
+        // );
+        for (let i = 0; i < bookIds.length; i++) {
+          const bookId = bookIds[i];
+          const bookTextbook = bookTextbooks[i];
+          const response = await textbook.createTextbookPages(
+            bookId,
+            bookTextbook
+          )
+        }
         uni.hideLoading();
         uni.showToast({
           title: "上传成功",
@@ -266,73 +310,96 @@ const book = ref({
 
     const uploadChapters = async () => {
       try {
-        const bookId1 = '1l1_V2'
-        const bookId2 = '1l2_V2'
-        const bookId3 = '1l3_V2'
-        const bookId4 = '241113SCCL_002052267526682daa78f0001151d8c'
-        const bookId5 = '1l5_V2'
-        const bookId6 = '241113SCCL_002055767579a011887c90001a3978a'
-        const bookId7 = '1l7_V2'
-        const bookId8 = '241113SCCL_00206046756bcbddaa78f0001c8efbd'
-        const bookId9 = '1l9_V2'
-        const bookId10 = '241115SCCL_00206486756c09f105ccd000197c45e'
-        const bookId11 = '1l11_V2'
-        const bookId12 = '241115SCCL_0020690675796941887c900019f87a4'
-        
+        // const bookId1 = '1l1_V2'
+        // const bookId2 = '1l2_V2'
+        // const bookId3 = '1l3_V2'
+        // const bookId4 = '241113SCCL_002052267526682daa78f0001151d8c'
+        // const bookId5 = '1l5_V2'
+        // const bookId6 = '241113SCCL_002055767579a011887c90001a3978a'
+        // const bookId7 = '1l7_V2'
+        // const bookId8 = '241113SCCL_00206046756bcbddaa78f0001c8efbd'
+        // const bookId9 = '1l9_V2'
+        // const bookId10 = '241115SCCL_00206486756c09f105ccd000197c45e'
+        // const bookId11 = '1l11_V2'
+        // const bookId12 = '241115SCCL_0020690675796941887c900019f87a4'
+        const bookIds = [
+          '3l1_V2',
+          '3l2_V2',
+          '3l3_V2',
+          '241111SCCL_002042267565986e341470001a5164f',
+          '3l5_V2',
+          '241112SCCL_002048367579bad105ccd0001178859',
+          '3l7_V2',
+          '241112SCCL_00204626756c4671887c90001242e2d',
+        ]
+
+        const bookChapters = [
+          bookChapters_start3_3_first,
+          bookChapters_start3_3_second,
+          bookChapters_start3_4_first,
+          bookChapters_start3_4_second,
+          bookChapters_start3_5_first,
+          bookChapters_start3_5_second,
+          bookChapters_start3_6_first,
+          bookChapters_start3_6_second,
+        ]
         // 显示加载提示
         uni.showLoading({
           title: '正在上传章节...'
         })
-        
-        // 调用 API 上传章节
-        const response1 = await textbook.createTextbookChapters(
-          bookId1,
-          bookChapters1
-        )
-        const response2 = await textbook.createTextbookChapters(
-          bookId2,
-          bookChapters2
-        )
-        const response3 = await textbook.createTextbookChapters(
-          bookId3,
-          bookChapters3
-        )
-        const response4 = await textbook.createTextbookChapters(
-          bookId4,
-          bookChapters4
-        )
-        const response5 = await textbook.createTextbookChapters(
-          bookId5,
-          bookChapters5
-        )
-        const response6 = await textbook.createTextbookChapters(
-          bookId6, 
-          bookChapters6
-        )
-        const response7 = await textbook.createTextbookChapters(
-          bookId7,
-          bookChapters7
-        )
-        const response8 = await textbook.createTextbookChapters(
-          bookId8,
-          bookChapters8
-        )
-        const response9 = await textbook.createTextbookChapters(
-          bookId9,
-          bookChapters9
-        )
-        const response10 = await textbook.createTextbookChapters(
-          bookId10,
-          bookChapters10
-        )
-        const response11 = await textbook.createTextbookChapters(
-          bookId11,
-          bookChapters11
-        )
-        const response12 = await textbook.createTextbookChapters(
-          bookId12,
-          bookChapters12
-        )
+        for (let i = 0; i < bookIds.length; i++) {
+          const bookId = bookIds[i];
+          const bookChapter = bookChapters[i];
+          // 调用 API 上传章节
+          const response = await textbook.createTextbookChapters(
+            bookId,
+            bookChapter
+          )
+        }
+        // const response2 = await textbook.createTextbookChapters(
+        //   bookId2,
+        //   bookChapters2
+        // )
+        // const response3 = await textbook.createTextbookChapters(
+        //   bookId3,
+        //   bookChapters3
+        // )
+        // const response4 = await textbook.createTextbookChapters(
+        //   bookId4,
+        //   bookChapters4
+        // )
+        // const response5 = await textbook.createTextbookChapters(
+        //   bookId5,
+        //   bookChapters5
+        // )
+        // const response6 = await textbook.createTextbookChapters(
+        //   bookId6, 
+        //   bookChapters6
+        // )
+        // const response7 = await textbook.createTextbookChapters(
+        //   bookId7,
+        //   bookChapters7
+        // )
+        // const response8 = await textbook.createTextbookChapters(
+        //   bookId8,
+        //   bookChapters8
+        // )
+        // const response9 = await textbook.createTextbookChapters(
+        //   bookId9,
+        //   bookChapters9
+        // )
+        // const response10 = await textbook.createTextbookChapters(
+        //   bookId10,
+        //   bookChapters10
+        // )
+        // const response11 = await textbook.createTextbookChapters(
+        //   bookId11,
+      //   bookChapters11
+        // )
+        // const response12 = await textbook.createTextbookChapters(
+        //   bookId12,
+        //   bookChapters12
+        // )
         // 隐藏加载提示
         uni.showToast({
           title: '章节上传成功',
