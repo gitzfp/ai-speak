@@ -471,9 +471,44 @@ const fetchBooks = async (isSwitch) => {
                 }
             });
         } else {
+			
+			
             // 设置默认教材（需要确保 books 是响应式引用）
             if (books.value.length > 0) {
-                book.value = { ...books.value[0] };
+				
+				uni.getStorage({
+				  key: 'bookSelectionObject', // 存储的键名
+				  success: (res) => {
+				    console.log('获取的数据:', res.data);
+					var bookSelectionObject = res.data
+					// var selectedVersion = bookSelectionObject.version_type
+					// var selectedGrade = bookSelectionObject.grade
+					// var selectedTerm = bookSelectionObject.term
+					// var selectedPublisher = bookSelectionObject.publisher
+					var  selectedbook_id = bookSelectionObject.book_id
+					
+					
+					
+					// book.value = books.value.find(item => 
+					//   item.version_type === selectedVersion &&
+					//   item.grade === selectedGrade &&
+					//   item.term === selectedTerm &&
+					//   item.publisher === selectedPublisher &&
+					//   item.book_id === selectedbook_id
+					// );
+					book.value = books.value.find(item =>
+					  item.book_id === selectedbook_id
+					);
+					
+				  },
+				  fail: (err) => {
+				    console.error('获取数据失败:', err);
+					 book.value = { ...books.value[0] };
+				  }
+				});
+				
+	
+               
             }
         }
       } catch (err) {
