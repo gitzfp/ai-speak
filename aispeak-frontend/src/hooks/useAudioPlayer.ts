@@ -129,10 +129,10 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void) {
   
     audio.onStop(() => {
       // 手动停止或到达指定结束时间时触发
-      console.log('onStop:',  sentences) 
-      isPlaying.value = false
-	  console.log('onStop----isPlaying:')
-	  console.log(isPlaying.value) 
+   //    console.log('onStop:',  sentences) 
+   //    isPlaying.value = false
+	  // console.log('onStop----isPlaying:')
+	  // console.log(isPlaying.value) 
       // handlePlayEnd(sentences)
     })
     
