@@ -163,12 +163,49 @@ const filteredBooks = computed(() => {
 });
 
 // 组件挂载时获取数据
-onMounted(() => {});
+onMounted(() => {
+	uni.getStorage({
+	  key: 'bookSelectionObject', // 存储的键名
+	  success: (res) => {
+	    console.log('获取的数据:', res.data);
+		var bookSelectionObject = res.data
+		selectedVersion.value = bookSelectionObject.version_type
+		selectedGrade.value = bookSelectionObject.grade
+		selectedTerm.value = bookSelectionObject.term
+		selectedPublisher.value = bookSelectionObject.publisher
+	  },
+	  fail: (err) => {
+	    console.error('获取数据失败:', err);
+	  }
+	});
+});
 
 // 添加跳转到课程页面的方法
 const goToCourse = (book) => {
-  emit("switchbookSuccess", book);
-  closePopup();
+	
+	var bookSelectionObject = {
+		version_type:selectedVersion.value,
+		grade:selectedGrade.value,
+		term:selectedTerm.value,
+		publisher:selectedPublisher.value,
+		book_id:book.book_id
+	}
+	
+	uni.setStorage({
+	  key: 'bookSelectionObject',
+	  data: bookSelectionObject,
+	  success: () => {
+	    console.log('数据已存储');
+		emit("switchbookSuccess", book);
+		closePopup();
+	  },
+	  fail: (err) => {
+	    console.error('存储失败:', err);
+	  }
+	});
+	
+	
+  
 };
 </script>
 

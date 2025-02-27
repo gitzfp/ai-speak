@@ -2,34 +2,45 @@
   <view class="page-container" v-if="planWordsList.length > 0">
     <view class="main-content" :animation="animationData">
 		
-		<!-- 分页指示 -->
-		<view class="pagination">
-		  <view>
-		    <text class="page-current">{{ planWordindext+1 }}</text>
-		    <text class="page-divider">/</text>
-		    <text class="page-total">{{ planWordsList.length }}</text>
-		  </view>
-		</view>
-		
-      <WordDisplay v-if="planWordmode == 0" ref="wordDisplayref" :word="planWordsList[planWordindext]" />
-      <view v-else-if="planWordmode == 1" class="secondMode">
-		  <view class="pronunciation-text">
-			<view @tap="pronunciationSelect" class="leftTit">{{ phonetic }} ⇌ |</view>
-			 <view class="rightTit" @tap="phonicsbegins">
-				 <view class="type-text"> 点击发音</view>
-				 <image v-if="isSecondModeReading" class="secondMode-icon" src="http://114.116.224.128:8097/static/voice_playing.gif"></image>
-				 <image v-else class="secondMode-icon" src="http://114.116.224.128:8097/static/voice_play.png"></image>
-			</view>  
-		 </view>
-        
-      </view>
-      <view class="thirdMode" v-else>
-        {{ planWordsList[planWordindext].paraphrase }}
-      </view>
+		<!-- 学习 -->
+		<template v-if="planWordmode==2">
+		  <view class="progress-bar">
+		  	<view 
+		  	  class="progress-ct" 
+		  	  :style="{ width: progress + '%' }"
+		  	></view>
+		   </view>
+		  
+		 <!-- <view  class="threeline">
+		  	<view class="threeline-title" style="color: red;">
+				{{ Math.floor(progress) + '%' }}</view>
+		  </view> -->
+		</template>
+		<template v-if="ismisanswer">
+			<WordDisplay ref="wordDisplayref" :word="optionWord" />
+		</template>
+		<template v-else>
+			<WordDisplay v-if="planWordmode == 0" ref="wordDisplayref" :word="planWordsList[planWordindext]" />
+			<view v-else-if="planWordmode == 1" class="secondMode">
+					  <view class="pronunciation-text">
+						<view @tap="pronunciationSelect" class="leftTit">{{ phonetic }} ⇌ |</view>
+						 <view class="rightTit" @tap="phonicsbegins">
+							 <view class="type-text"> 点击发音</view>
+							 <image v-if="isSecondModeReading" class="secondMode-icon" src="http://114.116.224.128:8097/static/voice_playing.gif"></image>
+							 <image v-else class="secondMode-icon" src="http://114.116.224.128:8097/static/voice_play.png"></image>
+						</view>  
+					 </view>
+			  
+			</view>
+			<view class="thirdMode" v-else>
+			  {{ planWordsThreeList[planWordThreeindext].paraphrase }}
+			</view>
+		</template>
+      
 
       <OptionAreaPicture
 		v-if="!ismisanswer"
-        :word="planWordsList[planWordindext]"
+        :word="optionWord"
         :planWordmode="planWordmode"
         :optionWords="optionAreaWords"
         @item-click="optionitemclick"
@@ -37,15 +48,15 @@
 	  <template v-else >
 		<view class="definition">
 			<view class="label">释义：</view>
-			<view class="value">{{planWordsList[planWordindext].chinese}}</view>
+			<view class="value">{{optionWord.chinese}}</view>
 		</view>
 	  </template>
 	  
 	  
     </view>
 	<view v-if="ismisanswer" class="tab-bar">
-		<view class="tab-item" @tap="wordsNotebookclick(planWordsList[planWordindext])">
-			<template v-if="isUnfamiliarWord(planWordsList[planWordindext])">
+		<view class="tab-item" @tap="wordsNotebookclick(optionWord)">
+			<template v-if="isUnfamiliarWord(optionWord)">
 				<image class="tab-icon" src="@/assets/icons/five-pointedstar-selet.svg"></image>
 				<text class="tab-text">已加入生词本</text>
 			</template>
@@ -59,6 +70,10 @@
 		  <view class="tab-btn">继续</view>
 		</view>
 	</view>
+	<FinishWordPop 
+	v-if="finishiWordshowPopup" @startSpelling="startSpelling"
+	@giveupspelling="giveupspelling"
+	/>
   </view>
 </template>
 
@@ -70,18 +85,32 @@ import textbook from '@/api/textbook';
 import OptionAreaPicture from './OptionAreaPicture.vue';
 import accountRequest from "@/api/account"
 
+import FinishWordPop from './FinishWordPop.vue'
+
 
 const wordDisplayref = ref(null);
 
 const book_id = ref('');
+
+//模式1的数组和下标
 const planWordsList = ref([]);
 const planWordindext = ref(0);
+//模式2的数组和下标
+const planWordsTwoList = ref([]);
+const planWordTwoindext = ref(0);
+//模式3的数组和下标
+const planWordsThreeList= ref([]);
+const planWordThreeindext = ref(0);
+const progressindext = ref(0);
+
 const planWordmode = ref(0); // 总共三种模式
 const isSecondModeReading = ref(false);
 const animationData = ref(null); // 用于绑定动画数据
 const phonetic = ref('美');
 const currentAudio = ref(null)
 const ismisanswer = ref(false)
+
+const finishiWordshowPopup = ref(false)
 
 
 //生词本 数租
@@ -92,8 +121,26 @@ onMounted(() => {
   
 });
 
+const progress = computed(() => {
+	   if (planWordsThreeList.value.length>0) {
+		   let percentage = ((progressindext.value) / planWordsThreeList.value.length) * 100;
+		   return percentage
+	   } else {
+		  return 0 
+	   }
+});
+
+const optionWord = computed(() => {
+	if (planWordmode.value == 0) {
+		return planWordsList.value[planWordindext.value]
+	} else if (planWordmode.value == 1) {
+		return planWordsTwoList.value[planWordTwoindext.value]
+	} else {
+		return planWordsThreeList.value[planWordThreeindext.value]
+	}
+});
 const sound_path = computed(() => {
-  var wdd =	planWordsList.value[planWordindext.value]
+  var wdd =	planWordsTwoList.value[planWordTwoindext.value]
   const selectedSoundPath = phonetic.value === '美' ? wdd.us_sound_path : wdd.uk_sound_path;
   return selectedSoundPath;
 });
@@ -116,18 +163,38 @@ const phonicsbegins = () => {
 const stopCurrentAudio = () => {
   if (currentAudio.value) {
 	currentAudio.value.pause();
-	currentAudio.value?.destroy()
+	// currentAudio.value?.destroy()
 	currentAudio.value = null;
   }
 };
 
 const instance = getCurrentInstance(); // 提前保存实例
 
+const giveupspelling = (num) =>  {
+	console.log("fx拼读")
+	finishiWordshowPopup.value = false
+	uni.navigateBack();
+}
+const startSpelling = (num) =>  {
+	console.log("ks拼读")
+	finishiWordshowPopup.value = false
+	uni.navigateBack();
+}
+
 const optionitemclick = (num) => {
   if (num==1) { //答对了
-	  animatedPageturn()
+	  if (planWordmode.value == 2 && planWordThreeindext.value == (planWordsThreeList.value.length-1)) {
+		  // console.log("不进来吗")
+		  progressindext.value = planWordsThreeList.value.length
+		  finishiWordshowPopup.value = true
+	  } else {
+		  // console.log("跑这边")
+		  animatedPageturn()
+	  }
   } else {
+	  // console.log("答错----")
 	  ismisanswer.value = true
+	  
   }
 };
 
@@ -156,32 +223,88 @@ const animatedPageturn = (isError = false) => {
 		}
 	
 	  setTimeout(() => {
+		  if (planWordmode.value == 0) {
+			  if (!isError) {
+				  if (planWordindext.value % 5 == 4) {
+						planWordmode.value = planWordmode.value + 1;
+				  } else {
+					  if (planWordindext.value == planWordsList.value.length - 1) {
+						  planWordmode.value = planWordmode.value + 1;
+					  } 
+				  }
+				  planWordindext.value = planWordindext.value + 1;
+			  } else {
+				let chajw = 4-(planWordindext.value % 5)
+				let crindext = planWordindext.value+chajw
+				let element = planWordsList.value.splice(planWordindext.value,1)[0]
+				planWordsList.value.splice(crindext, 0, element);
+			  }
+			  
+		  } else if (planWordmode.value == 1) {
+			  if (!isError) {
+				  if (planWordTwoindext.value % 5 == 4) {
+				  	planWordmode.value = planWordmode.value + 1;
+				  } else {
+				  				  if (planWordTwoindext.value == planWordsTwoList.value.length - 1) {
+				  					  planWordmode.value = planWordmode.value + 1;
+				  				  } 
+				  }
+				  planWordTwoindext.value = planWordTwoindext.value + 1;
+			  } else {
+				  let chajw = 4-(planWordTwoindext.value % 5)
+				  let crindext = planWordTwoindext.value+chajw
+				  let element = planWordsTwoList.value.splice(planWordTwoindext.value,1)[0]
+				  planWordsTwoList.value.splice(crindext, 0, element);
+			  }
+			  
+		  } else {
+			  if (!isError) {
+				 if (planWordThreeindext.value % 5 == 4) {
+				   if (planWordThreeindext.value < planWordsThreeList.value.length - 1) {
+				     planWordThreeindext.value = planWordThreeindext.value + 1;
+				     planWordmode.value = 0;
+				   }
+				 } else {
+				   if (planWordThreeindext.value < planWordsThreeList.value.length - 1) {
+				     planWordThreeindext.value = planWordThreeindext.value + 1;
+				   }
+				 } 
+			  } else {
+				  let chajw = 4-(planWordThreeindext.value % 5)
+				  let crindext = planWordThreeindext.value+chajw
+				  let element = planWordsThreeList.value.splice(planWordThreeindext.value,1)[0]
+				  planWordsThreeList.value.splice(crindext, 0, element);
+			  }
+			  progressindext.value = planWordThreeindext.value
+		  }
+		  
+		  
 	    // 更新逻辑
-	    if (planWordmode.value == 0 || planWordmode.value == 1) {
-	      if (planWordindext.value % 5 == 4) {
-	        planWordindext.value = planWordindext.value - 4;
-	        planWordmode.value = planWordmode.value + 1;
-	      } else {
-	        if (planWordindext.value == planWordsList.value.length - 1) {
-	          planWordindext.value = planWordindext.value - ((planWordsList.value.length - 1) % 5);
-	          planWordmode.value = planWordmode.value + 1;
-	        } else {
-	          planWordindext.value = planWordindext.value + 1;
-	        }
-	      }
-	    } else {
-	      // mode == 2
-	      if (planWordindext.value % 5 == 4) {
-	        if (planWordindext.value < planWordsList.value.length - 1) {
-	          planWordindext.value = planWordindext.value + 1;
-	          planWordmode.value = 0;
-	        }
-	      } else {
-	        if (planWordindext.value < planWordsList.value.length - 1) {
-	          planWordindext.value = planWordindext.value + 1;
-	        }
-	      }
-	    }
+	    // if (planWordmode.value == 0 || planWordmode.value == 1) {
+	    //   if (planWordindext.value % 5 == 4) {
+	    //     planWordindext.value = planWordindext.value - 4;
+	    //     planWordmode.value = planWordmode.value + 1;
+	    //   } else {
+	    //     if (planWordindext.value == planWordsList.value.length - 1) {
+	    //       planWordindext.value = planWordindext.value - ((planWordsList.value.length - 1) % 5);
+	    //       planWordmode.value = planWordmode.value + 1;
+	    //     } else {
+	    //       planWordindext.value = planWordindext.value + 1;
+	    //     }
+	    //   }
+	    // } else {
+	    //   // mode == 2
+	    //   if (planWordindext.value % 5 == 4) {
+	    //     if (planWordindext.value < planWordsList.value.length - 1) {
+	    //       planWordindext.value = planWordindext.value + 1;
+	    //       planWordmode.value = 0;
+	    //     }
+	    //   } else {
+	    //     if (planWordindext.value < planWordsList.value.length - 1) {
+	    //       planWordindext.value = planWordindext.value + 1;
+	    //     }
+	    //   }
+	    // }
 	
 	// 重置动画状态，但不触发动画
 	    animation.translateX('0%').opacity(1).step({ duration: 0 }); // 设置 duration 为 0，不触发动画
@@ -214,6 +337,16 @@ const getoptionAreaWords = (fixedNum, rangeStart, rangeEnd, numToSelect) => {
   // 随机选取不重复的数字
   let selectedNumbers = [];
   let result = [];
+  
+  var huoquList =[];
+  if (planWordmode.value == 0) {
+  	  huoquList = planWordsList.value
+  } else if (planWordmode.value ==1) {
+  	  huoquList = planWordsTwoList.value
+  } else {
+  	  huoquList = planWordsThreeList.value
+  }
+  
 
   while (selectedNumbers.length < numToSelect) {
     let randomIndex = Math.floor(Math.random() * numbersPool.length);
@@ -222,35 +355,43 @@ const getoptionAreaWords = (fixedNum, rangeStart, rangeEnd, numToSelect) => {
     // 如果这个数字还没有被选中，则添加到结果数组中
     if (!selectedNumbers.includes(chosenNumber)) {
       selectedNumbers.push(chosenNumber);
-      result.push(planWordsList.value[chosenNumber]);
+      result.push(huoquList[chosenNumber]);
     }
   }
 
   // 在随机位置插入固定数字
   let insertPosition = Math.floor(Math.random() * (result.length + 1));
-  result.splice(insertPosition, 0, planWordsList.value[fixedNum]);
+  result.splice(insertPosition, 0, huoquList[fixedNum]);
 
   return result;
 };
 
 const optionAreaWords = computed(() => {
-  console.log('uiiuuiiu');
-  let result = getoptionAreaWords(planWordindext.value, 0, planWordsList.value.length - 1, 3);
-  return result;
+  if (planWordmode.value == 0) {
+	  let result = getoptionAreaWords(planWordindext.value, 0, planWordsList.value.length - 1, 3);
+	  return result;
+  } else if (planWordmode.value ==1) {
+	  let result = getoptionAreaWords(planWordTwoindext.value, 0, planWordsTwoList.value.length - 1, 3);
+	  return result;
+  } else {
+	  let result = getoptionAreaWords(planWordThreeindext.value, 0, planWordsThreeList.value.length - 1, 3);
+	  return result;
+  }
+  
 });
 
 onLoad(async (options) => {
   const { bookId, planWords } = options;
   book_id.value = bookId;
-
   // 获取数据
   uni.getStorage({
     key: planWords,
     success: function (res) {
       const words = JSON.parse(res.data);
-      detailWords(bookId, words);
 	  
-	  //获取生词本数组
+	   detailWords(bookId, words);
+	  
+	  // //获取生词本数组
 	  collectsGetnotebook()
     },
     fail: function (err) {
@@ -262,15 +403,25 @@ onLoad(async (options) => {
 const detailWords = async (bookId, words) => {
   try {
     const response = await textbook.getWordsDetail(bookId, words);
-    planWordsList.value = response.data.words;
+	planWordsList.value = [...response.data.words]; // 创建新数组
+	planWordsTwoList.value = [...response.data.words]; // 创建新数组
+	planWordsThreeList.value = [...response.data.words]; // 创建新数组
 	
 	// 使用 nextTick 确保 DOM 更新完成
 	nextTick(() => {
-	  console.log('wordDisplayref.value:', wordDisplayref.value);
-	  if (planWordmode.value == 0 && wordDisplayref.value) {
-	    wordDisplayref.value.phonicsbegins();
-	  }
+
+	 console.log('wordDisplayref.value:', wordDisplayref.value);
+	 if (planWordmode.value == 0 && wordDisplayref.value) {
+	   wordDisplayref.value.phonicsbegins();
+	  } 
 	});
+	
+	// setTimeout(() => {
+	//       console.log('wordDisplayref.value:', wordDisplayref.value);
+	//       if (planWordmode.value == 0 && wordDisplayref.value) {
+	//         wordDisplayref.value.phonicsbegins();
+	//       }
+	//     }, 500); // 延迟 100ms
 	
   } catch (error) {
     console.error('获取单词列表失败:', error);
@@ -306,6 +457,7 @@ const collectsGetnotebook = async () => {
 	
 	
 	const isUnfamiliarWord =(word)=> {
+		
 		if (notebookList.value.length>0) {
 			const exists = notebookList.value.some(item => item.word_id === word.word_id);
 			return exists
@@ -315,6 +467,9 @@ const collectsGetnotebook = async () => {
 	}
 	
 	  const wordsNotebookclick =(word) => {
+		  
+		  console.log("word")
+		  console.log(word)
 		  
 		
 		let requestParams = {
@@ -527,5 +682,32 @@ page {
       color: #2b9939;
     }
   }
+  
+  .progress-bar {
+  	margin: 20rpx 30rpx 10rpx 30rpx;
+  	// margin-left: 0;
+  	height: 30rpx;
+	border-radius: 10rpx;
+  	background-color: #EFFEE8;
+  	.progress-ct {
+  		background-color: #05c160;
+		border-radius: 10rpx;
+  		height: 100%;
+  	}
+  }
+  .threeline {
+  	margin: 10rpx 50rpx 20rpx 50rpx;
+  	display: flex;
+  	justify-content: flex-start;
+  	align-items: center;
+  	.threeline-title {
+		width: 50%;
+  		color: #666;
+  		font-size: 23rpx;
+  		margin-left: 10rpx;
+  	
+  	}
+  }
+ 
 
 </style>

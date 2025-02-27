@@ -223,6 +223,8 @@
 		    planWordsList.push(word.word_id);
 		});
 		
+		console.log("firstFive==="+firstFive)
+		console.log(firstFive)
 		
 		const planWords = 'planWords';
 		uni.setStorage({

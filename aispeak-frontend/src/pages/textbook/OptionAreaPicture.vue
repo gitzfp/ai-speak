@@ -109,9 +109,6 @@ onMounted(() => {
   }) 
 
 const getDynamicstyle = (num) =>{
-	console.log("num")
-	console.log(num)
-	console.log(num.value)
 	if (num==1) {
 		return 'border-color:#5AC568;color:#5AC568;'  
 	} else if (num==2) {

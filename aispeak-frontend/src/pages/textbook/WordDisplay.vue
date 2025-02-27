@@ -19,11 +19,11 @@
 		    class="phonetic-item"
 		  >
 		    <text class="letter"
-		      :class="{ playing: (currentPlayingPhonetic === item.letter && currentPlayingPosition === item.position) || (currentTrackIndex != - 1 && sound_pathLists[currentTrackIndex].position === item.position) }">
+		      :class="{ playing: (currentPlayingPhonetic === item.letter && currentPlayingPosition === item.position) || (currentTrackIndex != - 1 && currentTrackIndex < sound_pathLists.length && sound_pathLists[currentTrackIndex].position === item.position) }">
 		      {{ item.letter }}
 		    </text>
 		    <text class="symbol"
-		      :class="{ playing: (currentPlayingPhonetic === item.letter && currentPlayingPosition === item.position || (currentTrackIndex != - 1 && sound_pathLists[currentTrackIndex].position === item.position)) }">
+		      :class="{ playing: (currentPlayingPhonetic === item.letter && currentPlayingPosition === item.position || (currentTrackIndex != - 1 && currentTrackIndex < sound_pathLists.length && sound_pathLists[currentTrackIndex].position === item.position)) }">
 		      /{{ item.phonetic }}/
 		    </text>
 		  </view>
@@ -87,6 +87,7 @@ const phonetic_content = computed(() => {
 });
 
 const filteredSyllables = computed(() => {
+	
   if (!props.word || !props.word.syllables) return [];
   const result = [];
   for (let i = 0; i < props.word.syllables.length - 1; i++) {
@@ -103,11 +104,14 @@ const filteredSyllables = computed(() => {
 });
 
 const sound_pathLists = computed(() => {
+	
   const result = [];
   const selectedSoundPath = phonetic.value === '美' ? props.word.us_sound_path : props.word.uk_sound_path;
   const soundoj = { position: -1, letter: "", content: "", sound_path: selectedSoundPath, phonetic: phonetic.value };
   result.push(soundoj);
   result.push(...props.word.syllables);
+  
+
   return result;
 });
 
@@ -150,9 +154,25 @@ const phonicsbegins = () => {
         audio.src = track.sound_path;
         audio.volume = props.volume;
         audio.onEnded(() => {
+			console.log("播放成功")
           currentTrackIndex.value++;
           playNext();
         });
+		// 监听播放错误事件
+		audio.onError((err) => {
+		  // console.error('音频播放失败:', err);
+		  // console.log("currentTrackIndex.value")
+		  // console.log(currentTrackIndex.value)
+		  currentTrackIndex.value++;
+		  playNext();
+		  // 在这里执行错误处理逻辑，例如提示用户、重试播放等
+		  // 例如：
+		  // uni.showToast({
+		  //   title: '音频播放失败，请稍后重试',
+		  //   icon: 'none'
+		  // });
+		});
+		
         audio.play();
       }
     } else {
@@ -174,7 +194,8 @@ const stopCurrentAudio = () => {
 	isPhonicsReading.value = false;
     try {
       currentAudio.value.stop();
-      currentAudio.value?.destroy();
+      // currentAudio.value?.destroy();
+	  currentAudio.value = null;
     } catch (error) {
       console.error("Error stopping audio:", error);
     }

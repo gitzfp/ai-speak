@@ -79,8 +79,9 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void) {
       return
     }
     console.log('播放句子开始:', sentence, sentences) 
+	
     stopCurrentAudio()
-    
+	
     const audio = uni.createInnerAudioContext()
     currentAudio.value = audio
     audio.src = sentence.audio_url
@@ -93,7 +94,16 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void) {
       
       // 监听播放进度
       audio.onTimeUpdate(() => {
+		  
         if (audio.currentTime >= endTime - 0.1) { // 防止浮点误差
+			// console.log("audio.currentTime")
+			// console.log(audio.currentTime)
+			// console.log("startTime - 0.1")
+			// console.log(startTime)
+			// console.log("endTime - 0.1")
+			// console.log(endTime)
+			// console.log(endTime - 0.1)
+			// console.log("一直调")
           // audio.stop()
           handlePlayEnd(sentences)  // 处理播放结束
         }
@@ -105,6 +115,8 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void) {
       console.error('播放错误:', res)
       stopCurrentAudio()
       isPlaying.value = false
+	  console.log('播放错误isPlaying:')
+	  console.log(isPlaying.value) 
     })
   
     audio.onEnded(() => {
@@ -119,6 +131,8 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void) {
       // 手动停止或到达指定结束时间时触发
       console.log('onStop:',  sentences) 
       isPlaying.value = false
+	  console.log('onStop----isPlaying:')
+	  console.log(isPlaying.value) 
       // handlePlayEnd(sentences)
     })
     
@@ -129,7 +143,7 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void) {
 
   // 播放结束处理
   const handlePlayEnd = (sentences?: Sentence[]) => {
-    console.log('播放句子结束handlePlayEnd:', sentences, loopMode.value)
+    // console.log('播放句子结束handlePlayEnd:', sentences, loopMode.value)
     if (!sentences) {
       stopCurrentAudio()
       return
@@ -148,6 +162,8 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void) {
       default:
         stopCurrentAudio()
         isPlaying.value = false
+		console.log('default----isPlaying:')
+		console.log(isPlaying.value) 
         break
     }
   }
@@ -186,13 +202,14 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void) {
 
 // Update stopCurrentAudio to clean up properly
 function stopCurrentAudio() {
+
   if (currentAudio.value) {
     uni.hideToast()
     const audio = currentAudio.value // Store reference before nullifying
     try {
       audio.stop()
+	  
       console.log("Audio stopped successfully")
-      // audio.destroy()
     } catch (error) {
       console.error("Error stopping audio:", error)
     } finally {
