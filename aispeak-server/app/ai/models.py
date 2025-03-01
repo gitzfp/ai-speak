@@ -73,10 +73,12 @@ class AIMessageResult:
 
 @dataclass
 class AITopicMessageResult:
-    message: str
-    message_style: str | None
-    completed: bool
-    new_achieved_target: AchievedTarget | None
+    def __init__(self, message: str, message_style: str, completed: bool, new_achieved_target: dict = None):
+        self.message = message
+        self.message_style = message_style
+        self.completed = completed
+        self.new_achieved_target = new_achieved_target
+
     all_targets: Optional[List[TaskTarget]] = field(default=None)
 
 

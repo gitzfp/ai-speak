@@ -1,7 +1,7 @@
 import datetime
 
 from sqlalchemy import Column, String, DateTime, Integer, Index, Text
-from app.db import Base, engine
+from app.db import Base
 
 
 # 聊天话题组表
