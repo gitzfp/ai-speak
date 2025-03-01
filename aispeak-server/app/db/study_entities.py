@@ -20,7 +20,7 @@ class UserWordProgress(Base):
     """用户单词学习进度表"""
     __tablename__ = "user_word_progress"
 
-    progress_id = Column(Integer, primary_key=True, autoincrement=True, comment="进度唯一标识")
+    id = Column("id", Integer, primary_key=True, autoincrement=True)  
     user_id = Column(Integer, nullable=False, comment="用户ID")
     word_id = Column(Integer, nullable=False, comment="单词ID")
     book_id = Column(Integer, nullable=False, comment="书籍ID")
@@ -43,8 +43,7 @@ class UserWordProgress(Base):
 class StudyRecord(Base):
     """学习记录表"""
     __tablename__ = "study_records"
-
-    record_id = Column(Integer, primary_key=True, autoincrement=True, comment="记录唯一标识")
+    id = Column(Integer, primary_key=True, autoincrement=True, comment="记录唯一标识")
     user_id = Column(Integer, nullable=False, comment="用户ID")
     book_id = Column(Integer, nullable=False, comment="书籍ID")
     study_date = Column(Date, nullable=False, comment="学习日期")
