@@ -58,7 +58,3 @@ class WordSyllable(Base):
     __table_args__ = (
         Index('idx_word_syllable', 'word_id', 'syllable_id'),
     )
-
-
-# 如果数据库未创建表，则自动创建表
-Base.metadata.create_all(engine)

@@ -7,7 +7,7 @@ class StudyPlan(Base):
     """学习计划表"""
     __tablename__ = "study_plans"
 
-    plan_id = Column(Integer, primary_key=True, autoincrement=True, comment="计划唯一标识")
+    id = Column("id", Integer, primary_key=True, autoincrement=True)  
     user_id = Column(Integer, nullable=False, comment="用户ID")
     book_id = Column(Integer, nullable=False, comment="书籍ID")
     daily_words = Column(Integer, default=0, comment="计划每天学多少个单词")
@@ -52,6 +52,3 @@ class StudyRecord(Base):
     review_words = Column(Integer, default=0, comment="今日复习单词数")
     duration = Column(Integer, default=0, comment="今日学习时长（分钟）")
 
-
-# 如果数据库未创建表，则自动创建表
-Base.metadata.create_all(engine)
