@@ -94,13 +94,6 @@ class SysService:
             )
         return result
 
-    def get_settings_languages_example(self, language: str, account_id: str):
-        """获取语言下的示例"""
-        # 获取语言下的示例
-        # 语言没有国家  所以去掉后面的国家后缀
-        language = language.split("-")[0]
-        return language_demo_map[language]
-
     def voice_upload(self, file: UploadFile, account_id: str):
         """用户上传语音文件"""
         file_name = save_voice_file(file, account_id)
