@@ -393,7 +393,7 @@ const sendMessage = (message?: string, fileName?: string) => {
     })
     .then((data) => {
       data = data.data
-      session.value.completed = data.completed
+      session.value.completed = data?.completed
 
       // Check for achieved targets and mark messages accordingly
       if (data.achieved_targets) {
