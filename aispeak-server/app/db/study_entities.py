@@ -16,9 +16,9 @@ class StudyPlan(Base):
     create_time = Column(DateTime, default=datetime.datetime.now, comment="创建时间")
 
 
-class UserWordProgress(Base):
+class StudyWordProgress(Base):
     """用户单词学习进度表"""
-    __tablename__ = "user_word_progress"
+    __tablename__ = "study_word_progress"
 
     id = Column("id", Integer, primary_key=True, autoincrement=True)  
     user_id = Column(Integer, nullable=False, comment="用户ID")
@@ -50,4 +50,3 @@ class StudyRecord(Base):
     new_words = Column(Integer, default=0, comment="今日新学单词数")
     review_words = Column(Integer, default=0, comment="今日复习单词数")
     duration = Column(Integer, default=0, comment="今日学习时长（分钟）")
-
