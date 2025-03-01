@@ -79,7 +79,7 @@ onLoad((options: any) => {
 onShow(() => {
   // 获取用户设置的语言，之后加载相应数据
   accountRequest.getSettings().then((data) => {
-    language.value = data.data.target_language;
+    language.value = data.data.target_language || "en-US";
     initAudioPlayerContent();
     initRoles();
   });
