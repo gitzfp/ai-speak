@@ -157,6 +157,3 @@ class ChapterEntity(Base):
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)  # 创建时间
     update_time = Column("update_time", DateTime, default=datetime.datetime.now)  # 更新时间
 
-
-# 创建表
-Base.metadata.create_all(engine)

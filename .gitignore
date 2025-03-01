@@ -6,4 +6,6 @@
 /aispeak-frontend/dist/*
 /aispeak-server/alembic.ini
 /aispeak-frontend/src/static/.DS_Store
-/*/.idea/
+/aispeak-server/alembic.ini
+/aispeak-server/.idea/
+aispeak-server/.DS_Store
