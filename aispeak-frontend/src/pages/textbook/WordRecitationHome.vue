@@ -16,14 +16,14 @@
 		<image @click="switchBook" :src="book.icon_url" class="section-img"></image>
 		<view class="section-ct">
 			<view class="oneline">
-				<text class="oneline-subtitle">义务教育课程标准</text>
+				<text class="oneline-subtitle">{{ book.grade }} {{ book.term }}</text>
 				<view @click="switchBook" class="oneline_btn">
 					<image class="left-icon" src="@/assets/icons/parallel_double_arrow.svg"></image>
 					<text class="section-title">切换单词书</text>
 				</view>
 			</view>
 			<view class="twoline">
-				小学热门单词书
+				{{ book.book_name }}
 			</view>
 			
 			<view class="progress-bar">
@@ -123,7 +123,7 @@
 	</view>
       
 
-    <bookSelector ref="bookSelectors" v-if="isPopupOpen" :books="books" @switchbookSuccess="switchbookSuccess" @closePopup="togglePopup" />
+    <bookSelector ref="bookSelectors" v-if="isPopupOpen" :numType="2" :books="books" @switchbookSuccess="switchbookSuccess" @closePopup="togglePopup" />
 
 		
 	<ModifyPlanPopup :visible="isPlanPopupVisible" :currentPlan="numofday"
@@ -140,16 +140,17 @@
 	import ModifyPlanPopup from './ModifyPlanPopup.vue'
 
 	
-	const weekstitList = ref([
-		{week:"周一",date:'17',isSelet:false},
-		{week:"周二",date:'18',isSelet:false},
-		{week:"周三",date:'19',isSelet:false},
-		{week:"周四",date:'20',isSelet:false},
-		{week:"周五",date:'21',isSelet:false},
-		{week:"周六",date:'22',isSelet:false},
-		{week:"周日",date:'23',isSelet:false},
-	])
-	const weekindext = ref(0)
+	// const weekstitList = ref([
+	// 	{week:"周一",date:'17',isSelet:false},
+	// 	{week:"周二",date:'18',isSelet:false},
+	// 	{week:"周三",date:'19',isSelet:false},
+	// 	{week:"周四",date:'20',isSelet:false},
+	// 	{week:"周五",date:'21',isSelet:false},
+	// 	{week:"周六",date:'22',isSelet:false},
+	// 	{week:"周日",date:'23',isSelet:false},
+	// ])
+	//暂时不点亮
+	const weekindext = ref(-1)
 	const isPopupOpen = ref(false)
 	const bookSelectors = ref(null);
 	const book = ref({
@@ -169,6 +170,35 @@
 	//学习计划每天 学几个
 	const numofday = ref(5)
 	const isPlanPopupVisible = ref(false);
+	
+	
+	const weekstitList = computed(() => {
+	   const today = new Date();
+	       const currentDay = today.getDay(); // 获取当前是星期几 (0=周日, 1=周一, ..., 6=周六)
+	       const currentDate = today.getDate(); // 获取当前日期
+	   
+	       // 计算本周的周一日期
+	       const monday = new Date(today);
+	       monday.setDate(currentDate - (currentDay === 0 ? 6 : currentDay - 1));
+	   
+	       const weekDates = [];
+	   
+	       for (let i = 0; i < 7; i++) {
+	           const date = new Date(monday);
+	           date.setDate(monday.getDate() + i);
+	   
+	           const weekDay = date.toLocaleDateString('zh-CN', { weekday: 'long' }).replace('星期', '');
+	           const monthDate = String(date.getDate()).padStart(2, '0'); // 小于10前面补零
+	   
+	           weekDates.push({
+	               week: weekDay,
+	               date: monthDate,
+	               isSelect: false
+	           });
+	       }
+	   
+	       return weekDates;
+	})
 	
 	//剩余多少天完成
 	const remainingdays = computed(() => {
@@ -223,8 +253,8 @@
 		    planWordsList.push(word.word_id);
 		});
 		
-		console.log("firstFive==="+firstFive)
-		console.log(firstFive)
+		// console.log("firstFive==="+firstFive)
+		// console.log(firstFive)
 		
 		const planWords = 'planWords';
 		uni.setStorage({
@@ -339,9 +369,29 @@
 	              }
 	        });
 	        } else {
-	        //  book.value = books.value[0]
-	         book.value = { ...books.value[0] };
-	          console.log("一开始请求")
+			
+			 if (books.value.length > 0) {
+				 uni.getStorage({
+				   key: 'planSelectionObject', // 存储的键名
+				   success: (res) => {
+				     console.log('获取的数据:', res.data);
+				 	var bookSelectionObject = res.data
+			
+				 	var  selectedbook_id = bookSelectionObject.book_id
+				 	
+				 	book.value = books.value.find(item =>
+				 	  item.book_id === selectedbook_id
+				 	);
+				 	
+				   },
+				   fail: (err) => {
+				  //    console.error('获取数据失败:', err);
+					 // console.log(books.value)
+				 	 book.value = { ...books.value[0] };
+				   }
+				 });
+			 }
+			
 	        }
 	        
 	
@@ -364,7 +414,7 @@
 	  numofday.value = newPlan;
 	};
 	const calendarItemclick = (index) =>  {
-		weekindext.value = index
+		// weekindext.value = index
 	}
 </script>
 
