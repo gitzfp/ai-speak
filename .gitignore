@@ -9,3 +9,4 @@
 /aispeak-server/alembic.ini
 /aispeak-server/.idea/
 aispeak-server/.DS_Store
+aispeak-server/alembic.prod.ini
