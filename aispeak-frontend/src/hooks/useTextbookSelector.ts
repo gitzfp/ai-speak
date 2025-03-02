@@ -7,7 +7,7 @@ export default function useTextbookSelector() {
   const versions = ref(["全部", "PEP", "精通", "新起点", "外研社（一起）", "外研社（三起）", "闽教版", "初中"]);
   const grades = ref(["全部", "一年级", "二年级", "三年级", "四年级", "五年级", "六年级", "七年级", "八年级", "九年级"]);
   const terms = ref(["全部", "上册", "下册", "全一册"]);
-  const publishers = ref(["全部", "人教版", "外研社"]); // 新增出版社选项
+  const publishers = ref(["全部", "人教版", "外研社", "福建教育出版社"]); // 新增出版社选项
 
   // 当前选中项（新增出版社选中状态）
   const selectedVersion = ref("全部");
