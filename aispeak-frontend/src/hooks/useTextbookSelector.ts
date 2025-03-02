@@ -4,7 +4,7 @@ import textbook from "@/api/textbook";
 
 export default function useTextbookSelector() {
   // 筛选选项（新增出版社）
-  const versions = ref(["全部", "PEP", "精通", "新起点", "外研社（一起）", "外研社（三起）", "初中"]);
+  const versions = ref(["全部", "PEP", "精通", "新起点", "外研社（一起）", "外研社（三起）", "闽教版", "初中"]);
   const grades = ref(["全部", "一年级", "二年级", "三年级", "四年级", "五年级", "六年级", "七年级", "八年级", "九年级"]);
   const terms = ref(["全部", "上册", "下册", "全一册"]);
   const publishers = ref(["全部", "人教版", "外研社"]); // 新增出版社选项
