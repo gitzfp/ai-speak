@@ -125,9 +125,9 @@
 </script>
 
 <style lang="scss" scoped>
-	page {
-	  background-color: #5AC467; /* 设置全局页面背景颜色 */
-	}
+	// page {
+	//   background-color: #5AC467; /* 设置全局页面背景颜色 */
+	// }
 	.headView {
 		display: flex;
 		justify-content: space-between;
@@ -148,9 +148,11 @@
 .container {
   // display: flex;
   // flex-direction: column;
-  // padding: 20rpx;
+  padding: 20rpx;
   // // background-color: #f0f0f0;
   // // background-color: #5AC467; 
+  background-color: #5AC467;
+  height: 100vh;
 }
 
 .top-section {
