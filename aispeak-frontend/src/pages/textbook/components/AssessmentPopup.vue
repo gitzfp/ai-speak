@@ -1,14 +1,11 @@
 <template>
-    <view v-if="showAssessSelection">
+    <view v-if="showAssessSelection" class="assess-popup">
         <!--测评 蒙版 -->
         <view class="asmask" @click="handleMaskClick"></view>
 
         <!-- 录音选择弹窗 -->
         <view v-if="currentStep === 'select'" class="assess-selection">
-        <!-- 关闭按钮 -->
-        <view class="close-button" @click="resetAll">×</view>
-        <view class="assess-header">选择录音段落</view>
-        <view class="assess-options">
+        <view>
             <view
             v-for="(option, index) in repeatOptions"
             :key="index"
@@ -16,19 +13,16 @@
             :class="{ 'assess-option-active': index === assessStartIndex }"
             @click="handleAssessSelection(index)"
             >
-            {{ option.trackText }}
+                  <view class="assess-options-item">
+                        {{ option.trackText }}
+                          <AudioPlayer
+                  :audioUrl="option?.audioUrl"/>
+                  </view>
+                  <!-- 预留跟读按钮位置 -->
+                  <FollowReading 
+                    :sentence="option.trackText"
+                  />
             </view>
-            <AudioPlayer
-            :content="repeatOptions[assessStartIndex]?.trackUrl"/>
-        </view>
-        <!-- 预留跟读按钮位置 -->
-         <FollowReading 
-          v-if="assessStartIndex !== null"
-          :sentence="repeatOptions[assessStartIndex]"
-        />
-        <view class="result-actions">
-            <button class="result-button" @click="handleReturn">返回</button>
-            <button class="result-button" @click="handleRetest">再测一次</button>
         </view>
         </view>
     </view>
@@ -87,24 +81,12 @@ const handleMaskClick = () => {
     assessStartIndex.value = index;
   }
 
-
-    const handleReturn = () => {
-      currentStep.value = "select"; // 返回选择页
-      assessStartIndex.value = null; // 重置选择
-      pronunciationResult.value = initPronunciation
-    }
-    const handleRetest = () => {
-      currentStep.value = "select"; // 返回选择页
-      // assessStartIndex.value = null; // 重置选择
-      pronunciationResult.value = initPronunciation
-    }
-
-  //-----测评用的方法-----结束------
-
-
 </script>
 
 <style>
+
+
+
 /* 测评蒙版样式 */
 .asmask {
   position: fixed;
@@ -119,9 +101,11 @@ const handleMaskClick = () => {
 /* 录音选择弹窗样式 */
 .assess-selection {
   position: fixed;
+  overflow: scroll;
   bottom: 0;
   left: 0;
   width: 100%;
+  max-height: 80%;
   background-color: #fff;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
@@ -147,6 +131,12 @@ const handleMaskClick = () => {
   padding: 0 16px; /* 添加内边距，确保内容不贴边 */
 }
 
+.assess-options-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .assess-option {
   padding: 12px;
   border: 1px solid #ddd;
@@ -157,8 +147,6 @@ const handleMaskClick = () => {
 }
 
 .assess-option-active {
-  background-color: #007bff;
-  color: #fff;
   border-color: #007bff;
 }
 

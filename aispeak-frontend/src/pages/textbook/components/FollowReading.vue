@@ -3,11 +3,11 @@
     <view v-if="sentence && currentStep === 'select'" class="assess-actions">
       <speech @success="submitRecording"></speech>
     </view>
-    <view v-if="currentStep === 'submiting'" class="assess-selection">
+    <view v-if="currentStep === 'submiting'" class="result-selection">
       <!-- 关闭按钮 -->
       <view class="close-button" @click="resetAll">×</view>
       <view class="assess-header">正在评估</view>
-      <view class="assess-options">
+      <view class="result-detail">
         <view class="loading-container">
           <view class="loading-spinner"></view>
           <view class="loading-text">正在分析您的发音...</view>
@@ -28,6 +28,8 @@
           <view class="dimension-item" :class="getScoreClass(pronunciationResult.completeness_score)">完整度: {{ pronunciationResult.completeness_score }}</view>
         </view>
       </view>
+      <!-- 新增重新测评按钮 -->
+      <view class="reassess-button" @click="resetAll">重新测评</view>
     </view>
   </view>
 </template>
@@ -75,18 +77,7 @@ const resetAll = () => {
 }
 
 .follow-reading {
-  padding: 20px;
-}
-
-.assess-selection {
-  width: 100%;
-  background-color: #fff;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  box-sizing: border-box;
+  padding: 10px;
 }
 
 .close-button {
@@ -188,5 +179,14 @@ const resetAll = () => {
   justify-content: space-around;
   color: #666;
   font-size: 14px;
+}
+.reassess-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  text-align: center;
+  border-radius: 5px;
+  cursor: pointer;
 }
 </style>
