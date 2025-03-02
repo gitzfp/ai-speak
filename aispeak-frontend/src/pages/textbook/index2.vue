@@ -32,15 +32,15 @@
         ></image>
         课本同步学
       </view>
-      <view class="function-button" @click="listenWrite">
-          <image class="button-icon" src="@/assets/icons/recite.svg"></image>
-          课本点读
-      </view>
-      <view class="function-button" @click="sentenceFollow">
-          <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
-          句子跟读
-      </view>
       <view class="button-row button-line">
+        <view class="function-button" @click="listenWrite">
+            <image class="button-icon" src="@/assets/icons/recite.svg"></image>
+            课本点读
+        </view>
+        <view class="function-button" @click="sentenceFollow">
+            <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
+            句子跟读
+        </view>
         <view class="function-button" @click="textbookListen">
           <image class="button-icon" src="@/assets/icons/listening.svg"></image>
           听课文
