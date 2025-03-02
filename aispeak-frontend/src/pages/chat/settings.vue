@@ -30,13 +30,13 @@
             <view class="setting-bot">
                 <text class="setting-card-title">语速</text>
                 <view class="tab-box">
-                    <view :class="`tab-item ${settingInfo.playing_voice_speed == '0.5' ? 'tab-item-select' : ''}`" @tap="selectTab('0.5')">
+                    <view :class="`tab-item ${settingInfo.playing_voice_speed == '0.8' ? 'tab-item-select' : ''}`" @tap="selectTab('0.5')">
                         <text>慢速</text>
                     </view>
                     <view :class="`tab-item ${settingInfo.playing_voice_speed == '1.0' ? 'tab-item-select' : ''}`" @tap="selectTab('1.0')">
                         <text>正常</text>
                     </view>
-                    <view :class="`tab-item ${settingInfo.playing_voice_speed == '1.5' ? 'tab-item-select' : ''}`" @tap="selectTab('1.5')">
+                    <view :class="`tab-item ${settingInfo.playing_voice_speed == '1.2' ? 'tab-item-select' : ''}`" @tap="selectTab('1.5')">
                         <text>较快</text>
                     </view>
                 </view>
