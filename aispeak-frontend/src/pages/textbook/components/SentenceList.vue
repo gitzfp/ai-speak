@@ -7,25 +7,29 @@
       v-else
       v-for="(sentence, index) in sentences" 
       :key="`${sentence.id}`"
-      class="sentence-item"
+     
       :class="{ 'locked': sentence.is_lock === 1, 'playing': currentPlaying(index) }"
       @tap="() => changeCurrentIndex(index)"
     >
-      <view class="sentence-content">
-        <text class="english">{{ sentence.english }}</text>
-        <text class="chinese">{{ sentence.chinese }}</text>
+      <view  class="sentence-item">
+        <view class="sentence-content">
+          <text class="english">{{ sentence.english }}</text>
+          <text class="chinese">{{ sentence.chinese }}</text>
+        </view>
+        <view class="controls" @tap="playSentence(sentence, sentences, currentIndex !== index)">
+          <text v-if="currentIndex === index && isPlaying" class="play-icon">⏸</text>
+          <text v-else class="play-icon">▶</text>
+          <text v-if="sentence.is_lock" class="lock-icon">🔒</text>
+        </view>
       </view>
-      <view class="controls" @tap="playSentence(sentence, sentences)">
-        <text v-if="currentIndex === index && isPlaying" class="play-icon">⏸</text>
-        <text v-else class="play-icon">▶</text>
-        <text v-if="sentence.is_lock" class="lock-icon">🔒</text>
-      </view>
+      <FollowReading 
+          v-if="repeatAfter" 
+          :sentence="sentence.english"
+      />
     </view>
 
     <!-- 跟读模式按钮 -->
-    <view v-if="repeatAfter" class="repeat-btn" @tap="handleRepeat">
-      <text class="repeat-icon">🎤</text>
-      <text class="repeat-text">开始跟读</text>
+    <view v-if="repeatAfter" class="repeat-btn" >
     </view>
    
     <!-- 控制栏，仅在非跟读模式显示 -->
@@ -73,18 +77,15 @@
         </view>
       </view>
     </view>
-     <AssessmentPopup :repeatOptions="repeatOptions" :showAssessSelection="showAssessSelection" @assessPopupHide="assessPopupHide" />
   </view>
 </template>
 
 <script setup lang="ts">
-import { computed, watch, ref, watchEffect } from 'vue'
+import { computed, watch, watchEffect } from 'vue'
 import { useAudioPlayer } from '@/hooks/useAudioPlayer'
-import AssessmentPopup from "./AssessmentPopup.vue"
+import FollowReading from './FollowReading.vue' // 导入新组件
 // 原始选项数据
 const speedOptions = [0.5, 0.8, 1.0, 1.2, 1.5, 2.0]
-const repeatOptions = ref([]) 
-const showAssessSelection = ref(false) // 测评 总弹窗显示控制
 
 interface Sentence {
   id: number
@@ -111,9 +112,11 @@ const loopModeText = computed(() => {
 const props = withDefaults(defineProps<{
   sentences?: Sentence[]
   repeatAfter?: boolean
+  onListEnd?: () => void
 }>(), {
   sentences: () => [],
-  repeatAfter: false
+  repeatAfter: false,
+  onListEnd: () => {}
 })
 
 // 添加更多调试信息
@@ -145,7 +148,11 @@ const {
   setPlaybackRate,
   loopMode,
   toggleLoopMode
-} = useAudioPlayer(changeCurrentIndex) 
+} = useAudioPlayer(changeCurrentIndex, () => {
+  if (typeof props.onListEnd === 'function') {
+    props.onListEnd()
+  }
+}, props.repeatAfter) // 传递 repeatAfter 参数
 
 // 显示格式处理
 const speedOptionsDisplay = computed(() => 
@@ -167,15 +174,18 @@ const currentPlaying = (index: number) => {
   return currentIndex.value === index
 }
 
-const assessPopupHide = () => {
-    showAssessSelection.value = false;
+
+// 添加 playFirstSentence 方法
+const playFirstSentence = () => {
+  if (props.sentences && props.sentences.length > 0) {
+    playSentence(props.sentences[0], props.sentences)
   }
-// 添加跟读处理函数
-const handleRepeat = () => {
-  showAssessSelection.value = true
-  repeatOptions.value = [props.sentences[currentIndex.value].english]
-  console.log('开始跟读练习')
 }
+
+// Expose the method to be accessible from the parent component
+defineExpose({
+  playFirstSentence
+})
 </script>
 
 <style scoped>
@@ -334,20 +344,7 @@ const handleRepeat = () => {
   justify-content: flex-end;
 }
 
-.repeat-btn {
-  position: fixed;
-  bottom: 40rpx;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #4CAF50;
-  color: white;
-  padding: 24rpx 48rpx;
-  border-radius: 48rpx;
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  box-shadow: 0 4rpx 12rpx rgba(76,175,80,0.3);
-}
+
 
 .repeat-icon {
   font-size: 40rpx;

@@ -9,17 +9,23 @@ type Sentence = {
   audio_end?: number
 }
 
-export function useAudioPlayer(onIndexChange?: (index: number) => void) {
+export function useAudioPlayer(onIndexChange?: (index: number) => void, onListEnd?: () => void, isRepeatAfter?: boolean) {
+  // 从存储中加载播放模式和速度
+  let savedLoopMode = uni.getStorageSync('loopMode') || 'none';
+  // 如果是跟读模式，强制设置为不循环
+  if (isRepeatAfter) {
+    savedLoopMode = 'none';
+  }
+  const localPlaybackRate = parseFloat(uni.getStorageSync('playbackRate') || '1.0');
   const currentAudio = ref<ReturnType<typeof getPlayer> | null>(null)
   const isPlaying = ref(false)
   const currentIndex = ref(0)
   const isRandomMode = ref(false)
-  const playbackRate = ref(1.0)
+  const playbackRate = ref(localPlaybackRate)
   const repeatCount = ref(0)
   const currentRepeat = ref(0)
   const playHistory = ref<number[]>([]) // 随机模式历史记录
-  const loopMode = ref<'list' | 'single' | 'none'>('none') // 新增循环模式状态
-
+  const loopMode = ref<'list' | 'single' | 'none'>(savedLoopMode) // 新增循环模式状态
 
   // 环境适配检测
   onMounted(() => {
@@ -32,14 +38,38 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void) {
 
   // 新增循环模式切换函数
   const toggleLoopMode = () => {
-    const modes: ('none' | 'single' | 'list')[] = ['none', 'single', 'list']
-    const index = modes.indexOf(loopMode.value)
-    const nextIndex = (index + 1) % modes.length
-    loopMode.value = modes[nextIndex]
+    if (isRepeatAfter) {
+      loopMode.value = 'none'; // 在跟读模式下强制设置为不循环
+      return;
+    }
+    const modes: ('none' | 'single' | 'list')[] = ['none', 'single', 'list'];
+    const index = modes.indexOf(loopMode.value);
+    const nextIndex = (index + 1) % modes.length;
+    loopMode.value = modes[nextIndex];
+    uni.setStorageSync('loopMode', loopMode.value); // 持久化循环模式
     uni.showToast({
       title: `当前循环模式：${loopModeText.value}`,
       icon: 'none'
-    })
+    });
+  };
+
+  // 设置播放速度
+  const setPlaybackRate = (rate: number) => {
+    const validRates = [0.5, 0.8, 1.0, 1.2, 1.5, 2.0]
+    if (!validRates.includes(rate)) {
+      uni.showToast({ title: '不支持的播放速率', icon: 'none' })
+      return
+    }
+    
+    playbackRate.value = rate
+    uni.setStorageSync('playbackRate', rate) // 持久化播放速度
+    if (currentAudio.value) {
+      try {
+        currentAudio.value.playbackRate = rate
+      } catch (e) {
+        console.error('速率设置失败:', e)
+      }
+    }
   }
 
   // 计算循环模式显示文本
@@ -62,49 +92,40 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void) {
     const nextIndex = (currentIndex.value + 1) % sentences.length
     updateCurrentIndex(nextIndex)
     console.log('playNextSentence', currentIndex.value, sentences) 
-    playSentence(sentences[currentIndex.value], sentences)
+    playSentence(sentences[currentIndex.value], sentences, true)
   }
 
   // 修改 playPrevSentence
   const playPrevSentence = (sentences: Sentence[]) => {
     const prevIndex = (currentIndex.value - 1 + sentences.length) % sentences.length
     updateCurrentIndex(prevIndex)
-    playSentence(sentences[currentIndex.value], sentences)
+    playSentence(sentences[currentIndex.value], sentences, true)
   }
 
   // 核心播放函数
-  const playSentence = (sentence: Sentence, sentences?: Sentence[]) => {
+  const playSentence = (sentence: Sentence, sentences?: Sentence[], forcePlay?: boolean) => {
+
+    if(isPlaying.value && !forcePlay){
+      stopCurrentAudio()
+      return
+    }
     if (sentence.is_lock === 1) {
       uni.showToast({title: '内容已锁定'})
       return
     }
-    console.log('播放句子开始:', sentence, sentences) 
-	
     stopCurrentAudio()
-	
+    isPlaying.value = true
     const audio = uni.createInnerAudioContext()
     currentAudio.value = audio
     audio.src = sentence.audio_url
-    
     // 设置时间范围
     if (sentence.audio_start !== undefined && sentence.audio_end !== undefined) {
       const startTime = sentence.audio_start / 1000
       const endTime = sentence.audio_end / 1000
       audio.startTime = startTime
-      
       // 监听播放进度
       audio.onTimeUpdate(() => {
-		  
         if (audio.currentTime >= endTime - 0.1) { // 防止浮点误差
-			// console.log("audio.currentTime")
-			// console.log(audio.currentTime)
-			// console.log("startTime - 0.1")
-			// console.log(startTime)
-			// console.log("endTime - 0.1")
-			// console.log(endTime)
-			// console.log(endTime - 0.1)
-			// console.log("一直调")
-          // audio.stop()
           handlePlayEnd(sentences)  // 处理播放结束
         }
       })
@@ -114,26 +135,15 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void) {
     audio.onError((res) => {
       console.error('播放错误:', res)
       stopCurrentAudio()
-      isPlaying.value = false
-	  console.log('播放错误isPlaying:')
-	  console.log(isPlaying.value) 
     })
   
     audio.onEnded(() => {
-       console.log('播放句子结束onEnd:', sentence) 
-      // 如果没有设置时间范围，或者播放到自然结束时触发
-      // if (!sentence.audio_start || !sentence.audio_end) {
+        console.log('播放句子结束onEnd:', sentence) 
         handlePlayEnd(sentences)
-      // }
     })
   
     audio.onStop(() => {
       // 手动停止或到达指定结束时间时触发
-   //    console.log('onStop:',  sentences) 
-   //    isPlaying.value = false
-	  // console.log('onStop----isPlaying:')
-	  // console.log(isPlaying.value) 
-      // handlePlayEnd(sentences)
     })
     
     audio.playbackRate = playbackRate.value
@@ -152,63 +162,43 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void) {
     // 根据循环模式处理
     switch(loopMode.value) {
       case 'list':
+         if(currentIndex.value === sentences.length - 1){
+          stopCurrentAudio();
+          onListEnd?.()
+          return
+        }
         playNextSentence(sentences)
         break
       case 'single':
         // 单曲循环时重新播放当前句子
-        playSentence(sentences[currentIndex.value], sentences)
+        playSentence(sentences[currentIndex.value], sentences, true)
         break
       case 'none':
       default:
         stopCurrentAudio()
-        isPlaying.value = false
-		console.log('default----isPlaying:')
-		console.log(isPlaying.value) 
-        break
     }
   }
 
 
   // 切换播放状态
   const togglePlay = (sentences: Sentence[]) => {
-    console.log('播放togglePlay:', sentences, currentIndex.value)
+    console.log('播放togglePlay:', sentences, currentIndex.value, isPlaying.value)
     if (isPlaying.value) {
       stopCurrentAudio()
-      isPlaying.value = false
     } else {
-      isPlaying.value = true
       playSentence(sentences[currentIndex.value], sentences)
     }
   }
 
-  // 设置播放速度
-  const setPlaybackRate = (rate: number) => {
-  // 确保速率在合法范围内
-  const validRates = [0.5, 0.8, 1.0, 1.2, 1.5, 2.0]
-  if (!validRates.includes(rate)) {
-    uni.showToast({ title: '不支持的播放速率', icon: 'none' })
-    return
-  }
-  
-  playbackRate.value = rate
-  if (currentAudio.value) {
-    try {
-      currentAudio.value.playbackRate = rate
-    } catch (e) {
-      console.error('速率设置失败:', e)
-    }
-  }
-}
 
 // Update stopCurrentAudio to clean up properly
 function stopCurrentAudio() {
-
+  isPlaying.value = false
   if (currentAudio.value) {
     uni.hideToast()
     const audio = currentAudio.value // Store reference before nullifying
     try {
       audio.stop()
-	  
       console.log("Audio stopped successfully")
     } catch (error) {
       console.error("Error stopping audio:", error)
@@ -228,7 +218,6 @@ function stopCurrentAudio() {
   // 修改 onBeforeUnmount
   onBeforeUnmount(() => {
     // uni.showToast({title: '播放结束'})
-    isPlaying.value = false
     stopCurrentAudio()
     updateCurrentIndex(0)
     playHistory.value = []

@@ -349,6 +349,24 @@ class AccountService:
             .filter_by(account_id=account_id)
             .first()
         )
+
+        # 如果 account_settings 为空，插入默认配置
+        if not account_settings:
+            speech_role_name = get_azure_language_default_role(Config.DEFAULT_TARGET_LANGUAGE)
+            account_settings = AccountSettingsEntity(
+                account_id=account_id,
+                auto_playing_voice=False,
+                playing_voice_speed=1.0,
+                auto_text_shadow=False,
+                auto_pronunciation=False,
+                speech_role_name=speech_role_name,
+                target_language=Config.DEFAULT_TARGET_LANGUAGE,
+                source_language=Config.DEFAULT_SOURCE_LANGUAGE  # Ensure source_language is set
+            )
+            self.db.add(account_settings)
+            self.db.commit()
+
+        print("保存单词save_settings", account_settings, dto)
         if dto.auto_playing_voice is not None:
             account_settings.auto_playing_voice = dto.auto_playing_voice
         if dto.playing_voice_speed is not None:
@@ -362,9 +380,7 @@ class AccountService:
         if dto.target_language is not None:
             if dto.target_language != account_settings.target_language:
                 # 获取语言对应的语音角色
-                speech_role_name = get_azure_language_default_role(
-                    dto.target_language
-                )
+                speech_role_name = get_azure_language_default_role(dto.target_language)
                 account_settings.speech_role_name = speech_role_name
             account_settings.target_language = dto.target_language
         self.db.commit()

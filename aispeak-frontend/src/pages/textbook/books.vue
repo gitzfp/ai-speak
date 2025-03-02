@@ -768,9 +768,15 @@ function togglePlayCurrentPage() {
 function startRepeatMode() {
   stopAndResetStatus()
   showRepeatSelection.value = true
+  console.log('开始复读模式', bookPages.value[currentPage.value].track_info)
   // 生成复读段落选项
   repeatOptions.value = bookPages.value[currentPage.value].track_info.map(
-    (track) => track.track_text || `段落 ${track.track_id}`
+    (track) => {
+      return {
+        trackText: track.track_text || `段落 ${track.track_id}`,
+        audioUrl: track.track_url_source,
+      }
+    }
   )
 }
 // 开始测评
@@ -778,8 +784,13 @@ function goToassess() {
   showAssessSelection.value = true
   console.log("开始测评模式", bookPages.value[currentPage.value])
   // 生成测评段落选项
-  repeatOptions.value = bookPages.value[currentPage.value].track_info?.map(
-    (track) => track.track_text || `段落 ${track.track_id}`
+  repeatOptions.value = bookPages.value[currentPage.value].track_info.map(
+    (track) => {
+      return {
+        trackText: track.track_text || `段落 ${track.track_id}`,
+        audioUrl: track.track_url_source,
+      }
+    }
   )
 }
 

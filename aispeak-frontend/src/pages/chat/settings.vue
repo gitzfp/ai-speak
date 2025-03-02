@@ -7,10 +7,10 @@
         </CommonHeader>
         <view class="mine-content">
             <view class="setting">
-                <view class="setting-card">
-                    <text class="setting-card-title">AI角色</text>
-                    <text @click="goSwitchRole">{{ settingInfo.speech_role_name_label || '默认角色' }}</text>
-                </view>
+                <!-- <view class="setting-card"> -->
+                    <!-- <text class="setting-card-title">AI角色</text> -->
+                    <!-- <text @click="goSwitchRole">{{ settingInfo.speech_role_name_label || '默认角色' }}</text> -->
+                <!-- </view> -->
                 <view class="setting-card">
                     <text class="setting-card-title">自动播放语音</text>
                     <Checkbox @input="(check) => inputCheck('auto_playing_voice', check)"

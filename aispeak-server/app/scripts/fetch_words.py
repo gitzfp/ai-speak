@@ -607,72 +607,73 @@ async def process_syllables(phonics_text: str, db, bucket: oss2.Bucket, public_e
 
 
 if __name__ == "__main__":
-    # sylleble = "h/h/e/ə/l/ /l/l/o/əʊ/"
-    # get_syllables(sylleble)
+    sylleble = "s/s/e/e/v/v/e/ə/n/n/"
+    get_syllables(sylleble)
+    # return
     # # 示例用法
-    params_list = [
-        # {
-        #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=yinianji&term_tag=shangce',
-        #     'name': '人教版PEP一年级上册'
-        #     'book_id': '1212001101247'
-        # },
-        # {
-        #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=yinianji&term_tag=xiace',
-        #     'name': '人教版PEP一年级下册',
-        #     'book_id': '1212001102247'
-        # },
-        # {
-        #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbxqd&grade_tag=yinianji&term_tag=shangce',
-        #     'name': '人教材新起点一年级上册',
-        #     'book_id': '1212001101123',
-        # },
-        # {
-        #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbxqd&grade_tag=yinianji&term_tag=xiace',
-        #     'name': '人教材新起点一年级下册',
-        #     'book_id': '1212001102123'
-        # },
-        # {
-        #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjjtb&grade_tag=yinianji&term_tag=shangce',
-        #     'name': '人教精通版一年级上册',
-        #     'book_id': '1212001101244'
-        # },
-        # {
-        #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjjtb&grade_tag=yinianji&term_tag=shangce',
-        #     'name': '人教精通版一年级下册',
-        #     'book_id': '1212001102244'
-        # },
-        {
-            'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=ernianji&term_tag=shangce',
-            'name': '人教版PEP二年级上册',
-            'book_id': '1212001201247'
-        },
-        {
-            'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=ernianji&term_tag=xiace',
-            'name': '人教版PEP二年级下册',
-            'book_id': '1212001202247'
-        },
-        {
-            'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbxqd&grade_tag=ernianji&term_tag=shangce',
-            'name': '人教材新起点二年级上册',
-            'book_id': '1212001201133'
-        },
-        {
-            'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbxqd&grade_tag=ernianji&term_tag=xiace',
-            'name': '人教材新起点二年级下册',
-            'book_id': '1212001202133'
-        },
-        {
-            'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjjtb&grade_tag=ernianji&term_tag=shangce',
-            'name': '人教精通版二年级上册',
-            'book_id': '1212001201244'
-        },
-        {
-            'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjjtb&grade_tag=ernianji&term_tag=shangce',
-            'name': '人教精通版二年级下册',
-            'book_id': '1212001202244'
-        }
-    ]
+    # params_list = [
+    #     # {
+    #     #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=yinianji&term_tag=shangce',
+    #     #     'name': '人教版PEP一年级上册'
+    #     #     'book_id': '1212001101247'
+    #     # },
+    #     # {
+    #     #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=yinianji&term_tag=xiace',
+    #     #     'name': '人教版PEP一年级下册',
+    #     #     'book_id': '1212001102247'
+    #     # },
+    #     # {
+    #     #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbxqd&grade_tag=yinianji&term_tag=shangce',
+    #     #     'name': '人教材新起点一年级上册',
+    #     #     'book_id': '1212001101123',
+    #     # },
+    #     # {
+    #     #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbxqd&grade_tag=yinianji&term_tag=xiace',
+    #     #     'name': '人教材新起点一年级下册',
+    #     #     'book_id': '1212001102123'
+    #     # },
+    #     # {
+    #     #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjjtb&grade_tag=yinianji&term_tag=shangce',
+    #     #     'name': '人教精通版一年级上册',
+    #     #     'book_id': '1212001101244'
+    #     # },
+    #     # {
+    #     #     'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjjtb&grade_tag=yinianji&term_tag=shangce',
+    #     #     'name': '人教精通版一年级下册',
+    #     #     'book_id': '1212001102244'
+    #     # },
+    #     {
+    #         'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=ernianji&term_tag=shangce',
+    #         'name': '人教版PEP二年级上册',
+    #         'book_id': '1212001201247'
+    #     },
+    #     {
+    #         'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbp&grade_tag=ernianji&term_tag=xiace',
+    #         'name': '人教版PEP二年级下册',
+    #         'book_id': '1212001202247'
+    #     },
+    #     {
+    #         'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbxqd&grade_tag=ernianji&term_tag=shangce',
+    #         'name': '人教材新起点二年级上册',
+    #         'book_id': '1212001201133'
+    #     },
+    #     {
+    #         'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjbxqd&grade_tag=ernianji&term_tag=xiace',
+    #         'name': '人教材新起点二年级下册',
+    #         'book_id': '1212001202133'
+    #     },
+    #     {
+    #         'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjjtb&grade_tag=ernianji&term_tag=shangce',
+    #         'name': '人教精通版二年级上册',
+    #         'book_id': '1212001201244'
+    #     },
+    #     {
+    #         'url': 'https://api.suyang123.com/api/syh5/yy/words/list?stage_tag=xiaoxue&lesson_id=1&version_tag=rjjtb&grade_tag=ernianji&term_tag=shangce',
+    #         'name': '人教精通版二年级下册',
+    #         'book_id': '1212001202244'
+    #     }
+    # ]
 
-    for params in params_list:
-        print(f"\n开始处理 book_id: {params['book_id']} 的数据...")
-        asyncio.run(fetch_words_data(params))
+    # for params in params_list:
+    #     print(f"\n开始处理 book_id: {params['book_id']} 的数据...")
+    #     asyncio.run(fetch_words_data(params))
