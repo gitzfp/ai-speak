@@ -61,6 +61,7 @@
 	const allWords = ref([])
 	const book_id = ref('')
 	const currentAudio = ref(null);
+	const backPageNum = ref(1)
 	
 	const phoneticClick = async (item) => {
 	  if (item.sound_path.length <= 0) return;
@@ -88,7 +89,7 @@
 // 这里可以定义一些响应式数据或逻辑
 	const handleBackPage = () => {
 	  uni.navigateBack({
-	      delta: 2, // 返回两层
+	      delta: backPageNum.value, // 返回两层
 	      success: () => {
 	        console.log('返回成功');
 	      },
@@ -99,8 +100,11 @@
 	}
 	
 	onLoad(async (options) => {
-	     const {bookId,learningreportWords} = options
+	     const {bookId,learningreportWords,backPage} = options
 			book_id.value = bookId
+			backPageNum.value = backPage
+			console.log("backPageNum.value")
+			console.log(backPageNum.value)
 			// 获取数据
 			uni.getStorage({
 			key: learningreportWords,

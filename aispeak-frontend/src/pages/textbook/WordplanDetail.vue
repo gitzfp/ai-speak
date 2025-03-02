@@ -185,7 +185,7 @@ const giveupspelling = (num) =>  {
 		console.log('数据存储成功');
 		// 跳转到学习页面
 		uni.navigateTo({
-		  url: `/pages/textbook/Learningreport?learningreportWords=${learningreportWords}&bookId=${book_id.value}`, // 将缓存键名传递给学习页面
+		  url: `/pages/textbook/Learningreport?learningreportWords=${learningreportWords}&bookId=${book_id.value}&backPage=2`, // 将缓存键名传递给学习页面
 		});
 	  },
 	  fail: function (err) {

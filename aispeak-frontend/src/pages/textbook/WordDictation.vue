@@ -81,7 +81,8 @@
 		 </template>  
 	</view>
 	<view class="bottomcontent">
-	    <view @click="inspectclick" :style="isInspect?'background: #4CAF50;':'background: gray;'" class="inspect-btn">检查</view>
+		<view @click="reportclick" v-if="isReportbtnreveal" style="background: #4CAF50" class="inspect-btn">生成报告</view>
+	    <view v-else @click="inspectclick" :style="isInspect?'background: #4CAF50;':'background: gray;'" class="inspect-btn">检查</view>
 	</view>		
   </view>
 </template>
@@ -216,7 +217,13 @@ const detailWords = async (bookId, words) => {
         try {
             const response = await textbook.getWordsDetail(bookId, words);
             console.log("Response:", response);
-            allWords.value = response.data.words
+			
+			//allWords 数组，添加 正确:correct_count  和 错误:incorrect_count 字段
+			allWords.value = response.data.words.map(word => ({
+			  ...word,
+			  correct_count: 0,
+			  incorrect_count: 0,
+			}));
 
 			// 使用 nextTick 确保 DOM 更新完成
 			nextTick(() => {
@@ -239,6 +246,14 @@ const detailWords = async (bookId, words) => {
         }
     };
 	
+	
+	const isReportbtnreveal = computed(() => {
+		const isEqual = inputBoxes.value.every((value, index) => value === originalwordletters.value[index]);
+		if (isEqual && currentPage.value == (allWords.value.length-1) && isInspect.value==false) {
+			return true
+		}
+		return false
+	 });
 	
 	
 	const currentWord = computed(() => {
@@ -469,6 +484,15 @@ const inspectclick =()=> {
 		stopCurrentAudio()
 		currentTrackIndex.value = 0
 		playNext(answernum)
+		
+		
+		// 更新 correct_count 或 incorrect_count
+		if (isEqual) {
+		  allWords.value[currentPage.value].correct_count += 1;
+		} else {
+		  allWords.value[currentPage.value].incorrect_count += 1;
+		}
+		
 
 		if (isEqual && currentPage.value<(allWords.value.length-1)) {
 			const animation = createAnimation();
@@ -494,6 +518,27 @@ const inspectclick =()=> {
 	}
 }
 
+
+const reportclick =()=> {
+	const learningreportWords = 'learningreportWords';
+	
+	var backPage = isreport.value?3:2
+	
+	uni.setStorage({
+	  key: learningreportWords,
+	  data: JSON.stringify(allWords.value),
+	  success: function () {
+		console.log('数据存储成功');
+		// 跳转到学习页面
+		uni.navigateTo({
+		  url: `/pages/textbook/Learningreport?learningreportWords=${learningreportWords}&bookId=${book_id.value}&backPage=${backPage}`, // 将缓存键名传递给学习页面
+		});
+	  },
+	  fail: function (err) {
+		console.log('数据存储失败', err);
+	  }
+	});
+}
 
 const isUnfamiliarWord =()=> {
 	if (notebookList.value.length>0 && currentWord.value) {
