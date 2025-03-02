@@ -479,7 +479,7 @@ const fetchBooks = async (isSwitch) => {
 				uni.getStorage({
 				  key: 'bookSelectionObject', // 存储的键名
 				  success: (res) => {
-				    console.log('获取的数据:', res.data);
+				    // console.log('获取的数据:', res.data);
 					var bookSelectionObject = res.data
 					// var selectedVersion = bookSelectionObject.version_type
 					// var selectedGrade = bookSelectionObject.grade

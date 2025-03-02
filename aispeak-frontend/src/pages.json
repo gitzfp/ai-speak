@@ -58,13 +58,21 @@
 	{
 	  "path": "pages/textbook/WordDictation",
 	  "style": {
-	    "navigationBarTitleText": "单词听写"
+	    // "navigationBarTitleText": "单词听写",
+		"navigationStyle": "custom"
 	  }
 	},
 	{
 	  "path": "pages/textbook/newWordbook",
 	  "style": {
 	    "navigationBarTitleText": "我的生词本"
+	  }
+	},
+	{
+	  "path": "pages/textbook/Learningreport",
+	  "style": {
+	    // "navigationBarTitleText": "单词完成报告",
+		"navigationStyle": "custom"
 	  }
 	},
     {

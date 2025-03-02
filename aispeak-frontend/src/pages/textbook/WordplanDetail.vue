@@ -103,6 +103,9 @@ const planWordsThreeList= ref([]);
 const planWordThreeindext = ref(0);
 const progressindext = ref(0);
 
+//用于存储错误和正确的次数的数组
+const planWordsWithCounts = ref([]);
+
 const planWordmode = ref(0); // 总共三种模式
 const isSecondModeReading = ref(false);
 const animationData = ref(null); // 用于绑定动画数据
@@ -171,30 +174,74 @@ const stopCurrentAudio = () => {
 const instance = getCurrentInstance(); // 提前保存实例
 
 const giveupspelling = (num) =>  {
-	console.log("fx拼读")
+	console.log("放弃拼读")
 	finishiWordshowPopup.value = false
-	uni.navigateBack();
+	const learningreportWords = 'learningreportWords';
+	
+	uni.setStorage({
+	  key: learningreportWords,
+	  data: JSON.stringify(planWordsWithCounts.value),
+	  success: function () {
+		console.log('数据存储成功');
+		// 跳转到学习页面
+		uni.navigateTo({
+		  url: `/pages/textbook/Learningreport?learningreportWords=${learningreportWords}&bookId=${book_id.value}`, // 将缓存键名传递给学习页面
+		});
+	  },
+	  fail: function (err) {
+		console.log('数据存储失败', err);
+	  }
+	});
+	
+	
 }
 const startSpelling = (num) =>  {
-	console.log("ks拼读")
+	console.log("开始拼读")
 	finishiWordshowPopup.value = false
-	uni.navigateBack();
+	const learningreportWords = 'learningreportWords';
+	
+	uni.setStorage({
+	  key: learningreportWords,
+	  data: JSON.stringify(planWordsWithCounts.value),
+	  success: function () {
+		console.log('数据存储成功');
+		// 跳转到学习页面
+		uni.navigateTo({
+		  url: `/pages/textbook/WordDictation?learningreportWords=${learningreportWords}&bookId=${book_id.value}`, // 将缓存键名传递给学习页面
+		});
+	  },
+	  fail: function (err) {
+		console.log('数据存储失败', err);
+	  }
+	});
+	
+	
 }
 
 const optionitemclick = (num) => {
+	// 找到与 optionWord.word_id 匹配的单词
+	const targetWord = planWordsWithCounts.value.find(word => word.word_id === optionWord.value.word_id);
+	if (targetWord) {
+	    if (num == 1) { // 答对了
+	      targetWord.correct_count += 1; // 更新 correct_count
+	    } else { // 答错了
+	      targetWord.incorrect_count += 1; // 更新 incorrect_count
+	    }
+	  }
+
   if (num==1) { //答对了
-	  if (planWordmode.value == 2 && planWordThreeindext.value == (planWordsThreeList.value.length-1)) {
+		if (planWordmode.value == 2 && planWordThreeindext.value == (planWordsThreeList.value.length-1)) {
 		  // console.log("不进来吗")
 		  progressindext.value = planWordsThreeList.value.length
 		  finishiWordshowPopup.value = true
-	  } else {
+		} else {
 		  // console.log("跑这边")
 		  animatedPageturn()
-	  }
+		}
   } else {
-	  // console.log("答错----")
-	  ismisanswer.value = true
-	  
+		// console.log("答错----")
+		ismisanswer.value = true
+			
   }
 };
 
@@ -406,7 +453,12 @@ const detailWords = async (bookId, words) => {
 	planWordsList.value = [...response.data.words]; // 创建新数组
 	planWordsTwoList.value = [...response.data.words]; // 创建新数组
 	planWordsThreeList.value = [...response.data.words]; // 创建新数组
-	
+	// 单独创建 planWordsWithCounts 数组，添加 correct_count 和 incorrect_count 字段
+	planWordsWithCounts.value = response.data.words.map(word => ({
+	  ...word,
+	  correct_count: 0,
+	  incorrect_count: 0,
+	}));
 	// 使用 nextTick 确保 DOM 更新完成
 	nextTick(() => {
 

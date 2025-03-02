@@ -19,11 +19,11 @@
       </view>
       <view class="popup-body">
 		  <scroll-view class="picview" scroll-y>
-			<view @tap="planoptionitemclick(item.num)" :class="item.num==wordgivendaynum?'plan-option-st':'plan-option'"  v-for="(item, index) in picdata" :key="index">
+			<view @tap="planoptionitemclick(item.num)" :class="item.num==currentPlan?'plan-option-st':'plan-option'"  v-for="(item, index) in picdata" :key="index">
 			  <view class="plan-option-item">{{ item.num }} 个</view>
 			  <view class="plan-option-right">
 				<view class="one">{{ item.date }}</view>
-				<view class="two" v-if="item.num==wordgivendaynum">
+				<view class="two" v-if="item.num==currentPlan">
 					<image class="left-icon" src="@/assets/icons/word_dagou.svg"></image>
 				</view>
 				<view class="one" v-else></view>
@@ -50,22 +50,19 @@ const picdata = ref([
 	{num:20,date:"3天"},
 	{ num: 30, date: "1天" }
 ])
-const wordgivendaynum = ref(5)
+
 
 const emit = defineEmits(['update:visible', 'updatePlan']);
 
-const newPlan = ref(props.currentPlan);
+
 
 const close = () => {
   emit('update:visible', false);
 };
 
-const confirm = () => {
-  emit('updatePlan', newPlan.value);
-  close();
-};
 const planoptionitemclick = (num) => {
-	wordgivendaynum.value = num
+	emit('updatePlan', num);
+	close();
 }
 </script>
 
