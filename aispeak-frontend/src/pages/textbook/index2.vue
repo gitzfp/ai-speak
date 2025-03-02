@@ -393,6 +393,7 @@ const uploadChapters = async () => {
       "5_s",
       "5_x",
       "6_s",
+      "6_x",
     ];
 
     const bookChapters = [
@@ -411,6 +412,7 @@ const uploadChapters = async () => {
       mj_5_s_chapters,
       mj_5_x_chapters,
       mj_6_s_chapters,
+      mj_6_x_chapters,
     ];
     // 显示加载提示
     uni.showLoading({
