@@ -32,14 +32,18 @@
         ></image>
         课本同步学
       </view>
+      <view class="function-button" @click="listenWrite">
+          <image class="button-icon" src="@/assets/icons/recite.svg"></image>
+          课本点读
+      </view>
+      <view class="function-button" @click="sentenceFollow">
+          <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
+          句子跟读
+      </view>
       <view class="button-row button-line">
         <view class="function-button" @click="textbookListen">
           <image class="button-icon" src="@/assets/icons/listening.svg"></image>
           听课文
-        </view>
-        <view class="function-button" @click="sentenceFollow">
-          <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
-          句子跟读
         </view>
         <!-- <view class="function-button" @click="reciteTest">
           <image class="button-icon" src="@/assets/icons/recitation_pattern.svg"></image>
@@ -49,10 +53,7 @@
           <image class="button-icon" src="@/assets/icons/word.svg"></image>
           学单词
         </view> -->
-        <view class="function-button" @click="listenWrite">
-          <image class="button-icon" src="@/assets/icons/recite.svg"></image>
-          课本点读
-        </view>
+ 
       </view>
       <view class="button-tittwo">
         <view class="button-tittwoItem">
