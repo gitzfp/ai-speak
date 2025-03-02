@@ -7,76 +7,87 @@
 		</view>
 		<template v-if="allWords.length>0" >
 			<view class="topcontent" :animation="animationData">
-						  <view class="pagination">
-						    <view>
-						      <text class="page-current">{{ currentPage+1 }}</text>
-						      <text class="page-divider">/</text>
-						      <text class="page-total">{{ allWords.length }}</text>
-						    </view>
-						     <view @tap="wordsNotebookclick" class="wordsNotebook">
-						      <image class="left-iconone" :src="isUnfamiliarWord()?dagou:jiahao"></image>
-						      <text>生词本</text>
-						    </view>
-						  </view>
-						  <!-- 3个文本框 -->
-						  <view class="input-boxes">
-							  <template v-if="iswordReveal">
-								  <view
-								    class="input-box"
-								    v-for="(box, index) in inputBoxes"
-								    :key="index"
-								    :class="{ active: activeIndex === index }"
-									:style="originalwordletters[index]==box?'color: #5AC568;':'color: red;'"
-								     @click="setActiveIndex(index)"
-								  >
-								    <text>{{ box }}</text>
-								    <view v-if="activeIndex === index" class="cursor"></view>
-								  </view>	
-							  </template>
-							  <template v-else>
-							  		<view
-							  		  class="input-box"
-							  		  v-for="(box, index) in inputBoxes"
-							  		  :key="index"
-							  		  :class="{ active: activeIndex === index }"
-							  		   @click="setActiveIndex(index)"
-							  		>
-							  		  <text>{{ box }}</text>
-							  		  <view v-if="activeIndex === index" class="cursor"></view>
-							  		</view>	  
-							  </template>
-							<view @tap="handleDelete" class="delbtn">X</view>
-						  </view>
-						  
-						  <view class="correctWord">
-							  <text v-if="iswordReveal" class="correctContent">{{currentWord.word}}</text>
-						  </view>
-						  <view class="audio-icon"> 
-							  <image @tap="playbuttonclick" class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
-						  </view>
-						  <!-- 释义区域 -->
-						  <view class="definition">
-						      <text class="label">释义：</text>
-						      <text class="value">{{currentWord.chinese}}</text>
-						  </view>
-						  
-						  
-						  <!-- 拼音键盘 -->
-						  <view class="keyboard">
-							<view class="row">
-							  <view
-								v-for="key in letterkeys"
-								:key="key.index"
-								class="key"
-								:style="key.isSelet?'background-color: #f0f0f0':''"
-								@click="handleKeyPress(key)"
-							  >
-								{{ key.letter }}
-							  </view>
-							  <view class="clear-button" @click="handleClear">清空</view>
-							</view>
-						  </view>
-				</view>
+				  <view class="pagination">
+					<view>
+					  <text class="page-current">{{ currentPage+1 }}</text>
+					  <text class="page-divider">/</text>
+					  <text class="page-total">{{ allWords.length }}</text>
+					</view>
+					 <view @tap="wordsNotebookclick" class="wordsNotebook">
+					  <image class="left-iconone" :src="isUnfamiliarWord()?dagou:jiahao"></image>
+					  <text>生词本</text>
+					</view>
+				  </view>
+				  <!-- 3个文本框 -->
+				  <view class="input-boxes">
+					  <template v-if="iswordReveal">
+						  <template :key="index" v-for="(box, index) in inputBoxes">
+							 <view class="input-box"
+								:class="{ active: activeIndex === index }"
+								:style="originalwordletters[index]==box?'color: #5AC568;':'color: red;'"
+								 @click="setActiveIndex(index)"
+							>
+								<text>{{ box }}</text>
+								<view v-if="activeIndex === index" class="cursor"></view>
+							 </view> 
+							 <view v-if="nonLetterChars.some(char => char.position === index + 1)"
+							     :style="originalwordletters[index] == box ? 'color: #5AC568;' : 'color: red;'"
+							     class="input-box-ot"
+							   >
+							     {{ nonLetterChars.find(char => char.position === index + 1)?.value }}
+							   </view>
+						  </template>
+						  	
+					  </template>
+					  <template v-else>
+						  <template :key="index" v-for="(box, index) in inputBoxes">
+							 <view class="input-box"
+							   :class="{ active: activeIndex === index }"
+							    @click="setActiveIndex(index)"
+							 >
+							   <text>{{ box }}</text>
+							   <view v-if="activeIndex === index" class="cursor"></view>
+							 </view>
+							  <view v-if="nonLetterChars.some(char => char.position === index + 1)"
+							      class="input-box-ot"
+							    >
+							      {{ nonLetterChars.find(char => char.position === index + 1)?.value }}
+							    </view>
+						  </template>
+							  
+					  </template>
+					<view @tap="handleDelete" class="delbtn">X</view>
+				  </view>
+				  
+				  <view class="correctWord">
+					  <text v-if="iswordReveal" class="correctContent">{{currentWord.word}}</text>
+				  </view>
+				  <view class="audio-icon"> 
+					  <image @tap="playbuttonclick" class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
+				  </view>
+				  <!-- 释义区域 -->
+				  <view class="definition">
+					  <text class="label">释义：</text>
+					  <text class="value">{{currentWord.chinese}}</text>
+				  </view>
+				  
+				  
+				  <!-- 拼音键盘 -->
+				  <view class="keyboard">
+					<view class="row">
+					  <view
+						v-for="key in letterkeys"
+						:key="key.index"
+						class="key"
+						:style="key.isSelet?'background-color: #f0f0f0':''"
+						@click="handleKeyPress(key)"
+					  >
+						{{ key.letter }}
+					  </view>
+					  <view class="clear-button" @click="handleClear">清空</view>
+					</view>
+				  </view>
+			</view>
 		
 		 </template>  
 	</view>
@@ -163,6 +174,8 @@ const isreport = ref(false)
 
 //生词本 数租
 const notebookList = ref([])
+
+const nonLetterChars = ref([])
 	
 // 组件挂载
 	onMounted(() => {
@@ -463,13 +476,41 @@ const updateInputBoxesAndLetterKeys = (word) => {
 	// console.log("activeIndex.value")
 	// console.log(activeIndex.value)
 	lettercheckList.value = []
-	  // 将单词的每个字母拆分成数组
-	  originalwordletters.value = word.trim().split('');
 	
+	// 去除首尾空格
+	  const trimmedWord = word.trim();
+	  
+	  // 初始化 originalwordletters 和 nonLetterChars 数组
+	    originalwordletters.value = [];
+	    nonLetterChars.value = [];
+		
+		
+		// 遍历 trimmedWord 的每个字符
+		  for (let i = 0; i < trimmedWord.length; i++) {
+		    const char = trimmedWord[i];
+		
+		    // 如果是字母（A-Z 或 a-z），添加到 originalwordletters
+		    if (/^[A-Za-z]$/.test(char)) {
+		      originalwordletters.value.push(char);
+		    } else {
+				var psnum = i;
+				if (nonLetterChars.value.length) {
+					psnum = i-nonLetterChars.value.length
+				}
+		      // 否则，添加到 nonLetterChars 数组，并记录其位置和字符
+		      nonLetterChars.value.push({
+		        position: psnum,
+		        value: char
+		      });
+		    }
+		  }
+		
+	  
 	  // 更新 inputBoxes，初始化为空字符串
 	  inputBoxes.value = Array(originalwordletters.value.length).fill('');
 	  
-	  letterkeys.value = processZm(word.trim())
+	
+	  letterkeys.value = processZm(trimmedWord)
 	
   
 };
@@ -720,6 +761,19 @@ const wordsNotebookclick =()=> {
   height: 80rpx;
   margin: 10rpx 10rpx;
   border-bottom: 1rpx solid #cccccc;
+  /* border-radius: 10rpx; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  color: #333333;
+  position: relative;
+}
+.input-box-ot {
+  /* width: 200rpx; */
+  width: 50rpx;
+  height: 80rpx;
+  margin: 10rpx 10rpx;
   /* border-radius: 10rpx; */
   display: flex;
   align-items: center;
