@@ -1,7 +1,7 @@
 <template>
   <view class="container">
 <!-- 	white_back.svg -->
-	<view class="headView">
+	<view class="headView" :style="{ paddingTop: statusBarHeight + 'px', height: '44px' }">
 		<image @tap="handleBackPage" class="head-icon" src="@/assets/icons/white_back.svg"></image>
 		<view class="head-text">单词完成报告</view>
 	</view>
@@ -62,6 +62,16 @@
 	const book_id = ref('')
 	const currentAudio = ref(null);
 	const backPageNum = ref(1)
+	
+	const statusBarHeight = ref(0);
+	const customBarHeight = ref(0);
+	
+	// 组件挂载
+		onMounted(() => {
+			const systemInfo = uni.getSystemInfoSync();
+			  statusBarHeight.value = systemInfo.statusBarHeight || 0;
+			  customBarHeight.value = (systemInfo.statusBarHeight || 0) + 44; // 44 是导航栏的默认高度
+		});
 	
 	const phoneticClick = async (item) => {
 	  if (item.sound_path.length <= 0) return;
@@ -133,7 +143,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		height: 96rpx;
+		// height: 96rpx;
 		.head-icon {
 			margin-left: 20rpx;
 			height: 40rpx;
@@ -150,7 +160,7 @@
 .container {
   // display: flex;
   // flex-direction: column;
-  padding: 20rpx;
+  // padding: 20rpx;
   // // background-color: #f0f0f0;
   // // background-color: #5AC467; 
   background-color: #5AC467;
@@ -235,6 +245,9 @@
   margin: 30rpx;
   border-radius: 10rpx;
   // margin-top: 20rpx;
+  min-height: auto; // 高度自适应内容
+  max-height: 50vh; // 最大高度为 60vh
+  overflow-y: auto; // 允许垂直滚动
 }
 .word-section-tit {
 	padding: 30rpx;
@@ -255,7 +268,7 @@
 }
 
 .word-item {
-	border-top:#979797 1rpx solid;;
+	border-top:#979797 0.5rpx solid;;
   font-size: 24rpx;
   padding: 30rpx;
   display: flex;

@@ -1,7 +1,7 @@
 <template>
   <view class="container">
 	<view>
-		<view class="headView">
+		<view class="headView" :style="{ paddingTop: statusBarHeight + 'px', height: '44px' }">
 			<image @tap="handleBackPage" class="head-icon" src="@/assets/icons/black_back.svg"></image>
 			<view class="head-text">单词听写</view>
 		</view>
@@ -88,15 +88,17 @@
 </template>
 
 <script setup>
-import { ref, watch,onMounted,computed,nextTick,onUnmounted} from 'vue';
+import { ref, watch,onMounted,computed,nextTick,onUnmounted,getCurrentInstance} from 'vue';
 import { onLoad } from '@dcloudio/uni-app'
 import { processZm } from '@/utils/stringUtils'
 import textbook from '@/api/textbook'
 import jiahao from '@/assets/icons/word_jiahao.svg';
 import dagou from '@/assets/icons/word_dagou.svg';
-
-
 import accountRequest from "@/api/account"
+// 获取设备的安全区域高度
+const statusBarHeight = ref(0);
+const customBarHeight = ref(0);
+
 
 // 动画数据
 const animationData = ref(null);
@@ -164,7 +166,9 @@ const notebookList = ref([])
 	
 // 组件挂载
 	onMounted(() => {
-		
+		const systemInfo = uni.getSystemInfoSync();
+		  statusBarHeight.value = systemInfo.statusBarHeight || 0;
+		  customBarHeight.value = (systemInfo.statusBarHeight || 0) + 44; // 44 是导航栏的默认高度
 	});
 	onUnmounted(() => {
 		stopCurrentAudio()
@@ -460,12 +464,12 @@ const updateInputBoxesAndLetterKeys = (word) => {
 	// console.log(activeIndex.value)
 	lettercheckList.value = []
 	  // 将单词的每个字母拆分成数组
-	  originalwordletters.value = word.split('');
+	  originalwordletters.value = word.trim().split('');
 	
 	  // 更新 inputBoxes，初始化为空字符串
 	  inputBoxes.value = Array(originalwordletters.value.length).fill('');
 	  
-	  letterkeys.value = processZm(word)
+	  letterkeys.value = processZm(word.trim())
 	
   
 };
