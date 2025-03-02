@@ -6,11 +6,10 @@
     <view v-if="currentStep === 'submiting'" class="result-selection">
       <!-- 关闭按钮 -->
       <view class="close-button" @click="resetAll">×</view>
-      <view class="result-header">评估中</view>
+      <view class="result-header">发音分析中...</view>
       <view class="result-detail">
         <view class="result-dimensions">
           <view class="loading-spinner result-text"></view>
-          <view class="loading-text">正在分析您的发音...</view>
         </view>
       </view>
     </view>
@@ -96,8 +95,8 @@ const resetAll = () => {
 }
 
 .loading-spinner {
-  width: 20px;
-  height: 20px;
+  width: 45px;
+  height: 45px;
   border: 3px solid #f3f3f3;
   border-top: 3px solid #007bff;
   border-radius: 50%;
