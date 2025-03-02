@@ -355,10 +355,10 @@ class AccountService:
             speech_role_name = get_azure_language_default_role(Config.DEFAULT_TARGET_LANGUAGE)
             account_settings = AccountSettingsEntity(
                 account_id=account_id,
-                auto_playing_voice=False,
+                auto_playing_voice=True,
                 playing_voice_speed=1.0,
                 auto_text_shadow=False,
-                auto_pronunciation=False,
+                auto_pronunciation=True,
                 speech_role_name=speech_role_name,
                 target_language=Config.DEFAULT_TARGET_LANGUAGE,
                 source_language=Config.DEFAULT_SOURCE_LANGUAGE  # Ensure source_language is set
