@@ -26,12 +26,21 @@
           <!-- 子课程内容 -->
           <view v-if="currentUnit.sub_lessons && currentUnit.sub_lessons.length > 0">
             <view 
+              v-for="subLesson in currentUnit.sub_lessons"
+              :key="subLesson.id"
               class="lesson-section">
-              <view class="lesson-title">{{ currentUnit.title }}</view>
-              <sentence-list 
-                :sentences="getAllSentences(currentUnit.sub_lessons)" 
-                :repeat-after="isRepeatAfter === 'true'"
-              />
+              <view class="lesson-title" @tap="toggleSubLesson(subLesson.id)">
+                {{ subLesson.title }}
+                <span class="toggle-button">{{ expandedSubLessons[subLesson.id] ? '收起' : '展开' }}</span>
+              </view>
+              <view v-if="expandedSubLessons[subLesson.id]">
+                <sentence-list 
+                    ref="sentenceListRef"
+                    :sentences="subLesson.sentences" 
+                    :repeat-after="isRepeatAfter === 'true'"
+                    :on-list-end="handleListEnd"
+                />
+              </view>
             </view>
           </view>
           <!-- 直接显示句子列表 -->
@@ -45,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import SentenceList from './components/SentenceList.vue'
 import textbookApi from '@/api/textbook'
 import { onLoad } from "@dcloudio/uni-app"
@@ -57,14 +66,81 @@ const bookId = ref('')
 const isRepeatAfter = ref('false')
 const currentUnitId = ref('')
 
+// 用于存储每个子单元的展开状态
+const expandedSubLessons = ref({})
+
 // 计算当前显示的单元
 const currentUnit = computed(() => 
   textbookData.value.find(unit => unit.id === currentUnitId.value)
 )
 
+// 监听 currentUnit 的变化，默认展开第一个子单元
+watch(currentUnit, (newUnit) => {
+  if (newUnit && newUnit.sub_lessons && newUnit.sub_lessons.length > 0) {
+    expandedSubLessons.value = { [newUnit.sub_lessons[0].id]: true }
+  }
+})
+
+
+const sentenceListRef = ref(null)
+
+// Define the handleListEnd function
+const handleListEnd = async () => {
+  const currentUnit = textbookData.value.find(unit => unit.id === currentUnitId.value)
+  if (!currentUnit) return
+  // 获取当前展开的子课程索引
+  const currentSubLessonIndex = currentUnit.sub_lessons.findIndex(
+    sub => expandedSubLessons.value[sub.id]
+  )
+  // 情况1: 当前单元还有下一个子课程
+  if (currentSubLessonIndex < currentUnit.sub_lessons.length - 1) {
+    const nextSubLesson = currentUnit.sub_lessons[currentSubLessonIndex + 1]
+    toggleSubLesson(nextSubLesson.id)
+    await nextTick() // 等待DOM更新
+    // 新子课程在数组中的索引 = 原索引 + 1
+    const newSubLessonIndex = currentSubLessonIndex + 1
+    console.log('newSubLessonIndex:', newSubLessonIndex, sentenceListRef.value)
+    if (sentenceListRef.value?.[sentenceListRef.value.length - 1]) {
+      sentenceListRef.value[sentenceListRef.value.length - 1].playFirstSentence()
+    }
+  } else { 
+    // 情况2: 切换到下一个单元
+    // const currentUnitIndex = textbookData.value.findIndex(unit => unit.id === currentUnitId.value)
+    // if (currentUnitIndex < textbookData.value.length - 1) {
+    //   const nextUnit = textbookData.value[currentUnitIndex + 1]
+    //   switchUnit(nextUnit)
+    //   await nextTick() // 等待单元切换渲染完成
+    //   // 新单元的第一个子课程
+    //   const firstSubLesson = nextUnit.sub_lessons?.[0]
+    //   if (firstSubLesson) {
+    //     toggleSubLesson(firstSubLesson.id)
+    //     await nextTick() // 等待子课程展开
+    //     console.log('report firstSubLesson:', sentenceListRef.value[0])
+    //     // 新单元的第一个SentenceList实例索引为0
+    //     if (sentenceListRef.value?.[0]) {
+    //       sentenceListRef.value[0].playFirstSentence()
+    //     }
+    //   }
+    // }
+  }
+}
 // 切换单元
 const switchUnit = (unit) => {
   currentUnitId.value = unit.id
+}
+
+// 切换子单元的展开状态
+const toggleSubLesson = (subLessonId) => {
+  // 如果当前子单元已经展开，则收起
+  if (expandedSubLessons.value[subLessonId]) {
+    expandedSubLessons.value[subLessonId] = false
+  } else {
+    // 否则，展开当前选择的子单元，并收起其他子单元
+    for (const key in expandedSubLessons.value) {
+      expandedSubLessons.value[key] = false
+    }
+    expandedSubLessons.value[subLessonId] = true
+  }
 }
 
 onLoad((options: any) => {
@@ -99,16 +175,6 @@ const fetchTextbookData = async () => {
   } finally {
     loading.value = false
   }
-}
-
-// 添加一个方法来获取所有 sentences
-const getAllSentences = (lessons) => {
-  return lessons.reduce((acc, lesson) => {
-    if (lesson.sentences && Array.isArray(lesson.sentences)) {
-      return [...acc, ...lesson.sentences]
-    }
-    return acc
-  }, [])
 }
 </script>
 
@@ -161,6 +227,23 @@ const getAllSentences = (lessons) => {
   margin-bottom: 20rpx;
   padding-left: 20rpx;
   border-left: 8rpx solid #4CAF50;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggle-button {
+  font-size: 28rpx;
+  color: #4CAF50;
+  background-color: #e0f7fa;
+  padding: 5rpx 10rpx;
+  border-radius: 12rpx;
+  transition: background-color 0.3s;
+}
+
+.toggle-button:hover {
+  background-color: #b2ebf2;
 }
 
 .loading, .error {

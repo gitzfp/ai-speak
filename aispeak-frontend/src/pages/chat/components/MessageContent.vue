@@ -124,6 +124,7 @@ onMounted(() => {
   if (props.message.auto_hint && props.message.auto_hint === true) {
     textShadow.value = true
   }
+  console.log(props.message, "消息评分...")
   if (props.message.auto_pronunciation) {
     autoPronunciation()
   }

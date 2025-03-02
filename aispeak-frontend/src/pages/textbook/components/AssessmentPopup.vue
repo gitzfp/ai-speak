@@ -16,69 +16,16 @@
             :class="{ 'assess-option-active': index === assessStartIndex }"
             @click="handleAssessSelection(index)"
             >
-            {{ option }}
+            {{ option.trackText }}
             </view>
+            <AudioPlayer
+            :content="repeatOptions[assessStartIndex]?.trackUrl"/>
         </view>
         <!-- 预留跟读按钮位置 -->
-        <view class="assess-actions-placeholder">
-            <view v-if="assessStartIndex !== null" class="assess-actions">
-            <speech  @success="submitRecording"></speech>
-            </view>
-        </view>
-        </view>
-        <view v-if="currentStep === 'submiting'" class="assess-selection">
-          <!-- 关闭按钮 -->
-          <view class="close-button" @click="resetAll">×</view>
-          <view class="assess-header">正在评估</view>
-          <view class="assess-options">
-            <view class="loading-container">
-              <view class="loading-spinner"></view>
-              <view class="loading-text">正在分析您的发音...</view>
-            </view>
-          </view>
-        </view>
-        <!-- 测评结果弹窗 -->
-        <view v-if="currentStep === 'result'" class="result-selection">
-        <!-- 返回按钮 -->
-        <view class="back-button" @click="handleReturn">←</view>
-        <view class="result-header">
-            <view class="result-score">{{ pronunciationResult.pronunciation_score }}</view>
-            <view class="result-label">评估分数</view>
-            <view class="result-tips">分数解读 ①</view>
-        </view>
-        <view class="result-detail">
-            <view class="result-text">{{ pronunciationResult.content }}</view>
-            <view class="result-dimensions">
-                <view class="dimension-item" :class="getScoreClass(pronunciationResult.fluency_score)">
-                    流畅度 {{ pronunciationResult.fluency_score }}
-                </view>
-                <view class="dimension-item" :class="getScoreClass(pronunciationResult.accuracy_score)">
-                    准确度 {{ pronunciationResult.accuracy_score }}
-                </view>
-                <view class="dimension-item" :class="getScoreClass(pronunciationResult.completeness_score)">
-                    完整度 {{ pronunciationResult.completeness_score }}
-                </view>
-            </view>
-            <!-- 单词评分详情 -->
-            <view class="word-details">
-                <view 
-                    v-for="(word, index) in pronunciationResult.words" 
-                    :key="index"
-                    class="word-item"
-                    :class="[
-                        {'word-error': word.error_type !== 'None'},
-                        getScoreClass(word.accuracy_score)
-                    ]"
-                >
-                    <view class="word-text">{{ word.word }}</view>
-                    <view class="word-score">{{ word.accuracy_score }}分</view>
-                    <view v-if="word.error_type !== 'None'" class="word-error-type">
-                        {{ word.error_type === 'Omission' ? '遗漏' : word.error_type }}
-                    </view>
-                </view>
-            </view>
-        </view>
-
+         <FollowReading 
+          v-if="assessStartIndex !== null"
+          :sentence="repeatOptions[assessStartIndex]"
+        />
         <view class="result-actions">
             <button class="result-button" @click="handleReturn">返回</button>
             <button class="result-button" @click="handleRetest">再测一次</button>
@@ -89,9 +36,8 @@
 </template>
 <script setup>
 import { ref, defineEmits } from "vue"
-import Speech from "./PronuciationSpeech.vue"
-import chatRequest from "@/api/chat";
-
+import FollowReading from './FollowReading.vue' // 导入新组件
+import AudioPlayer from '@/components/AudioPlayer.vue'
 const emit = defineEmits()
 
 const props = defineProps({
@@ -115,12 +61,7 @@ const initPronunciation = {
   content: ''
 }
 const pronunciationResult = ref(initPronunciation)
-const getScoreClass = (score) => {
-    if (score >= 90) return 'score-excellent'
-    if (score >= 80) return 'score-good'
-    if (score >= 60) return 'score-fair'
-    return 'score-poor'
-}
+
 //-----测评用的方法-----开始------
 // 方法
 const handleMaskClick = () => {
@@ -146,19 +87,7 @@ const handleMaskClick = () => {
     assessStartIndex.value = index;
   }
 
-  const submitRecording = (voice) => {
-    console.log(voice, "录音对象")
-    currentStep.value = "submiting"; // 切换到结果页
-    chatRequest
-      .pronunciationByFileInvoke({ file_name: voice.fileName, content: props.repeatOptions[assessStartIndex.value]})
-      .then((data) => {
-        pronunciationResult.value = data.data;
-        currentStep.value = "result"; // 切换到结果页
 
-      }).finally(() => {
-        currentStep.value = "result"; // 切换到结果页
-      });
-    }
     const handleReturn = () => {
       currentStep.value = "select"; // 返回选择页
       assessStartIndex.value = null; // 重置选择
@@ -233,17 +162,6 @@ const handleMaskClick = () => {
   border-color: #007bff;
 }
 
-/* 预留跟读按钮位置 */
-.assess-actions-placeholder {
-  height: 60px; /* 预留高度 */
-  margin-top: 20px;
-  padding: 0 16px; /* 添加内边距，确保按钮不贴边 */
-}
-
-.assess-actions {
-  display: flex;
-  justify-content: center;
-}
 
 .long-press-button {
   padding: 12px 24px;
@@ -261,61 +179,7 @@ const handleMaskClick = () => {
   background-color: #0056b3;
 }
 
-/* 测评结果弹窗样式 */
-.result-selection {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background-color: #fff;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  box-sizing: border-box; /* 确保内边距不影响宽度 */
-}
 
-.result-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.result-score {
-  font-size: 48px;
-  font-weight: bold;
-  color: #007bff;
-}
-
-.result-label {
-  font-size: 16px;
-  color: #666;
-}
-
-.result-tips {
-  font-size: 12px;
-  color: #999;
-  margin-top: 8px;
-}
-
-.result-detail {
-  border-top: 1px solid #eee;
-  padding: 15px 16px; /* 添加内边距，确保内容不贴边 */
-}
-
-.result-text {
-  color: #ff4444;
-  font-size: 14px;
-  margin-bottom: 12px;
-  text-align: center;
-}
-
-.result-dimensions {
-  display: flex;
-  justify-content: space-around;
-  color: #666;
-  font-size: 14px;
-}
 
 .result-actions {
   display: flex;

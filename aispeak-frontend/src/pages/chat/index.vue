@@ -412,7 +412,6 @@ const sendMessage = (message?: string, fileName?: string) => {
       )
 
       ownMessage.id = data?.send_message_id
-      ownMessage.auto_pronunciation = true
       messages.value.push({
         ...ownMessage,
       })
