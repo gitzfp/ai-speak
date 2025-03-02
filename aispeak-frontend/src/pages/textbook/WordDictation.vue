@@ -1,80 +1,88 @@
 <template>
-  <view v-if="allWords.length>0" class="container">
-	  <view class="topcontent" :animation="animationData">
-		  <view class="pagination">
-		    <view>
-		      <text class="page-current">{{ currentPage+1 }}</text>
-		      <text class="page-divider">/</text>
-		      <text class="page-total">{{ allWords.length }}</text>
-		    </view>
-		     <view @tap="wordsNotebookclick" class="wordsNotebook">
-		      <image class="left-iconone" :src="isUnfamiliarWord()?dagou:jiahao"></image>
-		      <text>生词本</text>
-		    </view>
-		  </view>
-		  <!-- 3个文本框 -->
-		  <view class="input-boxes">
-			  <template v-if="iswordReveal">
-				  <view
-				    class="input-box"
-				    v-for="(box, index) in inputBoxes"
-				    :key="index"
-				    :class="{ active: activeIndex === index }"
-					:style="originalwordletters[index]==box?'color: #5AC568;':'color: red;'"
-				     @click="setActiveIndex(index)"
-				  >
-				    <text>{{ box }}</text>
-				    <view v-if="activeIndex === index" class="cursor"></view>
-				  </view>	
-			  </template>
-			  <template v-else>
-			  		<view
-			  		  class="input-box"
-			  		  v-for="(box, index) in inputBoxes"
-			  		  :key="index"
-			  		  :class="{ active: activeIndex === index }"
-			  		   @click="setActiveIndex(index)"
-			  		>
-			  		  <text>{{ box }}</text>
-			  		  <view v-if="activeIndex === index" class="cursor"></view>
-			  		</view>	  
-			  </template>
-			<view @tap="handleDelete" class="delbtn">X</view>
-		  </view>
-		  
-		  <view class="correctWord">
-			  <text v-if="iswordReveal" class="correctContent">{{currentWord.word}}</text>
-		  </view>
-		  <view class="audio-icon"> 
-			  <image @tap="playbuttonclick" class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
-		  </view>
-		  <!-- 释义区域 -->
-		  <view class="definition">
-		      <text class="label">释义：</text>
-		      <text class="value">{{currentWord.chinese}}</text>
-		  </view>
-		  
-		  
-		  <!-- 拼音键盘 -->
-		  <view class="keyboard">
-			<view class="row">
-			  <view
-				v-for="key in letterkeys"
-				:key="key.index"
-				class="key"
-				:style="key.isSelet?'background-color: #f0f0f0':''"
-				@click="handleKeyPress(key)"
-			  >
-				{{ key.letter }}
-			  </view>
-			  <view class="clear-button" @click="handleClear">清空</view>
-			</view>
-		  </view>
-	  </view>
-    
-	  <view class="bottomcontent">
-		  <view @click="inspectclick" :style="isInspect?'background: #4CAF50;':'background: gray;'" class="inspect-btn">检查</view>
-	  </view>
+  <view class="container">
+	<view>
+		<view class="headView">
+			<image @tap="handleBackPage" class="head-icon" src="@/assets/icons/black_back.svg"></image>
+			<view class="head-text">单词听写</view>
+		</view>
+		<template v-if="allWords.length>0" >
+			<view class="topcontent" :animation="animationData">
+						  <view class="pagination">
+						    <view>
+						      <text class="page-current">{{ currentPage+1 }}</text>
+						      <text class="page-divider">/</text>
+						      <text class="page-total">{{ allWords.length }}</text>
+						    </view>
+						     <view @tap="wordsNotebookclick" class="wordsNotebook">
+						      <image class="left-iconone" :src="isUnfamiliarWord()?dagou:jiahao"></image>
+						      <text>生词本</text>
+						    </view>
+						  </view>
+						  <!-- 3个文本框 -->
+						  <view class="input-boxes">
+							  <template v-if="iswordReveal">
+								  <view
+								    class="input-box"
+								    v-for="(box, index) in inputBoxes"
+								    :key="index"
+								    :class="{ active: activeIndex === index }"
+									:style="originalwordletters[index]==box?'color: #5AC568;':'color: red;'"
+								     @click="setActiveIndex(index)"
+								  >
+								    <text>{{ box }}</text>
+								    <view v-if="activeIndex === index" class="cursor"></view>
+								  </view>	
+							  </template>
+							  <template v-else>
+							  		<view
+							  		  class="input-box"
+							  		  v-for="(box, index) in inputBoxes"
+							  		  :key="index"
+							  		  :class="{ active: activeIndex === index }"
+							  		   @click="setActiveIndex(index)"
+							  		>
+							  		  <text>{{ box }}</text>
+							  		  <view v-if="activeIndex === index" class="cursor"></view>
+							  		</view>	  
+							  </template>
+							<view @tap="handleDelete" class="delbtn">X</view>
+						  </view>
+						  
+						  <view class="correctWord">
+							  <text v-if="iswordReveal" class="correctContent">{{currentWord.word}}</text>
+						  </view>
+						  <view class="audio-icon"> 
+							  <image @tap="playbuttonclick" class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
+						  </view>
+						  <!-- 释义区域 -->
+						  <view class="definition">
+						      <text class="label">释义：</text>
+						      <text class="value">{{currentWord.chinese}}</text>
+						  </view>
+						  
+						  
+						  <!-- 拼音键盘 -->
+						  <view class="keyboard">
+							<view class="row">
+							  <view
+								v-for="key in letterkeys"
+								:key="key.index"
+								class="key"
+								:style="key.isSelet?'background-color: #f0f0f0':''"
+								@click="handleKeyPress(key)"
+							  >
+								{{ key.letter }}
+							  </view>
+							  <view class="clear-button" @click="handleClear">清空</view>
+							</view>
+						  </view>
+				</view>
+		
+		 </template>  
+	</view>
+	<view class="bottomcontent">
+	    <view @click="inspectclick" :style="isInspect?'background: #4CAF50;':'background: gray;'" class="inspect-btn">检查</view>
+	</view>		
   </view>
 </template>
 
@@ -85,6 +93,7 @@ import { processZm } from '@/utils/stringUtils'
 import textbook from '@/api/textbook'
 import jiahao from '@/assets/icons/word_jiahao.svg';
 import dagou from '@/assets/icons/word_dagou.svg';
+
 
 import accountRequest from "@/api/account"
 
@@ -99,6 +108,25 @@ const createAnimation = () => {
   });
   return animation;
 };
+
+// 这里可以定义一些响应式数据或逻辑
+	const handleBackPage = () => {
+		if (isreport.value) {
+			uni.navigateBack({
+			    delta: 2, // 返回两层
+			    success: () => {
+			      console.log('返回成功');
+			    },
+			    fail: (err) => {
+			      console.error('返回失败', err);
+			    },
+			  });
+		} else {
+			uni.navigateBack()
+		}
+		
+	  
+	}
 
 // 键盘字母
 const letterkeys = ref([]);
@@ -127,37 +155,60 @@ const iswordReveal = ref(false)
 const originalwordletters = ref([])
 
 const book_id = ref('')
+
+const isreport = ref(false)
+
 //生词本 数租
 const notebookList = ref([])
 	
 // 组件挂载
 	onMounted(() => {
-	 
-	 
+		
 	});
 	onUnmounted(() => {
 		stopCurrentAudio()
 	})
 
 	onLoad(async (options) => {
-        const {bookId,sessionKey} = options
-
+        const {bookId,sessionKey,learningreportWords} = options
 		book_id.value = bookId
-        // 获取数据
-        uni.getStorage({
-        key: sessionKey,
-        success: function (res) {
-            const words = JSON.parse(res.data);
-            console.log('获取到的数据:', words);
-            detailWords(bookId,words)
-			
-			//获取生词本数组
-			collectsGetnotebook()
-        },
-        fail: function (err) {
-            console.log('获取数据失败', err);
-        }
-        });
+		
+		if (learningreportWords) { //说明说从 被单词那边进来 就是艾比记忆法 
+			isreport.value = true
+			// 获取数据
+			uni.getStorage({
+			key: learningreportWords,
+			success: function (res) {
+				console.log('获取到的数据:');
+				allWords.value = JSON.parse(res.data);
+			   
+				//获取生词本数组
+				collectsGetnotebook()
+			},
+			fail: function (err) {
+			    console.log('获取数据失败', err);
+			}
+			});
+		} else {
+			// 获取数据
+			uni.getStorage({
+			key: sessionKey,
+			success: function (res) {
+			    const words = JSON.parse(res.data);
+			    console.log('获取到的数据:', words);
+			    detailWords(bookId,words)
+				
+				//获取生词本数组
+				collectsGetnotebook()
+			},
+			fail: function (err) {
+			    console.log('获取数据失败', err);
+			}
+			});
+		}
+
+		
+        
     
    })
 
@@ -494,6 +545,25 @@ const wordsNotebookclick =()=> {
   height: 100vh;
   /* background-color: #ffffff; */
   background-color: #f5f5f5;
+}
+
+.headView {
+	width: 100%;
+	background-color: #fff;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	height: 96rpx;
+	.head-icon {
+		margin-left: 20rpx;
+		height: 40rpx;
+		width: 40rpx;
+	}
+	.head-text {
+		flex: 1;
+		text-align: center;
+		font-size: 36rpx;
+	}
 }
 
 .topcontent {

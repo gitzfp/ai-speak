@@ -246,7 +246,8 @@
 	
 	const startLearningword = () => {
 	
-		let firstFive = allWords.value.slice(0, 7);
+		var numvalue = numofday.value
+		let firstFive = allWords.value.slice(0, numvalue);
 		
 		let planWordsList = [];
 		firstFive.forEach(word => {
