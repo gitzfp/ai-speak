@@ -128,6 +128,7 @@
 	// page {
 	//   background-color: #5AC467; /* 设置全局页面背景颜色 */
 	// }
+	
 	.headView {
 		display: flex;
 		justify-content: space-between;
@@ -145,6 +146,7 @@
 			font-size: 36rpx;
 		}
 	}
+
 .container {
   // display: flex;
   // flex-direction: column;
