@@ -122,14 +122,6 @@ const handleMaskClick = () => {
   margin-bottom: 16px;
 }
 
-.assess-options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 200px;
-  overflow-y: auto;
-  padding: 0 16px; /* 添加内边距，确保内容不贴边 */
-}
 
 .assess-options-item {
   display: flex;

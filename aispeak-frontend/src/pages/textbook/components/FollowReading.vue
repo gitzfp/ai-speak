@@ -6,10 +6,10 @@
     <view v-if="currentStep === 'submiting'" class="result-selection">
       <!-- 关闭按钮 -->
       <view class="close-button" @click="resetAll">×</view>
-      <view class="assess-header">正在评估</view>
+      <view class="result-header">评估中</view>
       <view class="result-detail">
-        <view class="loading-container">
-          <view class="loading-spinner"></view>
+        <view class="result-dimensions">
+          <view class="loading-spinner result-text"></view>
           <view class="loading-text">正在分析您的发音...</view>
         </view>
       </view>
@@ -89,20 +89,6 @@ const resetAll = () => {
   color: #666;
 }
 
-.assess-header {
-  font-size: 18px;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-.assess-options {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100px;
-}
-
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -110,8 +96,8 @@ const resetAll = () => {
 }
 
 .loading-spinner {
-  width: 50px;
-  height: 50px;
+  width: 20px;
+  height: 20px;
   border: 3px solid #f3f3f3;
   border-top: 3px solid #007bff;
   border-radius: 50%;
@@ -177,6 +163,7 @@ const resetAll = () => {
 .result-dimensions {
   display: flex;
   justify-content: space-around;
+  align-items: center;
   color: #666;
   font-size: 14px;
 }
