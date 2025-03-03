@@ -414,14 +414,15 @@ const getoptionAreaWords = (fixedNum, rangeStart, rangeEnd, numToSelect) => {
 };
 
 const optionAreaWords = computed(() => {
+	var numsz = planWordsWithCounts.value.length>=4?3:(planWordsWithCounts.value.length-1)
   if (planWordmode.value == 0) {
-	  let result = getoptionAreaWords(planWordindext.value, 0, planWordsList.value.length - 1, 3);
+	  let result = getoptionAreaWords(planWordindext.value, 0, planWordsList.value.length - 1, numsz);
 	  return result;
   } else if (planWordmode.value ==1) {
-	  let result = getoptionAreaWords(planWordTwoindext.value, 0, planWordsTwoList.value.length - 1, 3);
+	  let result = getoptionAreaWords(planWordTwoindext.value, 0, planWordsTwoList.value.length - 1, numsz);
 	  return result;
   } else {
-	  let result = getoptionAreaWords(planWordThreeindext.value, 0, planWordsThreeList.value.length - 1, 3);
+	  let result = getoptionAreaWords(planWordThreeindext.value, 0, planWordsThreeList.value.length - 1, numsz);
 	  return result;
   }
   
