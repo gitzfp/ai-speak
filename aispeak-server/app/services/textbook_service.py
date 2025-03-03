@@ -4,6 +4,7 @@ from app.db.textbook_entities import TextbookEntity,  LessonEntity, TaskTargetsE
 from app.db.words_entities import Word, WordSyllable, Syllable  # 添加这行导入
 import datetime
 
+
 class TextbookService:
     def __init__(self, db: Session):
         self.db = db
@@ -856,3 +857,4 @@ class TextbookService:
         except Exception as e:
             print(f"Error: {str(e)}")
             return None
+
