@@ -1,7 +1,7 @@
 <template>
   <view class="container">
 <!-- 	white_back.svg -->
-	<view class="headView">
+	<view class="headView" :style="{ paddingTop: statusBarHeight + 'px', height: '44px' }">
 		<image @tap="handleBackPage" class="head-icon" src="@/assets/icons/white_back.svg"></image>
 		<view class="head-text">单词完成报告</view>
 	</view>
@@ -12,20 +12,20 @@
       </view>
       <view class="stats">
         <view class="stat-item">
-          <view class="stat-value">10</view>
-          <view class="stat-label">今日新学</view>
+          <view class="stat-value">{{studyRecord.new_words}}</view>
+          <view class="stat-label">新学</view>
         </view>
         <view class="stat-item">
-          <view class="stat-value">0</view>
-          <view class="stat-label">复习</view>
+          <view class="stat-value">{{studyRecord.review_words}}</view>
+          <view class="stat-label">今日复习</view>
         </view>
         <view class="stat-item">
-          <view class="stat-value">2</view>
-          <view class="stat-label">学习时长</view>
+          <view class="stat-value">{{studyRecord.duration}}</view>
+          <view class="stat-label">今日学习时长</view>
         </view>
         <view class="stat-item">
-          <view class="stat-value">8</view>
-          <view class="stat-label">已学习</view>
+          <view class="stat-value">{{studyRecord.new_words}}</view>
+          <view class="stat-label">今日已学习</view>
         </view>
       </view>
     </view>
@@ -57,10 +57,31 @@
 	import { ref, watch,onMounted,computed,nextTick,onUnmounted} from 'vue';
 	import CommonHeader from "@/components/CommonHeader.vue"
 	import { onLoad } from '@dcloudio/uni-app'
+	import study from '@/api/study';
 	
 	const allWords = ref([])
 	const book_id = ref('')
 	const currentAudio = ref(null);
+	const backPageNum = ref(1)
+	
+	const statusBarHeight = ref(0);
+	const customBarHeight = ref(0);
+	//学习记录
+	const studyRecord = ref({
+		new_words: 0,
+		review_words: 0,
+		duration:0,
+		total_duration: 0,
+		total_mastered_words: 0,
+		total_learned_words:0,
+		
+	})
+	// 组件挂载
+		onMounted(() => {
+			const systemInfo = uni.getSystemInfoSync();
+			  statusBarHeight.value = systemInfo.statusBarHeight || 0;
+			  customBarHeight.value = (systemInfo.statusBarHeight || 0) + 44; // 44 是导航栏的默认高度
+		});
 	
 	const phoneticClick = async (item) => {
 	  if (item.sound_path.length <= 0) return;
@@ -88,9 +109,10 @@
 // 这里可以定义一些响应式数据或逻辑
 	const handleBackPage = () => {
 	  uni.navigateBack({
-	      delta: 2, // 返回两层
+	      delta: backPageNum.value, // 返回几层
 	      success: () => {
 	        console.log('返回成功');
+			uni.$emit('refreshwordshomepage', { action: 'updateData' }); // 传递参数
 	      },
 	      fail: (err) => {
 	        console.error('返回失败', err);
@@ -99,8 +121,9 @@
 	}
 	
 	onLoad(async (options) => {
-	     const {bookId,learningreportWords} = options
+	     const {bookId,learningreportWords,backPage} = options
 			book_id.value = bookId
+			backPageNum.value = backPage
 			// 获取数据
 			uni.getStorage({
 			key: learningreportWords,
@@ -114,21 +137,44 @@
 			}
 			});
 			
+			studyRecordForbookid(bookId)
 	})
 	
+	const studyRecordForbookid = async (bookId) => {
+		
+	  try {
+		const today = new Date();
+		const year = today.getFullYear();
+		const month = String(today.getMonth() + 1).padStart(2, '0');
+		const day = String(today.getDate()).padStart(2, '0');
+		const formattedDate = `${year}-${month}-${day}`;
+		  
+	    const response = await study.getStudyRecords(bookId,formattedDate);
+	    if (response.code === 1000) {
+			studyRecord.value = response.data
+	    }
+	  } catch (error) {
+	    console.error('获取记录:', error)
+	    uni.showToast({
+	      title: '获取记录失败',
+	      icon: 'none'
+	    })
+	  }
+	}
 	
 
 </script>
 
 <style lang="scss" scoped>
-	page {
-	  background-color: #5AC467; /* 设置全局页面背景颜色 */
-	}
+	// page {
+	//   background-color: #5AC467; /* 设置全局页面背景颜色 */
+	// }
+	
 	.headView {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		height: 96rpx;
+		// height: 96rpx;
 		.head-icon {
 			margin-left: 20rpx;
 			height: 40rpx;
@@ -141,12 +187,15 @@
 			font-size: 36rpx;
 		}
 	}
+
 .container {
   // display: flex;
   // flex-direction: column;
   // padding: 20rpx;
   // // background-color: #f0f0f0;
   // // background-color: #5AC467; 
+  background-color: #5AC467;
+  height: 100vh;
 }
 
 .top-section {
@@ -227,6 +276,9 @@
   margin: 30rpx;
   border-radius: 10rpx;
   // margin-top: 20rpx;
+  min-height: auto; // 高度自适应内容
+  max-height: 50vh; // 最大高度为 60vh
+  overflow-y: auto; // 允许垂直滚动
 }
 .word-section-tit {
 	padding: 30rpx;
@@ -247,7 +299,7 @@
 }
 
 .word-item {
-	border-top:#979797 1rpx solid;;
+	border-top:#979797 0.5rpx solid;;
   font-size: 24rpx;
   padding: 30rpx;
   display: flex;

@@ -39,7 +39,7 @@
       
 
       <OptionAreaPicture
-		v-if="!ismisanswer"
+		v-if="isPicturedisplay"
         :word="optionWord"
         :planWordmode="planWordmode"
         :optionWords="optionAreaWords"
@@ -78,7 +78,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, getCurrentInstance, nextTick } from 'vue';
+import { ref, computed, onMounted,onUnmounted, getCurrentInstance, nextTick } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import WordDisplay from './WordDisplay.vue';
 import textbook from '@/api/textbook';
@@ -86,7 +86,8 @@ import OptionAreaPicture from './OptionAreaPicture.vue';
 import accountRequest from "@/api/account"
 
 import FinishWordPop from './FinishWordPop.vue'
-
+import study from '@/api/study';
+import { onShow, onHide } from '@dcloudio/uni-app';
 
 const wordDisplayref = ref(null);
 
@@ -115,15 +116,135 @@ const ismisanswer = ref(false)
 
 const finishiWordshowPopup = ref(false)
 
+const subsidiaryList = ref([])
+
+const enterTime = ref(null); // 记录用户进入页面的时间戳
+
+const plan_id = ref(0)
 
 //生词本 数租
-	const notebookList = ref([])
+const notebookList = ref([])
+
+const subsidiaryWordsStr = ref('')
 
 onMounted(() => {
-  console.log('onMounted');
+	enterTime.value = new Date(); // 记录用户进入页面的时间
+	
+  setTimeout(() => {
+        console.log('wordDisplayref----.value:', wordDisplayref.value);
+        if (wordDisplayref.value) {
+          wordDisplayref.value.phonicsbegins();
+        }
+		console.log("subsidiaryList")
+		console.log(subsidiaryList.value)
+		
+		console.log("optionAreaWords")
+		console.log(optionAreaWords.value)
+		
+		
+  }, 500); // 延迟 100ms
+  
   
 });
 
+
+// 页面显示时触发 这个只要显示就执行
+onShow(() => {
+});
+
+// 页面隐藏时触发 这个页面销毁不会触发，只有页面导航带下一个才触发
+onHide(() => {
+	let storageKey = 'progresscacheObject'+book_id.value
+	uni.removeStorage({
+	    key: storageKey, // 要删除的键名
+	    success: () => {
+	        console.log('删除成功');
+	    },
+	    fail: (err) => {
+	        console.error('删除失败:', err);
+	    }
+	});
+	//说明有全部学完的上报  就把整个数据传过去
+	const leaveTime = new Date(); // 记录用户离开页面的时间
+	  // 计算停留时间（单位：毫秒）
+	  const stayDuration = leaveTime - enterTime.value;
+	  // 转换为分钟数
+	  const stayMinutes = Math.floor(stayDuration / (1000 * 60));
+	const studyDate = leaveTime.toISOString().split('T')[0] // 学习日期（格式：YYYY-MM-DD）
+	reportStudyRecord(stayMinutes,studyDate,planWordsWithCounts.value.length)
+	reportStudyWordProgress(planWordsWithCounts.value,1)
+});
+
+onUnmounted(() => {
+	let storageKey = 'progresscacheObject'+book_id.value
+	if (progressindext.value == planWordsThreeList.value.length) {
+		
+	} else {  
+		//学习一半的上报
+		const filteredArray = planWordsWithCounts.value.filter(item => item.correct_count > 0 || item.incorrect_count > 0);
+		const updatedPlanWordsWithCounts = planWordsWithCounts.value.map(item => ({
+		  ...item,
+		  correct_count: 0,
+		  incorrect_count: 0
+		}));
+		var progresscacheObject = {
+			planWordmode:planWordmode.value,
+			planWordindext:planWordindext.value,
+			planWordTwoindext:planWordTwoindext.value,
+			planWordThreeindext:planWordThreeindext.value,
+			progressindext:progressindext.value,
+			planWordsList:planWordsList.value,
+			planWordsTwoList:planWordsTwoList.value,
+			planWordsThreeList:planWordsThreeList.value,
+			planWordsWithCounts:updatedPlanWordsWithCounts
+		}
+		uni.setStorage({
+		  key: storageKey,
+		  data: JSON.stringify(progresscacheObject),
+		  success: () => {
+			console.log('数据已存储');
+		  },
+		  fail: (err) => {
+			console.error('存储失败:', err);
+		  }
+		});
+		
+		if (filteredArray.length>0) { //说明有学一些
+			reportStudyWordProgress(filteredArray,0)
+		}
+	}
+	
+	
+})
+
+//全部完成 上报到学习记录
+const reportStudyRecord = async (stayMinutes,studyDate,newWords) => {
+	study.updateOrCreateStudyRecord(book_id.value,studyDate,newWords,0,stayMinutes)
+}
+
+//上报到学习进度中
+const reportStudyWordProgress = async (filteredArray,typeNum) => {
+	
+	
+	study.upsertStudyWordProgress(book_id.value,typeNum,plan_id.value,filteredArray)
+}
+
+const isPicturedisplay = computed(() => {
+	if (!ismisanswer.value) {
+		if (subsidiaryWordsStr.value.length>0) {
+			if (subsidiaryList.value.length>0) {
+				return true;
+			}
+			return false
+		} else {
+			if (planWordsWithCounts.value.length>0) {
+				return true
+			}
+			return false
+		}
+	}
+	return false
+})
 const progress = computed(() => {
 	   if (planWordsThreeList.value.length>0) {
 		   let percentage = ((progressindext.value) / planWordsThreeList.value.length) * 100;
@@ -185,7 +306,7 @@ const giveupspelling = (num) =>  {
 		console.log('数据存储成功');
 		// 跳转到学习页面
 		uni.navigateTo({
-		  url: `/pages/textbook/Learningreport?learningreportWords=${learningreportWords}&bookId=${book_id.value}`, // 将缓存键名传递给学习页面
+		  url: `/pages/textbook/Learningreport?learningreportWords=${learningreportWords}&bookId=${book_id.value}&backPage=2`, // 将缓存键名传递给学习页面
 		});
 	  },
 	  fail: function (err) {
@@ -386,13 +507,26 @@ const getoptionAreaWords = (fixedNum, rangeStart, rangeEnd, numToSelect) => {
   let result = [];
   
   var huoquList =[];
-  if (planWordmode.value == 0) {
-  	  huoquList = planWordsList.value
-  } else if (planWordmode.value ==1) {
-  	  huoquList = planWordsTwoList.value
+  
+  if (subsidiaryWordsStr.value.length>0) {
+	  if (planWordmode.value == 0) {
+	  	  huoquList = [...planWordsList.value, ...subsidiaryList.value]
+	  } else if (planWordmode.value ==1) {
+	  	  huoquList = [...planWordsTwoList.value, ...subsidiaryList.value]
+	  } else {
+	  	  huoquList = [...planWordsThreeList.value, ...subsidiaryList.value]
+	  }
   } else {
-  	  huoquList = planWordsThreeList.value
+	  if (planWordmode.value == 0) {
+	  	  huoquList = planWordsList.value
+	  } else if (planWordmode.value ==1) {
+	  	  huoquList = planWordsTwoList.value
+	  } else {
+	  	  huoquList = planWordsThreeList.value
+	  }
   }
+  
+  
   
 
   while (selectedNumbers.length < numToSelect) {
@@ -414,66 +548,137 @@ const getoptionAreaWords = (fixedNum, rangeStart, rangeEnd, numToSelect) => {
 };
 
 const optionAreaWords = computed(() => {
-  if (planWordmode.value == 0) {
-	  let result = getoptionAreaWords(planWordindext.value, 0, planWordsList.value.length - 1, 3);
-	  return result;
-  } else if (planWordmode.value ==1) {
-	  let result = getoptionAreaWords(planWordTwoindext.value, 0, planWordsTwoList.value.length - 1, 3);
-	  return result;
-  } else {
-	  let result = getoptionAreaWords(planWordThreeindext.value, 0, planWordsThreeList.value.length - 1, 3);
-	  return result;
-  }
+	
+	if (subsidiaryWordsStr.value.length>0) {
+		if (planWordmode.value == 0) {
+			  let result = getoptionAreaWords(planWordindext.value, 0, 3, 3);
+			  return result;
+		} else if (planWordmode.value ==1) {
+			  let result = getoptionAreaWords(planWordTwoindext.value, 0, 3, 3);
+			  return result;
+		} else {
+			  let result = getoptionAreaWords(planWordThreeindext.value, 0, 3, 3);
+			  return result;
+		}
+	} else {
+		if (planWordmode.value == 0) {
+			  let result = getoptionAreaWords(planWordindext.value, 0, planWordsList.value.length - 1, 3);
+			  return result;
+		} else if (planWordmode.value ==1) {
+			  let result = getoptionAreaWords(planWordTwoindext.value, 0, planWordsTwoList.value.length - 1, 3);
+			  return result;
+		} else {
+			  let result = getoptionAreaWords(planWordThreeindext.value, 0, planWordsThreeList.value.length - 1, 3);
+			  return result;
+		}
+	}
+	
+  
   
 });
 
 onLoad(async (options) => {
-  const { bookId, planWords } = options;
+  const { bookId, planWords,subsidiaryWords,planId} = options;
   book_id.value = bookId;
-  // 获取数据
-  uni.getStorage({
-    key: planWords,
-    success: function (res) {
-      const words = JSON.parse(res.data);
+  plan_id.value = planId
+  
+  if (subsidiaryWords) {
+	  subsidiaryWordsStr.value = subsidiaryWords
+	  console.log("subsidiaryWords")
+	  uni.getStorage({
+	    key: subsidiaryWords,
+	    success: function (res) {
+	      const words = JSON.parse(res.data);
+		  console.log("99999")
+	  	   detailWords(bookId, words,true);
+	  	  
+	    },
+	    fail: function (err) {
+	      console.log('获取数据失败', err);
+	    },
+	  });
 	  
-	   detailWords(bookId, words);
-	  
-	  // //获取生词本数组
-	  collectsGetnotebook()
-    },
-    fail: function (err) {
-      console.log('获取数据失败', err);
-    },
-  });
+  }
+  
+  let storageKey = 'progresscacheObject'+bookId
+
+  var ishuncun = false
+
+ uni.getStorage({
+   key: storageKey,
+   success: function (res) {
+	   console.log("res999请求请求------"+res)
+     const progresscacheObject = JSON.parse(res.data);
+	  console.log(progresscacheObject)
+	 
+	 
+		planWordmode.value = progresscacheObject.planWordmode
+		planWordindext.value = progresscacheObject.planWordindext
+		planWordTwoindext.value = progresscacheObject.planWordTwoindext
+		planWordThreeindext.value = progresscacheObject.planWordThreeindext
+		progressindext.value = progresscacheObject.progressindext
+		planWordsList.value = progresscacheObject.planWordsList
+		planWordsTwoList.value = progresscacheObject.planWordsTwoList
+		planWordsThreeList.value = progresscacheObject.planWordsThreeList
+		planWordsWithCounts.value = progresscacheObject.planWordsWithCounts
+		ishuncun = true
+		collectsGetnotebook()
+   },
+   fail: function (err) {
+     console.log('获取数据失败', err);
+	 uni.getStorage({
+	   key: planWords,
+	   success: function (res) {
+	     const words = JSON.parse(res.data);
+	 	  
+	 	   detailWords(bookId, words);
+	 	  
+	 	  // //获取生词本数组
+	 	  collectsGetnotebook()
+	   },
+	   fail: function (err) {
+	     console.log('获取数据失败', err);
+	   },
+	 });
+   },
+ });
+ 
+ 
+ 
+ 
+ 
+  
 });
 
-const detailWords = async (bookId, words) => {
+const detailWords = async (bookId, words ,issubsidiary = false) => {
   try {
+	  console.log("开始请求")
     const response = await textbook.getWordsDetail(bookId, words);
-	planWordsList.value = [...response.data.words]; // 创建新数组
-	planWordsTwoList.value = [...response.data.words]; // 创建新数组
-	planWordsThreeList.value = [...response.data.words]; // 创建新数组
-	// 单独创建 planWordsWithCounts 数组，添加 correct_count 和 incorrect_count 字段
-	planWordsWithCounts.value = response.data.words.map(word => ({
-	  ...word,
-	  correct_count: 0,
-	  incorrect_count: 0,
-	}));
-	// 使用 nextTick 确保 DOM 更新完成
-	nextTick(() => {
-
-	 console.log('wordDisplayref.value:', wordDisplayref.value);
-	 if (planWordmode.value == 0 && wordDisplayref.value) {
-	   wordDisplayref.value.phonicsbegins();
-	  } 
-	});
+	if (issubsidiary) { //选项补充的数组
+		subsidiaryList.value = [...response.data.words];
+	} else {
+		planWordsList.value = [...response.data.words]; // 创建新数组
+		planWordsTwoList.value = [...response.data.words]; // 创建新数组
+		planWordsThreeList.value = [...response.data.words]; // 创建新数组
+		// 单独创建 planWordsWithCounts 数组，添加 correct_count 和 incorrect_count 字段
+		planWordsWithCounts.value = response.data.words.map(word => ({
+		  ...word,
+		  correct_count: 0,
+		  incorrect_count: 0,
+		}));
+	}
 	
-	// setTimeout(() => {
-	//       console.log('wordDisplayref.value:', wordDisplayref.value);
-	//       if (planWordmode.value == 0 && wordDisplayref.value) {
-	//         wordDisplayref.value.phonicsbegins();
-	//       }
-	//     }, 500); // 延迟 100ms
+	
+	
+	// 使用 nextTick 确保 DOM 更新完成
+	// nextTick(() => {
+
+	//  console.log('wordDisplayref.value:', wordDisplayref.value);
+	//  if (planWordmode.value == 0 && wordDisplayref.value) {
+	//    wordDisplayref.value.phonicsbegins();
+	//   } 
+	// });
+	
 	
   } catch (error) {
     console.error('获取单词列表失败:', error);
