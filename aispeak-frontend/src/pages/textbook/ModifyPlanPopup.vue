@@ -7,7 +7,7 @@
         <view class="close-btn" @tap="close">×</view>
       </view>
 	  <view class="popup-Instructions">
-		  完成日期：2025年03月09日预计每天5分钟
+		  完成日期：<text style="color: orange;">{{yjcompleteDate}} </text> 预计每天 {{currentPlan}} 分钟
 	  </view>
       <view class="popup-tit">
         <view class="plan-titItem">
@@ -22,7 +22,7 @@
 			<view @tap="planoptionitemclick(item.num)" :class="item.num==currentPlan?'plan-option-st':'plan-option'"  v-for="(item, index) in picdata" :key="index">
 			  <view class="plan-option-item">{{ item.num }} 个</view>
 			  <view class="plan-option-right">
-				<view class="one">{{ item.date }}</view>
+				<view class="one">{{ item.date }}天</view>
 				<view class="two" v-if="item.num==currentPlan">
 					<image class="left-icon" src="@/assets/icons/word_dagou.svg"></image>
 				</view>
@@ -36,22 +36,78 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref,computed } from 'vue';
 
 const props = defineProps({
-  visible: Boolean,
-  currentPlan: Number
+  visible: {
+      type: Boolean,
+      default: false, // 默认值为 false
+    },
+    currentPlan: {
+      type: Number,
+      default: 0, // 默认值为 0
+    },
+    unlearnednum: {
+      type: Number,
+      default: 0, // 默认值为 0
+    },
 });
 
-const picdata = ref([
-	{num:5,date:"10天"},
-	{num:10,date:"5天"},
-	{num:15,date:"4天"},
-	{num:20,date:"3天"},
-	{ num: 30, date: "1天" }
-])
 
+const yjcompleteDate = computed(() => {
+	// 获取当前日期
+	const today = new Date();
+	var daysToAdd = 0;
+	if (props.currentPlan>0) {
+		const jihua = picdata.value.find(item => item.num === props.currentPlan);
+		console.log("jihua")
+		console.log(jihua)
+		daysToAdd = jihua.date-1
+	}
+	// 在当前日期上加指定天数
+	today.setDate(today.getDate() + daysToAdd);
+	
+	// 格式化年月日
+	const year = today.getFullYear();
+	const month = String(today.getMonth() + 1).padStart(2, '0'); // 月份从 0 开始，需要 +1
+	const day = String(today.getDate()).padStart(2, '0');
+	
+	// 输出结果
+	const formattedDate = `${year}-${month}-${day}`;
+	return formattedDate
+})
 
+const picdata = computed(() => {
+	if (props.unlearnednum>0) {
+		var xzarr = []
+		var num = 1;
+		while(num<=50) {
+			
+			let datenum = Math.ceil(props.unlearnednum / num);
+			xzarr.push({num:num,date:datenum})
+			if (num<5) {
+				num++;
+			} else {
+				num+=5;
+			}
+		}
+		return xzarr
+	}
+	return [
+	{num:1,date:0},
+	{num:2,date:0},
+	{num:3,date:0},
+	{num:4,date:0},
+	{num:5,date:0},
+	{num:10,date:0},
+	{num:15,date:0},
+	{num:20,date:0},
+	{ num: 30, date:0},
+	{ num: 35, date:0},
+	{ num: 40, date:0},
+	{ num: 45, date:0},
+	{ num: 50, date:0}]
+})
 const emit = defineEmits(['update:visible', 'updatePlan']);
 
 
@@ -61,7 +117,9 @@ const close = () => {
 };
 
 const planoptionitemclick = (num) => {
-	emit('updatePlan', num);
+	if (props.currentPlan != num) {
+		emit('updatePlan', num)
+	}
 	close();
 }
 </script>

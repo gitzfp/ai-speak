@@ -8,7 +8,7 @@
     </view>
 
     <view class="contentone">
-		<view class="replacementplan">
+		<view @tap="openResetPopup" class="replacementplan">
 			<image class="left-icon" src="@/assets/icons/word_refresh.svg"></image>
 			<view class="replacementplan-title">重置计划</view>
 		</view>
@@ -34,7 +34,7 @@
 			 </view>
 			
 			<view class="threeline">
-				<view class="threeline-title"> <text style="color: red;">{{finishLearningNum}}</text>/{{allWords.length}}</view>
+				<view class="threeline-title"> <text style="color: red;">{{finishLearningNum}}</text>/{{wordcountTotal}}</view>
 				<view class="threeline-title"> 剩余<text style="color: red;">{{remainingdays}}</text>天</view>
 			</view>
 			
@@ -47,7 +47,7 @@
 		  <view class="progress-left">
 			<text class="progresslf">今日计划</text>
 			 <image class="left-icon" src="@/assets/icons/time_round.svg"></image>
-			 <text class="progressrt">预计需要<text style="color: red;">{{numofday}}</text>分钟</text> 
+			 <text class="progressrt">预计需要<text style="color: red;">{{learnNumtoday}}</text>分钟</text> 
 		  </view>
 		  <view @tap="modifyplan" class="modify-btn">
 			<image class="left-icon" src="@/assets/icons/edit_modify.svg"></image>
@@ -56,8 +56,8 @@
 	  </view>
 
 	  <view class="task-section">
-		<view class="task-title"><text>需新学</text> <text class="numtit" style="color: #F08833;">{{numofday}}</text> <text>词</text></view>
-		<view class="task-title"><text>需复习</text> <text class="numtit" style="color: #ED6C43;">0</text> <text>词</text></view>
+		<view class="task-title"><text>需新学</text> <text class="numtit" style="color: #F08833;">{{learnNumtoday}}</text> <text>词</text></view>
+		<view class="task-title"><text>需复习</text> <text class="numtit" style="color: #ED6C43;">{{review_words.length}}</text> <text>词</text></view>
 	  </view>
 	  
 	  <view class="contentonebtn">
@@ -100,21 +100,21 @@
 		    </view>
 		    <view class="record-content">
 		      <view class="record-item">
-		        <view class="record-labelone"><text>0</text> 词</view>
+		        <view class="record-labelone"><text>{{studyRecord.new_words+studyRecord.review_words}}</text> 词</view>
 		        <view class="record-labeltwo">今日学习/复习</view>
 		      </view>
 		      <view class="record-item">
-		        <view class="record-labelone"><text>0</text> 词</view>
+		        <view class="record-labelone"><text>{{studyRecord.total_mastered_words}}</text> 词</view>
 		        <view class="record-labeltwo">累计掌握</view>
 		      </view>
 			</view>
 			<view class="record-content record-content-interstice">
 				<view class="record-item">
-				  <view class="record-labelone"><text>0</text> 分钟</view>
+				  <view class="record-labelone"><text>{{studyRecord.duration}}</text> 分钟</view>
 				  <view class="record-labeltwo">今日学习时长</view>
 				</view>
 				<view class="record-item">
-				  <view class="record-labelone"><text>0</text> 分钟</view>
+				  <view class="record-labelone"><text>{{studyRecord.total_duration}}</text> 分钟</view>
 				  <view class="record-labeltwo">累计学习时长</view>
 				</view>
 		    </view>
@@ -126,29 +126,27 @@
     <bookSelector ref="bookSelectors" v-if="isPopupOpen" :numType="2" :books="books" @switchbookSuccess="switchbookSuccess" @closePopup="togglePopup" />
 
 		
-	<ModifyPlanPopup :visible="isPlanPopupVisible" :currentPlan="numofday"
+	<ModifyPlanPopup :visible="isPlanPopupVisible" :unlearnednum="unlearned_words.length" :currentPlan="numofday"
 		      @update:visible="isPlanPopupVisible = $event" @updatePlan="updatePlan"/>
-	  
+	
+	<!-- 重置计划弹窗 -->
+	 <ResetPlanPopup @confirm="replacementplanClick" ref="resetPlanPopup" />
     
+	  <RelearnPlanPop :book=book @confirm="relearnPlanClick" ref="relearnPlanPop" />
+	
   </view>
 </template>
 
 <script setup>
-	import { ref,onMounted,watch,nextTick,computed} from 'vue';
+	import { ref,onMounted,onUnmounted,watch,nextTick,computed} from 'vue';
 	import bookSelector from './bookSelector.vue';
 	import textbook from '@/api/textbook';
 	import ModifyPlanPopup from './ModifyPlanPopup.vue'
-
+	import study from '@/api/study';
+	import ResetPlanPopup from './components/ResetPlanPopup'
+	import RelearnPlanPop from './components/RelearnPlanPop'
 	
-	// const weekstitList = ref([
-	// 	{week:"周一",date:'17',isSelet:false},
-	// 	{week:"周二",date:'18',isSelet:false},
-	// 	{week:"周三",date:'19',isSelet:false},
-	// 	{week:"周四",date:'20',isSelet:false},
-	// 	{week:"周五",date:'21',isSelet:false},
-	// 	{week:"周六",date:'22',isSelet:false},
-	// 	{week:"周日",date:'23',isSelet:false},
-	// ])
+
 	//暂时不点亮
 	const weekindext = ref(-1)
 	const isPopupOpen = ref(false)
@@ -164,13 +162,57 @@
 	})
 	// 书籍数据
 	const books = ref([])
-	const allWords = ref([])
-	//学习完单词的个数
-	const finishLearningNum = ref(0)
-	//学习计划每天 学几个
-	const numofday = ref(5)
-	const isPlanPopupVisible = ref(false);
 	
+	//学习计划
+	const studyPlan = ref(null)
+	//学习记录
+	const studyRecord = ref({
+		new_words: 0,
+		review_words: 0,
+		duration:0,
+		total_duration: 0,
+		total_mastered_words: 0,
+	})
+	 
+	
+	//未学习的单词数组
+	const unlearned_words = ref([])
+	//学习的单词数组
+	const learned_words = ref([])
+	//需复习的单词数组
+	const review_words = ref([])
+	
+	const isPlanPopupVisible = ref(false);
+	// 获取弹窗组件的引用
+	const resetPlanPopup = ref(null);
+
+	// 获取重新弹窗组件的引用
+	const relearnPlanPop = ref(null);
+	
+	const learnNumtoday = computed(() => {
+		if (studyPlan.value) {
+			if (studyPlan.value.daily_words<studyRecord.value.new_words) {
+				return 0
+			}
+			return studyPlan.value.daily_words-studyRecord.value.new_words
+		}
+		return 0
+	})
+	const numofday = computed(() => {
+		if (studyPlan.value) {
+			return studyPlan.value.daily_words
+		}
+		return 5
+	})
+	//学习完单词的个数
+	const finishLearningNum = computed(() => {
+		return learned_words.value.length
+	})
+	//总单词的个数
+	const wordcountTotal = computed(() => {
+		let total = learned_words.value.length+unlearned_words.value.length
+		return total
+	})
 	
 	const weekstitList = computed(() => {
 	   const today = new Date();
@@ -202,8 +244,8 @@
 	
 	//剩余多少天完成
 	const remainingdays = computed(() => {
-		if (allWords.value.length>0) {
-			let rgwords = allWords.value.length - finishLearningNum.value
+		if (wordcountTotal.value>0) {
+			let rgwords = wordcountTotal.value - finishLearningNum.value
 			//向上取整
 			let halfCeil = Math.ceil(rgwords / numofday.value);
 			return halfCeil
@@ -214,8 +256,8 @@
 	
 	
 	const progress = computed(() => {
-	       if (allWords.value.length>0) {
-			   let percentage = (finishLearningNum.value / allWords.value.length) * 100;
+	       if (wordcountTotal.value>0) {
+			   let percentage = (finishLearningNum.value / wordcountTotal.value) * 100;
 			   return percentage
 		   } else {
 			  return 0 
@@ -227,51 +269,205 @@
 		console.log(`book_id 从 ${oldVal} 变更为 ${newVal}`);
 		// 在这里可以执行其他逻辑
 		if (newVal.length>0) {
-			fetchWords(newVal)
+			studyPlanForbookid(newVal)
+			studyRecordForbookid(newVal)
 		}
 	});
-
-
+	
 	// 组件挂载时获取数据
 	onMounted(() => {
-		let a = 7;
-		let b = 7;
-		let percentage = (a / b) * 100;
-		console.log("percentage"); 
-		console.log(percentage.toFixed(2));
 		
 		fetchBooks(false)
+		uni.$on('refreshwordshomepage', (params) => {
+		    console.log('收到全局事件，参数:', params);
+		    if (params.action === 'updateData') {
+			  fetchWords(book.value.book_id,studyPlan.value.id)
+		      studyRecordForbookid(book.value.book_id); // 根据参数执行操作
+		    }
+		  });
 	})
+	onUnmounted(() => {
+		 uni.$off('refreshwordshomepage'); // 组件卸载时移除监听
+		progresscacheObjectdelete()
+	})
+
+	// 打开重置计划弹窗
+	const openResetPopup = () => {
+	  resetPlanPopup.value.openPopup();
+	}
+	const relearnPlanClick = () => {
+		// console.log("重新学习")
+		replacementplanClick()
+	}
+	//重置计划 实现
+	const replacementplanClick = async () => {
+	  console.log("开始重置计划");
 	
+	  try {
+	    // 发送重置计划的请求
+	    const response = await study.createStudyPlan(book.value.book_id,3); 
+	    if (response.code === 1000) { // 假设 1000 是成功状态码
+		  studyPlan.value = response.data
+	      progresscacheObjectdelete(); // 清除缓存
+	      // 其他逻辑，例如更新页面状态
+	      fetchWords(book.value.book_id,studyPlan.value.id); // 重新获取单词数据
+	    } else {
+	      console.error("重置计划失败:", response.message);
+	      uni.showToast({
+	        title: "重置计划失败",
+	        icon: "none",
+	      });
+	    }
+	  } catch (error) {
+	    console.error("请求失败:", error);
+	    uni.showToast({
+	      title: "请求失败，请稍后重试",
+	      icon: "none",
+	    });
+	  }
+	};
+	
+	//删除背词里面的缓存
+	const progresscacheObjectdelete = () => {
+
+		// 获取所有存储的 key
+		  const storageInfo = uni.getStorageInfoSync();
+		  const allKeys = storageInfo.keys;
+		
+		  // 过滤出前缀为 progresscacheObject 的 key
+		  const progressCacheKeys = allKeys.filter(key => key.startsWith('progresscacheObject'));
+
+		
+		progressCacheKeys.forEach(key => {
+			uni.removeStorage({
+			  key: key,
+			  success: () => {
+				console.log(`已删除 key: ${key}`);
+			  },
+			  fail: (err) => {
+				console.error(`删除 key: ${key} 失败`, err);
+			  }
+			});
+		  });
+		
+		
+	}
+	
+	//数组选取数组的num 个值
+	function getRandomElements(szwords, num) {
+	    return [...szwords]
+	        .sort(() => Math.random() - 0.5) // 随机排序
+	        .slice(0, num); // 取前 num 个元素
+	}
 	
 	const startLearningword = () => {
-	
+		if (unlearned_words.value.length<=0) {
+			// console.log("学完了，是否重新学习的")
+			relearnPlanPop.value.openPopup();
+			return
+		}
+		if (studyPlan!=null && !(studyPlan.value.id > 0)) {
+			return
+		}
+		var planId = studyPlan.value.id
 		var numvalue = numofday.value
-		let firstFive = allWords.value.slice(0, numvalue);
+		
+		if (unlearned_words.value.length < numvalue) {
+			numvalue = unlearned_words.value.length
+		}
+		let firstFive = unlearned_words.value.slice(0, numvalue);
 		
 		let planWordsList = [];
 		firstFive.forEach(word => {
 		    planWordsList.push(word.word_id);
 		});
 		
+		var subsidiaryWordsList = []
+		// 如果 firstFive 的长度小于 4，则需要补充单词
+		if (firstFive.length < 4) {
+			// 从 unlearned_words 中排除 firstFive
+			let remainingUnlearned = unlearned_words.value.slice(numvalue);
+
+			// 计算需要补充的单词数量
+			let needed = 4 - firstFive.length;
+
+			// 如果 remainingUnlearned 中有单词，则先从中取
+			if (remainingUnlearned.length > 0) {
+				// 取 remainingUnlearned 中的所有单词（最多取 needed 个）
+				let supplementaryWords = remainingUnlearned.slice(0, needed);
+				supplementaryWords.forEach(word => {
+					subsidiaryWordsList.push(word.word_id);
+				});
+
+				// 如果 remainingUnlearned 中的单词不足，再从 learned_words 中取
+				if (supplementaryWords.length < needed) {
+					let remainingNeeded = needed - supplementaryWords.length;
+					let additionalWords = getRandomElements(learned_words.value, remainingNeeded);
+					additionalWords.forEach(word => {
+						subsidiaryWordsList.push(word.word_id);
+					});
+				}
+			} else {
+				// 如果 remainingUnlearned 中没有单词，则直接从 learned_words 中取
+				let supplementaryWords = getRandomElements(learned_words.value, needed);
+				supplementaryWords.forEach(word => {
+					subsidiaryWordsList.push(word.word_id);
+				});
+			}
+		}
+		
+		if (subsidiaryWordsList.length>0) {
+			const subsidiaryWords = 'subsidiaryWords';
+			const planWords = 'planWords';
+			uni.setStorage({
+			  key: subsidiaryWords,
+			  data: JSON.stringify(subsidiaryWordsList),
+			  success: function () {
+				uni.setStorage({
+				  key: planWords,
+				  data: JSON.stringify(planWordsList),
+				  success: function () {
+					console.log('数据存储成功');
+					// 跳转到学习页面
+					uni.navigateTo({
+					  url: `/pages/textbook/WordplanDetail?planWords=${planWords}&bookId=${book.value.book_id}&subsidiaryWords=${subsidiaryWords}&planId=${planId}`, // 将缓存键名传递给学习页面
+					});
+				  },
+				  fail: function (err) {
+					console.log('数据存储失败', err);
+				  }
+				});
+			  },
+			  fail: function (err) {
+				console.log('数据存储失败', err);
+			  }
+			});
+			
+			
+			
+			
+		} else {
+			const planWords = 'planWords';
+			uni.setStorage({
+			  key: planWords,
+			  data: JSON.stringify(planWordsList),
+			  success: function () {
+				console.log('数据存储成功');
+				// 跳转到学习页面
+				uni.navigateTo({
+				  url: `/pages/textbook/WordplanDetail?planWords=${planWords}&bookId=${book.value.book_id}&planId=${planId}`, // 将缓存键名传递给学习页面
+				});
+			  },
+			  fail: function (err) {
+				console.log('数据存储失败', err);
+			  }
+			});
+		}
+		
 		// console.log("firstFive==="+firstFive)
 		// console.log(firstFive)
 		
-		const planWords = 'planWords';
-		uni.setStorage({
-		  key: planWords,
-		  data: JSON.stringify(planWordsList),
-		  success: function () {
-			console.log('数据存储成功');
-			// 跳转到学习页面
-			uni.navigateTo({
-			  url: `/pages/textbook/WordplanDetail?planWords=${planWords}&bookId=${book.value.book_id}`, // 将缓存键名传递给学习页面
-			});
-		  },
-		  fail: function (err) {
-			console.log('数据存储失败', err);
-		  }
-		});
+		
 		
 		
 	}
@@ -282,10 +478,14 @@
 	};
 	
 	const switchbookSuccess = (newbook) => {
-	  console.log("newbook=====")
-	    console.log(newbook)
-	    book.value = {...newbook}
-	    console.log(book.value.term)
+	
+		if (book.value.book_id !== newbook.book_id) { //说明不是同一本书
+			progresscacheObjectdelete()
+			book.value = {...newbook}
+		}
+		
+	    
+	    
 	}
 	
 	//切换单词书
@@ -311,31 +511,60 @@
 	};
 	
 	
-	const fetchWords = async (bookId, lessonId = null) => {
+	const fetchWords = async (bookId,planId) => {
 	  try {
-	    const response = await textbook.getLessonWords(bookId)
+	    const response = await study.getUserWords(bookId,planId)
 	    console.log('API Response:', response)
 	    
 	    if (response.code === 1000) {
 	      // 保存所有单词数据
-	      allWords.value = response.data.words
-		  
-		  //这些是随便先写了
-		  if (allWords.value.length>0) {
-			  let num = allWords.value.length;
-			  //向下取整
-			  let half = Math.floor(num / 2);
-			  finishLearningNum.value = half
-		  } else {
-			  finishLearningNum.value = 0
-		  }
-		  
-	      
+	      unlearned_words.value = response.data.unlearned_words
+		  learned_words.value = response.data.learned_words
+		  review_words.value =  response.data.review_words
 	    }
 	  } catch (error) {
 	    console.error('获取单词列表失败:', error)
 	    uni.showToast({
 	      title: '获取单词列表失败',
+	      icon: 'none'
+	    })
+	  }
+	}
+	
+	const studyPlanForbookid = async (bookId) => {
+		
+	  try {
+	    const response = await study.getStudyPlan(bookId);
+	    if (response.code === 1000) {
+			studyPlan.value = response.data
+			fetchWords(bookId,studyPlan.value.id)
+	    } 
+	  } catch (error) {
+	    console.error('获取计划:', error)
+	    uni.showToast({
+	      title: '获取计划列表失败',
+	      icon: 'none'
+	    })
+	  }
+	}
+	
+	const studyRecordForbookid = async (bookId) => {
+		
+	  try {
+		const today = new Date();
+		const year = today.getFullYear();
+		const month = String(today.getMonth() + 1).padStart(2, '0');
+		const day = String(today.getDate()).padStart(2, '0');
+		const formattedDate = `${year}-${month}-${day}`;
+		  
+	    const response = await study.getStudyRecords(bookId,formattedDate);
+	    if (response.code === 1000) {
+			studyRecord.value = response.data
+	    }
+	  } catch (error) {
+	    console.error('获取记录:', error)
+	    uni.showToast({
+	      title: '获取记录失败',
 	      icon: 'none'
 	    })
 	  }
@@ -411,8 +640,21 @@
 		isPlanPopupVisible.value = true;
 	}
 	
-	const updatePlan = (newPlan) => {
-	  numofday.value = newPlan;
+	const updatePlan = async(newPlan) => {
+		console.log("更新计划")
+	  //更新计划
+	  try {
+	  		
+	    const response = await study.updateStudyPlan(studyPlan.value.id,newPlan);
+	    if (response.code === 1000) {
+			progresscacheObjectdelete()
+	  		studyPlan.value.daily_words = newPlan
+	    } 
+	  } catch (error) {
+	    console.error('更新失败:', error)
+	   
+	  }
+		
 	};
 	const calendarItemclick = (index) =>  {
 		// weekindext.value = index
