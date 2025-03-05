@@ -34,7 +34,7 @@
 			 </view>
 			
 			<view class="threeline">
-				<view class="threeline-title"> <text style="color: red;">{{finishLearningNum}}</text>/{{wordcountTotal}}</view>
+				<view class="threeline-title"> <text style="color: red;">{{finishLearningNum}}</text>/{{allWords.length}}</view>
 				<view class="threeline-title"> 剩余<text style="color: red;">{{remainingdays}}</text>天</view>
 			</view>
 			
@@ -47,7 +47,7 @@
 		  <view class="progress-left">
 			<text class="progresslf">今日计划</text>
 			 <image class="left-icon" src="@/assets/icons/time_round.svg"></image>
-			 <text class="progressrt">预计需要<text style="color: red;">{{learnNumtoday}}</text>分钟</text> 
+			 <text class="progressrt">预计需要<text style="color: red;">{{numofday}}</text>分钟</text> 
 		  </view>
 		  <view @tap="modifyplan" class="modify-btn">
 			<image class="left-icon" src="@/assets/icons/edit_modify.svg"></image>
@@ -56,7 +56,7 @@
 	  </view>
 
 	  <view class="task-section">
-		<view class="task-title"><text>需新学</text> <text class="numtit" style="color: #F08833;">{{learnNumtoday}}</text> <text>词</text></view>
+		<view class="task-title"><text>需新学</text> <text class="numtit" style="color: #F08833;">{{numofday}}</text> <text>词</text></view>
 		<view class="task-title"><text>需复习</text> <text class="numtit" style="color: #ED6C43;">0</text> <text>词</text></view>
 	  </view>
 	  
@@ -100,7 +100,7 @@
 		    </view>
 		    <view class="record-content">
 		      <view class="record-item">
-		        <view class="record-labelone"><text>{{studyRecord.new_words+studyRecord.review_words}}</text> 词</view>
+		        <view class="record-labelone"><text>0</text> 词</view>
 		        <view class="record-labeltwo">今日学习/复习</view>
 		      </view>
 		      <view class="record-item">
@@ -110,7 +110,7 @@
 			</view>
 			<view class="record-content record-content-interstice">
 				<view class="record-item">
-				  <view class="record-labelone"><text>{{studyRecord.duration}}</text> 分钟</view>
+				  <view class="record-labelone"><text>0</text> 分钟</view>
 				  <view class="record-labeltwo">今日学习时长</view>
 				</view>
 				<view class="record-item">
@@ -126,9 +126,9 @@
     <bookSelector ref="bookSelectors" v-if="isPopupOpen" :numType="2" :books="books" @switchbookSuccess="switchbookSuccess" @closePopup="togglePopup" />
 
 		
-	<ModifyPlanPopup :visible="isPlanPopupVisible" :unlearnednum="unlearned_words.length" :currentPlan="numofday"
+	<ModifyPlanPopup :visible="isPlanPopupVisible" :currentPlan="numofday"
 		      @update:visible="isPlanPopupVisible = $event" @updatePlan="updatePlan"/>
-	
+	  
     
   </view>
 </template>
@@ -138,7 +138,6 @@
 	import bookSelector from './bookSelector.vue';
 	import textbook from '@/api/textbook';
 	import ModifyPlanPopup from './ModifyPlanPopup.vue'
-	import study from '@/api/study';
 
 	
 	// const weekstitList = ref([
@@ -165,49 +164,13 @@
 	})
 	// 书籍数据
 	const books = ref([])
-	
-	//学习计划
-	const studyPlan = ref(null)
-	//学习记录
-	const studyRecord = ref({
-		new_words: 0,
-		review_words: 0,
-		duration:0,
-	})
-	 
-	
-	//未学习的单词数组
-	const unlearned_words = ref([])
-	//学习的单词数组
-	const learned_words = ref([])
-	
-	
+	const allWords = ref([])
+	//学习完单词的个数
+	const finishLearningNum = ref(0)
+	//学习计划每天 学几个
+	const numofday = ref(5)
 	const isPlanPopupVisible = ref(false);
 	
-	const learnNumtoday = computed(() => {
-		if (studyPlan.value) {
-			if (studyPlan.value.daily_words<studyRecord.value.new_words) {
-				return 0
-			}
-			return studyPlan.value.daily_words-studyRecord.value.new_words
-		}
-		return 0
-	})
-	const numofday = computed(() => {
-		if (studyPlan.value) {
-			return studyPlan.value.daily_words
-		}
-		return 5
-	})
-	//学习完单词的个数
-	const finishLearningNum = computed(() => {
-		return learned_words.value.length
-	})
-	//总单词的个数
-	const wordcountTotal = computed(() => {
-		let total = learned_words.value.length+unlearned_words.value.length
-		return total
-	})
 	
 	const weekstitList = computed(() => {
 	   const today = new Date();
@@ -239,8 +202,8 @@
 	
 	//剩余多少天完成
 	const remainingdays = computed(() => {
-		if (wordcountTotal.value>0) {
-			let rgwords = wordcountTotal.value - finishLearningNum.value
+		if (allWords.value.length>0) {
+			let rgwords = allWords.value.length - finishLearningNum.value
 			//向上取整
 			let halfCeil = Math.ceil(rgwords / numofday.value);
 			return halfCeil
@@ -251,8 +214,8 @@
 	
 	
 	const progress = computed(() => {
-	       if (wordcountTotal.value>0) {
-			   let percentage = (finishLearningNum.value / wordcountTotal.value) * 100;
+	       if (allWords.value.length>0) {
+			   let percentage = (finishLearningNum.value / allWords.value.length) * 100;
 			   return percentage
 		   } else {
 			  return 0 
@@ -265,8 +228,6 @@
 		// 在这里可以执行其他逻辑
 		if (newVal.length>0) {
 			fetchWords(newVal)
-			studyPlanForbookid(newVal)
-			studyRecordForbookid(newVal)
 		}
 	});
 
@@ -284,16 +245,9 @@
 	
 	
 	const startLearningword = () => {
-		if (unlearned_words.value.length<=0) {
-			console.log("学完了，到时处理")
-			return
-		}
-		//需要改一下 先这样子写
+	
 		var numvalue = numofday.value
-		if (unlearned_words.value.length < numvalue) {
-			numvalue = unlearned_words.value.length
-		}
-		let firstFive = unlearned_words.value.slice(0, numvalue);
+		let firstFive = allWords.value.slice(0, numvalue);
 		
 		let planWordsList = [];
 		firstFive.forEach(word => {
@@ -357,58 +311,31 @@
 	};
 	
 	
-	const fetchWords = async (bookId) => {
+	const fetchWords = async (bookId, lessonId = null) => {
 	  try {
-	    const response = await study.getUserWords(bookId)
+	    const response = await textbook.getLessonWords(bookId)
 	    console.log('API Response:', response)
 	    
 	    if (response.code === 1000) {
 	      // 保存所有单词数据
-	      unlearned_words.value = response.data.unlearned_words
-		  learned_words.value = response.data.learned_words
+	      allWords.value = response.data.words
+		  
+		  //这些是随便先写了
+		  if (allWords.value.length>0) {
+			  let num = allWords.value.length;
+			  //向下取整
+			  let half = Math.floor(num / 2);
+			  finishLearningNum.value = half
+		  } else {
+			  finishLearningNum.value = 0
+		  }
+		  
+	      
 	    }
 	  } catch (error) {
 	    console.error('获取单词列表失败:', error)
 	    uni.showToast({
 	      title: '获取单词列表失败',
-	      icon: 'none'
-	    })
-	  }
-	}
-	
-	const studyPlanForbookid = async (bookId) => {
-		
-	  try {
-	    const response = await study.getStudyPlan(bookId);
-	    if (response.code === 1000) {
-			studyPlan.value = response.data
-	    } 
-	  } catch (error) {
-	    console.error('获取计划:', error)
-	    uni.showToast({
-	      title: '获取计划列表失败',
-	      icon: 'none'
-	    })
-	  }
-	}
-	
-	const studyRecordForbookid = async (bookId) => {
-		
-	  try {
-		const today = new Date();
-		const year = today.getFullYear();
-		const month = String(today.getMonth() + 1).padStart(2, '0');
-		const day = String(today.getDate()).padStart(2, '0');
-		const formattedDate = `${year}-${month}-${day}`;
-		  
-	    const response = await study.getStudyRecords(bookId,formattedDate);
-	    if (response.code === 1000) {
-			studyRecord.value = response.data
-	    }
-	  } catch (error) {
-	    console.error('获取记录:', error)
-	    uni.showToast({
-	      title: '获取记录失败',
 	      icon: 'none'
 	    })
 	  }
@@ -484,19 +411,8 @@
 		isPlanPopupVisible.value = true;
 	}
 	
-	const updatePlan = async(newPlan) => {
-	  //更新计划
-	  try {
-	  		
-	    const response = await study.updateStudyPlan(studyPlan.value.id,newPlan);
-	    if (response.code === 1000) {
-	  			studyPlan.value.daily_words = newPlan
-	    } 
-	  } catch (error) {
-	    console.error('更新失败:', error)
-	   
-	  }
-		
+	const updatePlan = (newPlan) => {
+	  numofday.value = newPlan;
 	};
 	const calendarItemclick = (index) =>  {
 		// weekindext.value = index

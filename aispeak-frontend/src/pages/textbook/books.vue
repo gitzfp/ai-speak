@@ -741,17 +741,12 @@ function playCurrentPage() {
       })
       audio.play()
     } else {
-      // 当前页面音频播放完毕，切换到下一页
-      if (currentPage.value < bookPages.value.length - 1) {
-        currentPage.value++
-        playCurrentPage() // 继续播放下一页的音频
-      } else {
-        isPlaying.value = false // 所有页面播放完毕
-      }
+      isPlaying.value = false
     }
   }
   playNext()
 }
+
 // 暂停当前页面的音频
 function pauseCurrentPage() {
   if (currentAudio.value) {

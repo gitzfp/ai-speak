@@ -1,6 +1,6 @@
 <template>
   <view class="optionArea">
-    <view v-if="optionWords.length>0" :style="getDynamicstyle(ctseletnumone)" @tap="handleItemClick(optionWords[0],0)" class="option-item">
+    <view :style="getDynamicstyle(ctseletnumone)" @tap="handleItemClick(optionWords[0],0)" class="option-item">
       <view v-if="planWordmode==0" class="option-item-tit">{{ optionWords[0].paraphrase }}</view>
 	  <view v-else class="option-item-tit">{{ optionWords[0].word }}</view>
 	  
@@ -9,8 +9,8 @@
         mode="widthFix"
         class="phonics-img"
       />
-	</view>
-    <view v-if="optionWords.length>1" :style="getDynamicstyle(ctseletnumtwo)" @tap="handleItemClick(optionWords[1],1)" class="option-item">
+    </view>
+    <view :style="getDynamicstyle(ctseletnumtwo)" @tap="handleItemClick(optionWords[1],1)" class="option-item">
 	  <view v-if="planWordmode==0" class="option-item-tit">{{ optionWords[1].paraphrase }}</view>
 	  <view v-else class="option-item-tit">{{ optionWords[1].word }}</view>
       <image
@@ -19,11 +19,9 @@
         class="phonics-img"
       />
     </view>
-	<view v-else class="option-item" style="border: none;"></view>
-	
   </view>
   <view class="optionArea">
-    <view v-if="optionWords.length>2" :style="getDynamicstyle(ctseletnumthree)" @tap="handleItemClick(optionWords[2],2)" class="option-item">
+    <view :style="getDynamicstyle(ctseletnumthree)" @tap="handleItemClick(optionWords[2],2)" class="option-item">
 	  <view v-if="planWordmode==0" class="option-item-tit">{{ optionWords[2].paraphrase }}</view>
 	  <view v-else class="option-item-tit">{{ optionWords[2].word }}</view>
       <image
@@ -32,8 +30,7 @@
         class="phonics-img"
       />
     </view>
-	<view v-else class="option-item" style="border: none;"></view>
-    <view v-if="optionWords.length>3" :style="getDynamicstyle(ctseletnumfour)" @tap="handleItemClick(optionWords[3],3)" class="option-item">
+    <view :style="getDynamicstyle(ctseletnumfour)" @tap="handleItemClick(optionWords[3],3)" class="option-item">
 	  <view v-if="planWordmode==0" class="option-item-tit">{{ optionWords[3].paraphrase }}</view>
 	  <view v-else class="option-item-tit">{{ optionWords[3].word }}</view>
       <image
@@ -42,7 +39,6 @@
         class="phonics-img"
       />
     </view>
-	<view v-else class="option-item" style="border: none;"></view>
   </view>
 </template>
 

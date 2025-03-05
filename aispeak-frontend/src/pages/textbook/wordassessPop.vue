@@ -16,6 +16,17 @@
             </view>
         </view>
 		
+		<view v-if="currentStep === 'submiting'" class="assess-selection" @tap.stop>
+		  <!-- 关闭按钮 -->
+		  <view class="close-button" @tap.stop="resetAll">×</view>
+		  <view class="assess-header">正在评估</view>
+		  <view class="assess-options">
+		    <view class="loading-container">
+		      <view class="loading-spinner"></view>
+		      <view class="loading-text">正在分析您的发音...</view>
+		    </view>
+		  </view>
+		</view>
 		<!-- 测评结果弹窗 -->
 		<view v-if="currentStep === 'result'" class="result-selection" @tap.stop>
 		<!-- 返回按钮 -->

@@ -148,9 +148,6 @@ onLoad((options: any) => {
   const { book_id, repeat_after } = options
   bookId.value = book_id
   isRepeatAfter.value = repeat_after
-    uni.setNavigationBarTitle({
-      title: repeat_after ? '句子跟读' : '听课文', // 你想要显示的标题
-    })
   fetchTextbookData()
 })
 
