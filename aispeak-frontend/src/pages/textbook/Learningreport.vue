@@ -1,7 +1,7 @@
 <template>
   <view class="container">
 <!-- 	white_back.svg -->
-	<view class="headView" :style="{ paddingTop: statusBarHeight + 'px', height: '44px' }">
+	<view class="headView">
 		<image @tap="handleBackPage" class="head-icon" src="@/assets/icons/white_back.svg"></image>
 		<view class="head-text">单词完成报告</view>
 	</view>
@@ -61,17 +61,6 @@
 	const allWords = ref([])
 	const book_id = ref('')
 	const currentAudio = ref(null);
-	const backPageNum = ref(1)
-	
-	const statusBarHeight = ref(0);
-	const customBarHeight = ref(0);
-	
-	// 组件挂载
-		onMounted(() => {
-			const systemInfo = uni.getSystemInfoSync();
-			  statusBarHeight.value = systemInfo.statusBarHeight || 0;
-			  customBarHeight.value = (systemInfo.statusBarHeight || 0) + 44; // 44 是导航栏的默认高度
-		});
 	
 	const phoneticClick = async (item) => {
 	  if (item.sound_path.length <= 0) return;
@@ -99,7 +88,7 @@
 // 这里可以定义一些响应式数据或逻辑
 	const handleBackPage = () => {
 	  uni.navigateBack({
-	      delta: backPageNum.value, // 返回两层
+	      delta: 2, // 返回两层
 	      success: () => {
 	        console.log('返回成功');
 	      },
@@ -110,11 +99,8 @@
 	}
 	
 	onLoad(async (options) => {
-	     const {bookId,learningreportWords,backPage} = options
+	     const {bookId,learningreportWords} = options
 			book_id.value = bookId
-			backPageNum.value = backPage
-			console.log("backPageNum.value")
-			console.log(backPageNum.value)
 			// 获取数据
 			uni.getStorage({
 			key: learningreportWords,
@@ -135,15 +121,14 @@
 </script>
 
 <style lang="scss" scoped>
-	// page {
-	//   background-color: #5AC467; /* 设置全局页面背景颜色 */
-	// }
-	
+	page {
+	  background-color: #5AC467; /* 设置全局页面背景颜色 */
+	}
 	.headView {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		// height: 96rpx;
+		height: 96rpx;
 		.head-icon {
 			margin-left: 20rpx;
 			height: 40rpx;
@@ -156,15 +141,12 @@
 			font-size: 36rpx;
 		}
 	}
-
 .container {
   // display: flex;
   // flex-direction: column;
   // padding: 20rpx;
   // // background-color: #f0f0f0;
   // // background-color: #5AC467; 
-  background-color: #5AC467;
-  height: 100vh;
 }
 
 .top-section {
@@ -245,9 +227,6 @@
   margin: 30rpx;
   border-radius: 10rpx;
   // margin-top: 20rpx;
-  min-height: auto; // 高度自适应内容
-  max-height: 50vh; // 最大高度为 60vh
-  overflow-y: auto; // 允许垂直滚动
 }
 .word-section-tit {
 	padding: 30rpx;
@@ -268,7 +247,7 @@
 }
 
 .word-item {
-	border-top:#979797 0.5rpx solid;;
+	border-top:#979797 1rpx solid;;
   font-size: 24rpx;
   padding: 30rpx;
   display: flex;

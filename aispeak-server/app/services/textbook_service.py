@@ -4,7 +4,6 @@ from app.db.textbook_entities import TextbookEntity,  LessonEntity, TaskTargetsE
 from app.db.words_entities import Word, WordSyllable, Syllable  # 添加这行导入
 import datetime
 
-
 class TextbookService:
     def __init__(self, db: Session):
         self.db = db
@@ -12,9 +11,9 @@ class TextbookService:
     def get_all_textbooks(self, version: str = "全部", grade: str = "全部", term: str = "全部", publisher: str = "全部") -> Dict:
         # 构建返回数据结构
         result = {"booklist": []}
-    
-        # 获取所有教材基本信息并按subject_id和创建时间排序
-        query = self.db.query(TextbookEntity).order_by(TextbookEntity.subject_id, TextbookEntity.create_time.desc())
+
+        # 获取所有教材基本信息并按subject_id分组
+        query = self.db.query(TextbookEntity).order_by(TextbookEntity.subject_id)
         
         # 添加筛选条件
         if version != "全部":
@@ -857,4 +856,3 @@ class TextbookService:
         except Exception as e:
             print(f"Error: {str(e)}")
             return None
-
