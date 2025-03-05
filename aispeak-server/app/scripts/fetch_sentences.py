@@ -40,7 +40,7 @@ def fetch_sentences(stage_tag, lesson_id, version_tag, grade_tag, term_tag):
         response = requests.get(url, params=params)
         response.raise_for_status()
         data = response.json()
-        
+        logger.info(f"获取句子数据成功: {data}") 
         # 检查API返回的错误码
         if data.get('code') == 616:  # 书籍课文不存在
             logger.warning(f"书籍课文不存在，跳过处理")
@@ -186,7 +186,7 @@ async def save_lessons_and_sentences(data, book_id):
             session.rollback()  # 确保回滚事务
             raise
 
-def main():
+async def main():
     # 使用相对路径获取 JSON 文件
     current_dir = os.path.dirname(os.path.abspath(__file__))
     json_path = os.path.join(current_dir, 'data', 'words_grade9.json')
@@ -218,7 +218,7 @@ def main():
                 logger.info(f"获取到的数据结构: {data.keys()}")
                 logger.info(f"lessons数量: {len(data.get('lessons', []))}")
                 try:
-                    save_lessons_and_sentences(data, textbook["textbook_id"])
+                    await save_lessons_and_sentences(data, textbook["textbook_id"])
                     logger.info(f"保存成功: {textbook['book_name']}")
                     success_count += 1
                 except Exception as e:
@@ -257,4 +257,5 @@ if __name__ == "__main__":
     if not test_db_connection():
         logger.error("数据库连接失败，程序退出")
         exit(1)
-    main()
+    import asyncio
+    asyncio.run(main())

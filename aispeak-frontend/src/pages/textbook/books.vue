@@ -93,7 +93,7 @@
             :class="{ 'repeat-option-active': index === repeatStartIndex }"
             @click="handleRepeatSelection({ detail: { value: index } })"
           >
-            {{ option }}
+            {{ option.trackText }}
           </view>
         </view>
         <view class="repeat-actions">
