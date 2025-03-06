@@ -20,6 +20,7 @@
                   </view>
                   <!-- 预留跟读按钮位置 -->
                   <FollowReading 
+                    :trackId="option.trackId"
                     :sentence="option.trackText"
                   />
             </view>
@@ -44,7 +45,6 @@ const props = defineProps({
     default: false,
   },
 })
-
 const currentStep = ref('select') // 测评 步骤状态：select/result
 const assessStartIndex = ref(null) //测评 选中的段落索引
 const initPronunciation = {

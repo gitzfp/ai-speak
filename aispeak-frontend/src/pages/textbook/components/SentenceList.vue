@@ -24,6 +24,7 @@
       </view>
       <FollowReading 
           v-if="repeatAfter" 
+          :trackId="sentence.id"
           :sentence="sentence.english"
       />
     </view>
