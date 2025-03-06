@@ -224,12 +224,21 @@
 	       monday.setDate(currentDate - (currentDay === 0 ? 6 : currentDay - 1));
 	   
 	       const weekDates = [];
+	       const weekDayMap = {
+	           'Sunday': '日',
+	           'Monday': '一',
+	           'Tuesday': '二',
+	           'Wednesday': '三',
+	           'Thursday': '四',
+	           'Friday': '五',
+	           'Saturday': '六'
+	       };
 	   
 	       for (let i = 0; i < 7; i++) {
 	           const date = new Date(monday);
 	           date.setDate(monday.getDate() + i);
 	   
-	           const weekDay = date.toLocaleDateString('zh-CN', { weekday: 'long' }).replace('星期', '');
+	           const weekDay = weekDayMap[date.toLocaleDateString('en-US', { weekday: 'long' })] || '';
 	           const monthDate = String(date.getDate()).padStart(2, '0'); // 小于10前面补零
 	   
 	           weekDates.push({
