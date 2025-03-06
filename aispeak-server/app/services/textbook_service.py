@@ -714,6 +714,7 @@ class TextbookService:
                     page_sentences[sentence.page_no] = []
                 
                 track_info = {
+                    "id": sentence.id,
                     "is_recite": sentence.is_recite,
                     "is_ai_dub": sentence.is_ai_dub,
                     "track_continue_play_id": sentence.track_continue_play_id,
