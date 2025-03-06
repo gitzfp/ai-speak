@@ -1,5 +1,8 @@
 <template>
-    <Speech @success="handleSuccess" ref="speechRef">
+    <Speech 
+      @success="handleSuccess" 
+      ref="speechRef"
+      :keepRecordingAfterSend="true">
         <template v-slot:leftMenu>
             <slot name="leftMenu">
             </slot>
@@ -14,6 +17,7 @@
   import { getCurrentInstance, defineEmits } from "vue";
   import Speech from "@/components/Speech.vue";
   
+
   const emit = defineEmits();
   const $bus: any = getCurrentInstance()?.appContext.config.globalProperties.$bus;
   
