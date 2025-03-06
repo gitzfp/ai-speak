@@ -40,6 +40,7 @@ const props = defineProps<{
   messageId?: string | null
   fileName?: string | null
   content?: string | null
+  audioUrl?: string | null
   direction?: "right" | "left"
   autoPlay?: Boolean
   speechRoleName?: string | null
@@ -103,6 +104,10 @@ const handleSpeech = async () => {
     }
     if (uni.getStorageSync("x-token")) {
       audioUrl += `&x_token_query=${uni.getStorageSync("x-token")}`
+    }
+    if (props.audioUrl) {
+      // 直接播放传入的 URL
+      audioUrl = props.audioUrl
     }
   }
   console.log(audioUrl)

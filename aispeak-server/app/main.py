@@ -17,7 +17,6 @@ from app.api.textbook_routes import router as textbook_routes
 from app.api.alioss_routes import router as alioss_routes
 from app.api.study_routes import router as study_routes
 
-
 app = FastAPI()
 
 # Enables CORS

@@ -8,8 +8,8 @@ class StudyPlan(Base):
     __tablename__ = "study_plans"
 
     id = Column("id", Integer, primary_key=True, autoincrement=True)  
-    user_id = Column(Integer, nullable=False, comment="用户ID")
-    book_id = Column(Integer, nullable=False, comment="书籍ID")
+    user_id = Column(String(50), nullable=False, comment="用户ID")  # 指定长度
+    book_id = Column(String(50), nullable=False, comment="书籍ID")  # 指定长度
     daily_words = Column(Integer, default=0, comment="计划每天学多少个单词")
     create_time = Column(DateTime, default=datetime.datetime.now, comment="创建时间")
     update_time = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now, comment="更新时间")
@@ -20,7 +20,7 @@ class StudyWordProgress(Base):
     __tablename__ = "study_word_progress"
 
     id = Column("id", Integer, primary_key=True, autoincrement=True)  
-    user_id = Column(Integer, nullable=False, comment="用户ID")
+    user_id = Column(String(50), nullable=False, comment="用户ID")  # 指定长度
     word_id = Column(Integer, nullable=False, comment="单词ID")
     book_id = Column(Integer, nullable=False, comment="书籍ID")
     plan_id = Column(Integer, nullable=False, comment="计划ID")  # 新增 plan_id 字段
@@ -45,8 +45,8 @@ class StudyRecord(Base):
     """学习记录表"""
     __tablename__ = "study_records"
     id = Column(Integer, primary_key=True, autoincrement=True, comment="记录唯一标识")
-    user_id = Column(Integer, nullable=False, comment="用户ID")
-    book_id = Column(Integer, nullable=False, comment="书籍ID")
+    user_id = Column(String(50), nullable=False, comment="用户ID")  # 指定长度
+    book_id = Column(String(50), nullable=False, comment="书籍ID")  # 指定长度
     study_date = Column(Date, nullable=False, comment="学习日期")
     new_words = Column(Integer, default=0, comment="今日新学单词数")
     review_words = Column(Integer, default=0, comment="今日复习单词数")

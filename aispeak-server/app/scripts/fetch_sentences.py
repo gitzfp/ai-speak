@@ -189,7 +189,7 @@ async def save_lessons_and_sentences(data, book_id):
 async def main():
     # 使用相对路径获取 JSON 文件
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(current_dir, 'data', 'words_wy1.json')
+    json_path = os.path.join(current_dir, 'data', 'words_grade9.json')
 
     logger.info(f"开始读取文件: {json_path}")
     with open(json_path, 'r', encoding='utf-8') as file:
