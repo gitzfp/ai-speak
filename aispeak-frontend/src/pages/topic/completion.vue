@@ -84,7 +84,6 @@ import type {
   Message,
   MessagePage,
   MessageSession,
-  MessageSettings,
 } from "@/models/chat"
 
 const loading = ref(false)
