@@ -11,9 +11,8 @@ class StudyPlan(Base):
     user_id = Column(Integer, nullable=False, comment="用户ID")
     book_id = Column(Integer, nullable=False, comment="书籍ID")
     daily_words = Column(Integer, default=0, comment="计划每天学多少个单词")
-    total_words = Column(Integer, default=0, comment="这本书总共多少单词")
-    total_days = Column(Integer, default=0, comment="总计划天数")
     create_time = Column(DateTime, default=datetime.datetime.now, comment="创建时间")
+    update_time = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now, comment="更新时间")
 
 
 class StudyWordProgress(Base):
@@ -24,15 +23,17 @@ class StudyWordProgress(Base):
     user_id = Column(Integer, nullable=False, comment="用户ID")
     word_id = Column(Integer, nullable=False, comment="单词ID")
     book_id = Column(Integer, nullable=False, comment="书籍ID")
+    plan_id = Column(Integer, nullable=False, comment="计划ID")  # 新增 plan_id 字段
     learning_count = Column(Integer, default=0, comment="累计学习次数")
     correct_count = Column(Integer, default=0, comment="正确次数（用户答对次数）")
     incorrect_count = Column(Integer, default=0, comment="错误次数（用户答错次数）")
     last_study_time = Column(DateTime, comment="最后一次学习时间")
     next_review_time = Column(DateTime, comment="下次复习时间（未掌握时有效）")
-    memory_stage = Column(Integer, default=0, comment="记忆阶段（0=未学，1=短期记忆，2=长期记忆）")
     is_mastered = Column(Integer, default=0, comment="是否已掌握（0=未掌握，1=已掌握）")
     study_date = Column(Date, comment="学习日期")
-    is_new = Column(Integer, default=1, comment="是否为新学单词（1=新学，0=复习）")
+    type = Column(Integer, default=0, comment="单词类型（0=没全部学完模式，1=全部学完三种模式）")
+    create_time = Column(DateTime, default=datetime.datetime.now, comment="创建时间")
+    update_time = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now, comment="更新时间")
 
     # 创建联合索引提高查询效率
     __table_args__ = (
@@ -50,3 +51,5 @@ class StudyRecord(Base):
     new_words = Column(Integer, default=0, comment="今日新学单词数")
     review_words = Column(Integer, default=0, comment="今日复习单词数")
     duration = Column(Integer, default=0, comment="今日学习时长（分钟）")
+    create_time = Column(DateTime, default=datetime.datetime.now, comment="创建时间")
+    update_time = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now, comment="更新时间")

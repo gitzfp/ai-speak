@@ -127,6 +127,9 @@ const notebookList = ref([])
 
 const subsidiaryWordsStr = ref('')
 
+//0是新学了，1 是复习进来了
+const status_num = ref(0)
+
 onMounted(() => {
 	enterTime.value = new Date(); // 记录用户进入页面的时间
 	
@@ -154,25 +157,7 @@ onShow(() => {
 
 // 页面隐藏时触发 这个页面销毁不会触发，只有页面导航带下一个才触发
 onHide(() => {
-	let storageKey = 'progresscacheObject'+book_id.value
-	uni.removeStorage({
-	    key: storageKey, // 要删除的键名
-	    success: () => {
-	        console.log('删除成功');
-	    },
-	    fail: (err) => {
-	        console.error('删除失败:', err);
-	    }
-	});
-	//说明有全部学完的上报  就把整个数据传过去
-	const leaveTime = new Date(); // 记录用户离开页面的时间
-	  // 计算停留时间（单位：毫秒）
-	  const stayDuration = leaveTime - enterTime.value;
-	  // 转换为分钟数
-	  const stayMinutes = Math.floor(stayDuration / (1000 * 60));
-	const studyDate = leaveTime.toISOString().split('T')[0] // 学习日期（格式：YYYY-MM-DD）
-	reportStudyRecord(stayMinutes,studyDate,planWordsWithCounts.value.length)
-	reportStudyWordProgress(planWordsWithCounts.value,1)
+	
 });
 
 onUnmounted(() => {
@@ -219,14 +204,20 @@ onUnmounted(() => {
 
 //全部完成 上报到学习记录
 const reportStudyRecord = async (stayMinutes,studyDate,newWords) => {
-	study.updateOrCreateStudyRecord(book_id.value,studyDate,newWords,0,stayMinutes)
+	if (status_num.value == 1) {
+		study.updateOrCreateStudyRecord(book_id.value,studyDate,0,newWords,stayMinutes)
+	} else {
+		study.updateOrCreateStudyRecord(book_id.value,studyDate,newWords,0,stayMinutes)	
+	}
 }
 
 //上报到学习进度中
 const reportStudyWordProgress = async (filteredArray,typeNum) => {
-	
-	
-	study.upsertStudyWordProgress(book_id.value,typeNum,plan_id.value,filteredArray)
+	if (status_num.value == 1) {
+		study.upsertReviewWordProgress(book_id.value,typeNum,plan_id.value,filteredArray)
+	} else {
+		study.upsertStudyWordProgress(book_id.value,typeNum,plan_id.value,filteredArray)
+	}
 }
 
 const isPicturedisplay = computed(() => {
@@ -355,6 +346,8 @@ const optionitemclick = (num) => {
 		  // console.log("不进来吗")
 		  progressindext.value = planWordsThreeList.value.length
 		  finishiWordshowPopup.value = true
+		  //完成的去上报 和提交
+		  finishToreport()
 		} else {
 		  // console.log("跑这边")
 		  animatedPageturn()
@@ -365,6 +358,29 @@ const optionitemclick = (num) => {
 			
   }
 };
+
+const finishToreport = () => {
+	let storageKey = 'progresscacheObject'+book_id.value
+	uni.removeStorage({
+	    key: storageKey, // 要删除的键名
+	    success: () => {
+	        console.log('删除成功');
+	    },
+	    fail: (err) => {
+	        console.error('删除失败:', err);
+	    }
+	});
+	//说明有全部学完的上报  就把整个数据传过去
+	const leaveTime = new Date(); // 记录用户离开页面的时间
+	  // 计算停留时间（单位：毫秒）
+	  const stayDuration = leaveTime - enterTime.value;
+	  // 转换为分钟数
+	  const stayMinutes = Math.floor(stayDuration / (1000 * 60));
+	const studyDate = leaveTime.toISOString().split('T')[0] // 学习日期（格式：YYYY-MM-DD）
+	
+	reportStudyRecord(stayMinutes,studyDate,planWordsWithCounts.value.length)
+	reportStudyWordProgress(planWordsWithCounts.value,1)
+}
 
 //继续按钮
 const continuebtnclick = () => {
@@ -578,9 +594,12 @@ const optionAreaWords = computed(() => {
 });
 
 onLoad(async (options) => {
-  const { bookId, planWords,subsidiaryWords,planId} = options;
+  const { bookId, planWords,subsidiaryWords,planId,statusNum} = options;
   book_id.value = bookId;
   plan_id.value = planId
+  if (statusNum) {
+	  status_num.value = statusNum
+  }
   
   if (subsidiaryWords) {
 	  subsidiaryWordsStr.value = subsidiaryWords

@@ -65,7 +65,7 @@
 			  <view @tap="startLearningword" class="learn-btn">再学一组</view>
 		  </view>
 		  <view class="btn-view">
-		  	<view class="review-btn">复习完成</view>		  
+		  	<view @tap="goovertheword" class="review-btn">复习完成</view>		  
 		  </view>
 		  
 		  
@@ -467,6 +467,101 @@
 		// console.log("firstFive==="+firstFive)
 		// console.log(firstFive)
 		
+		
+		
+		
+	}
+	
+	
+	const goovertheword = () => {
+		if (review_words.value.length<=0) {
+			uni.showToast({
+			  title: '没有需复习的单词',
+			  icon: 'none'
+			})
+		}
+		if (studyPlan!=null && !(studyPlan.value.id > 0)) {
+			return
+		}
+		var planId = studyPlan.value.id
+		var numvalue = numofday.value
+		
+		if (review_words.value.length < numvalue) {
+			numvalue = review_words.value.length
+		}
+		let firstFive = review_words.value.slice(0, numvalue);
+		let planWordsList = [];
+		firstFive.forEach(word => {
+		    planWordsList.push(word.word_id);
+		});
+		
+		// 如果 firstFive 的长度小于 4，则需要补充单词
+		  if (firstFive.length < 4) {
+		    // 合并 unlearned_words 和 learned_words
+		    const combinedWords = [...unlearned_words.value, ...learned_words.value];
+		
+		    // 过滤掉已经在 firstFive 中的 word_id
+		    const filteredWords = combinedWords.filter(word => 
+		      !firstFive.some(item => item.word_id === word.word_id)
+		    );
+		
+		    // 计算需要补充的单词数量
+		    const needed = 4 - firstFive.length;
+		
+		    // 从 filteredWords 中随机选取 needed 个单词
+		    const supplementaryWords = getRandomElements(filteredWords, needed);
+		
+		    // 将 supplementaryWords 的 word_id 加入 subsidiaryWordsList
+		    let subsidiaryWordsList = [];
+		    supplementaryWords.forEach(word => {
+		      subsidiaryWordsList.push(word.word_id);
+		    });
+		
+		    // 存储 subsidiaryWordsList 和 planWordsList
+		    const subsidiaryWords = 'subsidiaryWords';
+		    const planWords = 'planWords';
+		
+		    uni.setStorage({
+		      key: subsidiaryWords,
+		      data: JSON.stringify(subsidiaryWordsList),
+		      success: function () {
+		        uni.setStorage({
+		          key: planWords,
+		          data: JSON.stringify(planWordsList),
+		          success: function () {
+		            console.log('数据存储成功');
+		            // 跳转到学习页面
+		            uni.navigateTo({
+		              url: `/pages/textbook/WordplanDetail?planWords=${planWords}&bookId=${book.value.book_id}&subsidiaryWords=${subsidiaryWords}&planId=${planId}&statusNum=1`,
+		            });
+		          },
+		          fail: function (err) {
+		            console.log('数据存储失败', err);
+		          }
+		        });
+		      },
+		      fail: function (err) {
+		        console.log('数据存储失败', err);
+		      }
+		    });
+		  } else {
+		    // 如果 firstFive 的长度 >= 4，直接存储 planWordsList
+		    const planWords = 'planWords';
+		    uni.setStorage({
+		      key: planWords,
+		      data: JSON.stringify(planWordsList),
+		      success: function () {
+		        console.log('数据存储成功');
+		        // 跳转到学习页面
+		        uni.navigateTo({
+		          url: `/pages/textbook/WordplanDetail?planWords=${planWords}&bookId=${book.value.book_id}&planId=${planId}&statusNum=1`,
+		        });
+		      },
+		      fail: function (err) {
+		        console.log('数据存储失败', err);
+		      }
+		    });
+		  }
 		
 		
 		

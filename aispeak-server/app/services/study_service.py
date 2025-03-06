@@ -34,10 +34,11 @@ class StudyService:
         study_plan = (
             self.db.query(StudyPlan)
             .filter(StudyPlan.user_id == user_id, StudyPlan.book_id == book_id)
-            .order_by(StudyPlan.create_time.desc())  # 按创建时间倒序排列
+            .order_by(StudyPlan.update_time.desc())  # 按创建时间倒序排列
             .first()  # 只返回最新的一条
         )
-
+        print("study_plan")
+        print(study_plan)
         # 如果没有找到学习计划，则创建一个默认的学习计划
         if not study_plan:
             default_daily_words = 3  # 默认每天学习3个单词
