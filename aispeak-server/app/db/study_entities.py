@@ -22,7 +22,7 @@ class StudyWordProgress(Base):
     id = Column("id", Integer, primary_key=True, autoincrement=True)  
     user_id = Column(String(50), nullable=False, comment="用户ID")  # 指定长度
     word_id = Column(Integer, nullable=False, comment="单词ID")
-    book_id = Column(Integer, nullable=False, comment="书籍ID")
+    book_id = Column(String(50), nullable=False, comment="书籍ID")  # 指定长度
     plan_id = Column(Integer, nullable=False, comment="计划ID")  # 新增 plan_id 字段
     learning_count = Column(Integer, default=0, comment="累计学习次数")
     correct_count = Column(Integer, default=0, comment="正确次数（用户答对次数）")
@@ -53,3 +53,23 @@ class StudyRecord(Base):
     duration = Column(Integer, default=0, comment="今日学习时长（分钟）")
     create_time = Column(DateTime, default=datetime.datetime.now, comment="创建时间")
     update_time = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now, comment="更新时间")
+
+
+class StudyCompletionRecord(Base):
+    """学习完成记录表"""
+    __tablename__ = "study_completion_records"
+
+    id = Column(Integer, primary_key=True, autoincrement=True, comment="完成记录唯一标识")
+    user_id = Column(String(50), nullable=False, comment="用户ID")  # 指定长度
+    book_id = Column(String(50), nullable=False, comment="书籍ID")  # 指定长度
+    date = Column(Date, nullable=False, comment="完成日期")
+    status = Column(Integer, default=0, comment="完成状态（0: 未完成, 1: 已完成）")  # 改为 Integer 类型
+    continuous_days = Column(Integer, default=0, comment="连续完成天数")
+    create_time = Column(DateTime, default=datetime.datetime.now, comment="创建时间")
+    update_time = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now, comment="更新时间")
+
+    # 创建联合索引提高查询效率
+    __table_args__ = (
+        Index('idx_user_date', 'user_id', 'date'),
+        Index('idx_user_book_date', 'user_id', 'book_id', 'date'),  # 新增联合索引
+    )
