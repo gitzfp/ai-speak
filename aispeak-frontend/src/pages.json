@@ -94,6 +94,12 @@
 		  "navigationBarTitleText": "背单词详情"
 		}
 	},
+	{
+		"path": "pages/textbook/Ebbinghaus",
+		"style": {
+		  "navigationBarTitleText": "记忆法说明"
+		}
+	},
     {
       "path": "pages/textbook/lesson",
       "style": {

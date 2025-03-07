@@ -195,5 +195,4 @@ def get_wx_share_sign(
             message="生成微信分享签名失败",
             error=str(e)
         )
-
 # ... existing code ...

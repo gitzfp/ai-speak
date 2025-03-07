@@ -202,6 +202,11 @@ onUnmounted(() => {
 	
 })
 
+//上报学习完成记录表
+const updateStudyCompletionRecord = async () => {
+	study.createOrUpdateStudyCompletionRecord(book_id.value)
+}
+
 //全部完成 上报到学习记录
 const reportStudyRecord = async (stayMinutes,studyDate,newWords) => {
 	if (status_num.value == 1) {
@@ -380,6 +385,7 @@ const finishToreport = () => {
 	
 	reportStudyRecord(stayMinutes,studyDate,planWordsWithCounts.value.length)
 	reportStudyWordProgress(planWordsWithCounts.value,1)
+	updateStudyCompletionRecord()
 }
 
 //继续按钮

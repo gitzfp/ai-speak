@@ -1,6 +1,6 @@
 <template>
   <view class="container">
-    <view class="header">
+    <view @tap="ebbinghausclick" class="header">
       <view class="hedtitle">艾宾浩斯记忆法</view>
       <view class="subtitle">
 		  <text class="subtitlect">高效背词·科学记忆·对抗遗忘</text>
@@ -74,23 +74,23 @@
 	</view>
 
 	<view class="contenttwo">
-		<view class="contenttwo-one">
+		<view v-if="completionRecords.length>0" class="contenttwo-one">
 			<view class="calendar-section">
-			  <view class="calendar-title">本周打卡</view>
+			  <view class="calendar-title">本周完成情况</view>
 			</view>
 			<view class="calendar-rt">
-			  <view class="calendar-subtitle">已连续打卡<text style="color: #ED6C43;">1</text>天</view>
+			  <view class="calendar-subtitle">连续完成<text style="color: #ED6C43;">{{singledayRecord.continuous_days}}</text>天</view>
 			  <view class="share-btn">晒一晒</view>
 			</view>
 		</view>
 		
 		
 		
-		<view class="contenttwo-days">
+		<view v-if="completionRecords.length>0" class="contenttwo-days">
 		  <view @tap="calendarItemclick(index)" class="calendar-item" v-for="(item, index) in weekstitList" :key="index">
 			  <view class="item_top">{{item.week}}</view>
-			  <view :class="weekindext==index?'item_middle_st':'item_middle'"><text>{{item.date}}</text></view>
-			  <view :class="weekindext==index?'item_bottom_st':'item_bottom'"></view>
+			  <view :class="completionRecords[index].status==1?'item_middle_st':'item_middle'"><text>{{item.date}}</text></view>
+			  <view :class="completionRecords[index].status==1?'item_bottom_st':'item_bottom'"></view>
 		  </view>
 		</view>
 		
@@ -189,6 +189,25 @@
 	// 获取重新弹窗组件的引用
 	const relearnPlanPop = ref(null);
 	
+	//完整每日单词的数组
+	const completionRecords = ref([])
+	
+	const singledayRecord = computed(() => {
+		if (completionRecords.value.length) {
+			const today = new Date();
+			const year = today.getFullYear();
+			const month = String(today.getMonth() + 1).padStart(2, '0');
+			const day = String(today.getDate()).padStart(2, '0');
+			const todayFormatted = `${year}-${month}-${day}`;
+			
+			// 查找 date 为当天的对象
+			const todayRecord = completionRecords.value.find(record => record.date === todayFormatted);
+
+			return todayRecord
+		}
+		return null
+	})
+	
 	const learnNumtoday = computed(() => {
 		if (studyPlan.value) {
 			if (studyPlan.value.daily_words<studyRecord.value.new_words) {
@@ -234,19 +253,28 @@
 	           'Saturday': '六'
 	       };
 	   
+			
 	       for (let i = 0; i < 7; i++) {
 	           const date = new Date(monday);
 	           date.setDate(monday.getDate() + i);
 	   
 	           const weekDay = weekDayMap[date.toLocaleDateString('en-US', { weekday: 'long' })] || '';
+			   
+			   const year = date.getFullYear(); // 获取年份
+			   const month = String(date.getMonth() + 1).padStart(2, '0'); // 获取月份，并补零
 	           const monthDate = String(date.getDate()).padStart(2, '0'); // 小于10前面补零
-	   
+			   
+			   const formattedDate = `${year}-${month}-${monthDate}`; // 拼接为年-月-日格式
+	
 	           weekDates.push({
 	               week: weekDay,
 	               date: monthDate,
-	               isSelect: false
+	               isSelect: false,
+				   formattedDate:formattedDate
 	           });
 	       }
+		   
+		   
 	   
 	       return weekDates;
 	})
@@ -280,6 +308,7 @@
 		if (newVal.length>0) {
 			studyPlanForbookid(newVal)
 			studyRecordForbookid(newVal)
+			studyCompletionRecords(newVal)
 		}
 	});
 	
@@ -292,6 +321,7 @@
 		    if (params.action === 'updateData') {
 			  fetchWords(book.value.book_id,studyPlan.value.id)
 		      studyRecordForbookid(book.value.book_id); // 根据参数执行操作
+			  studyCompletionRecords(book.value.book_id)
 		    }
 		  });
 	})
@@ -300,6 +330,12 @@
 		progresscacheObjectdelete()
 	})
 
+	const ebbinghausclick = () =>{
+		uni.navigateTo({
+		  url: `/pages/textbook/Ebbinghaus`, 
+		});
+	}
+	
 	// 打开重置计划弹窗
 	const openResetPopup = () => {
 	  resetPlanPopup.value.openPopup();
@@ -614,6 +650,20 @@
 	
 	};
 	
+	const studyCompletionRecords = async(bookId) => {
+		try {
+		  const dates = weekstitList.value.map(item => item.formattedDate);
+		  const response = await study.getStudyCompletionRecords(bookId,dates)
+		  
+		  if (response.code === 1000) {
+				completionRecords.value = response.data
+				
+				
+		  }
+		} catch (error) {
+		  console.error('获取失败:', error)
+		}
+	}
 	
 	const fetchWords = async (bookId,planId) => {
 	  try {

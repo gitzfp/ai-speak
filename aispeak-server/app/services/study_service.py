@@ -2,7 +2,7 @@ from typing import Dict, List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func  # 导入 func
 from datetime import datetime, date
-from app.db.study_entities import StudyPlan, StudyWordProgress, StudyRecord  # 假设实体类在 study_entities.py 中
+from app.db.study_entities import StudyPlan, StudyWordProgress, StudyRecord,StudyCompletionRecord  # 假设实体类在 study_entities.py 中
 from app.db.words_entities import Word  # 假设 Word 是单词表实体
 from datetime import datetime, date, timedelta
 
@@ -478,3 +478,148 @@ class StudyService:
             self.db.commit()
             self.db.refresh(new_record)
             return new_record
+
+
+
+    def get_study_completion_records(
+        self, user_id: str, book_id: str, dates: List[date]
+    ) -> List[Dict]:
+        """
+        根据用户ID、书本ID和日期数组查询学习完成记录，并返回与日期数组顺序一致的字典列表
+        :param user_id: 用户ID
+        :param book_id: 书本ID
+        :param dates: 日期数组
+        :return: 学习完成记录的字典格式列表，与 dates 顺序一致
+        """
+        try:
+            # 查询 StudyCompletionRecord 表中符合条件的所有记录
+            study_completion_records = (
+                self.db.query(StudyCompletionRecord)
+                .filter(
+                    StudyCompletionRecord.user_id == user_id,
+                    StudyCompletionRecord.book_id == book_id,
+                    StudyCompletionRecord.date.in_(dates)  # 使用 in_ 来匹配日期数组
+                )
+                .all()
+            )
+            
+            # 将查询到的记录转换为字典，并以日期的字符串形式为 key 存入字典中
+            records_dict = {
+                record.date.strftime("%Y-%m-%d"): {  # 将日期转换为字符串作为 key
+                    "id": record.id,
+                    "user_id": record.user_id,
+                    "book_id": record.book_id,
+                    "date": record.date.strftime("%Y-%m-%d"),  # 将日期格式化为字符串
+                    "status": record.status,
+                    "continuous_days": record.continuous_days,
+                    "create_time": record.create_time.strftime("%Y-%m-%d %H:%M:%S") if record.create_time else None,
+                    "update_time": record.update_time.strftime("%Y-%m-%d %H:%M:%S") if record.update_time else None,
+                }
+                for record in study_completion_records
+            }
+            
+            # 严格按照 dates 的顺序构建返回结果
+            result = []
+            for d in dates:
+                date_str = d.strftime("%Y-%m-%d")  # 将日期转换为字符串
+                if date_str in records_dict:
+                    result.append(records_dict[date_str])  # 如果查询到记录，则添加到结果中
+                else:
+                    # 如果没有查询到记录，则创建默认记录
+                    default_record = {
+                        "id": None,  # 默认记录没有 ID
+                        "user_id": user_id,
+                        "book_id": book_id,
+                        "date": date_str,  # 使用日期字符串
+                        "status": 0,  # 默认状态为 0
+                        "continuous_days": 0,  # 默认连续天数为 0
+                        "create_time": None,  # 默认记录没有创建时间
+                        "update_time": None,  # 默认记录没有更新时间
+                    }
+                    result.append(default_record)
+            
+            return result
+        except Exception as e:
+            print(f"查询学习完成记录失败: {str(e)}")
+            return []  
+
+
+    def create_or_update_study_completion_record(
+        self, user_id: str, book_id: str
+    ) -> Dict:
+        """
+        创建或更新学习完成记录，并返回字典格式
+        :param user_id: 用户ID
+        :param book_id: 书本ID
+        :return: 创建或更新后的 StudyCompletionRecord 字典
+        """
+        # 获取当前日期
+        current_date = datetime.now().date()
+
+        # 查询当前日期的记录是否存在
+        existing_record = (
+            self.db.query(StudyCompletionRecord)
+            .filter(
+                StudyCompletionRecord.user_id == user_id,
+                StudyCompletionRecord.book_id == book_id,
+                StudyCompletionRecord.date == current_date
+            )
+            .first()
+        )
+
+        # 如果记录已经存在，直接返回字典格式
+        if existing_record:
+            return self._record_to_dict(existing_record)
+
+        # 如果记录不存在，查询昨天的记录
+        yesterday = current_date - timedelta(days=1)
+        yesterday_record = (
+            self.db.query(StudyCompletionRecord)
+            .filter(
+                StudyCompletionRecord.user_id == user_id,
+                StudyCompletionRecord.book_id == book_id,
+                StudyCompletionRecord.date == yesterday
+            )
+            .first()
+        )
+
+        # 计算 continuous_days
+        continuous_days = 1  # 默认值为 1
+        if yesterday_record:
+            continuous_days = yesterday_record.continuous_days + 1
+
+        # 创建新的记录
+        new_record = StudyCompletionRecord(
+            user_id=user_id,
+            book_id=book_id,
+            date=current_date,
+            status=1,  # 默认状态为 1（已完成）
+            continuous_days=continuous_days,
+            create_time=datetime.now(),
+            update_time=datetime.now()
+        )
+
+        # 插入新记录
+        self.db.add(new_record)
+        self.db.commit()
+        self.db.refresh(new_record)
+
+        # 返回字典格式
+        return self._record_to_dict(new_record)
+
+    def _record_to_dict(self, record: StudyCompletionRecord) -> Dict:
+        """
+        将 StudyCompletionRecord 对象转换为字典
+        :param record: StudyCompletionRecord 对象
+        :return: 字典格式的记录
+        """
+        return {
+            "id": record.id,
+            "user_id": record.user_id,
+            "book_id": record.book_id,
+            "date": record.date.strftime("%Y-%m-%d"),  # 将日期格式化为字符串
+            "status": record.status,
+            "continuous_days": record.continuous_days,
+            "create_time": record.create_time.strftime("%Y-%m-%d %H:%M:%S") if record.create_time else None,
+            "update_time": record.update_time.strftime("%Y-%m-%d %H:%M:%S") if record.update_time else None,
+        }
