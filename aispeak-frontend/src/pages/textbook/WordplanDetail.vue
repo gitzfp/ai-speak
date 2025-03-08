@@ -2,20 +2,14 @@
   <view class="page-container" v-if="planWordsList.length > 0">
     <view class="main-content" :animation="animationData">
 		
-		<!-- 学习 -->
-		<template v-if="planWordmode==2">
-		  <view class="progress-bar">
-		  	<view 
-		  	  class="progress-ct" 
-		  	  :style="{ width: progress + '%' }"
-		  	></view>
-		   </view>
-		  
-		 <!-- <view  class="threeline">
-		  	<view class="threeline-title" style="color: red;">
-				{{ Math.floor(progress) + '%' }}</view>
-		  </view> -->
-		</template>
+		<!-- 学习 进度 -->
+		<view class="progress-bar">
+		<view 
+		  class="progress-ct" 
+		  :style="{ width: progress + '%' }"
+		></view>
+		</view>
+	
 		<template v-if="ismisanswer">
 			<WordDisplay ref="wordDisplayref" :word="optionWord" />
 		</template>
@@ -162,7 +156,7 @@ onHide(() => {
 
 onUnmounted(() => {
 	let storageKey = 'progresscacheObject'+book_id.value
-	if (progressindext.value == planWordsThreeList.value.length) {
+	if (progressindext.value == (planWordsWithCounts.value.length*3)) {
 		
 	} else {  
 		//学习一半的上报
@@ -242,8 +236,8 @@ const isPicturedisplay = computed(() => {
 	return false
 })
 const progress = computed(() => {
-	   if (planWordsThreeList.value.length>0) {
-		   let percentage = ((progressindext.value) / planWordsThreeList.value.length) * 100;
+	   if (planWordsWithCounts.value.length>0) {
+		   let percentage =  ((progressindext.value) / (planWordsWithCounts.value.length*3)) * 100;
 		   return percentage
 	   } else {
 		  return 0 
@@ -349,7 +343,7 @@ const optionitemclick = (num) => {
   if (num==1) { //答对了
 		if (planWordmode.value == 2 && planWordThreeindext.value == (planWordsThreeList.value.length-1)) {
 		  // console.log("不进来吗")
-		  progressindext.value = planWordsThreeList.value.length
+		  progressindext.value = planWordsWithCounts.value.length*3
 		  finishiWordshowPopup.value = true
 		  //完成的去上报 和提交
 		  finishToreport()
@@ -465,9 +459,9 @@ const animatedPageturn = (isError = false) => {
 				  let element = planWordsThreeList.value.splice(planWordThreeindext.value,1)[0]
 				  planWordsThreeList.value.splice(crindext, 0, element);
 			  }
-			  progressindext.value = planWordThreeindext.value
 		  }
 		  
+		  progressindext.value = planWordindext.value+planWordTwoindext.value+planWordThreeindext.value
 		  
 	    // 更新逻辑
 	    // if (planWordmode.value == 0 || planWordmode.value == 1) {

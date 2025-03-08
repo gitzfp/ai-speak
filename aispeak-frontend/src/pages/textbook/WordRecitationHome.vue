@@ -79,7 +79,8 @@
 			  <view class="calendar-title">本周完成情况</view>
 			</view>
 			<view class="calendar-rt">
-			  <view class="calendar-subtitle">连续完成<text style="color: #ED6C43;">{{singledayRecord.continuous_days}}</text>天</view>
+			  <view v-if="singledayRecord.status==1" class="calendar-subtitle">连续完成<text style="color: #ED6C43;">{{singledayRecord.continuous_days}}</text>天</view>
+			  <view v-else class="calendar-subtitle">今日计划未完成</view>
 			  <view class="share-btn">晒一晒</view>
 			</view>
 		</view>
