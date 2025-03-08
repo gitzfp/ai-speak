@@ -119,7 +119,7 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void, onListEn
     currentAudio.value = audio
     audio.src = sentence.audio_url
     // 设置时间范围
-    if (sentence.audio_start !== undefined && sentence.audio_end !== undefined) {
+    if (sentence.audio_start && sentence.audio_end) {
       const startTime = sentence.audio_start / 1000
       const endTime = sentence.audio_end / 1000
       audio.startTime = startTime
