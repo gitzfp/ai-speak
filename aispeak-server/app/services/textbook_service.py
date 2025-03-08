@@ -670,6 +670,29 @@ class TextbookService:
             print(traceback.format_exc())
             return str(e)
 
+    def get_textbook_chapters(self, book_id: str) -> Dict:
+       # 获取所有章节
+        chapters = self.db.query(ChapterEntity).filter(
+            ChapterEntity.book_id == book_id
+        ).order_by(ChapterEntity.id).all()
+
+        def build_chapter_tree(parent_id=None):
+            tree = []
+            for chapter in chapters:
+                if chapter.parent_id == parent_id:
+                    children = build_chapter_tree(chapter.id)
+                    chapter_data = {
+                        "id": chapter.id,
+                        "title": chapter.title,
+                        "page_id": chapter.page_id,
+                        "page_no": chapter.page_no
+                    }
+                    if children:
+                        chapter_data["children"] = children
+                    tree.append(chapter_data)
+            return tree
+        return build_chapter_tree()
+
     def get_textbook_details(self, book_id: str) -> Dict:
         """
         获取教材页面和音频信息
