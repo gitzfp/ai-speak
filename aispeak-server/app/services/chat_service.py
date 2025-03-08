@@ -357,7 +357,7 @@ class ChatService:
         )
 
     def pronunciation(self, dto: PronunciationDTO, account_id: str):
-        """发单评估"""
+        """发音评估"""
         # 先根据message_id查询出message
         message = self.db.query(MessageEntity).filter_by(id=dto.message_id).first()
         if not message:
@@ -565,6 +565,42 @@ class ChatService:
         self.db.add(session)
         self.db.commit()
         return self.__convert_session_model(session)
+
+    def get_session_by_topic(self, topic_id: str, account_id: str):
+        """根据话题ID获取会话"""
+        # 验证话题是否存在
+        topic = self.db.query(TopicEntity).filter_by(id=topic_id).first()
+        if not topic:
+            raise Exception("话题不存在")
+
+        # 通过关联表查询会话
+        session_relation = (
+            self.db.query(TopicSessionRelation)
+            .filter_by(
+                topic_id=topic_id,
+                account_id=account_id
+            )
+            .order_by(TopicSessionRelation.create_time.desc())
+            .first()
+        )
+
+        if not session_relation:
+            return {"id": None}
+
+        # 如果找到了会话，返回会话信息
+        session = (
+            self.db.query(MessageSessionEntity)
+            .filter(MessageSessionEntity.id == session_relation.session_id)
+            .first()
+        )
+
+        # 构建返回数据
+        session_info = {
+            "id": session.id,
+            "completed": session.completed
+        }
+
+        return session_info
 
     def get_session_messages(
         self, session_id: str, account_id: str, page: int, page_size: int

@@ -33,6 +33,17 @@ def get_session(
     return ApiResponse(data=chat_service.get_session(session_id, account_id))
 
 
+@router.get("/sessions/topic/{topic_id}")
+def get_session_by_topic(
+    topic_id: str,
+    db: Session = Depends(get_db),
+    account_id: str = Depends(get_current_account),
+):
+    """根据话题ID获取会话"""
+    chat_service = ChatService(db)
+    return ApiResponse(data=chat_service.get_session_by_topic(topic_id, account_id))
+
+
 @router.post("/sessions/{session_id}/voice-translate")
 def voice_upload_api(
     session_id: str,

@@ -35,46 +35,14 @@
           </view>
         </view>
 
-        <!-- 目标 -->
-        <view class="main-target-box">
-          <view class="main-target-title"> 目标 </view>
-          <view class="main-target-content">
-            <view
-              v-for="main_target in topicDetail.main_targets"
-              :key="main_target.id"
-              class="main-target-item"
-            >
-              {{ main_target.description }}
-            </view>
-          </view>
-        </view>
+        <!-- 核心短语 -->
+        <phrase :topic-id="topicDetail.id"/> 
 
-        <!-- 也试试 -->
-        <view
-          v-if="
-            topicDetail.trial_targets && topicDetail.trial_targets.length > 0
-          "
-          class="main-target-box"
-        >
-          <view class="main-target-title"> 也试试 </view>
-          <view class="main-target-content">
-            <view
-              v-for="main_target in topicDetail.trial_targets"
-              :key="main_target.id"
-              class="main-target-item"
-            >
-              {{ main_target.description }}
-            </view>
-          </view>
-        </view>
       </view>
     </view>
 
     <!-- 底部操作栏 -->
     <view class="bottom-box">
-      <view class="atk-btn-box gray" @click="goTopicPurchase">
-        <text class="atk-btn">查看短语手册</text>
-      </view>
       <view class="atk-btn-box start-btn-box" @click="goChat">
         <text class="atk-btn">开始</text>
       </view>
@@ -86,7 +54,7 @@ import CommonHeader from "@/components/CommonHeader.vue"
 import LoadingRound from "@/components/LoadingRound.vue"
 import topicRequest from "@/api/topic"
 import { ref } from "vue"
-
+import phrase from '@/pages/topic/phrase.vue'
 import { onLoad } from "@dcloudio/uni-app"
 
 const loading = ref(false)
@@ -114,18 +82,43 @@ const goTopicHistory = () => {
   })
 }
 
-const goTopicPurchase = () => {
-  uni.navigateTo({
-    url: `/pages/topic/phrase?topicId=${topicDetail.value.id}`,
-  })
-}
 
+const getTopicSentences = async (topic_id: string) => {
+    const topicSentenceList : any = []
+    await topicRequest.getPhrase({topic_id}).then((data) => {
+        data?.data?.forEach((item: any)=>{
+            topicSentenceList.push({
+                content: item.phrase,
+                translation: item.phrase_translation,
+                message_id: null,
+                type: "SENTENCE",
+            })        
+            return topicSentenceList
+        })
+    });
+    return topicSentenceList.map((sentence: {content: string, translation: string}) => ({
+          info_en: sentence.content,
+          info_cn: sentence.translation,
+        }))
+}
 /**
  * 先生成session信息，再根据session进行跳转
  */
-const goChat = () => {
+const goChat = async () => {
+  const sentences = await getTopicSentences(topicDetail.value.id)
+  console.log(sentences)
+  const data = await topicRequest.getSessionByTopicId({
+    topic_id: topicDetail.value.id,
+  }).then((res) => {
+    return res.data
+  })
+  if(data?.id){
+    uni.navigateTo({
+      url: `/pages/chat/index?sessionId=${data.id}`,
+    })
+    return
+  }
   topicRequest.createSession({ topic_id: topicDetail.value.id }).then((res) => {
-    console.log(res.data.id)
     uni.navigateTo({
       url: `/pages/chat/index?sessionId=${res.data.id}`,
     })
@@ -165,6 +158,14 @@ const handleBackPage = () => {
         font-size: 36rpx;
         font-weight: bold;
         margin-top: 32rpx;
+        display: flex;
+        align-items: center;
+        
+        .icon {
+          width: 48rpx;
+          height: 48rpx;
+          margin-left: 16rpx;
+        }
       }
     }
 
@@ -174,12 +175,14 @@ const handleBackPage = () => {
       .description-title {
         font-size: 36rpx;
         color: #333;
+        font-weight: 500;
       }
 
       .description-content {
         margin-top: 16rpx;
         font-size: 28rpx;
         color: #666;
+        line-height: 1.6;
       }
     }
 
@@ -189,6 +192,7 @@ const handleBackPage = () => {
       .main-target-title {
         font-size: 36rpx;
         color: #333;
+        font-weight: 500;
       }
 
       .main-target-content {
@@ -200,10 +204,27 @@ const handleBackPage = () => {
         border-radius: 24rpx;
 
         .main-target-item {
-          // padding: 16rpx 32rpx;
+          padding: 20rpx 0;
           border-bottom: 1px solid #f1f1f3;
-          line-height: 80rpx;
-          height: 80rpx;
+          
+          &:last-child {
+            border-bottom: none;
+          }
+          
+          .target-description {
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 8rpx;
+            line-height: 1.5;
+            word-break: break-word;
+          }
+          
+          .target-translation {
+            color: #666;
+            font-size: 26rpx;
+            line-height: 1.5;
+            word-break: break-word;
+          }
         }
       }
     }
@@ -211,7 +232,13 @@ const handleBackPage = () => {
 }
 
 .bottom-box {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 32rpx;
   background-color: #f5f5fe;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
 
   .start-btn-box {
     margin-top: 24rpx;

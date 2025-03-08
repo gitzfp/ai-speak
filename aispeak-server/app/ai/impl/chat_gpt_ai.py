@@ -150,6 +150,9 @@ class ChatGPTAI(ChatAI):
 
     def topic_invoke_message(self, dto: AITopicMessageParams) -> AITopicMessageResult:
         """与AI自由聊天"""
+        logging.info("Starting topic_invoke_message")
+        logging.info(f"Input params: {dto.__dict__}")
+        
         language = dto.language
         system_message = (
             f"Topic:{dto.prompt}.Please chat with me in this topic. If this conversation can be concluded or if the user wishes to end it, please return topic_completed=true."
@@ -161,23 +164,41 @@ class ChatGPTAI(ChatAI):
             + f"No matter what language I speak to you, you need to reply me in {language}. "
             + f"I hope you will ask me a question from time to time in your reply "
         )
-
+        
+        logging.info(f"System message: {system_message}")
+        
         messages = [{"role": "system", "content": system_message}]
         for message in dto.messages:
             messages.append(message)
+            
+        logging.info(f"All messages being sent to AI: {json.dumps(messages, ensure_ascii=False)}")
+        
         resp = self._original_invoke_chat_json(MessageInvokeDTO(messages=messages))
+        logging.info(f"AI response: {json.dumps(resp, ensure_ascii=False)}")
+        
         message_style = None
         # resp是否有message_style
         if "message_style" in resp:
-            message_style = resp["message_style"]
+            if isinstance(resp["message_style"], list) and resp["message_style"]:
+                message_style = resp["message_style"][0]
+            else:
+                message_style = resp["message_style"]
+        logging.info(f"Extracted message_style: {message_style}")
 
         completed = False
         # resp是否有topic_completed
         if "topic_completed" in resp:
-            completed = resp["topic_completed"] == "true"
+            if isinstance(resp["topic_completed"], bool):
+                completed = resp["topic_completed"]
+            elif isinstance(resp["topic_completed"], str):
+                completed = resp["topic_completed"].lower() == "true"
+        logging.info(f"Topic completed: {completed}")
+        
         result = AITopicMessageResult(
             message=resp["message"], message_style=message_style, completed=completed
         )
+        
+        logging.info(f"Final result: {result.__dict__}")
         return result
 
     def topic_invoke_complete(

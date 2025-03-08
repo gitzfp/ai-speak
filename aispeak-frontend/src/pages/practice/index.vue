@@ -1,6 +1,10 @@
 <template>
   <view>
-    <CommonHeader title="AISPeak">
+    <CommonHeader 
+      title="AISPeak"
+      :leftIcon="true"
+      :back-fn="handleBackPage" 
+    >
       <template v-slot:content>
         <text>练习</text>
       </template>
@@ -116,6 +120,13 @@ const onScroll = (event: any) => {
     senPageSize.value = senPageSize.value + 1;
     getSen();
   }
+};
+
+// 新增返回处理方法
+const handleBackPage = () => {
+  uni.switchTab({
+    url: "/pages/index/index"
+  });
 };
 </script>
 

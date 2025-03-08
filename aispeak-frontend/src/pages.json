@@ -203,10 +203,10 @@
         "iconPath": "static/home.png"
       },
       {
-        "pagePath": "pages/practice/index",
-        "text": "练习",
+        "pagePath": "pages/index/index",
+        "text": "场景",
         "selectedIconPath": "static/edit_select.png",
-        "iconPath": "static/edit.png"
+        "iconPath": "static/home.png"
       },
       {
         "pagePath": "pages/my/index",

@@ -30,12 +30,10 @@
 </template>
 <script setup lang="ts">
 import {
-  ref,
   defineProps,
   getCurrentInstance,
   computed,
   onMounted,
-  inject,
 } from "vue"
 interface Props {
   leftIcon?: boolean
@@ -60,6 +58,7 @@ const handleBack = () => {
     })
   }
 }
+
 </script>
 <style lang="less" scoped>
 .common-header {
