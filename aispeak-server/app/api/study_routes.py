@@ -212,3 +212,56 @@ def update_or_create_study_record(
         return ApiResponse.success(jsonable_encoder(record))  # 返回成功消息
     except Exception as e:
         return ApiResponse.system_error(str(e))  # 捕获异常并返回系统错误
+
+
+# 定义请求体模型
+class StudyCompletionRecordsRequest(BaseModel):
+    book_id: str  # 书本ID
+    dates: List[date]  # 日期数组
+
+@router.post("/completion-records", response_model=ApiResponse)
+def get_study_completion_records(
+    request: StudyCompletionRecordsRequest,
+    db: Session = Depends(get_db),
+    account_id: str = Depends(get_current_account)
+) -> ApiResponse:
+    """
+    根据用户ID、书本ID和日期数组查询学习完成记录，并返回与日期数组顺序一致的字典列表
+    """
+    try:
+        service = StudyService(db)
+        # 调用 StudyService 中的 get_study_completion_records 方法
+        records = service.get_study_completion_records(
+            user_id=account_id,
+            book_id=request.book_id,
+            dates=request.dates
+        )
+        return ApiResponse.success(records)  # 返回成功消息
+    except Exception as e:
+        return ApiResponse.system_error(str(e))  # 捕获异常并返回系统错误
+    
+
+# 定义请求体模型
+class StudyCompletionRecordRequest(BaseModel):
+    book_id: str  # 书本ID
+@router.post("/completion-record", response_model=ApiResponse)
+def create_or_update_study_completion_record(
+    request: StudyCompletionRecordRequest,
+    db: Session = Depends(get_db),
+    account_id: str = Depends(get_current_account)
+) -> ApiResponse:
+    """
+    创建或更新学习完成记录
+    - 如果当前日期的记录已存在，直接返回该记录。
+    - 如果不存在，则插入一条新记录，并根据昨天的记录计算 continuous_days。
+    """
+    try:
+        service = StudyService(db)
+        # 调用 StudyService 中的 create_or_update_study_completion_record 方法
+        record = service.create_or_update_study_completion_record(
+            user_id=account_id,
+            book_id=request.book_id
+        )
+        return ApiResponse.success(jsonable_encoder(record))  # 返回成功消息
+    except Exception as e:
+        return ApiResponse.system_error(str(e))  # 捕获异常并返回系统错误

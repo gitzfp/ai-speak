@@ -83,7 +83,19 @@ export default {
       });
     },
   
+  // 获取用户的学习完成记录
+    getStudyCompletionRecords(bookId: string, dates: string[]) {
+      return request("/study/completion-records", "POST", {
+        book_id: bookId,
+        dates: dates,
+      });
+    },
   
-  
+  // 创建或更新学习完成记录
+    createOrUpdateStudyCompletionRecord(bookId: string) {
+      return request("/study/completion-record", "POST", {
+        book_id: bookId,
+      });
+    },
   
 };

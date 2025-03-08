@@ -182,6 +182,27 @@ def create_textbook_chapters(
 
     except Exception as e:
         return ApiResponse.system_error(str(e))
+
+
+@router.get("/textbook/{book_id}/chapters", response_model=ApiResponse)
+def get_textbook_chapters(
+    book_id: str,
+    db: Session = Depends(get_db)
+) -> ApiResponse:
+    """
+    获取教材页面和音频信息
+    """
+    try:
+        service = TextbookService(db)
+        result = service.get_textbook_chapters(book_id)
+
+        if result is None:
+            return ApiResponse.error("未找到教材章节信息")
+
+        return ApiResponse.success(result)
+
+    except Exception as e:
+        return ApiResponse.system_error(str(e))
 @router.get("/textbook/{book_id}/details", response_model=ApiResponse)
 def get_textbook_pages(
     book_id: str,
