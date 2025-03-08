@@ -185,7 +185,7 @@ def create_textbook_chapters(
 
 
 @router.get("/textbook/{book_id}/chapters", response_model=ApiResponse)
-def get_textbook_pages(
+def get_textbook_chapters(
     book_id: str,
     db: Session = Depends(get_db)
 ) -> ApiResponse:
