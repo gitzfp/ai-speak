@@ -36,7 +36,7 @@ def get_custom_topic(
 # 获取所有话题组与话题
 @router.get("/topics", name="Get all chat topic group")
 def get_all_chat_topics(
-    type: str,
+    type: str = None,  # 修改为可选参数
     db: Session = Depends(get_db),
     account_id: str = Depends(get_current_account),
 ):
