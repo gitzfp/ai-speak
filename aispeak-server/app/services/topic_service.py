@@ -127,7 +127,7 @@ class TopicService:
         topic_group_entities = (
             self.db.query(TopicGroupEntity)
             .filter(
-                TopicGroupEntity.type == type,
+                TopicGroupEntity.type == type if type else True,  # 添加条件判断
                 TopicEntity.language == language,
             )
             .order_by(TopicGroupEntity.sequence.desc())
