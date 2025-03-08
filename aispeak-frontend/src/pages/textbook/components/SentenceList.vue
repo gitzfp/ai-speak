@@ -24,6 +24,7 @@
       </view>
       <FollowReading 
           v-if="repeatAfter" 
+          :trackId="sentence.id"
           :sentence="sentence.english"
       />
     </view>
@@ -120,7 +121,7 @@ const props = withDefaults(defineProps<{
 })
 
 // 添加更多调试信息
-console.log('初始 props:', props)
+console.log('SentenceList初始 props:', props)
 
 // 使用 watchEffect 替代 watch 来确保能捕获到变化
 watchEffect(() => {

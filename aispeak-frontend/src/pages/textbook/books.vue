@@ -792,6 +792,7 @@ function goToassess() {
   repeatOptions.value = bookPages.value[currentPage.value].track_info.map(
     (track) => {
       return {
+        trackId: currentPage.value + ':' + track.id,
         trackText: track.track_text || `段落 ${track.track_id}`,
         audioUrl: track.track_url_source,
       }
