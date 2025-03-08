@@ -17,13 +17,6 @@
   import { getCurrentInstance, defineEmits } from "vue";
   import Speech from "@/components/Speech.vue";
   
-  const props = defineProps({
-    keepRecordingAfterSend: {
-      type: Boolean,
-      default: false
-    }
-  });
-  
   const emit = defineEmits();
   const $bus: any = getCurrentInstance()?.appContext.config.globalProperties.$bus;
   

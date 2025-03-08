@@ -12,7 +12,7 @@
       </view>
       <view class="stats">
         <view class="stat-item">
-          <view class="stat-value">{{studyRecord.new_words}}</view>
+          <view class="stat-value">{{allWords.length}}</view>
           <view class="stat-label">新学</view>
         </view>
         <view class="stat-item">

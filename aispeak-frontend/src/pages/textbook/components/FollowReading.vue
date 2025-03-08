@@ -5,7 +5,7 @@
     </view>
     <view v-if="currentStep === 'submiting'" class="result-selection">
       <!-- 关闭按钮 -->
-      <view class="close-button" @click="resetAll">×</view>
+      <!-- <view class="close-button" @click="resetAll">×</view> -->
       <view class="result-header">发音分析中...</view>
       <view class="result-detail">
         <view class="result-dimensions">
@@ -15,7 +15,7 @@
     </view>
     <view v-if="currentStep === 'result'" class="result-selection">
       <view class="result-header">
-        <view class="result-score">评分: {{ pronunciationResult.pronunciation_score }}</view>
+        <view class="result-score">评分: {{ pronunciationResult?.pronunciation_score }}</view>
         <view class="result-tips" @click="toggleScoreTips">评估分数 <span class="toggle-icon">{{ showScoreTips ? '▲' : '▼' }}</span></view>
         
         <!-- 添加分数解读提示 -->
@@ -35,8 +35,8 @@
           </view>
         </view>
       </view>
-      <view class="result-detail">
-        <view class="result-text">{{ pronunciationResult.content }}</view>
+      <view class="result-detail" v-if="pronunciationResult">
+        <view class="result-text">{{ pronunciationResult?.content }}</view>
         <view class="result-dimensions">
           <view class="dimension-item" :class="getScoreClass(pronunciationResult.fluency_score)">流畅度: {{ pronunciationResult.fluency_score }}</view>
           <view class="dimension-item" :class="getScoreClass(pronunciationResult.accuracy_score)">准确度: {{ pronunciationResult.accuracy_score }}</view>
@@ -44,7 +44,7 @@
         </view>
         
         <!-- 添加单词得分显示部分 -->
-        <view class="word-scores-container" v-if="pronunciationResult.words && pronunciationResult.words.length > 0">
+        <view class="word-scores-container" v-if="pronunciationResult?.words && pronunciationResult.words.length > 0">
             <view 
               v-for="(word, index) in pronunciationResult.words" 
               :key="index" 
@@ -73,16 +73,18 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import chatRequest from "@/api/chat"
 import Speech from "./PronuciationSpeech.vue"
 import AudioPlayer from "@/components/AudioPlayer.vue"
 import utils from "@/utils/utils"
 
 const props = defineProps({
+  trackId: String,
   sentence: String
 })
 
+console.log('组件接收的TrackId:', props) // 打印初始trackId
 const currentStep = ref('select') // 新增步骤状态
 const pronunciationResult = ref(null)
 const showScoreTips = ref(false) // 添加控制分数解读显示的状态
@@ -98,6 +100,34 @@ const toggleScoreTips = () => {
   showScoreTips.value = !showScoreTips.value
 }
 
+const CACHE_KEY_PREFIX = 'pronunciation_result_'
+const CACHE_EXPIRE_TIME = 24 * 60 * 60 * 1000 // 24小时有效期
+const cacheKey = CACHE_KEY_PREFIX + props.trackId
+
+// 修改加载缓存逻辑
+onMounted(() => {
+  try {
+    const cachedData = uni.getStorageSync(cacheKey)
+    if (cachedData) {
+      const { data, timestamp, voiceFile } = cachedData // 新增voiceFile解析
+      if (Date.now() - timestamp < CACHE_EXPIRE_TIME) {
+        pronunciationResult.value = cachedData
+        voiceFileName.value = voiceFile 
+        currentStep.value = 'result'
+        console.log(cacheKey+'缓存加载成功', cachedData)
+      } else {
+        console.log(cacheKey+'缓存失效', cachedData)
+        uni.removeStorageSync(cacheKey)
+      }
+    }else{
+      console.log(cacheKey+'获取缓存为空', cachedData)
+    }
+  } catch (e) {
+    console.error('缓存读取失败:', e)
+  }
+})
+
+// 修改提交录音方法
 const submitRecording = (voice) => {
   console.log(voice, "录音对象")
   currentStep.value = 'submiting' // 切换到正在测评状态
@@ -108,8 +138,10 @@ const submitRecording = (voice) => {
     .then((data) => {
       pronunciationResult.value = data.data
       currentStep.value = 'result' // 切换到结果状态
+      uni.setStorageSync(cacheKey, {...data.data, content: props.sentence, timestamp: Date.now(),voiceFile: voice.fileName })
     })
 }
+
 
 const getScoreClass = (score) => {
     if (score >= 90) return 'score-excellent'
@@ -121,6 +153,11 @@ const getScoreClass = (score) => {
 const resetAll = () => {
   currentStep.value = 'select'
   pronunciationResult.value = null
+  try {
+    uni.removeStorageSync(CACHE_KEY_PREFIX + props.trackId)
+  } catch (e) {
+    console.error('缓存清除失败:', e)
+  }
   // 不重置voiceFileName，这样用户可以在重新测评时仍然播放上一次的录音
 }
 </script>
