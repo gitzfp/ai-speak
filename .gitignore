@@ -4,9 +4,8 @@
 /aispeak-frontend/node_modules/*
 *.pyc
 /aispeak-frontend/dist/*
-/aispeak-server/alembic.ini
 /aispeak-frontend/src/static/.DS_Store
-/aispeak-server/alembic.ini
 /aispeak-server/.idea/
 aispeak-server/.DS_Store
+/aispeak-server/alembic.ini
 aispeak-server/alembic.prod.ini

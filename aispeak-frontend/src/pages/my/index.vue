@@ -76,7 +76,7 @@
             class="setting-card-logo"
             src="http://114.116.224.128:8097/static/concat.png"
           />
-          <text class="setting-card-title">联系我们</text>
+          <text class="setting-card-title">收藏</text>
         </view>
         <!-- 如果是小程序登录 -->
         <view
@@ -121,7 +121,7 @@ onShow(() => {
 
 const goContact = () => {
   uni.navigateTo({
-    url: "/pages/contact/index",
+    url: "/pages/practice/index",
   })
 }
 

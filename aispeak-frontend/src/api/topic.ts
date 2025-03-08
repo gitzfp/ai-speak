@@ -18,6 +18,10 @@ export default {
       sentences: data.sentences
     }, true);
   },
+
+  getSessionByTopicId: (data: any) => {
+    return request(`/sessions/topic/${data.topic_id}/`, "GET", data, true);
+  },
   
   getSessionByLessonId: (data: any) => {
     return request(`/topics/lesson/${data.lesson_id}/session/`, "GET", data, true);

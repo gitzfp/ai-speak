@@ -205,6 +205,7 @@ class TopicService:
                 "id": topic_target_entity.id,
                 "type": topic_target_entity.type,
                 "description": topic_target_entity.description,
+                "description_translation": topic_target_entity.description_translation,
             }
             if topic_target_entity.type == "MAIN":
                 main_targets.append(target)

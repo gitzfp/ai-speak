@@ -119,8 +119,6 @@ onMounted(() => {
         console.log(cacheKey+'缓存失效', cachedData)
         uni.removeStorageSync(cacheKey)
       }
-    }else{
-      console.log(cacheKey+'获取缓存为空', cachedData)
     }
   } catch (e) {
     console.error('缓存读取失败:', e)
