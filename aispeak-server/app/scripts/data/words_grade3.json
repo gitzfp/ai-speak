@@ -145,5 +145,26 @@
         "lesson_id": "1",
         "lesson_name": "Starter",
         "textbook_id": "1212001301246"
+    },
+     {
+        "book_id": 3002321,
+        "stage_id": 1,
+        "stage": "小学",
+        "stage_tag": "xiaoxue",
+        "version_id": 20,
+        "version": "人教大同版",
+        "version_tag": "rjdtb",
+        "grade_id": 3,
+        "grade": "三年级",
+        "grade_tag": "sannianji",
+        "term_tag": "xiace",
+        "book_name": "三年级下册",
+        "publisher": "大同出版传媒有限公司",
+        "cover": "https://ywld-1315558954.51jiaoxi.com/yy-static/images/book/3002321.png",
+        "has_sentence": 0,
+        "has_word": 1,
+        "lesson_id": "1",
+        "lesson_name": "Starter",
+         "textbook_id": "1212001302246"
     }
 ]

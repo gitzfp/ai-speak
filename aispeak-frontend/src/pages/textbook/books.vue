@@ -688,7 +688,7 @@ const goToChatPage = async () => {
       console.log("会话已经存在，句子: ", sentences, "sessionId: ", sessionId)
       if (sessionId) {
         uni.navigateTo({
-          url: `/pages/chat/index?sessionId=${sessionId}&type=LESSON&lessonId=${lessonId}&sessionName=${pageTitle.value}`,
+          url: `/pages/chat/index?sessionId=${sessionId}&type=LESSON&topicOrLessonId=${lessonId}&sessionName=${pageTitle.value}`,
         })
         return
       }
@@ -702,7 +702,7 @@ const goToChatPage = async () => {
 
     if (response?.data) {
       uni.navigateTo({
-        url: `/pages/chat/index?sessionId=${response.data.id}&type=LESSON&lessonId=${lessonId}&sessionName=${pageTitle.value}`,
+        url: `/pages/chat/index?sessionId=${response.data.id}&type=LESSON&topicOrLessonId=${lessonId}&sessionName=${pageTitle.value}`,
       })
     } else {
       throw new Error("创建会话失败")

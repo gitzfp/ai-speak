@@ -118,5 +118,26 @@
         "lesson_id": "1",
         "lesson_name": "Unit 1",
         "textbook_id": "1212001102244"
+    },
+    {
+        "book_id": 3002265,
+        "stage_id": 1,
+        "stage": "小学",
+        "stage_tag": "xiaoxue",
+        "version_id": 20,
+        "version": "人教大同版",
+        "version_tag": "rjdtb",
+        "grade_id": 1,
+        "grade": "一年级",
+        "grade_tag": "yinianji",
+        "term_tag": "shangce",
+        "book_name": "一年级上册",
+        "publisher": "大同出版传媒有限公司",
+        "cover": "https://ywld-1315558954.51jiaoxi.com/yy-static/images/book/3002265.png",
+        "has_sentence": 1,
+        "has_word": 1,
+        "lesson_id": "1",
+        "lesson_name": "Unit 1",
+        "textbook_id": "1212001101246"
     }
 ]

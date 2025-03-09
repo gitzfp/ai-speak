@@ -81,27 +81,6 @@ def get_course_detail(
     except Exception as e:
         return ApiResponse.system_error(str(e))
     
-@router.get("/textbook/lesson/{lesson_id}", response_model=ApiResponse)
-def get_lesson_detail(
-    lesson_id: str,
-    db: Session = Depends(get_db)
-) -> ApiResponse:
-    """
-    获取课程单元详细信息
-    """
-    try:
-        service = TextbookService(db)
-        result = service.get_lesson_detail(lesson_id)
-        
-        if result is None:
-            return ApiResponse.error("课程单元不存在")
-
-        return ApiResponse.success(result)
-
-    except Exception as e:
-        return ApiResponse.system_error(str(e))
-
-
 @router.get("/textbook/{book_id}/words", response_model=ApiResponse)
 @router.get("/textbook/{book_id}/lesson/{lesson_id}/words", response_model=ApiResponse)
 def get_lesson_words(
