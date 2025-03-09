@@ -21,3 +21,8 @@ class SentenceInfo(BaseModel):
 class LessonSessionCreate(BaseModel):
     lesson_id: str
     sentences: List[SentenceInfo]
+
+
+class TopicSessionCreate(BaseModel):
+    topic_id: str
+    sentences: List[SentenceInfo]

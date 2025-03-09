@@ -93,19 +93,19 @@ def get_chat_topic_phrases(
 
 
 # 基于主题创建一个session
-@router.post("/topics/{topic_id}/session", name="Create chat topic session")
+@router.post("/topics/create_topic_session", name="Create chat topic session")
 def create_chat_topic_session(
-    topic_id: str,
+    request: TopicSessionCreate,
     db: Session = Depends(get_db),
     account_id: str = Depends(get_current_account),
 ):
     """基于主题创建一个session"""
     topic_service = TopicService(db)
-    return ApiResponse(data=topic_service.create_topic_session(topic_id, account_id))
+    return ApiResponse(data=topic_service.create_topic_session(request, account_id))
 
 
-# 修改路由
-@router.post("/topics/lesson_session", name="Create chat lesson session")
+# 基于主题创建一个session
+@router.post("/topics/create_lesson_session", name="Create chat lesson session")
 def create_chat_lesson_session(
     request: LessonSessionCreate,
     db: Session = Depends(get_db),

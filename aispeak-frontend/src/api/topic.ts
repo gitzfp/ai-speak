@@ -9,11 +9,11 @@ export default {
   getTopicHistory: (id: string) => {
     return request(`/topics/${id}/history`, "GET", null, false);
   },
-  createSession: (data: any) => {
-    return request(`/topics/${data.topic_id}/session`, "POST", data, true);
+  createTopicSession: (data: any) => {
+    return request(`/topics/create_topic_session`, "POST", data, true);
   },
   createLessonSession: (data: any) => {
-    return request(`/topics/lesson_session`, "POST", {
+    return request(`/topics/create_lesson_session`, "POST", {
       lesson_id: data.lesson_id,
       sentences: data.sentences
     }, true);

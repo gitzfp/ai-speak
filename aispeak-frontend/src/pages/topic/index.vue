@@ -118,7 +118,7 @@ const goChat = async () => {
     })
     return
   }
-  topicRequest.createSession({ topic_id: topicDetail.value.id }).then((res) => {
+  topicRequest.createTopicSession({ topic_id: topicDetail.value.id, sentences: sentences }).then((res) => {
     uni.navigateTo({
       url: `/pages/chat/index?sessionId=${res.data.id}`,
     })
