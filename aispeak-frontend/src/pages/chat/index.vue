@@ -112,22 +112,10 @@
         <view class="clip"></view>
         <view class="modal-body">
           <view class="section">
-            <text class="section-title">情景描述：</text>
-            <text class="section-content">{{
-              lessonData?.detail?.theme_desc
-            }}</text>
-          </view>
-          <view class="section">
-            <text class="section-title">任务描述：</text>
-            <text class="section-content"
-              >你需要在4轮之内完成以下任务，每完成一个，会获取⭐奖励（点击右下角提示随时查看任务）</text
-            >
-          </view>
-          <view class="section">
-            <text class="section-title">请完成以下目标：</text>
+            <text class="section-title">请通过口语对话完成以下目标：</text>
             <view class="section-content">
               <view
-                v-for="(target, index) in lessonData.task_target"
+                v-for="(target, index) in session.task_targets"
                 :key="index"
                 class="target-item"
               >
@@ -171,7 +159,6 @@ import { onLoad, onShow } from "@dcloudio/uni-app"
 import chatRequest from "@/api/chat"
 import accountRequest from "@/api/account"
 import topicRequest from "@/api/topic"
-import textbookRequest from "@/api/textbook"
 import type {
   Message,
   MessagePage,
@@ -185,27 +172,13 @@ const session = ref<Session>({
   messages: { total: 0, list: [] } as MessagePage,
   name: "",
   completed: 0,
+  topicOrLessonId: "",
 })
 const messages = ref<Message[]>([])
 const inputTypeVoice = ref(true)
 const inputText = ref("")
 const menuSwitchDown = ref(true)
 const inputBottom = ref(0)
-const lessonData = ref({
-  detail: {
-    theme_desc: "",
-    chat_nums: 0,
-    lesson_id: 0,
-  },
-  task_target: [],
-})
-const teacher = ref({
-  name: "",
-  avatar: "",
-  lesson_id: null,
-  prompt: "",
-  description: "",
-}) // Updated to match the provided teacher format
 const messageListRef = ref([])
 const accountSetting = ref<AccountSettings>({
   auto_playing_voice: 0,
@@ -237,30 +210,14 @@ const sendMessageHandler = (info: any) => {
   }
 }
 
-const loadLesson = async (lessonId: string) => {
-  try {
-    const res = await textbookRequest.getLessonDetail(lessonId)
-    console.log("Chatpage loadLesson API Response:", res)
-    if (res.data) {
-      lessonData.value = {
-        ...res.data,
-        exercise_list: res.data.exercise_list || [],
-      }
-      teacher.value = res.data.teacher
-      console.log("Loaded lesson data:", lessonData.value, teacher.value)
-    } else {
-      throw new Error("No data returned from server")
-    }
-  } catch (e: any) {
-    console.error("Load lesson error:", e)
-  }
-}
 
 onLoad(async (option: any) => {
   if (option.type === "LESSON") {
     session.value.type = "LESSON"
-    await loadLesson(option.lessonId)
+  }else{
+    session.value.type = "TOPIC"
   }
+  session.value.topicOrLessonId = option.topicOrLessonId
   initData(option.sessionId, option.sessionName)
   uni.setNavigationBarTitle({
     title: "AI-Speak",
@@ -396,7 +353,7 @@ const sendMessage = (message?: string, fileName?: string) => {
       session.value.completed = data?.completed
 
       // Check for achieved targets and mark messages accordingly
-      if (data.achieved_targets) {
+      if (data?.achieved_targets) {
         if (
           data.achieved_targets?.length > 0 &&
           message ===
@@ -447,6 +404,23 @@ const handleSwitchInputType = () => {
 }
 
 /**
+ * 滚动到最底部
+ */
+const scrollToBottom = () => {
+  // 获取scroll-view实例
+  if (messages.value.length === 0) {
+    return
+  }
+  // h5页面直接最原始的API
+  nextTick(() => {
+    uni.pageScrollTo({
+      scrollTop: 10000,
+      duration: 100,
+    })
+  })
+}
+
+/**
  * 初始化聊天数据
  * @param sessionId
  */
@@ -455,7 +429,9 @@ const initData = (sessionId: string, sessionName: string) => {
     session.value = res.data
     session.value.name = sessionName
     session.value.completed = res.data.completed
+    session.value.task_targets = res.data.task_targets
     messages.value = []
+    console.log("会话信息...session...", res)
     // 如果没有任何历史消息，则请求后台生成第一条消息
     if (session.value.messages.total === 0) {
       const timestamp = new Date().getTime()
@@ -471,8 +447,8 @@ const initData = (sessionId: string, sessionName: string) => {
         auto_pronunciation: false,
       }
       messages.value.push(aiMessage)
-      if (lessonData.value?.task_target) {
-        const formattedTargets = lessonData.value.task_target.map((target) => ({
+      if (session.value?.task_targets) {
+        const formattedTargets = session.value.task_targets.map((target) => ({
           id: target.id || "",
           info_cn: target.info_cn || "",
           info_en: target.info_en || "",
@@ -493,6 +469,7 @@ const initData = (sessionId: string, sessionName: string) => {
               auto_play: accountSetting.value.auto_playing_voice == 1,
               auto_pronunciation: false,
               pronunciation: null,
+              achieved_target: false,
             })
 
             nextTick(() => {
@@ -559,28 +536,18 @@ const completeTopic = () => {
   })
 }
 const handlePracticeAgain = () => {
-  const lessonId = lessonData.value.detail.lesson_id // Define lessonId based on session.value.id
-  topicRequest.createLessonSession({ lesson_id: lessonId }).then((res) => {
-    initData(res.data.id, res.data.name)
-  })
+  const topicOrLessonId = session.value.topicOrLessonId
+  if(session.value.type === "TOPIC"){
+    topicRequest.createTopicSession({ topic_id: topicOrLessonId }).then((res) => {
+      initData(res.data.id, res.data.name)
+    })
+  }else{
+    topicRequest.createLessonSession({ lesson_id: topicOrLessonId }).then((res) => {
+      initData(res.data.id, res.data.name)
+    })
+  }
 }
 
-/**
- * 滚动到最底部
- */
-const scrollToBottom = () => {
-  // 获取scroll-view实例
-  if (messages.value.length === 0) {
-    return
-  }
-  // h5页面直接最原始的API
-  nextTick(() => {
-    uni.pageScrollTo({
-      scrollTop: 10000,
-      duration: 100,
-    })
-  })
-}
 
 /**
  * 显示模态框

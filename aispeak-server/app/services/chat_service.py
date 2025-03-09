@@ -12,7 +12,7 @@ from app.models.account_models import *
 from app.models.chat_models import *
 from app.services.account_service import AccountService
 from app.services.topic_service import TopicService
-
+from app.db.textbook_entities import TaskTargetsEntity
 from app.ai.models import *
 from app.ai import chat_ai
 from app.core.azure_voice import *
@@ -63,10 +63,33 @@ class ChatService:
         """获取会话详情"""
         session = self.__get_and_check_session(session_id, account_id)
         result = self.__convert_session_model(session)
-
+        result["task_targets"] = self.get_topic_task_targets(session_id)
         # 获取会话下的消息
         result["messages"] = self.get_session_messages(session_id, account_id, 1, 100)
         return result
+    
+    def get_topic_task_targets(self, session_id: str):
+        """获取会话下的任务目标"""
+        # 通过session_id获取关联的话题ID
+        relation = (self.db.query(TopicSessionRelation)
+                    .filter_by(session_id=session_id)
+                    .first())
+        
+        if not relation:
+            return []
+        
+        # 通过话题ID查询任务目标
+        task_targets = (self.db.query(TaskTargetsEntity)
+                        .filter_by(lesson_id=relation.topic_id)
+                        .all())
+        
+        return [{
+            "id": t.id,
+            "info_cn": t.info_cn,
+            "info_en": t.info_en,
+            "lesson_id": t.lesson_id,
+            "match_type": t.match_type
+        } for t in task_targets]
 
     def get_session_greeting(self, session_id: str, account_id: str, task_targets: list = None):
         """需要会话没有任何消息时，需要返回的问候语"""
@@ -87,63 +110,17 @@ class ChatService:
                 language = self.account_service.get_account_target_language(account_id)
                 logging.info(f"CHAT type, using language: {language}")
                 result = chat_ai.invoke_greet(GreetParams(language=language))
-                
-            elif (session.type == "TOPIC"):
-                logging.info("TOPIC type, getting topic_greet_params")
-                topic_greet_params = self.topic_service.get_topic_greet_params(session.id)
-                logging.info(f"Topic greet params: {topic_greet_params.__dict__}")
-                result = chat_ai.topic_invoke_greet(topic_greet_params)
-                
-            elif (session.type == "LESSON"):
+            else:
                 logging.info("LESSON type, getting lesson session")
-                # 构建课程相关的问候参数
-                targets_str = ""
-                first_target = None
-                
-                if task_targets and len(task_targets) > 0:
-                    logging.info(f"Processing task_targets: {task_targets}")
-                    targets_str = ",\n".join([f"{target['info_en']}" for target in task_targets])
-                    first_target = task_targets[0]
-                    logging.info(f"First target: {first_target}")
-                else:
-                    logging.warning("No task_targets provided or empty list")
-                
-                first_target_text = first_target['info_en'] if first_target else "No target specified"
-                
+                # 构建通用提示参数
+                common_prompt = self._build_common_greeting_prompt(
+                    task_targets=task_targets,
+                    first_target_text=task_targets[0]['info_en'] if task_targets else "No target specified"
+                )
                 topic_greet_params = TopicGreetParams(
                     language=self.account_service.get_account_target_language(account_id),
-                    prompt=f"""你是一位充满创意的英语老师，正在给一位中国学生上一节有趣的英语课。
-
-本节课的学习目标是：
-{targets_str}
-
-请按以下顺序回复：
-1. 用简单的中文以老师的身份热情地向学生问好，称呼要用"你"，展现亲切感
-2. 用中文清晰列出本节课的具体学习目标，用"让你"而不是"让大家"
-3. 用简单的英语创造一个有趣的情境，引导学生说出第一个目标句子：{first_target_text}
-   - 创造一个你和学生之间的互动场景
-   - 或设计一个你带着学生玩的小游戏
-   - 让学生在轻松的对话中自然说出目标句子
-
-注意事项：
-1. 全程使用"你"而不是"你们"，让每个学生感受到专属关注
-2. 使用简单易懂的英语(no more than 60 words)表达
-3. 给予个性化的鼓励和引导
-4. 通过一对一的提问让学生更投入
-5. 创造轻松愉快的学习氛围
-6. 目标句子要自然地融入对话中
-7. 先示范给学生听，再邀请学生模仿
-8. 回答不要有旁白信息，全程对同一个学生说话
-
-示例引导方式：
-- "假设我是商店店员，你来询问商品价格"
-- "我来扮演服务员，你来点一份你最喜欢的食物"
-- "让我们玩个游戏，我迷路了，你来告诉我路线"
-- "想象你是你最喜欢的明星，向我介绍一下你自己"
-- "我这里有一个神秘物品，你来猜猜是什么"
-"""
+                    prompt=common_prompt
                 )
-                
                 logging.info(f"Created topic_greet_params: {topic_greet_params.__dict__}")
                 result = chat_ai.topic_invoke_greet(topic_greet_params)
 
@@ -966,3 +943,37 @@ class ChatService:
         if sequence:
             return sequence.sequence
         return 0
+
+    def _build_common_greeting_prompt(self, task_targets: list = None, first_target_text: str = "") -> str:
+        """构建通用问候提示模板"""
+        targets_str = ",\n".join([t['info_en'] for t in task_targets]) if task_targets else ""
+        
+        return f"""你是一位充满创意的英语老师，正在给一位中国学生上一节有趣的英语课。
+
+本节课的学习目标是：
+{targets_str}
+
+请按以下顺序回复：
+1. 用简单的中文以老师的身份热情地向学生问好，称呼要用"你"，展现亲切感
+2. 用简单的英语创造一个有趣的情境，引导学生说出第一个目标句子：{first_target_text}
+   - 创造一个你和学生之间的互动场景
+   - 或设计一个你带着学生玩的小游戏
+   - 让学生在轻松的对话中自然说出目标句子
+
+注意事项：
+1. 全程使用"你"而不是"你们"，让每个学生感受到专属关注
+2. 使用简单易懂的英语(no more than 60 words)表达
+3. 给予个性化的鼓励和引导
+4. 通过一对一的提问让学生更投入
+5. 创造轻松愉快的学习氛围
+6. 目标句子要自然地融入对话中
+7. 先示范给学生听，再邀请学生模仿
+8. 回答不要有旁白信息，全程对同一个学生说话
+
+示例引导方式：
+- "假设我是商店店员，你来询问商品价格"
+- "我来扮演服务员，你来点一份你最喜欢的食物"
+- "让我们玩个游戏，我迷路了，你来告诉我路线"
+- "想象你是你最喜欢的明星，向我介绍一下你自己"
+- "我这里有一个神秘物品，你来猜猜是什么"
+"""

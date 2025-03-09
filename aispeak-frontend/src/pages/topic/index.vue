@@ -35,8 +35,12 @@
           </view>
         </view>
 
-        <!-- 核心短语 -->
-        <phrase :topic-id="topicDetail.id"/> 
+         <view class="description-box">
+          <view class="description-title"> 核心短语 </view>
+          <view class="description-content">
+            <Statement v-for="sentence in topicSentenceList" :collect="sentence" :cannotCancel="true" />
+          </view>
+        </view>
 
       </view>
     </view>
@@ -54,18 +58,18 @@ import CommonHeader from "@/components/CommonHeader.vue"
 import LoadingRound from "@/components/LoadingRound.vue"
 import topicRequest from "@/api/topic"
 import { ref } from "vue"
-import phrase from '@/pages/topic/phrase.vue'
+import Statement from "@/pages/practice/components/Statement.vue";
 import { onLoad } from "@dcloudio/uni-app"
-
+const topicSentenceList = ref([])
 const loading = ref(false)
-const topicDetail = ref(null)
+const topicDetail = ref<any>(null)
 
 onLoad((props) => {
   uni.setNavigationBarTitle({
     title: "AISPeak",
   })
-
   getTopicDetail(props.topicId)
+  getTopicSentences(props.topicId)
 })
 
 const getTopicDetail = (topicId: string) => {
@@ -84,29 +88,33 @@ const goTopicHistory = () => {
 
 
 const getTopicSentences = async (topic_id: string) => {
-    const topicSentenceList : any = []
     await topicRequest.getPhrase({topic_id}).then((data) => {
-        data?.data?.forEach((item: any)=>{
-            topicSentenceList.push({
+        topicSentenceList.value = data?.data.map(item => {
+            return {
                 content: item.phrase,
                 translation: item.phrase_translation,
-                message_id: null,
                 type: "SENTENCE",
-            })        
-            return topicSentenceList
+                topic_id: topic_id,
+                id: item.id,
+            }
         })
     });
-    return topicSentenceList.map((sentence: {content: string, translation: string}) => ({
-          info_en: sentence.content,
-          info_cn: sentence.translation,
-        }))
+    return topicSentenceList
+}
+
+const getChatSentences = () => {
+  return topicSentenceList.value.map(item => {
+    return {
+      info_en: item.content,
+      info_cn: item.translation,
+    }
+  })
 }
 /**
  * 先生成session信息，再根据session进行跳转
  */
 const goChat = async () => {
-  const sentences = await getTopicSentences(topicDetail.value.id)
-  console.log(sentences)
+  const sentences = getChatSentences()
   const data = await topicRequest.getSessionByTopicId({
     topic_id: topicDetail.value.id,
   }).then((res) => {
@@ -114,13 +122,13 @@ const goChat = async () => {
   })
   if(data?.id){
     uni.navigateTo({
-      url: `/pages/chat/index?sessionId=${data.id}`,
+      url: `/pages/chat/index?sessionId=${data.id}&topicOrLessonId=${topicDetail.value.id}&sessionName=${topicDetail.value.name}`,
     })
     return
   }
   topicRequest.createTopicSession({ topic_id: topicDetail.value.id, sentences: sentences }).then((res) => {
     uni.navigateTo({
-      url: `/pages/chat/index?sessionId=${res.data.id}`,
+      url: `/pages/chat/index?sessionId=${res.data.id}&topicOrLessonId=${topicDetail.value.id}&sessionName=${topicDetail.value.name}`,
     })
   })
 }

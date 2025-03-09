@@ -157,7 +157,7 @@ const handleInitVoice = () => {
 const handleBackFn = () => {
   if (redirectType.value === "index") {
     uni.switchTab({
-      url: "/pages/textbook/index",
+      url: "/pages/textbook/index2",
     })
   } else {
     uni.navigateBack()

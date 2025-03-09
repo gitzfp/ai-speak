@@ -17,13 +17,6 @@ export default {
     );
   },
 
-  getLessonDetail(lessonId: string) {
-    return request(
-      `/textbook/lesson/${lessonId}`,
-      "GET"
-    );
-  },
-
   // 获取课程单元的单词列表
   getLessonWords(bookId: string, lessonId?: string) {
     const url = lessonId 

@@ -1,6 +1,11 @@
 <template>
   <view class="container">
     <!-- 移除原有 Topics 组件 -->
+    <CommonHeader>
+      <template v-slot:content>
+        <text>场景</text>
+      </template>
+    </CommonHeader>
     <view class="content">
       <!-- 新增分类导航 -->
       <scroll-view class="category-scroll" scroll-x>
@@ -111,12 +116,6 @@ const goChat = () => {
   return;
 };
 
-const handleRoleSelect = (role: any) => {
-  // 设置选中的角色
-  selectIndex.value = roles.value.findIndex((m) => m.id === role.id);
-  // 直接调用 goChat
-  goChat();
-};
 
 const groupList = ref<any[]>([])
 const currentGroup = ref<any>(null)
