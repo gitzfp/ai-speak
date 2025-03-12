@@ -27,7 +27,7 @@
 	>
 		
 		<view class="book-unit" :id="'unit-' + index" v-for="(chapter, index) in chapters">
-			<view class="book-one">
+			<view @tap="clickUnit(index)" class="book-one">
 				<view class="leftcontent">
 				  <image :src="book.icon_url" class="book-cover" />
 				</view>
@@ -185,6 +185,14 @@ const switchCatalogue = () => {
     }
   });
 };
+
+const clickUnit = (index) =>  {
+	// 更新章节的展开状态
+	chapters.value = chapters.value.map((chapter, i) => ({
+	  ...chapter,
+	  isExpansion: i === index ? 1 : 0, // 当前 index 的 isExpansion 为 1，其他为 0
+	}));
+}
 const handleCatalogueSelect = (index) => {
   // 更新章节的展开状态
   chapters.value = chapters.value.map((chapter, i) => ({
