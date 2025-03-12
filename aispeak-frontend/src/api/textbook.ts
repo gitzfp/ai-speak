@@ -55,5 +55,10 @@ export default {
     return request(url, "POST", { words }); // 传递 words 作为请求体
    },
    
+   // 获取教材章节列表
+     getTextbookChapters(bookId: string) {
+       return request(`/textbook/${bookId}/chapters`, "GET");
+     },
+   
 
 };

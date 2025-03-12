@@ -5,7 +5,7 @@ from app.db import get_db
 from app.models.response import ApiResponse
 from typing import List, Dict
 from pydantic import BaseModel
-
+from app.core import get_current_account  # 从依赖项中获取 account_id
 
 
 router = APIRouter()
@@ -166,6 +166,7 @@ def create_textbook_chapters(
 @router.get("/textbook/{book_id}/chapters", response_model=ApiResponse)
 def get_textbook_chapters(
     book_id: str,
+    account_id: str = Depends(get_current_account),  # 从依赖中获取 account_id
     db: Session = Depends(get_db)
 ) -> ApiResponse:
     """
@@ -173,7 +174,7 @@ def get_textbook_chapters(
     """
     try:
         service = TextbookService(db)
-        result = service.get_textbook_chapters(book_id)
+        result = service.get_textbook_chapters(book_id,account_id)
 
         if result is None:
             return ApiResponse.error("未找到教材章节信息")

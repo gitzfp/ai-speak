@@ -75,13 +75,11 @@
 				  <!-- 拼音键盘 -->
 				  <view class="keyboard">
 					<view class="row">
-					  <view
-						v-for="key in letterkeys"
+					  <view v-for="key in letterkeys"
 						:key="key.index"
 						class="key"
 						:style="key.isSelet?'background-color: #f0f0f0':''"
-						@click="handleKeyPress(key)"
-					  >
+						@click="handleKeyPress(key)">
 						{{ key.letter }}
 					  </view>
 					  <view class="clear-button" @click="handleClear">清空</view>
@@ -837,7 +835,7 @@ const wordsNotebookclick =()=> {
   background-color: #fff;
   border: #f0f0f0 1rpx solid;
   // border:none;
-
+  box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1); /* 添加阴影效果 */
   border-radius: 16rpx;
   display: flex;
   align-items: center;

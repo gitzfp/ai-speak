@@ -2,7 +2,9 @@ from typing import Dict, List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func  # 导入 func
 from datetime import datetime, date
-from app.db.study_entities import StudyPlan, StudyWordProgress, StudyRecord,StudyCompletionRecord  # 假设实体类在 study_entities.py 中
+from app.db.study_entities import StudyPlan, StudyWordProgress, StudyRecord,StudyCompletionRecord,StudyProgressReport  # 假设实体类在 study_entities.py 中
+
+from app.db.account_entities import AccountEntity 
 from app.db.words_entities import Word  # 假设 Word 是单词表实体
 from datetime import datetime, date, timedelta
 
@@ -623,3 +625,118 @@ class StudyService:
             "create_time": record.create_time.strftime("%Y-%m-%d %H:%M:%S") if record.create_time else None,
             "update_time": record.update_time.strftime("%Y-%m-%d %H:%M:%S") if record.update_time else None,
         }
+    
+
+    def submit_study_progress_report(
+        self,
+        user_id: str,
+        book_id: str,
+        lesson_id: int,
+        reports: List[Dict],  # 使用 StudyProgressReportItem 对象
+    ) -> bool:
+        """
+        提交学习进度报告表数据，并为用户加上积分
+        :param user_id: 用户ID
+        :param book_id: 书籍ID
+        :param lesson_id: 课程ID
+        :param reports: 报告数据列表，格式为 [{"word": "", "content_type": "", "error_count": "", "points": ""}]
+        :return: 是否提交成功
+        """
+        try:
+            # 查询当前用户
+            user = self.db.query(AccountEntity).filter_by(id=user_id).first()
+            if not user:
+                raise Exception("用户不存在")
+
+            total_points = 0  # 记录本次操作的总积分
+            has_content_type_4 = False  # 记录是否存在 content_type 为 4 的记录
+
+            for report in reports:
+                # 提取报告数据，并去除 word 字段的前后空格
+                word = report.word.strip()
+                content_type = report.content_type
+                error_count = report.error_count
+                points = report.points
+
+                # 查询是否已存在记录
+                existing_record = (
+                    self.db.query(StudyProgressReport)
+                    .filter(
+                        StudyProgressReport.user_id == user_id,
+                        StudyProgressReport.book_id == book_id,
+                        StudyProgressReport.lesson_id == lesson_id,
+                        StudyProgressReport.content == word,  # 使用去除空格后的 word
+                        StudyProgressReport.content_type == content_type,
+                    )
+                    .first()
+                )
+
+                if existing_record:
+                    # 如果记录存在，则更新字段
+                    existing_record.error_count = error_count
+                    existing_record.points = points
+                    existing_record.update_time = datetime.now()
+                else:
+                    # 如果记录不存在，则插入新记录
+                    progress_report = StudyProgressReport(
+                        user_id=user_id,
+                        book_id=book_id,
+                        lesson_id=lesson_id,
+                        content=word,  # 使用去除空格后的 word
+                        content_type=content_type,
+                        error_count=error_count,
+                        points=points,
+                        create_time=datetime.now(),
+                        update_time=datetime.now(),
+                    )
+                    self.db.add(progress_report)
+
+                # 累加总积分
+                total_points += points
+
+                # 检查是否存在 content_type 为 4 的记录
+                if content_type == 4:
+                    has_content_type_4 = True
+
+            # 为用户加上积分
+            user.points += total_points
+            user.update_time = datetime.now()
+
+            # 查询 StudyCompletionRecord 是否存在
+            completion_record = (
+                self.db.query(StudyCompletionRecord)
+                .filter(
+                    StudyCompletionRecord.user_id == user_id,
+                    StudyCompletionRecord.book_id == book_id,
+                    StudyCompletionRecord.lesson_id == lesson_id,
+                )
+                .first()
+            )
+
+            if completion_record:
+                # 如果记录存在，则更新积分字段
+                completion_record.points += total_points
+                completion_record.update_time = datetime.now()
+            else:
+                # 如果记录不存在，则插入新记录
+                type_value = 1 if has_content_type_4 else 0  # 根据 content_type 判断 type
+                completion_record = StudyCompletionRecord(
+                    user_id=user_id,
+                    book_id=book_id,
+                    lesson_id=lesson_id,
+                    date=datetime.now().date(),
+                    status=1,  # 默认状态为 1（已完成）
+                    type=type_value,  # 根据 content_type 判断 type
+                    points=total_points,
+                    create_time=datetime.now(),
+                    update_time=datetime.now(),
+                )
+                self.db.add(completion_record)
+
+            # 提交事务
+            self.db.commit()
+            return True
+        except Exception as e:
+            print(f"提交学习进度报告失败: {str(e)}")
+            self.db.rollback()  # 回滚事务
+            return False

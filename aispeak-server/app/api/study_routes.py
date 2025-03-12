@@ -265,3 +265,38 @@ def create_or_update_study_completion_record(
         return ApiResponse.success(jsonable_encoder(record))  # 返回成功消息
     except Exception as e:
         return ApiResponse.system_error(str(e))  # 捕获异常并返回系统错误
+
+
+class StudyProgressReportItem(BaseModel):
+    word: str  # 单词
+    content_type: int  # 类型（0: 单词发音, 1: 单词读, 2: 单词写, 3: 单独拼写按钮进去的那边提交, 4:句子）
+    error_count: int  # 错误次数
+    points: int  # 积分
+class StudyProgressReportRequest(BaseModel):
+    book_id: str  # 书籍ID
+    lesson_id: int  # 课程ID
+    reports: List[StudyProgressReportItem]  # 报告数据列表
+@router.post("/progress-report", response_model=ApiResponse)
+def submit_study_progress_report(
+    request: StudyProgressReportRequest,
+    db: Session = Depends(get_db),
+    account_id: str = Depends(get_current_account)
+) -> ApiResponse:
+    """
+    提交学习进度报告表数据，并为用户加上积分
+    """
+    try:
+        service = StudyService(db)
+        # 调用 StudyService 中的 submit_study_progress_report 方法
+        success = service.submit_study_progress_report(
+            user_id=account_id,  # 使用 account_id
+            book_id=request.book_id,
+            lesson_id=request.lesson_id,
+            reports=request.reports,
+        )
+        if success:
+            return ApiResponse.success("学习进度报告提交成功！")
+        else:
+            return ApiResponse.fail("学习进度报告提交失败！")
+    except Exception as e:
+        return ApiResponse.system_error(str(e))  # 捕获异常并返回系统错误

@@ -27,19 +27,22 @@ export function generateRandomLetter(): string {
  * @param zm 输入的字符串
  * @returns 包含字母和索引的对象数组
  */
-export function processZm(zm: string): { index: number; letter: string }[] {
+export function processZm(zm: string,isShuffle: boolean = false): { index: number; letter: string }[] {
   
    // 过滤掉非字母字符
     let letters = zm.replace(/[^A-Za-z]/g, '').split('');
 
 	// let letters = zm.split('');
   // 仅当字母不足11时补充随机字母
-  if (letters.length < 11) {
-    const needed = 11 - letters.length;
-    for (let i = 0; i < needed; i++) {
-      letters.push(generateRandomLetter());
-    }
+  if (!isShuffle) {
+	 if (letters.length < 11) {
+	   const needed = 11 - letters.length;
+	   for (let i = 0; i < needed; i++) {
+	     letters.push(generateRandomLetter());
+	   }
+	 } 
   }
+  
 
   // 打乱所有字母
   letters = shuffleArray(letters);

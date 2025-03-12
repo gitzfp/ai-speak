@@ -98,4 +98,23 @@ export default {
       });
     },
   
+  
+	// 提交学习进度报告
+	  submitStudyProgressReport(
+	    bookId: string,
+	    lessonId: number,
+	    reports: Array<{
+	      word: string;
+	      content_type: number;
+	      error_count: number;
+	      points: number;
+	    }>
+	  ) {
+	    return request("/study/progress-report", "POST", {
+	      book_id: bookId,
+	      lesson_id: lessonId,
+	      reports: reports,
+	    });
+	  },
+  
 };
