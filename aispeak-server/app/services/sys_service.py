@@ -76,9 +76,9 @@ class SysService:
         # 添加空值保护
         if not languages:
             # 如果数据库没有记录，返回预定义的演示内容
-            return language_demo_map.get(language, "")
+            return language_demo_map.get(language, [])
 
-        return languages.example
+        return languages.example if languages.example else []
 
     def get_settings_languages(self, account_id: str):
         """获取用户支持的所有语种"""
