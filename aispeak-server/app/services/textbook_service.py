@@ -2,6 +2,9 @@ from typing import Dict, List
 from sqlalchemy.orm import Session
 from app.db.textbook_entities import TextbookEntity,  LessonEntity, TaskTargetsEntity, TextbookPageEntity, TextbookSentence, ChapterEntity, LessonSentenceEntity
 from app.db.words_entities import Word, WordSyllable, Syllable  # 添加这行导入
+from app.db.study_entities import  StudyCompletionRecord  # 假设实体类在 study_entities.py 中
+from app.db.account_entities import  AccountEntity
+
 import datetime
 
 
@@ -521,28 +524,104 @@ class TextbookService:
             print(traceback.format_exc())
             return str(e)
 
-    def get_textbook_chapters(self, book_id: str) -> Dict:
-       # 获取所有章节
-        chapters = self.db.query(ChapterEntity).filter(
-            ChapterEntity.book_id == book_id
-        ).order_by(ChapterEntity.id).all()
+    def get_textbook_chapters(self, book_id: str, user_id: str) -> Dict:
+        """
+        获取教材章节信息，并在第一层章节中添加学习状态和单词列表
+        同时返回当前用户的信息
+        """
+        try:
+            # 1. 查询主课程，并按 lesson_id 升序排序
+            main_lessons = self.db.query(LessonEntity).filter(
+                LessonEntity.book_id == book_id,
+                LessonEntity.parent_id == None
+            ).order_by(LessonEntity.lesson_id.asc()).all()  # 添加排序条件
 
-        def build_chapter_tree(parent_id=None):
-            tree = []
-            for chapter in chapters:
-                if chapter.parent_id == parent_id:
-                    children = build_chapter_tree(chapter.id)
+            print(f"获取教材章节信息失败: {main_lessons}")
+
+            # 获取当前用户的信息
+            user_info = self.get_user_info(user_id)  # 调用 get_user_info 方法
+
+            result = []
+            for lesson in main_lessons:
+                # 查询当前章节的单词列表
+                words = self.db.query(Word).filter(
+                    Word.book_id == book_id,
+                    Word.lesson_id == lesson.lesson_id  # 使用章节 ID 作为 lesson_id
+                ).order_by(Word.word_id.asc()).all()
+
+                if words:
                     chapter_data = {
-                        "id": chapter.id,
-                        "title": chapter.title,
-                        "page_id": chapter.page_id,
-                        "page_no": chapter.page_no
+                        "id": lesson.id,
+                        "title": lesson.title,
+                        "lesson_id": lesson.lesson_id
                     }
-                    if children:
-                        chapter_data["children"] = children
-                    tree.append(chapter_data)
-            return tree
-        return build_chapter_tree()
+                    # 构建单词字典数组
+                    chapter_data["words"] = [{
+                        "word_id": word.id,
+                        "word": word.word,
+                        "lesson_id": word.lesson_id,
+                        "chinese": word.chinese,
+                    } for word in words]
+
+                    # 查询当前章节的学习状态（type=0 表示单词学习状态）
+                    study_word_status = self.db.query(StudyCompletionRecord).filter(
+                        StudyCompletionRecord.user_id == user_id,
+                        StudyCompletionRecord.book_id == book_id,
+                        StudyCompletionRecord.lesson_id == lesson.lesson_id,  # 使用章节 ID 作为 lesson_id
+                        StudyCompletionRecord.type == 0  # type=0 表示单词学习状态
+                    ).first()
+
+                    # 查询当前章节的学习状态（type=1 表示文本学习状态）
+                    study_text_status = self.db.query(StudyCompletionRecord).filter(
+                        StudyCompletionRecord.user_id == user_id,
+                        StudyCompletionRecord.book_id == book_id,
+                        StudyCompletionRecord.lesson_id == lesson.lesson_id,  # 使用章节 ID 作为 lesson_id
+                        StudyCompletionRecord.type == 1  # type=1 表示文本学习状态
+                    ).first()
+
+                    # 设置学习状态
+                    chapter_data["is_learning_word"] = study_word_status.status if study_word_status else 0
+                    chapter_data["is_learning_text"] = study_text_status.status if study_text_status else 0
+
+                    result.append(chapter_data)
+
+            # 构建返回数据，包含章节信息和用户信息
+            return {
+                "user_info": user_info,
+                "chapters": result
+            }
+
+        except Exception as e:
+            print(f"获取教材章节信息失败: {str(e)}")
+            return None
+    
+    def get_user_info(self, user_id: str) -> Dict:
+        """
+        根据 user_id 查询用户信息
+        """
+        try:
+            # 查询 AccountEntity 表
+            user = self.db.query(AccountEntity).filter(AccountEntity.id == user_id).first()
+            if user:
+                return {
+                    "user_id": user.id,
+                    "client_host": user.client_host,
+                    "user_agent": user.user_agent,
+                    "fingerprint": user.fingerprint,
+                    "status": user.status,
+                    "openid": user.openid,
+                    "session_key": user.session_key,
+                    "phone_number": user.phone_number,
+                    "points": user.points,
+                    "create_time": str(user.create_time),
+                    "update_time": str(user.update_time)
+                }
+            else:
+                return None
+        except Exception as e:
+            print(f"查询用户信息失败: {str(e)}")
+            return None
+
 
     def get_textbook_details(self, book_id: str) -> Dict:
         """

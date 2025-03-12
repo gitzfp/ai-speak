@@ -15,9 +15,19 @@
                 <button @tap.stop="hideEvaluationModal">关闭</button>
             </view>
         </view>
+		<view v-if="currentStep === 'submiting'" class="result-selection">
+		  <!-- 关闭按钮 -->
+		  <!-- <view class="close-button" @click="resetAll">×</view> -->
+		  <view class="result-header">发音分析中...</view>
+		  <view class="result-detail">
+		    <view class="result-dimensions">
+		      <view class="loading-spinner result-text"></view>
+		    </view>
+		  </view>
+		</view>
 		
 		<!-- 测评结果弹窗 -->
-		<view v-if="currentStep === 'result'" class="result-selection" @tap.stop>
+		<view v-if="currentStep === 'result' && isUnit==false" class="result-selection" @tap.stop>
 		<!-- 返回按钮 -->
 		<view class="back-button" @tap.stop="handleReturn">←</view>
 		<view class="result-header">
@@ -79,12 +89,19 @@
     import { ref,defineEmits,computed} from 'vue';
     import Speech from "./components/PronuciationSpeech.vue"
 	import chatRequest from "@/api/chat";
+	
+	const emit = defineEmits();
 
     const props = defineProps({
         currentWord: {
         type: Object, 
         required: true
          },
+		 
+		 isUnit: {
+			type: Boolean,
+			default: false // 设置默认值为 false
+		 }
     })
 
     const isModalVisible = ref(false);
@@ -105,9 +122,7 @@
 	    if (score >= 60) return 'score-fair'
 	    return 'score-poor'
 	}
-	
-	
-    const emit = defineEmits();
+
     const hideEvaluationModal = () => {
 		if (currentStep.value === "select") {
 			isModalVisible.value = false;
@@ -144,7 +159,7 @@
       chatRequest
         .pronunciationByFileInvoke({ file_name: voice.fileName, content: props.currentWord.word})
         .then((data) => {
-			console.log("最好喝或或或")
+			// console.log("最好喝或或或")
 		  if (currentStep.value != "select") {
 			  pronunciationResult.value = data.data;
 			  if  (pronunciationResult.value==null) {
@@ -152,11 +167,19 @@
 				          title: '评估失败重新评估',
 				  });
 				  currentStep.value = "select"; // 切换到结果页
-			  } else {
-				 currentStep.value = "result"; // 切换到结果页 
+			  } else {  
+				  if (props.isUnit == true) {
+					  
+					  isModalVisible.value = false;
+					   currentStep.value = "select"; // 切换到结果页
+					  emit("evaluationResult",pronunciationResult.value.pronunciation_score)
+				  } else {
+					   currentStep.value = "result"; // 切换到结果页
+				  }
+				  
 			  }
-			  console.log("phonemes.value")
-			  console.log(phonemes.value)
+			  // console.log("phonemes.value")
+			  // console.log(phonemes.value)
 			  
 		  }
           

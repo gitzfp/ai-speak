@@ -18,6 +18,18 @@
         "navigationStyle": "custom"
       }
     },
+	{
+	  "path": "pages/textbook/index3",
+	  "style": {
+	    "navigationStyle": "custom"
+	  }
+	},
+	{
+	  "path": "pages/textbook/UnitwordConsolidation",
+	  "style": {
+	    "navigationStyle": "custom"
+	  }
+	},
     {
       "path": "pages/textbook/TextbookListen",
       "style": {
@@ -80,7 +92,13 @@
       "style": {
         "navigationStyle": "custom"
       }
-    }
+    },
+	{
+	  "path": "pages/textbook/UnitWordreport",
+	  "style": {
+	    "navigationStyle": "custom"
+	  }
+	}
 	,
 	{
 		"path": "pages/textbook/WordRecitationHome",
@@ -196,12 +214,18 @@
     "borderStyle": "white",
     "backgroundColor": "#ffffff",
     "list": [
-      {
-        "pagePath": "pages/textbook/index2",
-        "text": "首页",
-        "selectedIconPath": "static/home_select.png",
-        "iconPath": "static/home.png"
-      },
+	  {
+	    "pagePath": "pages/textbook/index3",
+	    "text": "首页",
+	    "selectedIconPath": "static/home_select.png",
+	    "iconPath": "static/home.png"
+	  },
+	  {
+	    "pagePath": "pages/textbook/index2",
+	    "text": "首页2",
+	    "selectedIconPath": "static/home_select.png",
+	    "iconPath": "static/home.png"
+	  },
       {
         "pagePath": "pages/index/index",
         "text": "场景",
