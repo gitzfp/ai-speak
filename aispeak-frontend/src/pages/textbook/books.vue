@@ -137,6 +137,7 @@ const currentPage = ref(0)
 const showCatalog = ref(false)
 const isPlaying = ref(false)
 const currentAudio = ref(null)
+const isContinueMode = ref(false) // 是否处于连读模式
 const showRepeatSelection = ref(false) // 是否显示复读选择框
 const isRepeatMode = ref(false) // 是否处于复读模式
 const repeatStartIndex = ref(0) // 复读起始段落
@@ -615,7 +616,6 @@ const handlePageChange = (e) => {
   loadedPages.value.add(newPage)
   loadedPages.value.add(newPage - 1)
   loadedPages.value.add(newPage + 1)
-  console.log('handlePageChange'+debounceFlag.value,e.detail) 
 
   //有复读的时候退出复读
   if (isRepeatMode.value) {
@@ -627,6 +627,9 @@ const handlePageChange = (e) => {
   debounceFlag.value = true
   // 立即停止当前页音频
   stopCurrentAudio()
+  if(isContinueMode.value){
+    playCurrentPage()
+  }
   // 使用nextTick确保更新顺序
   currentPage.value = e.detail.current
     isPlaying.value = false
@@ -720,7 +723,7 @@ const goToChatPage = async () => {
 function playCurrentPage() {
   const currentPageData = bookPages.value[currentPage.value]
   if (!currentPageData?.track_info) return
-
+  isContinueMode.value = true
   isPlaying.value = true
   let currentTrackIndex = 0
 
@@ -744,7 +747,6 @@ function playCurrentPage() {
       // 当前页面音频播放完毕，切换到下一页
       if (currentPage.value < bookPages.value.length - 1) {
         currentPage.value++
-        playCurrentPage() // 继续播放下一页的音频
       } else {
         isPlaying.value = false // 所有页面播放完毕
       }
