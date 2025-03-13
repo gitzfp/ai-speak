@@ -3,11 +3,12 @@ from sqlalchemy.orm import Session
 from app.services.study_service import StudyService  # 假设 StudyService 在 study_service.py 中
 from app.db import get_db
 from app.models.response import ApiResponse
-from typing import List, Optional
+from typing import Dict,List, Optional
 from datetime import date
 from pydantic import BaseModel
 from app.core import get_current_account  # 从依赖项中获取 account_id
 from fastapi.encoders import jsonable_encoder
+
 
 router = APIRouter(prefix="/study", tags=["study"])
 
@@ -271,11 +272,14 @@ class StudyProgressReportItem(BaseModel):
     word: str  # 单词
     content_type: int  # 类型（0: 单词发音, 1: 单词读, 2: 单词写, 3: 单独拼写按钮进去的那边提交, 4:句子）
     error_count: int  # 错误次数
+    speak_count:Optional[int] = 0
     points: int  # 积分
+    json_data: Optional[str] = None  # 改为字符串类型
 class StudyProgressReportRequest(BaseModel):
     book_id: str  # 书籍ID
     lesson_id: int  # 课程ID
     reports: List[StudyProgressReportItem]  # 报告数据列表
+    statusNum: Optional[int] = 1  # 状态值，默认值为 1
 @router.post("/progress-report", response_model=ApiResponse)
 def submit_study_progress_report(
     request: StudyProgressReportRequest,
@@ -293,6 +297,7 @@ def submit_study_progress_report(
             book_id=request.book_id,
             lesson_id=request.lesson_id,
             reports=request.reports,
+            statusNum=request.statusNum,  # 传递 statusNum
         )
         if success:
             return ApiResponse.success("学习进度报告提交成功！")

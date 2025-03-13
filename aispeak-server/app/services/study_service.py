@@ -628,27 +628,32 @@ class StudyService:
     
 
     def submit_study_progress_report(
-        self,
-        user_id: str,
-        book_id: str,
-        lesson_id: int,
-        reports: List[Dict],  # 使用 StudyProgressReportItem 对象
-    ) -> bool:
+    self,
+    user_id: str,
+    book_id: str,
+    lesson_id: int,
+    reports: List[Dict],  # 使用 StudyProgressReportItem 对象
+    statusNum: int = 1,  # 新增可选参数，默认值为 1
+) -> bool:
         """
         提交学习进度报告表数据，并为用户加上积分
         :param user_id: 用户ID
         :param book_id: 书籍ID
         :param lesson_id: 课程ID
         :param reports: 报告数据列表，格式为 [{"word": "", "content_type": "", "error_count": "", "points": ""}]
+        :param statusNum: 状态值，默认值为 1
         :return: 是否提交成功
         """
         try:
+            print("reports")
+            print(reports)
             # 查询当前用户
             user = self.db.query(AccountEntity).filter_by(id=user_id).first()
             if not user:
                 raise Exception("用户不存在")
 
             total_points = 0  # 记录本次操作的总积分
+            totalspeak_count = 0
             has_content_type_4 = False  # 记录是否存在 content_type 为 4 的记录
 
             for report in reports:
@@ -657,6 +662,8 @@ class StudyService:
                 content_type = report.content_type
                 error_count = report.error_count
                 points = report.points
+                speak_count = report.speak_count
+                json_data = report.json_data  # 获取 json_data 字段
 
                 # 查询是否已存在记录
                 existing_record = (
@@ -676,6 +683,10 @@ class StudyService:
                     existing_record.error_count = error_count
                     existing_record.points = points
                     existing_record.update_time = datetime.now()
+
+                    # 如果 content_type 为 4，则更新 json_data
+                    if content_type == 4 and json_data is not None:
+                        existing_record.json_data = json_data
                 else:
                     # 如果记录不存在，则插入新记录
                     progress_report = StudyProgressReport(
@@ -689,11 +700,17 @@ class StudyService:
                         create_time=datetime.now(),
                         update_time=datetime.now(),
                     )
+
+                    # 如果 content_type 为 4，则插入 json_data
+                    if content_type == 4 and json_data is not None:
+                        progress_report.json_data = json_data
+
                     self.db.add(progress_report)
 
                 # 累加总积分
                 total_points += points
-
+                # 累积总开口次数
+                totalspeak_count += speak_count
                 # 检查是否存在 content_type 为 4 的记录
                 if content_type == 4:
                     has_content_type_4 = True
@@ -716,7 +733,10 @@ class StudyService:
             if completion_record:
                 # 如果记录存在，则更新积分字段
                 completion_record.points += total_points
+                completion_record.speak_count += totalspeak_count
                 completion_record.update_time = datetime.now()
+                if statusNum == 1:
+                    completion_record.status = statusNum
             else:
                 # 如果记录不存在，则插入新记录
                 type_value = 1 if has_content_type_4 else 0  # 根据 content_type 判断 type
@@ -725,9 +745,10 @@ class StudyService:
                     book_id=book_id,
                     lesson_id=lesson_id,
                     date=datetime.now().date(),
-                    status=1,  # 默认状态为 1（已完成）
+                    status=statusNum,  # 使用传入的 statusNum
                     type=type_value,  # 根据 content_type 判断 type
                     points=total_points,
+                    speak_count=totalspeak_count,
                     create_time=datetime.now(),
                     update_time=datetime.now(),
                 )

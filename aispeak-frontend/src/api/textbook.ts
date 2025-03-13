@@ -60,5 +60,9 @@ export default {
        return request(`/textbook/${bookId}/chapters`, "GET");
      },
    
+    // 获取指定 书本的单元的 句子
+     getLessonSentences(bookId: string, lessonId: string) {
+       return request(`/textbook/${bookId}/lesson/${lessonId}/sentences`, "GET");
+     },
 
 };

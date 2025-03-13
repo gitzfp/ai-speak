@@ -222,3 +222,26 @@ def get_textbook_lessons_and_sentences(
 
     except Exception as e:
         return ApiResponse.system_error(str(e))
+    
+
+@router.get("/textbook/{book_id}/lesson/{lesson_id}/sentences", response_model=ApiResponse)
+def get_lesson_sentences(
+    book_id: str,
+    lesson_id: str,
+    account_id: str = Depends(get_current_account),  # 从依赖中获取当前用户的 account_id
+    db: Session = Depends(get_db)
+) -> ApiResponse:
+    """
+    根据 book_id 和 lesson_id 查询指定课程的句子信息，并关联用户的学习进度报告
+    """
+    try:
+        service = TextbookService(db)
+        result = service.get_lesson_sentences(account_id, book_id, lesson_id)
+        
+        if result is None:
+            return ApiResponse.error("未找到课程句子信息")
+
+        return ApiResponse.success(result)
+
+    except Exception as e:
+        return ApiResponse.system_error(str(e))

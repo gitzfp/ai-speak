@@ -68,6 +68,7 @@ class StudyCompletionRecord(Base):
     type = Column(Integer, default=0, comment="类型（0: 单词, 1: 别的）")  # 新增 type 字段
     continuous_days = Column(Integer, default=0, comment="连续完成天数")
     points = Column(Integer, default=0, comment="积分")  # 新增 points 字段
+    speak_count = Column(Integer, default=0, comment="开口次数")  # 新增 speak_count 字段
     create_time = Column(DateTime, default=datetime.datetime.now, comment="创建时间")
     update_time = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now, comment="更新时间")
 
@@ -93,8 +94,9 @@ class StudyProgressReport(Base):
     create_time = Column(DateTime, default=datetime.datetime.now, comment="创建时间")
     update_time = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now, comment="更新时间")
     
-    # 新增字段：使用 JSON 类型存储 JSON 数据，默认值为 NULL
-    json_data = Column(JSON, nullable=True, default=None, comment="JSON 数据")
+   # 将 JSON 类型改为 TEXT 类型
+    json_data = Column(Text, nullable=True, default=None, comment="TEXT 数据 的评分数据")
+
 
     # 创建联合索引提高查询效率
     __table_args__ = (
