@@ -1,5 +1,5 @@
 <template>
-	<view container>
+	<view>
 		<view class="headView" :style="{ paddingTop: statusBarHeight + 'px', height: '44px' }">
 			<image @tap="handleBackPage" class="head-icon" src="@/assets/icons/black_back.svg"></image>
 			<view class="head-text">单词单元测试</view>
@@ -350,7 +350,6 @@
 				}
 			}
 		}
-		console.log("yyyyllll")
 		showPopup.value = false
 	}
 	const clicknext = () => {
@@ -372,6 +371,7 @@
 		isShowmark.value = true
 		// 获取当前单词对象
 		const obj = planWordsList.value[planWordindext.value];
+		obj.speak_count +=1
 		//对
 		var audioStr = 'http://114.116.224.128:8097/static/audio/answerright.mp3'
 		//错
@@ -446,7 +446,6 @@
 	})
 	const detailWords = async (bookId, words) => {
 	  try {
-		  console.log("开始请求")
 	    const response = await textbook.getWordsDetail(bookId, words);
 		
 		// 创建新数组，并添加 error_count 和 points 字段，默认值为 0
@@ -455,6 +454,7 @@
 		content_type:0,
 		error_count: 0,
 		points: 0,
+		speak_count:0,
 		}));
 
 		planWordsTwoList.value = response.data.words.map(word => ({
@@ -462,6 +462,7 @@
 		content_type:1,
 		error_count: 0,
 		points: 0,
+		speak_count:0,
 		}));
 
 		planWordsThreeList.value = response.data.words.map(word => ({
@@ -469,6 +470,7 @@
 		content_type:2,
 		error_count: 0,
 		points: 0,
+		speak_count:0,
 		}));
 		
 		planWordsWithCounts.value = response.data.words.map(word => ({
@@ -564,8 +566,8 @@
 	  justify-content: space-between;
 	  height: 100vh;
 	  /* background-color: #ffffff; */
-	  // background-color: #f5f5f5;
-	  background-color: red;
+	  background-color: #f5f5f5;
+	  // background-color: red;
 	}
 	.headView {
 		width: 100%;

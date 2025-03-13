@@ -2,7 +2,7 @@ from typing import Dict, List
 from sqlalchemy.orm import Session
 from app.db.textbook_entities import TextbookEntity,  LessonEntity, TaskTargetsEntity, TextbookPageEntity, TextbookSentence, ChapterEntity, LessonSentenceEntity
 from app.db.words_entities import Word, WordSyllable, Syllable  # 添加这行导入
-from app.db.study_entities import  StudyCompletionRecord  # 假设实体类在 study_entities.py 中
+from app.db.study_entities import  StudyCompletionRecord,StudyProgressReport  # 假设实体类在 study_entities.py 中
 from app.db.account_entities import  AccountEntity
 
 import datetime
@@ -810,5 +810,74 @@ class TextbookService:
 
         except Exception as e:
             print(f"Error: {str(e)}")
+            return None
+        
+    
+
+    def get_lesson_sentences(self,user_id: str,book_id: str, lesson_id: str) -> dict:
+        """
+        根据 book_id 和 lesson_id 查询指定课程的句子信息，并关联用户的学习进度报告
+        """
+        try:
+            # 1. 查询指定的课程
+            lesson = self.db.query(LessonEntity).filter(
+                LessonEntity.book_id == book_id,
+                LessonEntity.lesson_id == lesson_id
+            ).first()
+            
+            if not lesson:
+                print(f"未找到 book_id={book_id}, lesson_id={lesson_id} 的课程")
+                return None
+            
+            print(f"\n=== 开始获取课程句子，book_id: {book_id}, lesson_id: {lesson_id} ===")
+            print(f"课程标题: {lesson.title}")
+
+            # 2. 查询该课程的句子
+            sentences = self.db.query(LessonSentenceEntity).filter(
+                LessonSentenceEntity.lesson_id == lesson.id
+            ).all()
+            
+            print(f"找到句子数量: {len(sentences)}")
+            for s in sentences:
+                print(f"句子: id={s.id}, english={s.english[:30]}...")
+
+            # 3. 构建句子信息并关联学习进度报告
+            sentence_list = []
+            for s in sentences:
+                sentence_content = s.english.strip()  # 去掉前后空格
+                
+                # 查询该句子的学习进度报告
+                progress_report = self.db.query(StudyProgressReport).filter(
+                    StudyProgressReport.user_id == user_id,
+                    StudyProgressReport.book_id == book_id,
+                    StudyProgressReport.lesson_id == lesson_id,
+                    StudyProgressReport.content_type == 4,
+                    StudyProgressReport.content == sentence_content  # 精确匹配句子内容
+                ).first()
+                
+                # 提取 json_data
+                json_data = progress_report.json_data if progress_report else None
+                
+                sentence_info = {
+                    "id": s.id,
+                    "english": s.english,
+                    "chinese": s.chinese,
+                    "audio_url": s.audio_url,
+                    "audio_start": s.audio_start,
+                    "audio_end": s.audio_end,
+                    "is_lock": s.is_lock,
+                    "progress_data": json_data  # 关联学习进度数据
+                }
+                sentence_list.append(sentence_info)
+
+            return {
+                "book_id": book_id,
+                "lesson_id": lesson_id,
+                "title": lesson.title,
+                "sentences": sentence_list
+            }
+
+        except Exception as e:
+            print(f"获取课程句子失败: {str(e)}")
             return None
 

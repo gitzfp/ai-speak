@@ -30,6 +30,13 @@
 	    "navigationStyle": "custom"
 	  }
 	},
+	{
+	  "path": "pages/textbook/UnitSentenceRead",
+	  "style": {
+		  // "navigationBarTitleText": "单元句子跟读"
+	    "navigationStyle": "custom"
+	  }
+	},
     {
       "path": "pages/textbook/TextbookListen",
       "style": {

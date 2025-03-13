@@ -73,15 +73,24 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted,defineEmits} from 'vue'
 import chatRequest from "@/api/chat"
 import Speech from "./PronuciationSpeech.vue"
 import AudioPlayer from "@/components/AudioPlayer.vue"
 import utils from "@/utils/utils"
+const emit = defineEmits();
 
 const props = defineProps({
   trackId: String,
-  sentence: String
+  sentence: String,
+  isUnit: {
+	type: Boolean,
+	default: false // 设置默认值为 false
+  },
+  historypronunciation: {
+	type: Object, // 类型为对象
+	default: () => ({}) // 默认值为空对象
+  }
 })
 
 console.log('组件接收的TrackId:', props) // 打印初始trackId
@@ -106,23 +115,33 @@ const cacheKey = CACHE_KEY_PREFIX + props.trackId
 
 // 修改加载缓存逻辑
 onMounted(() => {
-  try {
-    const cachedData = uni.getStorageSync(cacheKey)
-    if (cachedData) {
-      const { data, timestamp, voiceFile } = cachedData // 新增voiceFile解析
-      if (Date.now() - timestamp < CACHE_EXPIRE_TIME) {
-        pronunciationResult.value = cachedData
-        voiceFileName.value = voiceFile 
-        currentStep.value = 'result'
-        console.log(cacheKey+'缓存加载成功', cachedData)
-      } else {
-        console.log(cacheKey+'缓存失效', cachedData)
-        uni.removeStorageSync(cacheKey)
-      }
-    }
-  } catch (e) {
-    console.error('缓存读取失败:', e)
-  }
+	
+	if (!props.isUnit) {
+		try {
+		  const cachedData = uni.getStorageSync(cacheKey)
+		  if (cachedData) {
+		    const { data, timestamp, voiceFile } = cachedData // 新增voiceFile解析
+		    if (Date.now() - timestamp < CACHE_EXPIRE_TIME) {
+		      pronunciationResult.value = cachedData
+		      voiceFileName.value = voiceFile 
+		      currentStep.value = 'result'
+		      console.log(cacheKey+'缓存加载成功', cachedData)
+		    } else {
+		      console.log(cacheKey+'缓存失效', cachedData)
+		      uni.removeStorageSync(cacheKey)
+		    }
+		  }
+		} catch (e) {
+		  console.error('缓存读取失败:', e)
+		}
+	} else { //是单元进去了
+
+		if (props.historypronunciation  && Object.keys(props.historypronunciation).length > 0) {
+			pronunciationResult.value = props.historypronunciation
+			currentStep.value = 'result'
+		}
+	}
+  
 })
 
 // 修改提交录音方法
@@ -136,7 +155,11 @@ const submitRecording = (voice) => {
     .then((data) => {
       pronunciationResult.value = data.data
       currentStep.value = 'result' // 切换到结果状态
-      uni.setStorageSync(cacheKey, {...data.data, content: props.sentence, timestamp: Date.now(),voiceFile: voice.fileName })
+	  if (props.isUnit == true) {
+		  emit("evaluationResult",pronunciationResult.value)
+	  } else {
+		uni.setStorageSync(cacheKey, {...data.data, content: props.sentence, timestamp: Date.now(),voiceFile: voice.fileName })  
+	  }
     })
 }
 
@@ -151,6 +174,9 @@ const getScoreClass = (score) => {
 const resetAll = () => {
   currentStep.value = 'select'
   pronunciationResult.value = null
+  if (props.isUnit == true) {
+  		emit("reevaluation")
+  }
   try {
     uni.removeStorageSync(CACHE_KEY_PREFIX + props.trackId)
   } catch (e) {
@@ -158,6 +184,14 @@ const resetAll = () => {
   }
   // 不重置voiceFileName，这样用户可以在重新测评时仍然播放上一次的录音
 }
+
+const resetRefresh =() => {
+	currentStep.value = 'select'
+	pronunciationResult.value = null
+}
+defineExpose({
+	resetRefresh,
+});
 </script>
 
 <style scoped>

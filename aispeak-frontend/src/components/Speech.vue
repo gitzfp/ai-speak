@@ -82,6 +82,7 @@ const voicePlaying = ref(false)
  * 开始录音
  */
 const handleSpeech = () => {
+	uni.$emit('start_recording', { action: 'recording' });
   if (recorder.value.start) {
     speech.handleEndVoice()
     return

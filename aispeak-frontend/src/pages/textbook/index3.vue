@@ -48,17 +48,17 @@
 					</view>
 					<image class="right-icon" :src="chapter.is_learning_word==1 ? selectIcon : unselectIcon"></image>
 				</view>
-				<view v-if="chapter.is_learning_word==1" class="readtextone">
+				<view @tap="unitsentenceclick(chapter,1)" v-if="chapter.is_learning_word==1" class="readtextone">
 					<view class="leftclass">
-						<view class="tit">读课文</view>
-						<view class="subtit">趣味配音，告别死记硬背</view>
+						<view class="tit">句子跟读</view>
+						<view class="subtit">告别死记硬背</view>
 					</view>
 					<image class="right-icon" :src="chapter.is_learning_text==1 ? selectIcon : unselectIcon"></image>
 				</view>
-				<view v-else class="readtexttwo">
+				<view @tap="unitsentenceclick(chapter,0)" v-else class="readtexttwo">
 					<view class="leftclass">
-						<view class="tit">读课文</view>
-						<view class="subtit">趣味配音，告别死记硬背</view>
+						<view class="tit">句子跟读</view>
+						<view class="subtit">告别死记硬背</view>
 					</view>
 				</view>
 				<view class="button-row">
@@ -379,6 +379,20 @@ const pronunciationTest = () => {
 };
 
 
+
+const unitsentenceclick = (chapter,num) => {
+	if (num ==0) {
+		uni.showToast({
+		  title: "请先完成背单词",
+		  icon: "none",
+		});
+	} else {
+		
+		uni.navigateTo({
+		  url: `/pages/textbook/UnitSentenceRead?bookId=${book.value.book_id}&lessonId=${chapter.lesson_id}`,
+		});
+	}
+}
 
 const unitwordclick = (chapter) => {
 	const selectedWords = [];
