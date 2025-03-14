@@ -30,7 +30,7 @@
 				    :trackId="optionSentence.id"
 					:isUnit="true"
 				    :sentence="optionSentence.english"
-					:historypronunciation="optionSentence.progress_data ? JSON.parse(optionSentence.progress_data) : null"	
+					:optionSentence="optionSentence"
 					@evaluationResult="evaluationResult"
 					@reevaluation="reevaluation"
 				/>
@@ -94,6 +94,7 @@
 	});
 	
 	onUnmounted(() => {
+		stopCurrentAudio()
 		uni.$off('start_recording'); // 组件卸载时移除监听
 		
 	})
@@ -118,6 +119,8 @@
 				});
 			}
 			let statusNum = isDone==true?1:0
+			
+			
 			const response = await study.submitStudyProgressReport(bookId, lessonId,reports,statusNum);
 			
 			//发消息更新首页积分
@@ -170,7 +173,7 @@
 	
 	
 	const clicknext = () => {
-		// isShowmark.value = false
+		isShowmark.value = false
 		 stopCurrentAudio()
 		if (currentIndext.value==(sentencesList.value.length-1)) {
 			progressIndext.value = sentencesList.value.length
@@ -181,22 +184,27 @@
 		} else {
 			currentIndext.value++;
 			progressIndext.value = currentIndext.value
+			
+			
 			if (!(optionSentence.value.progress_data && optionSentence.value.progress_data.length > 20)) {
 				followReadingref.value.resetRefresh()
 			}
+			
 			setTimeout(() => {
-			    playbuttonclick()	
+			    playbuttonclick()
 			}, 500);
 		}
 	}
 	
 	const reevaluation = () => {
 		optionSentence.value.isHaverated = 0
+		optionSentence.value.progress_data=""
 		isShowmark.value = false
 	}
 	
-	const evaluationResult = (pronunciationResult) => {
+	const evaluationResult = (pronunciationResult,voiceFile) => {
 		optionSentence.value.json_data = pronunciationResult
+		optionSentence.value.voice_file = voiceFile
 		optionSentence.value.isHaverated = 1
 		isShowmark.value = true
 		optionSentence.value.speak_count +=1
@@ -274,14 +282,16 @@
 
 	// 这里可以定义一些响应式数据或逻辑
 	const handleBackPage = () => {
-		if (progressIndext != sentencesList.value.length) {
+		if (progressIndext.value != sentencesList.value.length) {
 			// 筛选已评分的句子的数组
 			const haveratedSentences = sentencesList.value.filter(
 			  (sentence) => sentence.isHaverated === 1
 			);
 			if (haveratedSentences.length>0) {
 				submitreslutStudyProgressReport(book_id.value,lesson_id.value,haveratedSentences,false)
-			}		
+			} else {
+				uni.navigateBack()
+			}	
 		} else {
 			uni.navigateBack()
 		}
@@ -304,6 +314,7 @@
 		const sentences = response.data.sentences.map(sentence => ({
 		...sentence,
 		word:sentence.english,
+		content_id:sentence.id,
 		content_type:4,
 		error_count: 0,
 		points: 0,
@@ -326,8 +337,9 @@
 		const firstInvalidIndex = sentences.findIndex(
 		  (sentence) => !(sentence.progress_data && sentence.progress_data.length > 20)
 		);
-
-		if (firstInvalidIndex<sentences.length-1) {
+		
+		if (firstInvalidIndex != -1) {
+			console.log("跑进去了")
 			currentIndext.value = firstInvalidIndex;
 			progressIndext.value = currentIndext.value
 		}

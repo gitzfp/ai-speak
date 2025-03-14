@@ -857,6 +857,8 @@ class TextbookService:
                 
                 # 提取 json_data
                 json_data = progress_report.json_data if progress_report else None
+
+                voice_file = progress_report.voice_file if progress_report else None
                 
                 sentence_info = {
                     "id": s.id,
@@ -866,7 +868,8 @@ class TextbookService:
                     "audio_start": s.audio_start,
                     "audio_end": s.audio_end,
                     "is_lock": s.is_lock,
-                    "progress_data": json_data  # 关联学习进度数据
+                    "progress_data": json_data,  # 关联学习进度数据
+                    "voice_file":voice_file
                 }
                 sentence_list.append(sentence_info)
 

@@ -32,7 +32,19 @@
 				  <image :src="book.icon_url" class="book-cover" />
 				</view>
 				<view class="rightcontent">
-					<view class="topclass">{{chapter.title}}</view>
+					<view class="topclass">
+						<view class="topleft">{{chapter.title}}</view>
+						<template v-if="chapter.is_learning_text==1">
+							<view v-if="chapter.isExpansion == 1" @tap="seereport(chapter)" class="topright">
+							<view>学习</view>
+							<view>报告</view>
+							</view>
+							<view v-else class="topright_notclick">
+							<view>学习</view>
+							<view>报告</view>
+							</view>
+						</template>
+					</view>
 					<view class="bottomclass">
 						<view class="worditem" v-for="word in chapter.words">
 							{{word.word}}
@@ -62,15 +74,21 @@
 					</view>
 				</view>
 				<view class="button-row">
-					<view class="function-button" @click="sentenceFollow">
+					<view class="function-button"
+					:style="chapter.is_learning_text == 1 ? { 'background-color': '#E5FEF1' } : {}"
+					@click="sentenceFollow(chapter)">
 					    <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
 					    句子跟读
 					</view>
-					<view class="function-button" @click="textbookListen">
+					<view class="function-button"
+					 :style="chapter.is_learning_text == 1 ? { 'background-color': '#E5FEF1' } : {}"
+					 @click="textbookListen(chapter)">
 					  <image class="button-icon" src="@/assets/icons/listening.svg"></image>
 					  听课文
 					</view>
-					<view class="function-button" @tap="wordListenWrite(chapter)">
+					<view class="function-button"
+					 :style="chapter.is_learning_text == 1 ? { 'background-color': '#E5FEF1' } : {}"
+					 @tap="wordListenWrite(chapter)">
 					  <image
 					    class="button-icon"
 					    src="@/assets/icons/word_dictation.svg"
@@ -314,16 +332,61 @@ const textbookChapters = async(bookId) => {
 	   }
 }
 
-const textbookListen = () => {
-  uni.navigateTo({
-    url: `/pages/textbook/TextbookListen?book_id=${book.value.book_id}`,
-  });
+const textbookListen = (chapter) => {
+	if (chapter.is_learning_text != 1) {
+		uni.showToast({
+		  title: "请先完成课文点读",
+		  icon: "none",
+		});
+		return
+	}
+	uni.navigateTo({
+	url: `/pages/textbook/TextbookListen?book_id=${book.value.book_id}`,
+	});
 };
 
-const sentenceFollow = () => {
-  uni.navigateTo({
-    url: `/pages/textbook/TextbookListen?book_id=${book.value.book_id}&repeat_after=true`,
-  });
+const sentenceFollow = (chapter) => {
+	if (chapter.is_learning_text != 1) {
+		uni.showToast({
+		  title: "请先完成课文点读",
+		  icon: "none",
+		});
+		return
+	}
+	uni.navigateTo({
+	url: `/pages/textbook/TextbookListen?book_id=${book.value.book_id}&repeat_after=true`,
+	});
+};
+
+const seereport = (chapter) => {
+	
+	let bookargument = {
+		publisher:book.value.publisher,
+		book_name:book.value.book_name,
+		grade:book.value.grade,
+		term:book.value.term,
+		title:chapter.title,
+		bookId:book.value.book_id,
+		lessonId:chapter.lesson_id,
+	}
+	
+	uni.setStorage({
+		key: "bookargument",
+		data: bookargument,
+		success: function () {
+	
+			uni.navigateTo({
+				url: `/pages/textbook/UnitSummaryReport?bookargument=bookargument`,
+			});
+	
+		},
+		fail: function (err) {
+		console.log('数据存储失败', err);
+		}
+	});
+	
+ 
+  
 };
 
 const reciteTest = () => {
@@ -431,6 +494,13 @@ const unitwordclick = (chapter) => {
 
 
 const wordListenWrite = (chapter) => {
+	if (chapter.is_learning_text != 1) {
+		uni.showToast({
+		  title: "请先完成课文点读",
+		  icon: "none",
+		});
+		return
+	}
 	const selectedWords = [];
 	if (chapter.words.length>0) {
 		chapter.words.forEach(word => {
@@ -555,13 +625,44 @@ const eliminationGame = () => {
 	width:calc(100% - 240rpx) ;
 }
 .topclass {
-	font-size: 35rpx;
+	font-size: 30rpx;
 	font-weight: bold;
 	// background-color: red;
-	overflow: hidden; /* 超出内容隐藏 */
-	display: -webkit-box; /* 启用弹性盒子布局 */
-	-webkit-box-orient: vertical; /* 垂直排列 */
-	-webkit-line-clamp: 2; /* 显示2行，超出部分省略 */
+	display: flex;
+	justify-content: space-between;
+	.topleft{
+		flex: 1;
+		overflow: hidden; /* 超出内容隐藏 */
+		display: -webkit-box; /* 启用弹性盒子布局 */
+		-webkit-box-orient: vertical; /* 垂直排列 */
+		-webkit-line-clamp: 2; /* 显示2行，超出部分省略 */
+	}
+	.topright {
+		width: 100rpx;
+		height: 100rpx;
+		border-radius: 50rpx;
+		background-color: #F8CF81;
+		text-align: center;
+		font-size: 25rpx;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		color: #845627;
+	}
+	.topright_notclick {
+		width: 100rpx;
+		height: 100rpx;
+		border-radius: 50rpx;
+		background-color: #FBEBCA;
+		text-align: center;
+		font-size: 25rpx;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		color: #CEBAA4;
+	}
 }
 .bottomclass {
 	// background-color: red;

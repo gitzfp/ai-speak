@@ -134,7 +134,7 @@
 	//用于计算进度条
 	const progressThreeindext = ref(0);
 	
-	const planWordmode = ref(0); // 总共三种模式
+	const planWordmode = ref(2); // 总共三种模式
 	
 	// 获取设备的安全区域高度
 	const statusBarHeight = ref(0);
@@ -321,6 +321,7 @@
 						totalpoints.value = totalpoints.value*2	
 					}
 					
+					
 					submitreslutStudyProgressReport(book_id.value,lesson_id.value,combinedWordsList)
 					
 					
@@ -451,27 +452,34 @@
 		// 创建新数组，并添加 error_count 和 points 字段，默认值为 0
 		planWordsList.value = response.data.words.map(word => ({
 		...word,
+		content_id:word.word_id,
 		content_type:0,
 		error_count: 0,
 		points: 0,
 		speak_count:0,
+		voice_file:word.sound_path,
 		}));
 
 		planWordsTwoList.value = response.data.words.map(word => ({
 		...word,
+		content_id:word.word_id,
 		content_type:1,
 		error_count: 0,
 		points: 0,
 		speak_count:0,
+		voice_file:word.sound_path,
 		}));
 
 		planWordsThreeList.value = response.data.words.map(word => ({
 		...word,
+		content_id:word.word_id,
 		content_type:2,
 		error_count: 0,
 		points: 0,
 		speak_count:0,
+		voice_file:word.sound_path,
 		}));
+	
 		
 		planWordsWithCounts.value = response.data.words.map(word => ({
 		  ...word,

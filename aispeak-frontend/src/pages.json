@@ -37,6 +37,13 @@
 	    "navigationStyle": "custom"
 	  }
 	},
+	{
+	  "path": "pages/textbook/UnitSummaryReport",
+	  "style": {
+		  // "navigationBarTitleText": "单元总报告"
+	    "navigationStyle": "custom"
+	  }
+	},
     {
       "path": "pages/textbook/TextbookListen",
       "style": {

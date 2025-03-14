@@ -105,11 +105,13 @@ export default {
 	    lessonId: number,
 	    reports: Array<{
 	      word: string;
+		  content_id: number;
 	      content_type: number;
 	      error_count: number;
 	      points: number;
 	      speak_count: number; // 新增开口次数字段
 	      json_data?: string; // 修改为字符串类型，与后端一致
+		  voice_file?: string; // 语音文件路径或 URL
 	    }>,
 	    statusNum?: number // 新增 statusNum 参数，可选
 	  ) {
@@ -119,13 +121,24 @@ export default {
 	      reports: reports.map(report => ({
 	        word: report.word,
 	        content_type: report.content_type,
+			content_id: report.content_id,
 	        error_count: report.error_count,
 	        points: report.points,
 	        speak_count: report.speak_count, // 新增字段
 	        json_data: report.json_data ? JSON.stringify(report.json_data) : null, // 将 JSON 对象转为字符串
+			voice_file: report.voice_file || null, // 默认值为 null
 	      })),
-	      statusNum: statusNum || 1, // 默认值为 1
+	      statusNum: statusNum ,
 	    });
-	  }
+	  },
+	  
+	  
+	  // 获取单元进度摘要
+	  getUnitSummaryReport(bookId: string, lessonId: number) {
+	      return request("/study/unit-summary-report", "GET", {
+	        book_id: bookId,
+	        lesson_id: lessonId,
+	      });
+	    },
   
 };
