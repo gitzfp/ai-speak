@@ -87,15 +87,17 @@ class StudyProgressReport(Base):
     user_id = Column(String(50), nullable=False, comment="用户ID")  # 指定长度
     book_id = Column(String(50), nullable=False, comment="书籍ID")  # 指定长度
     lesson_id = Column(Integer, nullable=True, comment="课程ID")  # 新增 lesson_id 字段
+    content_id = Column(Integer, nullable=False, comment="内容ID（单词ID或句子ID等）")  # 新增 content_id 字段
     content = Column(String(255), nullable=False, comment="学习内容（单词或句子）")  # 修改为 content，存储具体内容
     content_type = Column(Integer, nullable=False, comment="类型（0: 单词发音, 1: 单词读, 2: 单词写, 3: 单独拼写按钮进去的那边提交, 4:句子）")  # 新增 content_type 字段
     error_count = Column(Integer, default=0, comment="错误次数（仅对单词的读和写有效）")  # 新增 error_count 字段
     points = Column(Integer, default=0, comment="积分")  # 新增 points 字段
     create_time = Column(DateTime, default=datetime.datetime.now, comment="创建时间")
     update_time = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now, comment="更新时间")
-    
    # 将 JSON 类型改为 TEXT 类型
     json_data = Column(Text, nullable=True, default=None, comment="TEXT 数据 的评分数据")
+    # 新增 voice_file 字段，长度为 300
+    voice_file = Column(String(300), nullable=True, default=None, comment="语音文件路径或 URL")
 
 
     # 创建联合索引提高查询效率

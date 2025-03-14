@@ -270,11 +270,13 @@ def create_or_update_study_completion_record(
 
 class StudyProgressReportItem(BaseModel):
     word: str  # 单词
+    content_id: int
     content_type: int  # 类型（0: 单词发音, 1: 单词读, 2: 单词写, 3: 单独拼写按钮进去的那边提交, 4:句子）
     error_count: int  # 错误次数
     speak_count:Optional[int] = 0
     points: int  # 积分
     json_data: Optional[str] = None  # 改为字符串类型
+    voice_file: Optional[str] = None  # 新增字段，语音文件路径或 URL
 class StudyProgressReportRequest(BaseModel):
     book_id: str  # 书籍ID
     lesson_id: int  # 课程ID
@@ -303,5 +305,33 @@ def submit_study_progress_report(
             return ApiResponse.success("学习进度报告提交成功！")
         else:
             return ApiResponse.fail("学习进度报告提交失败！")
+    except Exception as e:
+        return ApiResponse.system_error(str(e))  # 捕获异常并返回系统错误
+    
+
+
+    # 定义查询参数模型
+class UnitSummaryReportQuery(BaseModel):
+    book_id: str  # 书本ID
+    lesson_id: int  # 课程ID
+@router.get("/unit-summary-report", response_model=ApiResponse)
+def get_unit_summary_report(
+    book_id: str = Query(..., description="书本ID"),  # 从查询参数中获取
+    lesson_id: int = Query(..., description="课程ID"),  # 从查询参数中获取
+    db: Session = Depends(get_db),
+    account_id: str = Depends(get_current_account)
+) -> ApiResponse:
+    """
+    根据用户ID、书本ID和课程ID获取单元进度摘要
+    """
+    try:
+        service = StudyService(db)
+        # 调用 StudyService 中的 get_unit_summary_report 方法
+        summary = service.get_unit_summary_report(
+            user_id=account_id,  # 使用 account_id
+            book_id=book_id,
+            lesson_id=lesson_id
+        )
+        return ApiResponse.success(summary)  # 返回成功消息
     except Exception as e:
         return ApiResponse.system_error(str(e))  # 捕获异常并返回系统错误

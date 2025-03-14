@@ -73,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted,defineEmits} from 'vue'
+import { ref, computed, onMounted,defineEmits,watch} from 'vue'
 import chatRequest from "@/api/chat"
 import Speech from "./PronuciationSpeech.vue"
 import AudioPlayer from "@/components/AudioPlayer.vue"
@@ -87,7 +87,7 @@ const props = defineProps({
 	type: Boolean,
 	default: false // 设置默认值为 false
   },
-  historypronunciation: {
+  optionSentence: {
 	type: Object, // 类型为对象
 	default: () => ({}) // 默认值为空对象
   }
@@ -135,14 +135,37 @@ onMounted(() => {
 		  console.error('缓存读取失败:', e)
 		}
 	} else { //是单元进去了
-
-		if (props.historypronunciation  && Object.keys(props.historypronunciation).length > 0) {
-			pronunciationResult.value = props.historypronunciation
-			currentStep.value = 'result'
-		}
+		if (props.optionSentence.progress_data && props.optionSentence.progress_data.length > 20) {
+		  	pronunciationResult.value = JSON.parse(props.optionSentence.progress_data)
+		  	currentStep.value = 'result'
+			voiceFileName.value = props.optionSentence.voice_file 
+		  }
 	}
   
 })
+
+// 监听 optionSentence 的变化
+watch(
+  () => props.optionSentence,
+  (newVal, oldVal) => {
+    console.log('optionSentence 发生了变化:', newVal)
+    // 在这里添加处理逻辑，例如根据新的 optionSentence 更新状态
+    if (newVal && Object.keys(newVal).length > 0) {
+      
+	  if (props.isUnit) {
+		  if (newVal.progress_data && newVal.progress_data.length > 20) {
+		  	pronunciationResult.value = JSON.parse(newVal.progress_data)
+		  	currentStep.value = 'result'
+			// voiceFileName.value = false
+			voiceFileName.value = newVal.voice_file 
+		  }
+	  }
+	  
+	  
+    }
+  },
+  { deep: true } // 深度监听，确保对象内部属性的变化也能触发
+)
 
 // 修改提交录音方法
 const submitRecording = (voice) => {
@@ -153,11 +176,23 @@ const submitRecording = (voice) => {
   chatRequest
     .pronunciationByFileInvoke({ file_name: voice.fileName, content: props.sentence })
     .then((data) => {
-      pronunciationResult.value = data.data
-      currentStep.value = 'result' // 切换到结果状态
+     // 切换到结果状态
 	  if (props.isUnit == true) {
-		  emit("evaluationResult",pronunciationResult.value)
+		  if (data.code == 1000) {
+			 pronunciationResult.value = data.data
+			 currentStep.value = 'result'
+			 emit("evaluationResult",pronunciationResult.value,voice.fileName) 
+		  } else {
+			  currentStep.value = 'select'
+			 uni.showToast({
+			   title: '评估失败请重新测评',
+			   icon: 'none',
+			 });
+		  }
+		   
 	  } else {
+		  pronunciationResult.value = data.data
+		  currentStep.value = 'result'
 		uni.setStorageSync(cacheKey, {...data.data, content: props.sentence, timestamp: Date.now(),voiceFile: voice.fileName })  
 	  }
     })
@@ -189,8 +224,15 @@ const resetRefresh =() => {
 	currentStep.value = 'select'
 	pronunciationResult.value = null
 }
+const changeRefresh =() => {
+	if (props.historypronunciation  && Object.keys(props.historypronunciation).length > 0) {
+		pronunciationResult.value = props.historypronunciation
+		currentStep.value = 'result'
+	}
+}
 defineExpose({
 	resetRefresh,
+	changeRefresh
 });
 </script>
 
