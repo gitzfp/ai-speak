@@ -1017,3 +1017,54 @@ class StudyService:
                     "mastered_words": [],
                     "words_to_review": []
                 }
+            
+
+
+    def get_study_progress_reports(
+    self,
+    user_id: str,
+    book_id: str,
+    lesson_id: int,
+) -> List[Dict]:
+        """
+        根据 user_id, book_id 和 lesson_id 查找 content_type 为 0, 1, 2 的 StudyProgressReport 对象，并返回字典数组
+        :param user_id: 用户ID
+        :param book_id: 书本ID
+        :param lesson_id: 课程ID
+        :return: 包含 StudyProgressReport 数据的字典数组
+        """
+        try:
+            # 查询 content_type 为 0, 1, 2 的记录
+            progress_reports = (
+                self.db.query(StudyProgressReport)
+                .filter(
+                    StudyProgressReport.user_id == user_id,
+                    StudyProgressReport.book_id == book_id,
+                    StudyProgressReport.lesson_id == lesson_id,
+                    StudyProgressReport.content_type.in_([0, 1, 2])  # 过滤 content_type 为 0, 1, 2 的记录
+                )
+                .all()
+            )
+
+            # 将 StudyProgressReport 对象转换为字典数组
+            report_dicts = [
+                {
+                    "id": report.id,
+                    "user_id": report.user_id,
+                    "book_id": report.book_id,
+                    "lesson_id": report.lesson_id,
+                    "content": report.content,
+                    "content_id": report.content_id,
+                    "content_type": report.content_type,
+                    "error_count": report.error_count,
+                    "points": report.points,
+                    "chinese": report.chinese,
+                }
+                for report in progress_reports
+            ]
+
+            return report_dicts
+
+        except Exception as e:
+            print(f"查询学习进度报告失败: {str(e)}")
+            return []        

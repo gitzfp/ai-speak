@@ -2,7 +2,7 @@
   <view class="popup-container">
     <view class="popup-content">
       <view class="popup-header">
-        <text>退出后练习进度不保留哦</text>
+        <text>再坚持一会就完成啦！</text>
       </view>
       <!-- <view class="popup-body">
         <text>恭喜你完成本组单词的学习，是否进行单词拼写增强记忆？</text>
