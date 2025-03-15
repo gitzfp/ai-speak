@@ -1,8 +1,8 @@
-"""添加 chinese audio_url字段
+"""init alembic
 
-Revision ID: bb78cc2cf6e2
-Revises: 3b9f46d7dd9f
-Create Date: 2025-03-15 17:40:14.805919
+Revision ID: d9452ca27e38
+Revises: 
+Create Date: 2025-03-16 01:26:28.494334
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'bb78cc2cf6e2'
-down_revision: Union[str, None] = '3b9f46d7dd9f'
+revision: str = 'd9452ca27e38'
+down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
