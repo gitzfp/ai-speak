@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-# 第一阶段：构建依赖
-FROM python:3.11-slim as builder
-
-WORKDIR /app
-COPY requirements.txt .
-
-=======
 # 第一阶段：构建依赖（优化版）
 FROM python:3.11-slim as builder
 
@@ -14,49 +5,10 @@ WORKDIR /aispeak-server
 COPY requirements.txt .
 
 # 安装编译依赖
->>>>>>> 5532451a (Update Docker deployment configuration)
-=======
-# 第一阶段：构建依赖（优化版）
-FROM python:3.11-slim as builder
-
-WORKDIR /aispeak-server
-COPY requirements.txt .
-
-# 安装编译依赖
->>>>>>> 5532451a (Update Docker deployment configuration)
 RUN apt-get update && apt-get install -y \
     gcc \
     default-libmysqlclient-dev \
     && rm -rf /var/lib/apt/lists/*
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-RUN pip install --user --no-cache-dir -r requirements.txt
-RUN pip install safety && safety check --full-report
-
-# 第二阶段：运行环境
-FROM python:3.11-slim
-WORKDIR /app
-
-COPY --from=builder /root/.local /root/.local
-COPY ./app ./app
-COPY ./alembic ./alembic
-COPY alembic.ini .
-
-ENV PATH=/root/.local/bin:$PATH
-ENV PYTHONPATH=/app
-
-RUN apt-get update && apt-get install -y \
-    default-mysql-client \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN addgroup --system appuser && adduser --system --no-create-home --ingroup appuser appuser
-USER appuser
-
-CMD ["sh", "-c", "until mysqladmin ping -h db -u${DB_USER} -p${DB_PASSWORD} --silent; do sleep 2; done && alembic upgrade head && gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8097"]
-=======
-=======
->>>>>>> 5532451a (Update Docker deployment configuration)
 
 # 安装 Python 依赖
 RUN pip install --no-cache-dir -r requirements.txt
@@ -102,9 +54,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 
 # 启动命令
 CMD ["sh", "-c", "until mysqladmin ping -h db -u${DB_USER} -p${DB_PASSWORD} --silent; do sleep 2; done && \
-<<<<<<< HEAD
     gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8097"]
->>>>>>> 5532451a (Update Docker deployment configuration)
-=======
-    gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8097"]
->>>>>>> 5532451a (Update Docker deployment configuration)

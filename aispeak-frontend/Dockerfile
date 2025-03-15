@@ -1,22 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-# 前端构建阶段
-FROM node:18-alpine as builder
-
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --silent
-COPY . .
-RUN npm run build -- --mode production
-
-# 前端运行阶段
-FROM nginx:1.25-alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-=======
-=======
->>>>>>> 5532451a (Update Docker deployment configuration)
 # 第一阶段：构建环境
 FROM node:20-alpine AS builder
 
@@ -72,9 +53,5 @@ COPY ssl/dingguagua.fun.crt /etc/nginx/ssl/
 COPY ssl/dingguagua.fun.key /etc/nginx/ssl/
 
 EXPOSE 80 443
-<<<<<<< HEAD
-CMD ["nginx", "-g", "daemon off;"]
->>>>>>> 5532451a (Update Docker deployment configuration)
-=======
 CMD ["nginx", "-g", "daemon off;"]
 >>>>>>> 5532451a (Update Docker deployment configuration)
