@@ -1,26 +1,23 @@
 <template>
   <view class="loading-round" :style="containerStyle">
-    <image class="loading-round-img" src="/static/loading.png"></image>
+    <image
+      class="loading-round-img"
+      src="http://114.116.224.128:8097/static/loading.png"
+    ></image>
   </view>
 </template>
 <script setup lang="ts">
-import {
-  ref,
-  defineProps,
-  computed
-} from 'vue';
+import { ref, defineProps, computed } from "vue"
 interface Props {
-  minHeight?: number;
+  minHeight?: number
 }
-const props = defineProps<Props>();
-const containerStyle = computed(
-  () => {
-    if (props.minHeight) {
-      return `min-height:${props.minHeight}rpx;`
-    }
-    return '';
+const props = defineProps<Props>()
+const containerStyle = computed(() => {
+  if (props.minHeight) {
+    return `min-height:${props.minHeight}rpx;`
   }
-);
+  return ""
+})
 </script>
 <style lang="less" scoped>
 .loading-round {

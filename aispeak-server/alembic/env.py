@@ -11,6 +11,8 @@ from app.db.sys_entities import *  # noqa: F401
 from app.db.account_entities import *  # noqa: F401
 from app.db.topic_entities import *
 from app.db.textbook_entities import *
+from app.db.words_entities import *
+from app.db.study_entities import *
 
 target_metadata = Base.metadata
 print("Target Metadata Tables:", target_metadata.tables.keys())  # 输出所有表名
@@ -53,6 +55,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        compare_type=True  # 添加类型比较
     )
 
     with context.begin_transaction():
@@ -74,7 +77,9 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True  # 添加类型比较
         )
 
         with context.begin_transaction():

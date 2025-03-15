@@ -1,3 +1,4 @@
+from fastapi import UploadFile
 import json
 import os
 from pydub import AudioSegment
@@ -72,7 +73,12 @@ class SysService:
             .filter_by(language=language)
             .first()
         )
-        return languages.example
+        # 添加空值保护
+        if not languages:
+            # 如果数据库没有记录，返回预定义的演示内容
+            return language_demo_map.get(language, [])
+
+        return languages.example if languages.example else []
 
     def get_settings_languages(self, account_id: str):
         """获取用户支持的所有语种"""
@@ -92,13 +98,6 @@ class SysService:
                 }
             )
         return result
-
-    def get_settings_languages_example(self, language: str, account_id: str):
-        """获取语言下的示例"""
-        # 获取语言下的示例
-        # 语言没有国家  所以去掉后面的国家后缀
-        language = language.split("-")[0]
-        return language_demo_map[language]
 
     def voice_upload(self, file: UploadFile, account_id: str):
         """用户上传语音文件"""

@@ -148,6 +148,12 @@ class AccountService:
                 .filter_by(account_id=account_id, message_id=dto.message_id)
                 .first()
             )
+        elif dto.word_id:
+            collect = (
+                self.db.query(AccountCollectEntity)
+                .filter_by(account_id=account_id, word_id=dto.word_id)
+                .first()
+            )
         else:
             collect = (
                 self.db.query(AccountCollectEntity)
@@ -180,8 +186,11 @@ class AccountService:
             TranslateParams(target_language=source_language, content=content)
         )
 
-        # 如果没有任何符号且只有单独一个单词，则type为WORD，否则为 SENTENCE
-        if re.match(r"^[a-zA-Z]+$", content) and len(content.split(" ")) == 1:
+        # 如果存在 word_id，则 type 为 NEW_WORD
+        if dto.type:
+            type = dto.type
+        # 如果没有任何符号且只有单独一个单词，则 type 为 WORD，否则为 SENTENCE
+        elif re.match(r"^[a-zA-Z]+$", content) and len(content.split(" ")) == 1:
             type = "WORD"
         else:
             type = "SENTENCE"
@@ -190,6 +199,8 @@ class AccountService:
             account_id=account_id,
             type=type,
             message_id=dto.message_id,
+            word_id=dto.word_id,
+            book_id=dto.book_id,
             content=content,
             translation=translation,
         )
@@ -250,6 +261,12 @@ class AccountService:
                 .filter_by(account_id=account_id, message_id=dto.message_id)
                 .first()
             )
+        elif dto.word_id:
+            collect = (
+                self.db.query(AccountCollectEntity)
+                .filter_by(account_id=account_id, word_id=dto.word_id)
+                .first()
+            )
         else:
             collect = (
                 self.db.query(AccountCollectEntity)
@@ -277,6 +294,7 @@ class AccountService:
             result.append(
                 {
                     "id": collect.id,
+                    "word_id": collect.word_id,
                     "type": collect.type,
                     "content": collect.content,
                     "translation": collect.translation,
@@ -295,7 +313,17 @@ class AccountService:
         )
         if not settings:
             settings = self.db.query(AccountSettingsEntity).first()
-            
+            # 如果还是没有找到设置，使用默认值
+            if not settings:
+                settings = type('DefaultSettings', (object,), {
+                    "auto_playing_voice": False,
+                    "playing_voice_speed": 1.0,
+                    "auto_text_shadow": False,
+                    "auto_pronunciation": False,
+                    "speech_role_name": None,
+                    "target_language": None
+                })()
+
         # 设置 vo dict，里面的值与settings中的值一致
         vo = {
             "auto_playing_voice": settings.auto_playing_voice,
@@ -321,6 +349,24 @@ class AccountService:
             .filter_by(account_id=account_id)
             .first()
         )
+
+        # 如果 account_settings 为空，插入默认配置
+        if not account_settings:
+            speech_role_name = get_azure_language_default_role(Config.DEFAULT_TARGET_LANGUAGE)
+            account_settings = AccountSettingsEntity(
+                account_id=account_id,
+                auto_playing_voice=True,
+                playing_voice_speed=1.0,
+                auto_text_shadow=False,
+                auto_pronunciation=True,
+                speech_role_name=speech_role_name,
+                target_language=Config.DEFAULT_TARGET_LANGUAGE,
+                source_language=Config.DEFAULT_SOURCE_LANGUAGE  # Ensure source_language is set
+            )
+            self.db.add(account_settings)
+            self.db.commit()
+
+        print("保存单词save_settings", account_settings, dto)
         if dto.auto_playing_voice is not None:
             account_settings.auto_playing_voice = dto.auto_playing_voice
         if dto.playing_voice_speed is not None:
@@ -334,9 +380,7 @@ class AccountService:
         if dto.target_language is not None:
             if dto.target_language != account_settings.target_language:
                 # 获取语言对应的语音角色
-                speech_role_name = get_azure_language_default_role(
-                    dto.target_language
-                )
+                speech_role_name = get_azure_language_default_role(dto.target_language)
                 account_settings.speech_role_name = speech_role_name
             account_settings.target_language = dto.target_language
         self.db.commit()
@@ -440,3 +484,27 @@ class AccountService:
             )
             self.db.add(settings)
             self.db.commit()
+
+    def get_wx_access_token(self):
+        """获取微信 access_token"""
+        url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={Config.WECHAT_APP_ID}&secret={Config.WX_APP_SECRET}"
+        response = requests.get(url)
+        data = response.json()
+
+        if "errcode" in data:
+            raise Exception(f"获取access_token失败: {data['errmsg']}")
+
+        return data["access_token"]
+
+
+    def get_wx_jsapi_ticket(self):
+        """获取微信 JSAPI_TICKET"""
+        access_token = self.get_wx_access_token()
+        url = f"https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token={access_token}&type=jsapi"
+        response = requests.get(url)
+        data = response.json()
+
+        if data["errcode"] != 0:
+            raise Exception(f"获取jsapi_ticket失败: {data['errmsg']}")
+
+        return data["ticket"]

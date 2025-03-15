@@ -12,7 +12,7 @@ from app.models.account_models import *
 from app.models.chat_models import *
 from app.services.account_service import AccountService
 from app.services.topic_service import TopicService
-
+from app.db.textbook_entities import TaskTargetsEntity
 from app.ai.models import *
 from app.ai import chat_ai
 from app.core.azure_voice import *
@@ -63,12 +63,35 @@ class ChatService:
         """获取会话详情"""
         session = self.__get_and_check_session(session_id, account_id)
         result = self.__convert_session_model(session)
-
+        result["task_targets"] = self.get_topic_task_targets(session_id)
         # 获取会话下的消息
         result["messages"] = self.get_session_messages(session_id, account_id, 1, 100)
         return result
+    
+    def get_topic_task_targets(self, session_id: str):
+        """获取会话下的任务目标"""
+        # 通过session_id获取关联的话题ID
+        relation = (self.db.query(TopicSessionRelation)
+                    .filter_by(session_id=session_id)
+                    .first())
+        
+        if not relation:
+            return []
+        
+        # 通过话题ID查询任务目标
+        task_targets = (self.db.query(TaskTargetsEntity)
+                        .filter_by(lesson_id=relation.topic_id)
+                        .all())
+        
+        return [{
+            "id": t.id,
+            "info_cn": t.info_cn,
+            "info_en": t.info_en,
+            "lesson_id": t.lesson_id,
+            "match_type": t.match_type
+        } for t in task_targets]
 
-    def get_session_greeting(self, session_id: str, account_id: str):
+    def get_session_greeting(self, session_id: str, account_id: str, task_targets: list = None):
         """需要会话没有任何消息时，需要返回的问候语"""
         try:
             logging.info(f"Starting get_session_greeting for session_id: {session_id}, account_id: {account_id}")
@@ -87,28 +110,17 @@ class ChatService:
                 language = self.account_service.get_account_target_language(account_id)
                 logging.info(f"CHAT type, using language: {language}")
                 result = chat_ai.invoke_greet(GreetParams(language=language))
-                
-            elif (session.type == "TOPIC"):
-                logging.info("TOPIC type, getting topic_greet_params")
-                topic_greet_params = self.topic_service.get_topic_greet_params(session.id)
-                logging.info(f"Topic greet params: {topic_greet_params.__dict__}")
-                result = chat_ai.topic_invoke_greet(topic_greet_params)
-                
-            elif (session.type == "LESSON"):
+            else:
                 logging.info("LESSON type, getting lesson session")
-                # 构建课程相关的问候参数
+                # 构建通用提示参数
+                common_prompt = self._build_common_greeting_prompt(
+                    task_targets=task_targets,
+                    first_target_text=task_targets[0]['info_en'] if task_targets else "No target specified"
+                )
                 topic_greet_params = TopicGreetParams(
                     language=self.account_service.get_account_target_language(account_id),
-                    prompt="""你是一位专业的英语老师，正在给学生上一节英语课。
-                    请用友好和鼓励的语气向学生问好，并简单介绍一下今天的学习内容。
-                    记住：
-                    1. 使用简单易懂的英语
-                    2. 保持积极正面的态度
-                    3. 让学生感到轻松和有趣
-                    4. 鼓励学生积极参与
-                    """
+                    prompt=common_prompt
                 )
-                
                 logging.info(f"Created topic_greet_params: {topic_greet_params.__dict__}")
                 result = chat_ai.topic_invoke_greet(topic_greet_params)
 
@@ -322,7 +334,7 @@ class ChatService:
         )
 
     def pronunciation(self, dto: PronunciationDTO, account_id: str):
-        """发单评估"""
+        """发音评估"""
         # 先根据message_id查询出message
         message = self.db.query(MessageEntity).filter_by(id=dto.message_id).first()
         if not message:
@@ -378,6 +390,28 @@ class ChatService:
         self.db.add(message_grammar)
         self.db.commit()
         return pronunciation_result
+    
+    def file_pronunciation(self, dto: FilePronunciationDTO, account_id: str):
+        """发单评估"""
+        file_full_path = voice_file_get_path(dto.file_name)
+        # 检查文件是否存在
+        if not os.path.exists(file_full_path):
+            raise UserAccessDeniedException("语音文件不存在")
+        target_language = self.account_service.get_account_target_language(account_id)
+        # 进行评分
+        try:
+            pronunciation_result = word_speech_pronunciation(
+                dto.content, file_full_path, language=target_language
+            )
+            logging.info("end")
+        except Exception as e:
+            # 输出错误信息
+            logging.exception(
+                f"file_full_path:{file_full_path}\n content:{dto.content}", e
+            )
+            raise UserAccessDeniedException("语音评估失败")
+
+        return pronunciation_result
 
     def message_speech_content(self, dto: TransformContentSpeechDTO, account_id: str):
         """如果file表中已经存在文件的保存，则直接返回，如果不存在，生成一份并保存"""
@@ -388,7 +422,9 @@ class ChatService:
             .filter_by(account_id=account_id)
             .first()
         )
-        target_language = account_settings.target_language
+        
+        # Set default target language if account_settings is None
+        target_language = account_settings.target_language if account_settings else "en"  # Default to English
         set_speech_role_name = None
         set_speech_role_style = ""
         if dto.speech_role_name:
@@ -465,9 +501,11 @@ class ChatService:
             .filter_by(account_id=account_id)
             .first()
         )
-        target_language = account_settings.target_language
-        voice_name = account_settings.speech_role_name
-        speech_speed = account_settings.playing_voice_speed
+        
+        # Set default values if account_settings is None
+        target_language = account_settings.target_language if account_settings else "en"  # Default to English
+        voice_name = account_settings.speech_role_name if account_settings else "default_voice"  # Default voice name
+        speech_speed = account_settings.playing_voice_speed if account_settings else "1.0"  # Default speech speed
         filename = f"message_{message.id}_{voice_name}_{speech_speed}.wav"
         full_file_name = voice_file_get_path(filename)
         voice_role_style = ""
@@ -504,6 +542,42 @@ class ChatService:
         self.db.add(session)
         self.db.commit()
         return self.__convert_session_model(session)
+
+    def get_session_by_topic(self, topic_id: str, account_id: str):
+        """根据话题ID获取会话"""
+        # 验证话题是否存在
+        topic = self.db.query(TopicEntity).filter_by(id=topic_id).first()
+        if not topic:
+            raise Exception("话题不存在")
+
+        # 通过关联表查询会话
+        session_relation = (
+            self.db.query(TopicSessionRelation)
+            .filter_by(
+                topic_id=topic_id,
+                account_id=account_id
+            )
+            .order_by(TopicSessionRelation.create_time.desc())
+            .first()
+        )
+
+        if not session_relation:
+            return {"id": None}
+
+        # 如果找到了会话，返回会话信息
+        session = (
+            self.db.query(MessageSessionEntity)
+            .filter(MessageSessionEntity.id == session_relation.session_id)
+            .first()
+        )
+
+        # 构建返回数据
+        session_info = {
+            "id": session.id,
+            "completed": session.completed
+        }
+
+        return session_info
 
     def get_session_messages(
         self, session_id: str, account_id: str, page: int, page_size: int
@@ -567,10 +641,22 @@ class ChatService:
     def transform_text(self, session_id: str, dto: VoiceTranslateDTO, account_id: str):
         """语音解析成文字"""
         input_file = voice_file_get_path(dto.file_name)
+        logging.info(f"Starting voice transformation for file: {input_file}")
         
         try:
+            # 检查输入文件是否存在
+            if not os.path.exists(input_file):
+                raise Exception(f"输入文件不存在: {input_file}")
+                
+            # 检查文件大小
+            file_size = os.path.getsize(input_file)
+            logging.info(f"Input file size: {file_size} bytes")
+            if file_size == 0:
+                raise Exception("输入文件为空")
+            
             # 转换音频格式
             temp_wav = self._convert_to_standard_wav(input_file)
+            logging.info(f"Audio converted successfully to: {temp_wav}")
             
             # 使用转换后的文件进行识别
             result = speech_translate_text(
@@ -581,6 +667,7 @@ class ChatService:
             # 删除临时文件
             if os.path.exists(temp_wav):
                 os.remove(temp_wav)
+                logging.info("Temporary WAV file removed")
                 
             return result
             
@@ -593,31 +680,62 @@ class ChatService:
         try:
             # 生成临时文件路径
             temp_path = input_file + ".standard.wav"
+            logging.info(f"Converting audio file: {input_file} to {temp_path}")
             
-            # 加载音频文件
-            audio = AudioSegment.from_file(input_file)
+            # 检查输入文件格式
+            try:
+                audio = AudioSegment.from_file(input_file)
+                logging.info(f"Original audio properties - Channels: {audio.channels}, "
+                           f"Frame rate: {audio.frame_rate}, "
+                           f"Sample width: {audio.sample_width}")
+            except Exception as e:
+                logging.error(f"Failed to load audio file: {str(e)}")
+                # 尝试指定格式加载
+                audio = AudioSegment.from_file(input_file, format="wav")
+                logging.info("Successfully loaded file with explicit WAV format")
             
             # 设置标准参数
-            audio = audio.set_channels(1)  # 单声道
-            audio = audio.set_frame_rate(16000)  # 16kHz 采样率
-            audio = audio.set_sample_width(2)  # 16-bit
-            
-            # 导出为标准 WAV 格式
-            audio.export(
-                temp_path,
-                format="wav",
-                parameters=[
-                    "-acodec", "pcm_s16le",  # 16-bit PCM
-                    "-ar", "16000",          # 16kHz
-                    "-ac", "1"               # 单声道
-                ]
-            )
-            
-            return temp_path
+            try:
+                # 转换为单声道
+                if audio.channels > 1:
+                    audio = audio.set_channels(1)
+                    logging.info("Converted to mono")
+                
+                # 设置采样率
+                if audio.frame_rate != 16000:
+                    audio = audio.set_frame_rate(16000)
+                    logging.info("Set frame rate to 16kHz")
+                
+                # 设置采样位深
+                if audio.sample_width != 2:
+                    audio = audio.set_sample_width(2)
+                    logging.info("Set sample width to 16-bit")
+                
+                # 导出为标准 WAV 格式
+                audio.export(
+                    temp_path,
+                    format="wav",
+                    parameters=["-acodec", "pcm_s16le"]
+                )
+                
+                # 验证输出文件
+                if not os.path.exists(temp_path):
+                    raise Exception("输出文件未生成")
+                
+                output_size = os.path.getsize(temp_path)
+                logging.info(f"Output file size: {output_size} bytes")
+                if output_size == 0:
+                    raise Exception("输出文件为空")
+                
+                return temp_path
+                
+            except Exception as e:
+                logging.error(f"Audio conversion failed: {str(e)}")
+                raise Exception(f"音频参数转换失败: {str(e)}")
             
         except Exception as e:
             logging.error(f"音频转换失败: {str(e)}, file: {input_file}")
-            raise Exception("音频格式转换失败")
+            raise Exception(f"音频格式转换失败: {str(e)}")
 
     def delete_latest_session_messages(self, session_id: str, account_id: str):
         """查出最近的一条type为ACCOUNT的数据，并且把create_time之后的数据全部调整为deleted=1，删除成功后需要返回所有删除成功的message的id"""
@@ -825,3 +943,37 @@ class ChatService:
         if sequence:
             return sequence.sequence
         return 0
+
+    def _build_common_greeting_prompt(self, task_targets: list = None, first_target_text: str = "") -> str:
+        """构建通用问候提示模板"""
+        targets_str = ",\n".join([t['info_en'] for t in task_targets]) if task_targets else ""
+        
+        return f"""你是一位充满创意的英语老师，正在给一位中国学生上一节有趣的英语课。
+
+本节课的学习目标是：
+{targets_str}
+
+请按以下顺序回复：
+1. 用简单的中文以老师的身份热情地向学生问好，称呼要用"你"，展现亲切感
+2. 用简单的英语创造一个有趣的情境，引导学生说出第一个目标句子：{first_target_text}
+   - 创造一个你和学生之间的互动场景
+   - 或设计一个你带着学生玩的小游戏
+   - 让学生在轻松的对话中自然说出目标句子
+
+注意事项：
+1. 全程使用"你"而不是"你们"，让每个学生感受到专属关注
+2. 使用简单易懂的英语(no more than 60 words)表达
+3. 给予个性化的鼓励和引导
+4. 通过一对一的提问让学生更投入
+5. 创造轻松愉快的学习氛围
+6. 目标句子要自然地融入对话中
+7. 先示范给学生听，再邀请学生模仿
+8. 回答不要有旁白信息，全程对同一个学生说话
+
+示例引导方式：
+- "假设我是商店店员，你来询问商品价格"
+- "我来扮演服务员，你来点一份你最喜欢的食物"
+- "让我们玩个游戏，我迷路了，你来告诉我路线"
+- "想象你是你最喜欢的明星，向我介绍一下你自己"
+- "我这里有一个神秘物品，你来猜猜是什么"
+"""

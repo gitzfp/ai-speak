@@ -13,9 +13,54 @@
       }
     },
     {
+      "path": "pages/textbook/index2",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+	{
+	  "path": "pages/textbook/index3",
+	  "style": {
+	    "navigationStyle": "custom"
+	  }
+	},
+	{
+	  "path": "pages/textbook/UnitwordConsolidation",
+	  "style": {
+	    "navigationStyle": "custom"
+	  }
+	},
+	{
+	  "path": "pages/textbook/UnitSentenceRead",
+	  "style": {
+		  // "navigationBarTitleText": "单元句子跟读"
+	    "navigationStyle": "custom"
+	  }
+	},
+	{
+	  "path": "pages/textbook/UnitSummaryReport",
+	  "style": {
+		  // "navigationBarTitleText": "单元总报告"
+	    "navigationStyle": "custom"
+	  }
+	},
+    {
+      "path": "pages/textbook/TextbookListen",
+      "style": {
+        "navigationBarTitleText": "听课文"
+      }
+    },
+    {
+      "path": "pages/textbook/worddetails",
+      "style": {
+        "navigationBarTitleText": "单词详情"
+      }
+    },
+    {
       "path": "pages/textbook/index",
       "style": {
-        "navigationBarTitleText": "教材详情"
+        "navigationBarTitleText": "教材详情",
+        "navigationStyle": "custom"
       }
     },
     {
@@ -24,6 +69,69 @@
         "navigationBarTitleText": "课程列表"
       }
     },
+    {
+      "path": "pages/textbook/books",
+      "style": {
+        "navigationBarTitleText": "书籍"
+      }
+    },
+    {
+      "path": "pages/textbook/words",
+      "style": {
+        "navigationBarTitleText": "单词列表"
+      }
+    },
+	{
+	  "path": "pages/textbook/WordDictation",
+	  "style": {
+	    // "navigationBarTitleText": "单词听写",
+		"navigationStyle": "custom"
+	  }
+	},
+	{
+	  "path": "pages/textbook/newWordbook",
+	  "style": {
+	    "navigationBarTitleText": "我的生词本"
+	  }
+	},
+	{
+	  "path": "pages/textbook/Learningreport",
+	  "style": {
+	    // "navigationBarTitleText": "单词完成报告",
+		"navigationStyle": "custom"
+	  }
+	},
+    {
+      "path": "pages/textbook/Learnwords",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+	{
+	  "path": "pages/textbook/UnitWordreport",
+	  "style": {
+	    "navigationStyle": "custom"
+	  }
+	}
+	,
+	{
+		"path": "pages/textbook/WordRecitationHome",
+		"style": {
+		  "navigationBarTitleText": "背单词"
+		}
+	},
+	{
+		"path": "pages/textbook/WordplanDetail",
+		"style": {
+		  "navigationBarTitleText": "背单词详情"
+		}
+	},
+	{
+		"path": "pages/textbook/Ebbinghaus",
+		"style": {
+		  "navigationBarTitleText": "记忆法说明"
+		}
+	},
     {
       "path": "pages/textbook/lesson",
       "style": {
@@ -61,7 +169,7 @@
       }
     },
     {
-      "path":"pages/my/learnLanguage",
+      "path": "pages/my/learnLanguage",
       "style": {
         "navigationStyle": "custom"
       }
@@ -107,7 +215,7 @@
       "style": {
         "navigationStyle": "custom"
       }
-    } 
+    }
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
@@ -120,17 +228,23 @@
     "borderStyle": "white",
     "backgroundColor": "#ffffff",
     "list": [
+	  {
+	    "pagePath": "pages/textbook/index3",
+	    "text": "首页",
+	    "selectedIconPath": "static/home_select.png",
+	    "iconPath": "static/home.png"
+	  },
+	  {
+	    "pagePath": "pages/textbook/index2",
+	    "text": "首页2",
+	    "selectedIconPath": "static/home_select.png",
+	    "iconPath": "static/home.png"
+	  },
       {
-        "pagePath": "pages/textbook/index",
-        "text": "首页",
-        "selectedIconPath": "static/home_select.png",
-        "iconPath": "static/home.png"
-      },
-      {
-        "pagePath": "pages/practice/index",
-        "text": "练习",
+        "pagePath": "pages/index/index",
+        "text": "场景",
         "selectedIconPath": "static/edit_select.png",
-        "iconPath": "static/edit.png"
+        "iconPath": "static/home.png"
       },
       {
         "pagePath": "pages/my/index",

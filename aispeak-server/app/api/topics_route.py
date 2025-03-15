@@ -36,7 +36,7 @@ def get_custom_topic(
 # 获取所有话题组与话题
 @router.get("/topics", name="Get all chat topic group")
 def get_all_chat_topics(
-    type: str,
+    type: str = None,  # 修改为可选参数
     db: Session = Depends(get_db),
     account_id: str = Depends(get_current_account),
 ):
@@ -93,26 +93,31 @@ def get_chat_topic_phrases(
 
 
 # 基于主题创建一个session
-@router.post("/topics/{topic_id}/session", name="Create chat topic session")
+@router.post("/topics/create_topic_session", name="Create chat topic session")
 def create_chat_topic_session(
-    topic_id: str,
+    request: TopicSessionCreate,
     db: Session = Depends(get_db),
     account_id: str = Depends(get_current_account),
 ):
     """基于主题创建一个session"""
     topic_service = TopicService(db)
-    return ApiResponse(data=topic_service.create_topic_session(topic_id, account_id))
+    return ApiResponse(data=topic_service.create_topic_session(request, account_id))
 
-# 基于课程创建一个session
-@router.post("/topics/{lesson_id}/lesson_session", name="Create chat lesson session")
+
+# 基于主题创建一个session
+@router.post("/topics/create_lesson_session", name="Create chat lesson session")
 def create_chat_lesson_session(
-    lesson_id: str,
+    request: LessonSessionCreate,
     db: Session = Depends(get_db),
     account_id: str = Depends(get_current_account),
 ):
     """基于课程创建一个session"""
     topic_service = TopicService(db)
-    return ApiResponse(data=topic_service.create_lesson_session(lesson_id, account_id))
+    return ApiResponse(data=topic_service.create_lesson_session(
+        request.lesson_id, 
+        account_id,
+        request.sentences
+    ))
 
 
 # 结束当前会话并进行评分

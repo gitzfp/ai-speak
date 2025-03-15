@@ -7,10 +7,10 @@
         </CommonHeader>
         <view class="mine-content">
             <view class="setting">
-                <view class="setting-card">
-                    <text class="setting-card-title">AI角色</text>
-                    <text @click="goSwitchRole">{{ settingInfo.speech_role_name_label || '默认角色' }}</text>
-                </view>
+                <!-- <view class="setting-card"> -->
+                    <!-- <text class="setting-card-title">AI角色</text> -->
+                    <!-- <text @click="goSwitchRole">{{ settingInfo.speech_role_name_label || '默认角色' }}</text> -->
+                <!-- </view> -->
                 <view class="setting-card">
                     <text class="setting-card-title">自动播放语音</text>
                     <Checkbox @input="(check) => inputCheck('auto_playing_voice', check)"
@@ -30,13 +30,13 @@
             <view class="setting-bot">
                 <text class="setting-card-title">语速</text>
                 <view class="tab-box">
-                    <view :class="`tab-item ${settingInfo.playing_voice_speed == '0.5' ? 'tab-item-select' : ''}`" @tap="selectTab('0.5')">
+                    <view :class="`tab-item ${Number(settingInfo.playing_voice_speed) <= 0.8 ? 'tab-item-select' : ''}`" @tap="selectTab('0.8')">
                         <text>慢速</text>
                     </view>
                     <view :class="`tab-item ${settingInfo.playing_voice_speed == '1.0' ? 'tab-item-select' : ''}`" @tap="selectTab('1.0')">
                         <text>正常</text>
                     </view>
-                    <view :class="`tab-item ${settingInfo.playing_voice_speed == '1.5' ? 'tab-item-select' : ''}`" @tap="selectTab('1.5')">
+                    <view :class="`tab-item ${Number(settingInfo.playing_voice_speed) >= 1.2 ? 'tab-item-select' : ''}`" @tap="selectTab('1.2')">
                         <text>较快</text>
                     </view>
                 </view>

@@ -24,9 +24,10 @@ class Config:
     CHAT_GPT_PROXY = os.getenv('CHAT_GPT_PROXY')
     CHAT_GPT_KEY = os.getenv('CHAT_GPT_KEY')
     CHAT_GPT_MODEL = os.getenv('CHAT_GPT_MODEL')
-    # 智谱AI配置
-    ZHIPU_AI_API_KEY = os.getenv('ZHIPU_AI_API_KEY')
-    ZHIPU_AI_MODEL = os.getenv('ZHIPU_AI_MODEL')
+    
+    #阿里云配置
+    alioss_access_key_id = os.getenv("ALIBABA_CLOUD_ACCESS_KEY_ID")
+    alioss_access_key_secret = os.getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET") 
 
     # WeChat
     WECHAT_APP_ID = os.getenv('WECHAT_APP_ID')

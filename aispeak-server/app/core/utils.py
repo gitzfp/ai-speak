@@ -116,16 +116,20 @@ def file_get_path(filename: str) -> str:
     return f'{Config.TEMP_SAVE_FILE_PATH}/{filename}'
 
 # 获取文件的后缀名
+
+
 def get_file_ext(filename: str) -> str:
-    return os.path.splitext(filename)[1]    
+    return os.path.splitext(filename)[1]
 
 # 获取年月日 yyyymmdd格式
+
+
 def get_date_str():
     return time.strftime("%Y%m%d", time.localtime())
 
 
 def save_image_file(upload_file: UploadFile) -> str:
-    # 获取upload_file文件后缀名 
+    # 获取upload_file文件后缀名
     file_ext = get_file_ext(upload_file.filename)
     filename = f'{short_uuid()}{file_ext}'
 
@@ -141,7 +145,7 @@ def save_image_file(upload_file: UploadFile) -> str:
 
 
 def save_voice_file(upload_file: UploadFile, prefix='') -> str:
-    # 获取upload_file文件后缀名 
+    # 获取upload_file文件后缀名
     file_ext = get_file_ext(upload_file.filename)
     filename = f'{prefix}_{short_uuid()}{file_ext}'
 
@@ -155,12 +159,13 @@ def save_voice_file(upload_file: UploadFile, prefix='') -> str:
         shutil.copyfileobj(upload_file.file, buffer)
     return filename
 
+
 def voice_file_get_path(filename: str) -> str:
     result = f"{Config.TEMP_SAVE_FILE_PATH}/voices/{filename}"
     # 检查full_file_name文件的所属目录是否存在，不存在则创建新的目录
     if not os.path.exists(os.path.dirname(result)):
-        os.makedirs(os.path.dirname(result))    
-    return result    
+        os.makedirs(os.path.dirname(result))
+    return result
 
 
 def image_file_get_path(filename: str) -> str:

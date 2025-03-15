@@ -1,6 +1,0 @@
-{
-  "navigationStyle": "custom",
-  "usingComponents": {
-    "common-header": "../../components/CommonHeader"
-  }
-}

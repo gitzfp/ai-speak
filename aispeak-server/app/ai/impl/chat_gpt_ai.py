@@ -31,7 +31,7 @@ class ChatGPTAI(ChatAI):
         messages = [
             {
                 "role": "system",
-                "content": f"场景：{params.prompt}. 现在你需要使用标识为 {params.language} 的语言来打个招呼，20字左右.",
+                "content": f"场景：{params.prompt}",
             }
         ]
 
@@ -73,12 +73,27 @@ class ChatGPTAI(ChatAI):
         system_message = (
             f"Lesson: {dto.prompt}\n"
             f"Completed Targets:\n{completed_targets_info}\n"
-            f"Learning Targets:\n{targets_info}\n\n"
+            f"Learning Targets:\n{targets_info}\n"
             "'The reply must be JSON format, Rules:\n"
             "1. Track each learning target achievement, showing which have already been met.\n"
             "2. For the current user input, if the target is achieved, include in new_achieved_target:\n"
             '   {"user_say": "actual user input", "target_id": "achieved target ID", "target_name": "achieved target name (info_en of target)"}\n'
-            '3. If no targets are achieved, set new_achieved_target to None.\n'
+            '3. If target is achieved:\n'
+            '   - Include achievement in new_achieved_target\n'
+            '   - Give brief positive feedback\n'
+            '   - Immediately create a simple, engaging scenario for the next target\n'
+            '   - Use one of these approaches for the next target:\n'
+            '     * Simple role-play (e.g., "Now imagine you are...")\n'
+            '     * Easy question (e.g., "What do you think about...")\n'
+            '     * Real-life situation (e.g., "Let\'s say you...")\n'
+            '4. If no targets are achieved:\n'
+            '   - Set new_achieved_target to None\n'
+            '   - If attempts < 3:\n'
+            '     * Continue guiding with simpler approaches\n'
+            '     * Use encouraging feedback and hints\n'
+            '   - If attempts >= 3:\n'
+            '     * Show the correct answer\n'
+            '     * Move to next target with simple scenario\n'
             'Response Format:\n'
             '{\n'
             '  "message": "your response",\n'
@@ -92,9 +107,6 @@ class ChatGPTAI(ChatAI):
             '}\n\n'
             f"Additional Instructions:\n"
             f"- Respond only in {dto.language}\n"
-            f"- Your name is {dto.name}\n"
-            "- Naturally integrate acknowledgment of achieved targets to avoid repetition and guide through the lesson effectively\n"
-            "- Use engaging and supportive language to facilitate the learning experience."
         )
         
         logging.info(f"System message: {system_message}")
@@ -110,7 +122,10 @@ class ChatGPTAI(ChatAI):
         
         message_style = None
         if "message_style" in resp:
-            message_style = resp["message_style"][0] if isinstance(resp["message_style"], list) else resp["message_style"]
+            if isinstance(resp["message_style"], list) and resp["message_style"]:
+                message_style = resp["message_style"][0]
+            else:
+                message_style = resp["message_style"]
 
         completed = False
         if "lesson_completed" in resp:
@@ -135,6 +150,9 @@ class ChatGPTAI(ChatAI):
 
     def topic_invoke_message(self, dto: AITopicMessageParams) -> AITopicMessageResult:
         """与AI自由聊天"""
+        logging.info("Starting topic_invoke_message")
+        logging.info(f"Input params: {dto.__dict__}")
+        
         language = dto.language
         system_message = (
             f"Topic:{dto.prompt}.Please chat with me in this topic. If this conversation can be concluded or if the user wishes to end it, please return topic_completed=true."
@@ -146,23 +164,41 @@ class ChatGPTAI(ChatAI):
             + f"No matter what language I speak to you, you need to reply me in {language}. "
             + f"I hope you will ask me a question from time to time in your reply "
         )
-
+        
+        logging.info(f"System message: {system_message}")
+        
         messages = [{"role": "system", "content": system_message}]
         for message in dto.messages:
             messages.append(message)
+            
+        logging.info(f"All messages being sent to AI: {json.dumps(messages, ensure_ascii=False)}")
+        
         resp = self._original_invoke_chat_json(MessageInvokeDTO(messages=messages))
+        logging.info(f"AI response: {json.dumps(resp, ensure_ascii=False)}")
+        
         message_style = None
         # resp是否有message_style
         if "message_style" in resp:
-            message_style = resp["message_style"]
+            if isinstance(resp["message_style"], list) and resp["message_style"]:
+                message_style = resp["message_style"][0]
+            else:
+                message_style = resp["message_style"]
+        logging.info(f"Extracted message_style: {message_style}")
 
         completed = False
         # resp是否有topic_completed
         if "topic_completed" in resp:
-            completed = resp["topic_completed"] == "true"
+            if isinstance(resp["topic_completed"], bool):
+                completed = resp["topic_completed"]
+            elif isinstance(resp["topic_completed"], str):
+                completed = resp["topic_completed"].lower() == "true"
+        logging.info(f"Topic completed: {completed}")
+        
         result = AITopicMessageResult(
             message=resp["message"], message_style=message_style, completed=completed
         )
+        
+        logging.info(f"Final result: {result.__dict__}")
         return result
 
     def topic_invoke_complete(
@@ -333,7 +369,7 @@ class ChatGPTAI(ChatAI):
         )
         logging.info(f"response:{resp}")
         result = resp.choices[0].message.content
-        # 去掉俩边的 “” ''
+        # 去掉俩边的 " " ' '
         result = result.strip('"')
         result = result.strip("'")
         # 去掉json的转义字符

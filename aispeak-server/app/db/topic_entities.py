@@ -1,7 +1,7 @@
 import datetime
 
 from sqlalchemy import Column, String, DateTime, Integer, Index, Text
-from app.db import Base, engine
+from app.db import Base
 
 
 # 聊天话题组表
@@ -20,7 +20,6 @@ class TopicGroupEntity(Base):
     created_by = Column("created_by", String(80), nullable=False)
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)
     update_time = Column("update_time", DateTime, default=datetime.datetime.now)
-
 
 class TopicEntity(Base):
     """聊天话题表"""
@@ -89,13 +88,11 @@ class AccountTopicEntity(Base):
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)
     sequence = Column("sequence", Integer, nullable=False, default=1)
 
-
 # 话题目标表
+# 在TopicTargetEntity类中添加复合唯一约束
 class TopicTargetEntity(Base):
-    """话题目标表"""
-
     __tablename__ = "topic_target"
-
+    
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     # 所属话题
     topic_id = Column("topic_id", String(80), nullable=False)
@@ -111,16 +108,16 @@ class TopicTargetEntity(Base):
     created_by = Column("created_by", String(80), nullable=False)
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)
     update_time = Column("update_time", DateTime, default=datetime.datetime.now)
+    
+    __table_args__ = (
+        # 添加复合唯一约束（topic_id + type + sequence）
+        Index('uq_target_topic_type_seq', 'topic_id', 'type', 'sequence', unique=True),
+    )
 
-    # topic_id 增加搜索索引
-    topic_id_index = Index("topic_id_index", topic_id)
-
-# 话题短语
+# 在TopicPhraseEntity类中添加复合唯一约束  
 class TopicPhraseEntity(Base):
-    """话题短语"""
-
     __tablename__ = "topic_phrase"
-
+    
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     # 所属话题
     topic_id = Column("topic_id", String(80), nullable=False)
@@ -139,8 +136,6 @@ class TopicPhraseEntity(Base):
 
     # topic_id 增加搜索索引
     topic_id_index = Index("topic_id_index", topic_id)
-
-
 
 class TopicHistoryEntity(Base):
     """话题历史记录表"""
@@ -182,7 +177,3 @@ class TopicHistoryEntity(Base):
     status = Column("status", String(80), nullable=False, default="ACTIVE")
     # 创建时间
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)
-
-
-# 数据库未创建表的话自动创建表
-Base.metadata.create_all(engine)

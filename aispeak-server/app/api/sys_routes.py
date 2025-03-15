@@ -44,6 +44,10 @@ def get_settings_languages(
     return ApiResponse(data=sys_service.get_settings_languages(account_id))    
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 @router.post("/voices/upload")
 def voice_upload_api(
     db: Session = Depends(get_db),
@@ -51,8 +55,23 @@ def voice_upload_api(
     account_id: str = Depends(get_current_account),
 ):
     """上传语音文件"""
-    sys_service = SysService(db)
-    return ApiResponse(data=sys_service.voice_upload(file, account_id))
+    try:
+        logger.info(f"Voice upload started. Account: {account_id}")
+        logger.info(f"File info - Name: {file.filename}, Size: {file.size}, Type: {file.content_type}")
+        
+        sys_service = SysService(db)
+        result = sys_service.voice_upload(file, account_id)
+        
+        logger.info(f"Voice upload completed. Account: {account_id}, Result: {result}")
+        return ApiResponse(data=result)
+        
+    except Exception as e:
+        logger.error(f"Voice upload failed. Account: {account_id}, Error: {str(e)}", exc_info=True)
+        return ApiResponse(
+            success=False,
+            message="文件上传失败",
+            error=str(e)
+        )
 
 
 @router.get("/voices/{file_name}")
