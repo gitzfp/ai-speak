@@ -134,7 +134,7 @@
 	//用于计算进度条
 	const progressThreeindext = ref(0);
 	
-	const planWordmode = ref(2); // 总共三种模式
+	const planWordmode = ref(0); // 总共三种模式
 	
 	// 获取设备的安全区域高度
 	const statusBarHeight = ref(0);
@@ -354,17 +354,21 @@
 		showPopup.value = false
 	}
 	const clicknext = () => {
-		 wordDisplayref.value.redefineSettings()
-		if (planWordindext.value==(planWordsList.value.length-1)) {
-			planWordmode.value = 1
+		if (isShowmark.value) {
+			isShowmark.value = false
+			wordDisplayref.value.redefineSettings()
+			if (planWordindext.value==(planWordsList.value.length-1)) {
+				planWordmode.value = 1
+			}
+			planWordindext.value++;
+			
+			setTimeout(() => {
+			    if (wordDisplayref.value) {
+			      wordDisplayref.value.phonicsbegins();
+			    }	
+			}, 500);
 		}
-		planWordindext.value++;
 		
-		setTimeout(() => {
-		    if (wordDisplayref.value) {
-		      wordDisplayref.value.phonicsbegins();
-		    }	
-		}, 500);
 		
 	}
 	const evaluationResult = (pronunciationScore) => {
@@ -397,7 +401,7 @@
 	// 监听 planWordindext 的变化
 	watch(planWordindext, (newValue, oldValue) => {
 		pronunciation_score.value = 0
-		isShowmark.value = false
+		// isShowmark.value = false
 		// 例如，重新加载单词显示组件
 		// if (wordDisplayref.value) {
 		// 	wordDisplayref.value.phonicsbegins();
@@ -457,7 +461,7 @@
 		error_count: 0,
 		points: 0,
 		speak_count:0,
-		voice_file:word.sound_path,
+		audio_url:word.sound_path,
 		}));
 
 		planWordsTwoList.value = response.data.words.map(word => ({
@@ -467,7 +471,7 @@
 		error_count: 0,
 		points: 0,
 		speak_count:0,
-		voice_file:word.sound_path,
+		audio_url:word.sound_path,
 		}));
 
 		planWordsThreeList.value = response.data.words.map(word => ({
@@ -477,7 +481,7 @@
 		error_count: 0,
 		points: 0,
 		speak_count:0,
-		voice_file:word.sound_path,
+		audio_url:word.sound_path,
 		}));
 	
 		
@@ -516,7 +520,7 @@
 				console.log('数据存储成功');
 				// 跳转到学习页面
 				uni.navigateTo({
-				  url: `/pages/textbook/UnitWordreport?unitreportWords=${unitreportWords}&totalpoints=${totalpoints.value}&backPage=2`, // 将缓存键名传递给学习页面
+				  url: `/pages/textbook/UnitWordreport?unitreportWords=${unitreportWords}&totalpoints=${totalpoints.value}&backPage=2&type=0`, // 将缓存键名传递给学习页面
 				});
 			  },
 			  fail: function (err) {

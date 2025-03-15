@@ -75,12 +75,6 @@
 				</view>
 				<view class="button-row">
 					<view class="function-button"
-					:style="chapter.is_learning_text == 1 ? { 'background-color': '#E5FEF1' } : {}"
-					@click="sentenceFollow(chapter)">
-					    <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
-					    句子跟读
-					</view>
-					<view class="function-button"
 					 :style="chapter.is_learning_text == 1 ? { 'background-color': '#E5FEF1' } : {}"
 					 @click="textbookListen(chapter)">
 					  <image class="button-icon" src="@/assets/icons/listening.svg"></image>
@@ -94,6 +88,12 @@
 					    src="@/assets/icons/word_dictation.svg"
 					  ></image>
 					  单词听写
+					</view>
+					<view class="function-button"
+					:style="chapter.is_learning_text == 1 ? { 'background-color': '#E5FEF1' } : {}"
+					@click="sentenceFollow(chapter)">
+					    <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
+					    AI外教
 					</view>
 				</view>
 			</template>
@@ -346,16 +346,15 @@ const textbookListen = (chapter) => {
 };
 
 const sentenceFollow = (chapter) => {
-	if (chapter.is_learning_text != 1) {
-		uni.showToast({
-		  title: "请先完成课文点读",
-		  icon: "none",
-		});
-		return
-	}
-	uni.navigateTo({
-	url: `/pages/textbook/TextbookListen?book_id=${book.value.book_id}&repeat_after=true`,
+	
+	uni.showToast({
+	  title: "暂时没开放",
+	  icon: "none",
 	});
+	
+	// uni.navigateTo({
+	// url: `/pages/textbook/TextbookListen?book_id=${book.value.book_id}&repeat_after=true`,
+	// });
 };
 
 const seereport = (chapter) => {
@@ -508,13 +507,14 @@ const wordListenWrite = (chapter) => {
 		});
 		const sessionKey = 'selectedWords'; // 缓存键名
 		let bookId = book.value.book_id
+		let lessonId = chapter.lesson_id
 		uni.setStorage({
 			key: sessionKey,
 			data: JSON.stringify(selectedWords),
 			success: function () {
 
 			uni.navigateTo({
-			  url: `/pages/textbook/WordDictation?sessionKey=${sessionKey}&bookId=${bookId}&wordmode=3`, // 将缓存键名传递给学习页面
+			  url: `/pages/textbook/WordDictation?sessionKey=${sessionKey}&bookId=${bookId}&lessonId=${lessonId}&wordmode=4`, // 将缓存键名传递给学习页面
 			});
 
 			},
