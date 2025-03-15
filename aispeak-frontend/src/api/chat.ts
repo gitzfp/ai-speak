@@ -1,4 +1,12 @@
 import request from "@/axios/api";
+
+// 定义任务目标的接口
+interface TaskTarget {
+  id: string;
+  info_cn: string;
+  info_en: string;
+}
+
 export default {
   sessionCreate: (data: any) => {
     return request("/sessions", "POST", data, true);
@@ -9,8 +17,18 @@ export default {
   sessionDetailsGet: (data: any) => {
     return request("/sessions/" + data.sessionId, "GET", data, true);
   },
-  sessionInitGreeting: (sessionId: string) => {
-    return request("/sessions/" + sessionId + "/greeting", "GET", {}, false);
+  sessionInitGreeting: (sessionId: string, taskTargets: any) => {
+    const data = taskTargets ? { task_targets: taskTargets } : {};
+    console.log('Sending greeting request:', { sessionId, data });
+    return request(
+      `/sessions/${sessionId}/greeting`,
+      "POST",
+      data,
+      false
+    ).catch(error => {
+      console.error('Greeting request failed:', error);
+      throw error;
+    });
   },
   sessionChatInvoke: (data: any) => {
     return request(`/sessions/${data.sessionId}/chat`, "POST", data, false);
@@ -61,6 +79,9 @@ export default {
   },
   pronunciationInvoke: (data: any) => {
     return request("/message/pronunciation", "POST", data, false);
+  },
+  pronunciationByFileInvoke: (data: {file_name: string, content: string}) => {
+    return request("/message/file-pronunciation", "POST", data, false);
   },
   translateSettingLanguage: (data: any) => {
     return request("/message/translate-setting-language", "POST", data, false);

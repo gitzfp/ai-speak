@@ -7,12 +7,13 @@ from app.db.topic_entities import *
 from app.db.chat_entities import *
 from app.db.account_entities import *
 from app.ai.models import *
-from app.db.textbook_entities import TaskTargetsEntity, TeacherEntity, LessonEntity
+from app.models.topic_models import *
+from typing import List
+from app.db.textbook_entities import TaskTargetsEntity,  LessonEntity
 from app.core.logging import logging
 from app.ai import chat_ai
 from app.core.azure_voice import *
 from app.models.chat_models import *
-
 
 class TopicService:
     def __init__(self, db: Session):
@@ -63,7 +64,7 @@ class TopicService:
         )
         return topic_message_params
     
-    def get_lesson_message_params(self, session_id: str) -> AITopicMessageParams:
+    def get_lesson_message_params(self, session_id: str):
         """获取课程的prompt"""
         logging.info(f"Getting lesson message params for session: {session_id}")
         
@@ -71,11 +72,7 @@ class TopicService:
         topic_session_relation = (
             self.db.query(TopicSessionRelation).filter_by(session_id=session_id).first()
         )
-        teach_entity = (
-            self.db.query(TeacherEntity)
-            .filter(TeacherEntity.lesson_id == topic_session_relation.topic_id)
-            .first()
-        )
+       
         # 获取当前用户已经完成的目标
         completed_targets = (
             self.db.query(MessageSessionEntity)
@@ -96,27 +93,18 @@ class TopicService:
         } for target in task_targets]
         
         logging.info(f"Task targets: {json.dumps(task_target_list, ensure_ascii=False)}")
+        
 
-        
-        styles = []
-        if teach_entity.role_short_name:
-            voice_role_config = get_azure_voice_role_by_short_name(
-                teach_entity.role_short_name
-            )
-            styles = voice_role_config["style_list"]
-        
-        topic_message_params = AITopicMessageParams(
-            name=teach_entity.name,
-            language=teach_entity.language,
-            prompt=teach_entity.prompt,
-            speech_role_name=teach_entity.role_short_name,
-            styles=styles,
+        return AITopicMessageParams(
+            name="Default Teacher",
+            language="en-US",
+            prompt="I am your English teacher.",
+            speech_role_name="en-US-JennyNeural",
+            styles=[],
             task_target_list=task_target_list,
             completed_targets=completed_targets
         )
-        
-        logging.info(f"Final message params: {topic_message_params.__dict__}")
-        return topic_message_params
+
 
     def get_all_topics(self, type: str, account_id: str):
         """获取所有话题组与话题"""
@@ -139,7 +127,7 @@ class TopicService:
         topic_group_entities = (
             self.db.query(TopicGroupEntity)
             .filter(
-                TopicGroupEntity.type == type,
+                TopicGroupEntity.type == type if type else True,  # 添加条件判断
                 TopicEntity.language == language,
             )
             .order_by(TopicGroupEntity.sequence.desc())
@@ -217,6 +205,7 @@ class TopicService:
                 "id": topic_target_entity.id,
                 "type": topic_target_entity.type,
                 "description": topic_target_entity.description,
+                "description_translation": topic_target_entity.description_translation,
             }
             if topic_target_entity.type == "MAIN":
                 main_targets.append(target)
@@ -234,7 +223,112 @@ class TopicService:
         }
         return result
 
-    def create_topic_session(self, topic_id: str, account_id: str):
+    # 在TopicService类中添加以下方法
+    def _create_task_targets(self, lesson_id: str, sentences: List[SentenceInfo]):
+        """创建课程任务目标（公共方法）"""
+        print(f"Processing sentences, total count: {len(sentences)}")
+        for sentence in sentences:
+            try:
+                if not all([sentence.info_en, sentence.info_cn]):
+                    print(f"Missing fields in sentence: {sentence}")
+                    continue
+                    
+                task_target = TaskTargetsEntity(
+                    info_cn=sentence.info_cn,
+                    info_en=sentence.info_en,
+                    lesson_id=lesson_id,
+                    match_type=1,
+                    status=1
+                )
+                print(f"Adding task_target: {task_target.__dict__}")
+                self.db.add(task_target)
+            except Exception as e:
+                print(f"Error creating task target: {str(e)}")
+
+    def create_lesson_session(self, lesson_id: str, account_id: str, sentences: List[SentenceInfo]):
+        """基于课程创建一个会话"""
+        # 添加调试日志
+        print(f"Creating lesson session with lesson_id: {lesson_id}")
+        print(f"Received sentences: {sentences}")
+        
+        # 创建session
+        session = MessageSessionEntity(
+            id=f"session_{short_uuid()}",
+            account_id=account_id,
+            type="LESSON",
+        )
+        self.db.add(session)
+
+        # 创建session与lesson的关系
+        session_lesson_relation = TopicSessionRelation(
+            session_id=session.id,
+            topic_id=lesson_id,
+            account_id=account_id,
+        )
+        self.db.add(session_lesson_relation)
+        
+        lesson = self.db.query(LessonEntity).filter(LessonEntity.lesson_id == lesson_id).first()
+
+        # 保存课程历史记录
+        lesson_history_entity = TopicHistoryEntity(
+            account_id=account_id,
+            topic_id=lesson_id,
+            topic_type="LESSON",
+            topic_name=f"Lesson {lesson_id}",
+            completion=0,
+            session_id=session.id,
+        )
+        self.db.add(lesson_history_entity)
+        self._create_task_targets(lesson_id, sentences)
+        try:
+            print("Attempting to commit changes...")
+            self.db.commit()
+            print("Successfully committed changes")
+        except Exception as e:
+            print(f"Error during commit: {str(e)}")
+            self.db.rollback()
+
+        self.db.commit()
+        session_info = {"id": session.id}
+        if lesson is not None:
+            session_info["name"] = f"{lesson.title}:{lesson.sub_title}"
+        return session_info
+
+    def get_lesson_session(self, lesson_id: str, account_id: str):
+        """获取基于课程的会话"""
+        # 通过 TopicSessionRelation 查找对应的 session
+        session_relation = (
+            self.db.query(TopicSessionRelation)
+            .filter(
+                TopicSessionRelation.topic_id == lesson_id,
+                TopicSessionRelation.account_id == account_id,
+            ).order_by(TopicSessionRelation.create_time.desc())
+            .first()
+        )
+
+        if not session_relation:
+            return {"id": None} 
+
+        # 如果找到了会话，返回会话信息
+        session = (
+            self.db.query(MessageSessionEntity)
+            .filter(MessageSessionEntity.id == session_relation.session_id)
+            .first()
+        )
+
+        lesson = self.db.query(LessonEntity).filter(LessonEntity.id == lesson_id).first()
+        
+        # 构建返回数据
+        session_info = {
+            "id": session.id,
+            "completed": session.completed
+        }
+        if lesson is not None:
+            session_info["name"] = f"{lesson.title}:{lesson.sub_title}"
+        
+        return session_info
+
+    def create_topic_session(self, topicSession: TopicSessionCreate, account_id: str):
         """基于主题创建一个会话"""
        
         # 创建session
@@ -248,25 +342,27 @@ class TopicService:
         # 创建session与topic的关系
         session_topic_relation = TopicSessionRelation(
             session_id=session.id,
-            topic_id=topic_id,
+            topic_id=topicSession.topic_id,
             account_id=account_id,
         )
         self.db.add(session_topic_relation)
 
         # 保存话题历史记录
         topic_entity = (
-            self.db.query(TopicEntity).filter(TopicEntity.id == topic_id).first()
+            self.db.query(TopicEntity).filter(
+                TopicEntity.id == topicSession.topic_id).first()
         )
         topic_history_entity = TopicHistoryEntity(
             account_id=account_id,
-            topic_id=topic_id,
+            topic_id=topicSession.topic_id,
             topic_type="TOPIC",
             topic_name=topic_entity.name,
             completion=0,
             session_id=session.id,
         )
         self.db.add(topic_history_entity)
-
+        self._create_task_targets(
+            topicSession.topic_id, topicSession.sentences)
         self.db.commit()
         return {"id": session.id}
 
@@ -545,68 +641,3 @@ class TopicService:
                     )
                     self.db.add(topic_phrase_entity)
         self.db.commit()
-
-    def create_lesson_session(self, lesson_id: str, account_id: str):
-        """基于课程创建一个会话"""
-        # 创建session
-        session = MessageSessionEntity(
-            id=f"session_{short_uuid()}",
-            account_id=account_id,
-            type="LESSON",  # 设置类型为LESSON
-        )
-        self.db.add(session)
-
-        # 创建session与lesson的关系
-        session_lesson_relation = TopicSessionRelation(
-            session_id=session.id,
-            topic_id=lesson_id,  # 这里使用lesson_id
-            account_id=account_id,
-        )
-        self.db.add(session_lesson_relation)
-        
-        lesson = self.db.query(LessonEntity).filter(LessonEntity.id == lesson_id).first()
-
-        # 保存课程历史记录
-        lesson_history_entity = TopicHistoryEntity(
-            account_id=account_id,
-            topic_id=lesson_id,
-            topic_type="LESSON",  # 设置类型为LESSON
-            topic_name=f"Lesson {lesson_id}",  # 可以根据实际lesson表获取名称
-            completion=0,
-            session_id=session.id,
-        )
-        self.db.add(lesson_history_entity)
-
-        self.db.commit()
-        return {"id": session.id,  "name": lesson.title + ":" + lesson.sub_title}
-
-    def get_lesson_session(self, lesson_id: str, account_id: str):
-        """获取基于课程的会话"""
-        # 通过 TopicSessionRelation 查找对应的 session
-        session_relation = (
-            self.db.query(TopicSessionRelation)
-            .filter(
-                TopicSessionRelation.topic_id == lesson_id,
-                TopicSessionRelation.account_id == account_id,
-            ).order_by(TopicSessionRelation.create_time.desc())
-            .first()
-        )
-
-        if not session_relation:
-            return {"id": None} 
-
-        # 如果找到了会话，返回会话信息
-        session = (
-            self.db.query(MessageSessionEntity)
-            .filter(MessageSessionEntity.id == session_relation.session_id)
-            .first()
-        )
-
-        lesson = self.db.query(LessonEntity).filter(LessonEntity.id == lesson_id).first()
-
-        # 直接返回 session 对象的属性
-        return {
-            "id": session.id,
-            "completed": session.completed,
-            "name": lesson.title + ":" + lesson.sub_title
-        }

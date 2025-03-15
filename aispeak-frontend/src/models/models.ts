@@ -34,7 +34,7 @@ export interface Message {
   auto_hint?: boolean | null;
   auto_pronunciation?: boolean | null;
   pronunciation?: Pronunciation | null | undefined;
-  achieved_target: boolean | null;
+  achieved_target?: boolean | null;
 }
 
 export interface Phoneme {
@@ -67,7 +67,9 @@ export interface Session {
   type?: string;
   messages: MessagePage;
   name?: string;
-  completed? : number
+  completed? : number;
+  task_targets?: any[];
+  topicOrLessonId?: string;
 }
 
 export interface Prompt {

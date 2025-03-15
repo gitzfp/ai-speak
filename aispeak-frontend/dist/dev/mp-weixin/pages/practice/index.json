@@ -1,9 +1,0 @@
-{
-  "navigationStyle": "custom",
-  "usingComponents": {
-    "loading-round": "../../components/LoadingRound",
-    "common-header": "../../components/CommonHeader",
-    "single": "./components/Single",
-    "statement": "./components/Statement"
-  }
-}

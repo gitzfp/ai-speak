@@ -197,14 +197,14 @@ const goToTopics = async() => {
     let sessionId = existingSession.data?.id
     if(sessionId){
         uni.navigateTo({
-            url: `/pages/chat/index?sessionId=${sessionId}&type=LESSON&lessonId=${lessonId}`
+            url: `/pages/chat/index?sessionId=${sessionId}&type=LESSON&topicOrLessonId=${lessonId}`
         }); 
         return
     }
     topicRequest.createLessonSession({ lesson_id: lessonData.value?.detail?.lesson_id }).then((res) => {
         console.log(res.data.id)
         uni.navigateTo({
-            url: `/pages/chat/index?sessionId=${res.data.id}&type=LESSON&lessonId=${lessonId}`
+            url: `/pages/chat/index?sessionId=${res.data.id}&type=LESSON&topicOrLessonId=${lessonId}`
         });
     }); 
     

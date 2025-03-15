@@ -1,11 +1,20 @@
 <template>
-  <view class="common-header"
-    :style="{ height: CustomBar + 'px', backgroundColor: (backgroundColor ? backgroundColor : 'inhert') }">
+  <view
+    class="common-header"
+    :style="{
+      height: CustomBar + 'px',
+      backgroundColor: backgroundColor ? backgroundColor : 'inhert',
+    }"
+  >
     <view class="common-header-content" :style="style">
       <view class="left">
         <slot name="left">
           <view class="left-icon-box" @tap="handleBack">
-            <image v-if="leftIcon" class="back-icon" src="/static/icon_header_back.png"></image>
+            <image
+              v-if="leftIcon"
+              class="back-icon"
+              src="http://114.116.224.128:8097/static/icon_header_back.png"
+            ></image>
           </view>
         </slot>
       </view>
@@ -21,36 +30,35 @@
 </template>
 <script setup lang="ts">
 import {
-  ref,
   defineProps,
   getCurrentInstance,
   computed,
   onMounted,
-  inject,
-} from "vue";
+} from "vue"
 interface Props {
-  leftIcon?: boolean;
-  backFn?: () => void;
-  backgroundColor?: string;
+  leftIcon?: boolean
+  backFn?: () => void
+  backgroundColor?: string
 }
 
 const CustomBar: any =
-  getCurrentInstance()?.appContext.config.globalProperties.CustomBar;
+  getCurrentInstance()?.appContext.config.globalProperties.CustomBar
 const StatusBar: any =
-  getCurrentInstance()?.appContext.config.globalProperties.StatusBar;
-const props = defineProps<Props>();
+  getCurrentInstance()?.appContext.config.globalProperties.StatusBar
+const props = defineProps<Props>()
 const style = computed(
   () => `height:${CustomBar}px;padding-top:${StatusBar}px;`
-);
+)
 const handleBack = () => {
   if (props.backFn) {
-    props.backFn();
+    props.backFn()
   } else {
     uni.navigateBack({
       delta: 1,
-    });
+    })
   }
-};
+}
+
 </script>
 <style lang="less" scoped>
 .common-header {

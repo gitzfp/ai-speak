@@ -1,3 +1,12 @@
+import os
+from typing import Optional
+from app.core.utils import *
+from app.config import Config
+from app.services.sys_service import SysService
+from app.models.sys_models import *
+from fastapi import APIRouter, Depends, Request, UploadFile, File, Response
+import hashlib
+import time
 import logging
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
@@ -152,3 +161,38 @@ def get_account_collects_api(
     return ApiResponse(
         data=account_service.get_collects(type, page, page_size, account_id)
     )
+
+
+@router.get("/wx/share/sign")
+def get_wx_share_sign(
+    url: str,
+    db: Session = Depends(get_db),
+    account_id: str = Depends(get_current_account),
+):
+    """获取微信分享签名配置"""
+    try:
+        noncestr = 'Wm3WZYTPz0wzccnW'  # 随机字符串
+        timestamp = int(time.time())
+        
+        account_service = AccountService(db)
+        jsapi_ticket = account_service.get_wx_jsapi_ticket()  # 直接获取 jsapi_ticket
+
+        # 生成签名字符串
+        sign_str = f"jsapi_ticket={jsapi_ticket}&noncestr={noncestr}&timestamp={timestamp}&url={url}"
+        signature = hashlib.sha1(sign_str.encode('utf-8')).hexdigest()
+
+        return ApiResponse(data={
+            "appId": Config.WX_APP_ID,
+            "nonceStr": noncestr,
+            "timestamp": timestamp,
+            "signature": signature,
+            "url": url
+        })
+    except Exception as e:
+        logging.error(f"Generate wx share sign failed. Error: {str(e)}", exc_info=True)
+        return ApiResponse(
+            success=False,
+            message="生成微信分享签名失败",
+            error=str(e)
+        )
+# ... existing code ...

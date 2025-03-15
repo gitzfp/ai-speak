@@ -127,7 +127,7 @@ def grammar_api(
     return ApiResponse(data=chat_service.grammar_analysis(dto, account_id))
 
 
-# 进行发音评估
+# 进行消息发音评估
 @router.post("/message/pronunciation")
 def pronunciation_api(
     dto: PronunciationDTO,
@@ -137,6 +137,17 @@ def pronunciation_api(
     """进行发单评估"""
     chat_service = ChatService(db)
     return ApiResponse(data=chat_service.pronunciation(dto, account_id))
+
+# 根据文件进行发音评估
+@router.post("/message/file-pronunciation")
+def file_pronunciation_api(
+    dto: FilePronunciationDTO,
+    db: Session = Depends(get_db),
+    account_id: str = Depends(get_current_account),
+):
+    """进行发单评估"""
+    chat_service = ChatService(db)
+    return ApiResponse(data=chat_service.file_pronunciation(dto, account_id))
 
 
 # 进行音素级别的发音评估

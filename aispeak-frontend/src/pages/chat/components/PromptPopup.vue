@@ -1,8 +1,16 @@
 <template>
-  <uni-popup class="popup-container" ref="promotPopup" type="bottom" :background-color="popupBackgoundColor">
+  <uni-popup
+    class="popup-container"
+    ref="promotPopup"
+    type="bottom"
+    :background-color="popupBackgoundColor"
+  >
     <view class="promot-popup-container">
       <view @tap="handleClose" class="close-icon-box">
-        <image class="close-icon" src="/static/icon_close.png"></image>
+        <image
+          class="close-icon"
+          src="http://114.116.224.128:8097/static/icon_close.png"
+        ></image>
       </view>
 
       <view class="title-box">
@@ -18,11 +26,22 @@
       <!-- 提示内容 -->
       <view v-for="prompt in promoptList" :key="prompt.text">
         <view class="promot-box padding-left-right">
-          <functional-text :session-id="sessionId" :text="prompt.text" :translate-show="prompt.translateShow"
-            class="prompt-text-box"></functional-text>
+          <functional-text
+            :session-id="sessionId"
+            :text="prompt.text"
+            :translate-show="prompt.translateShow"
+            class="prompt-text-box"
+          ></functional-text>
           <view class="action-box">
-            <view class="translate-icon-box left-box" :class="{ 'active': prompt.translateShow }">
-              <image @tap="handleTranslatePrompt(prompt)" class="icon-tanslate" src="/static/icon_translate.png">
+            <view
+              class="translate-icon-box left-box"
+              :class="{ active: prompt.translateShow }"
+            >
+              <image
+                @tap="handleTranslatePrompt(prompt)"
+                class="icon-tanslate"
+                src="http://114.116.224.128:8097/static/icon_translate.png"
+              >
               </image>
             </view>
             <view @tap="sendMessage(prompt)" class="right-box"> 发送文本 </view>
@@ -38,103 +57,105 @@
   </uni-popup>
 </template>
 <script setup lang="ts">
-import { ref, getCurrentInstance, onMounted } from "vue";
-import FunctionalText from "@/components/FunctionalText.vue";
-import Speech from "./MessageSpeech.vue";
-import chatRequest from "@/api/chat";
-import LoadingRound from "@/components/LoadingRound.vue";
-import type { Prompt } from "@/models/models";
+import { ref, getCurrentInstance, onMounted } from "vue"
+import FunctionalText from "@/components/FunctionalText.vue"
+import Speech from "./MessageSpeech.vue"
+import chatRequest from "@/api/chat"
+import LoadingRound from "@/components/LoadingRound.vue"
+import type { Prompt } from "@/models/models"
 
-const promotPopup = ref<any>(null);
-const sessionId = ref<any>(null);
-const promptLoading = ref<boolean>(true);
-const promoptList = ref<Prompt[]>([]);
-const $bus: any = getCurrentInstance()?.appContext.config.globalProperties.$bus;
-const popupBackgoundColor = ref("");
+const promotPopup = ref<any>(null)
+const sessionId = ref<any>(null)
+const promptLoading = ref<boolean>(true)
+const promoptList = ref<Prompt[]>([])
+const $bus: any = getCurrentInstance()?.appContext.config.globalProperties.$bus
+const popupBackgoundColor = ref("")
 
 onMounted(() => {
   // 如果是微信息小程序，背景色要设置成#fff
   if (process.env.VUE_APP_PLATFORM === "mp-weixin") {
-    popupBackgoundColor.value = "#fff";
+    popupBackgoundColor.value = "#fff"
   }
-});
+})
 
 const handleClose = () => {
-  closePopup();
-};
+  closePopup()
+}
 
 const open = (sessionIdValue: string) => {
-  sessionId.value = sessionIdValue;
-  promotPopup.value.open();
-  promptLoading.value = true;
+  sessionId.value = sessionIdValue
+  promotPopup.value.open()
+  promptLoading.value = true
   chatRequest
     .promptInvoke({
       session_id: sessionIdValue,
     })
     .then((data) => {
-      promoptList.value =[ {
+      promoptList.value = [
+        {
           text: data.data,
           translateShow: false,
-        }];
+        },
+      ]
       // promoptList.value = data.data.map((item: string) => {
       //   return {
       //     text: item,
       //     translateShow: false,
       //   };
       // });
-    }).finally(() => {
-      promptLoading.value = false;
     })
-};
+    .finally(() => {
+      promptLoading.value = false
+    })
+}
 
 const handleTranslatePrompt = (prompt: Prompt) => {
-  prompt.translateShow = !prompt.translateShow;
-};
+  prompt.translateShow = !prompt.translateShow
+}
 
 const sendMessage = (prompt: Prompt) => {
   $bus.emit("SendMessage", {
     text: prompt.text,
-  });
-  closePopup();
-};
+  })
+  closePopup()
+}
 
 const handleSpeechSuccess = () => {
-  closePopup();
-};
+  closePopup()
+}
 
 const closePopup = () => {
-  console.log('closePopup')
-  sessionId.value = '';
+  console.log("closePopup")
+  sessionId.value = ""
   promoptList.value = []
-  promotPopup.value.close();
-};
+  promotPopup.value.close()
+}
 
 defineExpose({
   open,
-});
+})
 </script>
 <style lang="less" scoped>
 .divide {
   width: 750rpx;
   height: 1rpx;
   // border: 1rpx solid #E8E8E8;
-  background-color: #E8E8E8;
+  background-color: #e8e8e8;
   margin-top: 27rpx;
 }
 
 .speech-divide-box {
-  background-color: #FFF;
+  background-color: #fff;
   padding-top: 156rpx;
 
   .speech-divide {
     width: 100%;
     height: 1rpx;
     box-shadow: 0rpx 0rpx 4rpx 0rpx rgba(0, 0, 0, 0.5);
-    border: 1rpx solid #E5E5E5;
+    border: 1rpx solid #e5e5e5;
     filter: blur(4px);
   }
 }
-
 
 .padding-left-right {
   padding: 0 32rpx;
@@ -232,7 +253,6 @@ defineExpose({
       background: #e8ebff;
       color: #6236ff;
     }
-
   }
 
   .icon-tanslate {

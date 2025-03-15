@@ -18,6 +18,7 @@ class AccountEntity(Base):
     session_key = Column("session_key", String(200))  # 保存 session_key
     phone_number = Column("phone_number", String(20), unique=True)
     password = Column("password", String(300), nullable=True)
+    points = Column(Integer, default=0, comment="积分")  # 新增 points 字段
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)
     update_time = Column("update_time", DateTime, default=datetime.datetime.now)
 
@@ -46,12 +47,12 @@ class AccountCollectEntity(Base):
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     message_id = Column("message_id", String(80), nullable=True)
     account_id = Column("account_id", String(80), nullable=False)
+    book_id = Column("book_id", String(80), nullable=True)
     type = Column("type", String(80), nullable=False)
     content = Column("content", String(2500), nullable=True)
+    word_id = Column("word_id", Integer, nullable=True)
     translation = Column("translation", String(2500), nullable=True)
     deleted = Column("deleted", Integer, default="0")
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)
     update_time = Column("update_time", DateTime, default=datetime.datetime.now)
     
-# 数据库未创建表的话自动创建表
-Base.metadata.create_all(engine)

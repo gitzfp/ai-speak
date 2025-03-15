@@ -10,26 +10,34 @@
         </view>
       </view>
       <view class="chat-list-action-box">
-        <AudioPlayer class="chat-list-action_playing btn-box" :messageId="collect.message_id"
-          :content="collect.content" />
-        <image @tap="handleDelete" class="chat-list-action btn-box" src="/static/deleted.png" mode="heightFix" />
+        <AudioPlayer
+          class="chat-list-action_playing btn-box"
+          :messageId="collect.message_id"
+          :content="collect.content"
+        />
+        <image
+          @tap="handleDelete"
+          class="chat-list-action btn-box"
+          src="http://114.116.224.128:8097/static/deleted.png"
+          mode="heightFix"
+        />
       </view>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, defineEmits } from "vue";
-import { defineProps } from "vue";
-import AudioPlayer from "@/components/AudioPlayer.vue";
-import type { Collect } from "@/models/models";
-import accountRequest from "@/api/account";
+import { ref, onMounted, defineEmits } from "vue"
+import { defineProps } from "vue"
+import AudioPlayer from "@/components/AudioPlayer.vue"
+import type { Collect } from "@/models/models"
+import accountRequest from "@/api/account"
 
-const emit = defineEmits();
+const emit = defineEmits()
 // 定义Collect类型为prop
 const props = defineProps<{
-  collect: Collect;
-}>();
+  collect: Collect
+}>()
 const handleDelete = () => {
   // 调用提示用户是否删除
   uni.showModal({
@@ -50,16 +58,16 @@ const handleDelete = () => {
             uni.showToast({
               title: "删除成功",
               icon: "none",
-            });
+            })
             // 触发父组件的事件
-            emit("deleteCollect", props.collect);
-          });
+            emit("deleteCollect", props.collect)
+          })
       } else if (res.cancel) {
         // 用户点击取消
       }
     },
-  });
-};
+  })
+}
 </script>
 
 <style lang="less">

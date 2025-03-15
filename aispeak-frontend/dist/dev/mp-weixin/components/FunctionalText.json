@@ -1,8 +1,0 @@
-{
-  "component": true,
-  "usingComponents": {
-    "audio-player": "./AudioPlayer",
-    "word-analysis-popup": "./WordAnalysisPopup",
-    "loading-round": "./LoadingRound"
-  }
-}

@@ -1,49 +1,38 @@
 <template>
   <view class="container">
-    <Topics class="topic-component" />
+    <!-- 移除原有 Topics 组件 -->
+    <CommonHeader>
+      <template v-slot:content>
+        <text>场景</text>
+      </template>
+    </CommonHeader>
     <view class="content">
-      <view class="role-grid">
-        <view
-          v-for="m in roles"
-          :key="m.id"
-          class="role-card"
-          @tap="handleRoleSelect(m)"
+      <!-- 新增分类导航 -->
+      <scroll-view class="category-scroll" scroll-x>
+        <view 
+          v-for="group in groupList" 
+          :key="group.id"
+          class="category-item"
+          :class="{ active: currentGroup?.id === group.id }"
+          @click="switchGroup(group)"
         >
-          <view class="role-image-wrapper">
-            <image v-if="m.avatar" :src="m.avatar" class="role-image" />
-            <image
-              v-else-if="m.gender == '2'"
-              src="http://qiniu.prejade.com/1597936949107363840/AISPeak/images/en-US_Guy.png"
-              class="role-image"
-            />
-            <image
-              v-else
-              src="https://qiniu.prejade.com/1597936949107363840/AISPeak/images/en-US_JennyNeural.png"
-              class="role-image"
-            />
-          </view>
-          <view class="role-info">
-            <text class="role-name">{{ m.local_name }}</text>
-            <view class="style-tags">
-              <view
-                v-for="style in m.styles.slice(0, 2)"
-                :key="style.value"
-                class="style-tag"
-              >
-                {{ style.label || "默认" }}
-              </view>
-              <view v-if="m.styles.length > 2" class="style-tag">
-                +{{ m.styles.length - 2 }}
-              </view>
-            </view>
-            <view class="preview-audio">
-              <AudioPlayer
-                :content="audioPlayerContent"
-                :speechRoleName="m.short_name"
-                :speechRoleStyle="m.styles[0]?.value"
-                class="audio-player"
-              />
-            </view>
+          {{ group.name }}
+        </view>
+      </scroll-view>
+
+      <!-- 修改为主题列表 -->
+      <LoadingRound v-if="loading" />
+      <view v-if="currentGroup" class="topic-list">
+        <view 
+          v-for="topic in currentGroup.topics" 
+          :key="topic.id"
+          class="topic-item"
+          @click="selectTopic(topic)"
+        >
+          <image class="topic-image" :src="topic.image_url" mode="aspectFill" />
+          <view class="topic-info">
+            <text class="topic-name">{{ topic.name }}</text>
+            <text class="topic-desc">{{ topic.description }}</text>
           </view>
         </view>
       </view>
@@ -58,6 +47,7 @@ import chatRequest from "@/api/chat";
 import accountRequest from "@/api/account";
 import sysRequest from "@/api/sys";
 import { onLoad, onShow } from "@dcloudio/uni-app";
+import topicRequest from "@/api/topic"
 
 const roles = ref<any[]>([]);
 const selectIndex = ref<number>(0);
@@ -79,7 +69,7 @@ onLoad((options: any) => {
 onShow(() => {
   // 获取用户设置的语言，之后加载相应数据
   accountRequest.getSettings().then((data) => {
-    language.value = data.data.target_language;
+    language.value = data.data.target_language || "en-US";
     initAudioPlayerContent();
     initRoles();
   });
@@ -126,12 +116,38 @@ const goChat = () => {
   return;
 };
 
-const handleRoleSelect = (role: any) => {
-  // 设置选中的角色
-  selectIndex.value = roles.value.findIndex((m) => m.id === role.id);
-  // 直接调用 goChat
-  goChat();
-};
+
+const groupList = ref<any[]>([])
+const currentGroup = ref<any>(null)
+const loading = ref(false)
+
+onShow(() => {
+  accountRequest.getSettings().then((data) => {
+    language.value = data.data.target_language || "en-US";
+    loadGroupData();  // 改为加载分组数据
+  });
+});
+
+const loadGroupData = () => {
+  loading.value = true
+  topicRequest.getTopicData({}).then(res => {
+    groupList.value = res.data
+    if (groupList.value.length > 0) {
+      currentGroup.value = groupList.value[0]
+    }
+    loading.value = false
+  })
+}
+
+const switchGroup = (group: any) => {
+  currentGroup.value = group
+}
+
+const selectTopic = (topic: any) => {
+  uni.navigateTo({
+    url: `/pages/topic/index?topicId=${topic.id}`
+  })
+}
 </script>
 
 <style scoped lang="less">
@@ -215,5 +231,112 @@ const handleRoleSelect = (role: any) => {
 
 .topic-component {
   margin-bottom: 20rpx;
+}
+
+// 修改分类导航样式
+.category-scroll {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  scrollbar-width: none;  // Firefox
+  -ms-overflow-style: none;  // IE/Edge
+  -webkit-overflow-scrolling: touch;
+  padding: 45rpx 32rpx 45rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.03);
+  margin-bottom: 24rpx;
+  white-space: nowrap;  // 确保内容不换行
+  
+  .category-item {
+    display: inline-block;
+    padding: 16rpx 36rpx;
+    margin-right: 32rpx;
+    border-radius: 40rpx;
+    background: #f5f5f5;
+    color: #666;
+    font-size: 28rpx;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    
+    &:last-child {
+      margin-right: 20rpx;  // 最后一项保留一些右边距
+    }
+    
+    &:active {
+      transform: scale(0.95);
+    }
+    
+    &.active {
+      background: linear-gradient(135deg, #4B7EFE, #6A93FF);
+      color: white;
+      box-shadow: 0 4rpx 12rpx rgba(75, 126, 254, 0.3);
+    }
+  }
+}
+
+// 优化主题列表样式
+.topic-list {
+  padding: 0 20rpx;
+  
+  .topic-item {
+    display: flex;
+    padding: 32rpx;
+    margin-bottom: 32rpx;
+    background: white;
+    border-radius: 24rpx;
+    box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+    
+    &:active {
+      transform: scale(0.98);
+      box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.02);
+    }
+    
+    .topic-image {
+      width: 220rpx;
+      height: 220rpx;
+      border-radius: 16rpx;
+      margin-right: 32rpx;
+      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+    }
+    
+    .topic-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      
+      .topic-name {
+        font-size: 34rpx;
+        font-weight: bold;
+        margin-bottom: 16rpx;
+        color: #333;
+      }
+      
+      .topic-desc {
+        font-size: 28rpx;
+        color: #666;
+        line-height: 1.6;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+}
+
+// 全局隐藏滚动条
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+// 添加加载状态样式
+.loading-round {
+  margin: 60rpx auto;
 }
 </style>

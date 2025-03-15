@@ -88,19 +88,15 @@ class CollectDTO(BaseModel):
     type: constr(min_length=1)
     message_id: str = None
     content: str = None
+    word_id: int = None
+    # book_id: int = None
+    book_id: str = None
 
 
 class PromptDTO(BaseModel):
     """帮助用户生成提示句"""
 
     session_id: constr(min_length=1)
-
-
-class AccountSettingsDTO(BaseModel):
-    auto_playing_voice: bool = True
-    playing_voice_speed: str = "1.0"
-    auto_text_shadow: bool = True
-    auto_pronunciation: bool = True
 
 
 class CreateSessionDTO(BaseModel):
@@ -119,10 +115,19 @@ class UpdateLanguageDTO(BaseModel):
     language: constr(min_length=1)
 
 
+from typing import Optional
+from pydantic import BaseModel, constr, validator
+
 class AccountSettingsDTO(BaseModel):
-    target_language: str | None = None
-    speech_role_name: str | None = None
-    auto_playing_voice: int = 1
-    playing_voice_speed: str = "1.0"
-    auto_text_shadow: int = 1
-    auto_pronunciation: int = 1
+    target_language: Optional[str] = None
+    speech_role_name: Optional[str] = None
+    auto_playing_voice: Optional[bool] = None
+    playing_voice_speed: Optional[str] = None
+    auto_text_shadow: Optional[bool] = None
+    auto_pronunciation: Optional[bool] = None
+
+    @validator('auto_playing_voice', 'auto_text_shadow', 'auto_pronunciation', pre=True)
+    def convert_to_bool(cls, v):
+        if isinstance(v, int):
+            return bool(v)
+        return v

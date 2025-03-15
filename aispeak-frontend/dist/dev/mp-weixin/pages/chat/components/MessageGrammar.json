@@ -1,8 +1,0 @@
-{
-  "component": true,
-  "usingComponents": {
-    "functional-text": "../../../components/FunctionalText",
-    "loading-round": "../../../components/LoadingRound",
-    "collect": "../../../components/Collect"
-  }
-}

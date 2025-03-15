@@ -81,6 +81,11 @@ class PronunciationDTO(BaseModel):
     """语音评估"""
     message_id: constr(min_length=1)
 
+class FilePronunciationDTO(BaseModel):
+    """根据文件名语音评估"""
+    file_name: constr(min_length=3)
+    content: constr(min_length=1)
+
 
 class WordDetailDTO(BaseModel):
     """单词详情"""
