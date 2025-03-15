@@ -54,4 +54,3 @@ COPY ssl/dingguagua.fun.key /etc/nginx/ssl/
 
 EXPOSE 80 443
 CMD ["nginx", "-g", "daemon off;"]
->>>>>>> 5532451a (Update Docker deployment configuration)
