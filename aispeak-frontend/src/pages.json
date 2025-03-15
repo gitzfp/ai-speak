@@ -234,17 +234,11 @@
 	    "selectedIconPath": "static/home_select.png",
 	    "iconPath": "static/home.png"
 	  },
-	  {
-	    "pagePath": "pages/textbook/index2",
-	    "text": "首页2",
-	    "selectedIconPath": "static/home_select.png",
-	    "iconPath": "static/home.png"
-	  },
       {
-        "pagePath": "pages/index/index",
-        "text": "场景",
+        "pagePath": "pages/textbook/WordRecitationHome",
+        "text": "计划",
         "selectedIconPath": "static/edit_select.png",
-        "iconPath": "static/home.png"
+        "iconPath": "static/edit.png"
       },
       {
         "pagePath": "pages/my/index",

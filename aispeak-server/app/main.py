@@ -69,3 +69,8 @@ async def user_access_denied_error_handler(_, exc: UserAccessDeniedException):
         },
         content=ApiResponse(code="403", status=403, message=str(exc)).__dict__,
     )
+
+
+@app.get("/health") 
+def health_check(): 
+    return 'OK', 200
