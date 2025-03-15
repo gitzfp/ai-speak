@@ -4,6 +4,7 @@
 		<view class="headView" :style="{ paddingTop: statusBarHeight + 'px', height: '44px' }">
 			<image @tap="handleBackPage" class="head-icon" src="@/assets/icons/black_back.svg"></image>
 			<view class="head-text">单词听写</view>
+			<view v-if="word_mode == 4" class="head-points">积分:{{totalpoints}}</view>
 		</view>
 		<template v-if="allWords.length>0" >
 			<view class="topcontent" :animation="animationData">
@@ -104,6 +105,7 @@ import textbook from '@/api/textbook'
 import jiahao from '@/assets/icons/word_jiahao.svg';
 import dagou from '@/assets/icons/word_dagou.svg';
 import accountRequest from "@/api/account"
+import study from '@/api/study';
 // 获取设备的安全区域高度
 const statusBarHeight = ref(0);
 const customBarHeight = ref(0);
@@ -168,12 +170,22 @@ const originalwordletters = ref([])
 
 const book_id = ref('')
 
+const lesson_id = ref('')
+
 const isreport = ref(false)
 
 //生词本 数租
 const notebookList = ref([])
 
 const nonLetterChars = ref([])
+
+const totalpoints = ref(0)
+const totalerrornum = ref(0)
+
+//等于4 是单元首页进来了
+const word_mode = ref(0)
+
+
 	
 // 组件挂载
 	onMounted(() => {
@@ -186,8 +198,13 @@ const nonLetterChars = ref([])
 	})
 
 	onLoad(async (options) => {
-        const {bookId,sessionKey,learningreportWords} = options
+        const {bookId,sessionKey,learningreportWords,wordmode,lessonId} = options
 		book_id.value = bookId
+		
+		if (wordmode) { 
+			word_mode.value = wordmode
+			lesson_id.value = lessonId
+		}
 		
 		if (learningreportWords) { //说明说从 被单词那边进来 就是艾比记忆法 
 			isreport.value = true
@@ -195,8 +212,16 @@ const nonLetterChars = ref([])
 			uni.getStorage({
 			key: learningreportWords,
 			success: function (res) {
-				console.log('获取到的数据:');
-				allWords.value = JSON.parse(res.data);
+				console.log('获取到的数据:');				
+				allWords.value = JSON.parse(res.data).map(word => ({
+					...word,
+					content_id: word.word_id,
+					content_type: 3,
+					error_count: 0,
+					points: 0,
+					speak_count: 0,
+					audio_url: word.sound_path,
+				}));
 			   
 				//获取生词本数组
 				collectsGetnotebook()
@@ -236,8 +261,12 @@ const detailWords = async (bookId, words) => {
 			//allWords 数组，添加 正确:correct_count  和 错误:incorrect_count 字段
 			allWords.value = response.data.words.map(word => ({
 			  ...word,
-			  correct_count: 0,
-			  incorrect_count: 0,
+			  content_id:word.word_id,
+			  content_type:3,
+			  error_count: 0,
+			  points: 0,
+			  speak_count:0,
+			  voice_file:word.sound_path,
 			}));
 
 			// 使用 nextTick 确保 DOM 更新完成
@@ -529,11 +558,13 @@ const inspectclick =()=> {
 		playNext(answernum)
 		
 		
-		// 更新 correct_count 或 incorrect_count
-		if (isEqual) {
-		  allWords.value[currentPage.value].correct_count += 1;
+		// 更新 error_count 和points 还有总totalpoints和totalerrornum
+		if (isEqual) { //正确
+		  allWords.value[currentPage.value].points += 1;
+		  totalpoints.value += 1
 		} else {
-		  allWords.value[currentPage.value].incorrect_count += 1;
+		  allWords.value[currentPage.value].error_count += 1;
+		  totalerrornum.value += 1
 		}
 		
 
@@ -562,26 +593,79 @@ const inspectclick =()=> {
 }
 
 
-const reportclick =()=> {
-	const learningreportWords = 'learningreportWords';
-	
+const reportclick =()=> {	
 	var backPage = isreport.value?3:2
-	
-	uni.setStorage({
-	  key: learningreportWords,
-	  data: JSON.stringify(allWords.value),
-	  success: function () {
-		console.log('数据存储成功');
-		// 跳转到学习页面
-		uni.navigateTo({
-		  url: `/pages/textbook/Learningreport?learningreportWords=${learningreportWords}&bookId=${book_id.value}&backPage=${backPage}`, // 将缓存键名传递给学习页面
+	if (word_mode.value == 4) { //单元进去	
+		//判断错误为0 积分翻倍
+		if (totalerrornum.value == 0) {
+			allWords.value.forEach(word => word.points *= 2);
+			totalpoints.value = totalpoints.value*2	
+		}
+		submitreslutStudyProgressReport(allWords.value)
+		
+		
+	} else {
+		let learningreportWords = 'learningreportWords'
+		uni.setStorage({
+		  key: learningreportWords,
+		  data: JSON.stringify(allWords.value),
+		  success: function () {
+			console.log('数据存储成功');
+			// 跳转到学习页面
+			uni.navigateTo({
+			  url: `/pages/textbook/Learningreport?learningreportWords=${learningreportWords}&bookId=${book_id.value}&backPage=${backPage}`, // 将缓存键名传递给学习页面
+			});
+		  },
+		  fail: function (err) {
+			console.log('数据存储失败', err);
+		  }
 		});
-	  },
-	  fail: function (err) {
-		console.log('数据存储失败', err);
-	  }
-	});
+	}	
 }
+
+const submitreslutStudyProgressReport = async(reports)=> {
+		try {
+		
+			// 显示加载中状态
+			uni.showLoading({
+			title: '报告生成中...',
+			mask: true, // 防止用户点击
+			});
+			const response = await study.submitStudyProgressReport(book_id.value,lesson_id.value,reports);
+				
+			uni.hideLoading();
+					
+			let unitreportWords = 'unitreportWords'
+			uni.setStorage({
+			  key: unitreportWords,
+			  data: JSON.stringify(allWords.value),
+			  success: function () {
+				console.log('数据存储成功');
+				// 跳转到学习页面
+				uni.navigateTo({
+				  url: `/pages/textbook/UnitWordreport?unitreportWords=${unitreportWords}&totalpoints=${totalpoints.value}&backPage=2&type=3`, // 将缓存键名传递给学习页面
+				});
+			  },
+			  fail: function (err) {
+				console.log('数据存储失败', err);
+			  }
+			});
+				
+		} catch (error) {
+		  
+		  // 隐藏加载中状态
+			uni.hideLoading();
+
+			// 请求失败后的逻辑
+			console.error('提交学习进度报告失败:', error);
+			uni.showToast({
+			title: '提交失败，请重试',
+			icon: 'none',
+			});
+		  
+		}
+	}
+	
 
 const isUnfamiliarWord =()=> {
 	if (notebookList.value.length>0 && currentWord.value) {
@@ -651,6 +735,10 @@ const wordsNotebookclick =()=> {
 		flex: 1;
 		text-align: center;
 		font-size: 36rpx;
+	}
+	.head-points {
+		color: orange;
+		margin-right: 20rpx;
 	}
 }
 

@@ -3,29 +3,65 @@
 <!-- 	white_back.svg -->
 	<view class="headView" :style="{ paddingTop: statusBarHeight + 'px', height: '44px' }">
 		<image @tap="handleBackPage" class="head-icon" src="@/assets/icons/black_back.svg"></image>
-		<view class="head-text">单元学习单词报告</view>
+		<view v-if="report_type==0" class="head-text">单元学习单词报告</view>
+		<view v-else-if="report_type==3" class="head-text">单元拼写单词报告</view>
+		<view v-else class="head-text">单元句子跟读报告</view>
 	</view>
     <!-- 顶部区域 -->
     <view class="top-section">
-		
+		<view class="top-section-p">积分+{{total_points}}</view>
+		<template v-if="report_type!=4">
+			<view class="top-section-ins" v-if="errorCountGreaterThanZero==0">全部正确<text style="color: red;">积分翻倍</text></view>
+			<view class="top-section-ins" v-else>错误{{errorCountGreaterThanZero}}个</view>
+		</template>
     </view>
 
     <!-- 背单词记录 -->
     <view class="word-section">
-		<view class="word-section-tit">
-			<view class="section-title">本次学习单词</view>
-			<view class="word-count">共{{ allWords.length }}个单词 
-				<text style="color: orange;">
-					公得积分:{{total_points}}
-				</text>
-			</view>
+		
+		<view class="item_view">
+			<template v-if="report_type!=4">
+				<view style="background-color: #FEF4B9;" class="item_icon">
+					<view class="item_icon_two">本次学习词汇</view>
+					<view class="item_icon_one"><text style="font-size: 40rpx;margin-right: 5rpx;">{{allWords.length}}</text>词</view>
+				</view>
+				<view style="background-color: #DFFDC7" class="item_icon">
+					<view class="item_icon_two">本次正确率</view>
+					<view class="item_icon_one"><text style="font-size: 40rpx;margin-right: 5rpx;">{{errorPercentage}}</text>%</view>
+				</view>
+			</template>
+			<template v-else>
+				<view style="background-color: #FEF4B9;" class="item_icon">
+					<view class="item_icon_two">本次学习句子</view>
+					<view class="item_icon_one"><text style="font-size: 40rpx;margin-right: 5rpx;">{{allWords.length}}</text>句</view>
+				</view>
+				<view style="background-color: #DFFDC7" class="item_icon">
+					<view class="item_icon_two">本次开口总次数</view>
+					<view class="item_icon_one"><text style="font-size: 40rpx;margin-right: 5rpx;">{{totalSpeakCount}}</text>次</view>
+				</view>
+			</template>
+			
 		</view>
+		
       
       <view class="word-list">
-        <view v-for="(word, index) in allWords" :key="word.word_id" class="word-item">
-          <text class="word-text">{{ word.word }}</text>
-		  <text class="word-text">答错{{ word.error_count }}次</text>
-        </view>
+		<template v-if="report_type!=4">
+			<view v-for="(word, index) in allWords" :key="word.word_id" class="word-item">
+			  <text class="word-text">{{ word.word }}</text>
+			  <text v-if="report_type==3" class="word-text">拼错<text style="color: red;">{{ word.error_count }}</text>次</text>
+			  <text v-else class="word-text">答错<text style="color: red;">{{ word.error_count }}</text>次</text>
+			</view>
+		</template>
+		<template v-else>
+			<view v-for="(word, index) in allWords" :key="word.word_id" class="word-item">
+			  <view class="word-text">
+				<view>{{ word.english }}</view>
+				<view style="margin-top: 10rpx;">{{ word.chinese }}</view>
+			  </view>
+			  <view class="word-text">开口次数<text style="color: red;">{{ word.speak_count }}</text>次</view>
+			</view>
+		</template>
+        
       </view>
     </view>
 
@@ -47,6 +83,8 @@
 	const total_points = ref(0)
 	const currentAudio = ref(null);
 	const backPageNum = ref(1)
+	
+	const report_type = ref(0)
 	
 	const statusBarHeight = ref(0);
 	const customBarHeight = ref(0);
@@ -104,16 +142,41 @@
 	    });
 	}
 	
+	const errorCountGreaterThanZero = computed(() => {
+	  return allWords.value.filter(word => word.error_count > 0).length;
+	});
+	
+	const errorPercentage = computed(() => {
+	  const totalWords = allWords.value.length;
+	  if (totalWords === 0) return 0; // 避免除以零
+	  var correctCountGreaterThanZero = allWords.value.filter(word => word.error_count <= 0).length;
+	  return (correctCountGreaterThanZero / totalWords) * 100;
+	});
+	
+	const totalSpeakCount = computed(() => {
+	  return allWords.value.reduce((sum, word) => sum + (word.speak_count || 0), 0);
+	});
+	
+	
 	onLoad(async (options) => {
-	     const {totalpoints,unitreportWords,backPage} = options
+	     const {totalpoints,unitreportWords,backPage,type} = options
 			total_points.value = totalpoints
 			backPageNum.value = backPage
+			report_type.value = type
 			// 获取数据
 			uni.getStorage({
 			key: unitreportWords,
 			success: function (res) {
 				console.log('获取到的数据:');
-				allWords.value = JSON.parse(res.data);
+				const data = JSON.parse(res.data);
+				
+				if (report_type.value == 4) {
+					// 过滤出 isHaverated == 1 的数据
+					allWords.value = data.filter(item => item.isHaverated == 1);
+				} else {
+					allWords.value = data;
+				}
+				
 			   
 			},
 			fail: function (err) {
@@ -154,16 +217,55 @@
   // display: flex;
   // flex-direction: column;
   // padding: 20rpx;
-  // background-color: #5AC467;
-  background-color:  #C9FACA;
+  background-color: #fff;
+  // background-color:  #C9FACA;
   height: 100vh;
 }
 
 .top-section {
   background-color: #fff;
-  margin: 30rpx;
-  border-radius: 10rpx;
-  color: white;
+  margin: 100rpx;
+  // border-radius: 10rpx;
+  // text-align: center;
+  display: flex;
+  justify-content: space-between;
+}
+.top-section-p {
+	color: orange;
+	font-size: 30rpx;
+}
+.top-section-ins {
+	color: #333;
+	font-size: 30rpx;
+}
+
+.item_view {
+	width: calc(100% - 50rpx);
+	margin-left: 25rpx;
+	box-sizing: border-box;
+	display: flex;
+	justify-content: space-between;
+	.item_icon {
+		width: calc(50% - 10rpx);
+		box-sizing: border-box;
+		// border: #f0f0f0 1rpx solid;
+		// border: #ECECEC 1rpx solid;
+		// box-shadow: 2rpx 2rpx 4rpx rgba(0, 0, 0, 0.1);
+		border-radius: 30rpx;
+		padding: 30rpx;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		margin-bottom: 10rpx;
+		.item_icon_one {
+			// color: orange;
+			font-size: 30rpx;
+		}
+		.item_icon_two {
+			margin-top: 20rpx;
+		}
+	} 
 }
 
 .user-info {
@@ -257,26 +359,33 @@
 }
 
 .word-list {
-  margin-top: 10rpx;
+  margin-top: 50rpx;
 }
 
 .word-item {
-	border-top:#979797 0.5rpx solid;;
+  // border-bottom:0.5rpx solid #7F8583;
+  border-bottom:1rpx dashed #979389;
   font-size: 24rpx;
   padding: 30rpx;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .left-icon {
 	height: 40rpx;
 	width: 40rpx;
 }
 
 .bottom-section {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 150rpx;
   display: flex;
   justify-content: space-between;
-  margin: 30rpx;
+  // margin: 30rpx;
 }
 
 .action-button {
