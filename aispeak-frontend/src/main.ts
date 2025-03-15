@@ -2,6 +2,7 @@ import { createSSRApp } from "vue";
 import App from "./App.vue";
 import EventBus from "@/utils/bus";
 import WxShare from '@/utils/wxShare'
+import utils from "@/utils/utils"
 
 const getHeight = (global: any) => {
   uni.getSystemInfo({
@@ -15,7 +16,7 @@ const getHeight = (global: any) => {
       }
       // MP-WEIXIN specific logic
       // #ifdef MP-WEIXIN
-      global.Custom = wx.getMenuButtonBoundingClientRect();
+      global.Custom = uni.getMenuButtonBoundingClientRect();
       let customBar =
         global.Custom.bottom + global.Custom.top - global.StatusBar + 4;
       global.CustomBar = customBar;
@@ -38,7 +39,7 @@ export function createApp() {
 
   // 初始化微信分享
   // #ifdef H5
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production' && utils.isWechat()) {
     // 延迟执行，确保页面完全加载
     setTimeout(() => {
       WxShare.init();

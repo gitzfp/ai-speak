@@ -1,0 +1,38 @@
+services:
+  backend:
+    build: ./aispeak-server
+    env_file: .env
+    volumes : 
+      - ./files:/aispeak-server/files
+    ports:
+      - "8097:8097"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    # healthcheck:
+    #   test : [ "CMD" , "curl" , "-f" , "http://localhost:8097/health" ]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+    networks:
+      - app-network
+    command: gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8097
+
+  frontend:
+    build:
+      context: ./aispeak-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./aispeak-frontend/ssl/dingguagua.fun.crt:/etc/nginx/ssl/dingguagua.fun.crt
+      - ./aispeak-frontend/ssl/dingguagua.fun.key:/etc/nginx/ssl/dingguagua.fun.key
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+    attachable: true
