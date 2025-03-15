@@ -122,8 +122,6 @@
 			
 			const response = await study.submitStudyProgressReport(bookId, lessonId,reports,statusNum);
 			
-			//发消息更新首页积分
-			uni.$emit('refrespoints', { action: 'updatepoints' });
 			
 			if (isDone)  { //全部完成才会跳转了
 				uni.hideLoading();
@@ -144,6 +142,8 @@
 				  }
 				});
 			} else { //直接返回了
+				//发消息更新首页积分
+				uni.$emit('refrespoints', { action: 'updatepoints' });
 				uni.navigateBack()
 			}	
 			

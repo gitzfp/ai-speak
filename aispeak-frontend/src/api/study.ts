@@ -148,5 +148,14 @@ export default {
 	        lesson_id: lessonId,
 	      });
 	    },
+		
+		
+		// 获取 content_type 为 0, 1, 2 的学习进度报告
+		getStudyProgressReports(bookId: string, lessonId: number) {
+		  return request("/study/progress-reports", "GET", {
+			book_id: bookId,
+			lesson_id: lessonId,
+		  });
+		},
   
 };
