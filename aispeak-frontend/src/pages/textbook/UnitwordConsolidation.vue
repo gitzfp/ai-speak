@@ -134,7 +134,7 @@
 	//用于计算进度条
 	const progressThreeindext = ref(0);
 	
-	const planWordmode = ref(2); // 总共三种模式
+	const planWordmode = ref(0); // 总共三种模式
 	
 	// 获取设备的安全区域高度
 	const statusBarHeight = ref(0);
@@ -163,9 +163,17 @@
 		customBarHeight.value = (systemInfo.statusBarHeight || 0) + 44; // 44 是导航栏的默认高度
 		
 		setTimeout(() => {
-		      if (wordDisplayref.value) {
-		        wordDisplayref.value.phonicsbegins();
-		      }		
+			
+			if (planWordmode.value == 2) {
+				if (unitwordspellref.value) {
+				  unitwordspellref.value.phonicsbegins(0);
+				}
+			} else {
+				if (wordDisplayref.value) {
+				  wordDisplayref.value.phonicsbegins();
+				}	
+			}
+				
 		}, 500); // 延迟 100ms
 	});
 	
@@ -253,13 +261,14 @@
 	
 	
 	const optionitemclick = (num) => {
+		const targetWord = planWordsWithCounts.value.find(word => word.word_id === optionWord.value.word_id);
+		targetWord.isHaverated=1
 	  if (num==1) { //答对了
 		isRight.value = true
 		optionWord.value.points = 1;
 		totalpoints.value += 1; 
 	  } else {
 		  
-		  const targetWord = planWordsWithCounts.value.find(word => word.word_id === optionWord.value.word_id);
 		  targetWord.error_count += 1;
 		totalerrornum.value += 1
 		optionWord.value.error_count += 1
@@ -269,12 +278,13 @@
 	};
 	
 	const inspectionresult = (num) => {
+		const targetWord = planWordsWithCounts.value.find(word => word.word_id === optionWord.value.word_id);
+		targetWord.isHaverated = 1
 	  if (num==1) { //答对了
 		isRight.value = true
 		optionWord.value.points = 1;
 		totalpoints.value += 1; 
 	  } else {
-		  const targetWord = planWordsWithCounts.value.find(word => word.word_id === optionWord.value.word_id);
 		  targetWord.error_count += 1;
 		  
 		  totalerrornum.value += 1
@@ -287,84 +297,103 @@
 	
 	//模式1和2 的继续按钮
 	const handleContinue = () => {
-		if (isRight.value) { //正确
-			if (planWordmode.value == 1) {
-				wordDisplayref.value.redefineSettings()
-				if (planWordTwoindext.value==(planWordsTwoList.value.length-1)) {
-					planWordmode.value = 2
-					
-					setTimeout(() => {
-					    if (unitwordspellref.value) {
-					      unitwordspellref.value.phonicsbegins(0);
-					    }	
-					}, 500);
-				} else {
-					setTimeout(() => {
-					      if (wordDisplayref.value) {
-					        wordDisplayref.value.phonicsbegins();
-					      }		
-					}, 500);
-					
-				}
-				planWordTwoindext.value++;
-			} else { //模式=2  相当于模式3
-				unitwordspellref.value.stopCurrentAudio()
-				if (planWordThreeindext.value==(planWordsThreeList.value.length-1)) {
-					progressThreeindext.value = planWordsThreeList.value.length
-					
-					// 创建一个新数组，包含三个数组的所有数据
-					const combinedWordsList = planWordsList.value.concat(planWordsTwoList.value, planWordsThreeList.value);
-
-					//这边全部结束了要直接其他操作
-					if (totalerrornum.value == 0) {
-						combinedWordsList.forEach(word => word.points *= 2);
-						totalpoints.value = totalpoints.value*2	
+		
+		if (showPopup.value) {
+			optionWord.value.isHaverated = 1
+			showPopup.value = false
+			if (isRight.value) { //正确
+				if (planWordmode.value == 1) {
+					wordDisplayref.value.redefineSettings()
+					if (planWordTwoindext.value==(planWordsTwoList.value.length-1)) {
+						planWordmode.value = 2
+						
+						setTimeout(() => {
+						    if (unitwordspellref.value) {
+						      unitwordspellref.value.phonicsbegins(0);
+						    }	
+						}, 500);
+					} else {
+						setTimeout(() => {
+						      if (wordDisplayref.value) {
+						        wordDisplayref.value.phonicsbegins();
+						      }		
+						}, 500);
+						
 					}
-					
-					
-					submitreslutStudyProgressReport(book_id.value,lesson_id.value,combinedWordsList)
-					
-					
-				} else {
-					
-					planWordThreeindext.value++;
-					progressThreeindext.value = planWordThreeindext.value
-					setTimeout(() => {
-					    if (unitwordspellref.value) {
-					      unitwordspellref.value.phonicsbegins(0);
-					    }	
-					}, 500);
+					planWordTwoindext.value++;
+				} else { //模式=2  相当于模式3
+					unitwordspellref.value.stopCurrentAudio()
+					if (planWordThreeindext.value==(planWordsThreeList.value.length-1)) {
+						progressThreeindext.value = planWordsThreeList.value.length
+						
+						// 创建一个新数组，包含三个数组的所有数据
+						const combinedWordsList = planWordsList.value.concat(planWordsTwoList.value, planWordsThreeList.value);
+			
+						// 筛选出 isHaverated 为 1 的数据
+						const filteredWordsList = combinedWordsList.filter(word => word.isHaverated === 1);
+						
+						
+						if (filteredWordsList.length>0) {
+							//这边全部结束了要直接其他操作
+							if (totalerrornum.value == 0) {
+								filteredWordsList.forEach(word => word.points *= 2);
+								totalpoints.value = totalpoints.value*2	
+							}
+							
+							
+							submitreslutStudyProgressReport(book_id.value,lesson_id.value,filteredWordsList,true)
+							
+						}
+						
+						
+					} else {
+						
+						planWordThreeindext.value++;
+						progressThreeindext.value = planWordThreeindext.value
+						setTimeout(() => {
+						    if (unitwordspellref.value) {
+						      unitwordspellref.value.phonicsbegins(0);
+						    }	
+						}, 500);
+					}
 				}
-			}
-		} else {  //答错了
-			if (planWordmode.value == 1) {
-				// 将当前对象移到数组最后一位
-				const currentWord = planWordsTwoList.value.splice(planWordTwoindext.value, 1)[0];
-				planWordsTwoList.value.push(currentWord);
-			} else if (planWordmode.value == 2) {
-				if (planWordThreeindext.value ==(planWordsThreeList.value.length-1)) {
-					unitwordspellref.value.initiativerefreshData()
-				} else {
+			} else {  //答错了
+				if (planWordmode.value == 1) {
 					// 将当前对象移到数组最后一位
-					const currentWord = planWordsThreeList.value.splice(planWordThreeindext.value, 1)[0];
-					planWordsThreeList.value.push(currentWord);
+					const currentWord = planWordsTwoList.value.splice(planWordTwoindext.value, 1)[0];
+					planWordsTwoList.value.push(currentWord);
+				} else if (planWordmode.value == 2) {
+					if (planWordThreeindext.value ==(planWordsThreeList.value.length-1)) {
+						unitwordspellref.value.initiativerefreshData()
+					} else {
+						// 将当前对象移到数组最后一位
+						const currentWord = planWordsThreeList.value.splice(planWordThreeindext.value, 1)[0];
+						planWordsThreeList.value.push(currentWord);
+					}
 				}
 			}
 		}
-		showPopup.value = false
+		
+		
+		
 	}
 	const clicknext = () => {
-		 wordDisplayref.value.redefineSettings()
-		if (planWordindext.value==(planWordsList.value.length-1)) {
-			planWordmode.value = 1
+		if (isShowmark.value) {
+			optionWord.value.isHaverated = 1
+			isShowmark.value = false
+			wordDisplayref.value.redefineSettings()
+			if (planWordindext.value==(planWordsList.value.length-1)) {
+				planWordmode.value = 1
+			}
+			planWordindext.value++;
+			
+			setTimeout(() => {
+			    if (wordDisplayref.value) {
+			      wordDisplayref.value.phonicsbegins();
+			    }	
+			}, 500);
 		}
-		planWordindext.value++;
 		
-		setTimeout(() => {
-		    if (wordDisplayref.value) {
-		      wordDisplayref.value.phonicsbegins();
-		    }	
-		}, 500);
 		
 	}
 	const evaluationResult = (pronunciationScore) => {
@@ -397,7 +426,7 @@
 	// 监听 planWordindext 的变化
 	watch(planWordindext, (newValue, oldValue) => {
 		pronunciation_score.value = 0
-		isShowmark.value = false
+		// isShowmark.value = false
 		// 例如，重新加载单词显示组件
 		// if (wordDisplayref.value) {
 		// 	wordDisplayref.value.phonicsbegins();
@@ -413,7 +442,31 @@
 	}
 	const gonavback = () => {
 		uniExitreminderPopPopup.value = false
-		uni.navigateBack()
+		
+		
+		// 创建一个新数组，包含三个数组的所有数据
+		const combinedWordsList = planWordsList.value.concat(planWordsTwoList.value, planWordsThreeList.value);
+					
+		// 筛选出 isHaverated 为 1 的数据
+		const filteredWordsList = combinedWordsList.filter(word => word.isHaverated === 1);
+		
+		
+		console.log("filteredWordsList.length")
+		console.log(filteredWordsList.length)
+		
+		if (filteredWordsList.length>0) {
+			//这边全部结束了要直接其他操作
+			if (totalerrornum.value == 0) {
+				filteredWordsList.forEach(word => word.points *= 2);
+				totalpoints.value = totalpoints.value*2	
+			}
+			
+			submitreslutStudyProgressReport(book_id.value,lesson_id.value,filteredWordsList,false)
+			
+		} else {
+			uni.navigateBack()
+		}
+	
 	}
 	
 	
@@ -435,17 +488,34 @@
 		uni.getStorage({
 		key: sessionKey,
 		success: function (res) {
-		    const words = JSON.parse(res.data);
-		    console.log('获取到的数据:', words);
-		    detailWords(bookId,words)
-		
+		    const words = JSON.parse(res.data);		    
+			acquireStudyProgressReports(words)
 		},
 		fail: function (err) {
 		    console.log('获取数据失败', err);
 		}
 		});
 	})
-	const detailWords = async (bookId, words) => {
+	
+	const acquireStudyProgressReports = async(words) => {
+		try {
+			const response = await study.getStudyProgressReports(book_id.value, lesson_id.value);
+			
+		    const completeList = response.data
+			
+			detailWords(book_id.value,words,completeList)
+			
+		} catch (error) {
+			console.error('获取列表失败:', error);
+			uni.showToast({
+			  title: '获取列表失败',
+			  icon: 'none',
+			});
+	  }
+		
+	}
+	
+	const detailWords = async (bookId, words,completeList) => {
 	  try {
 	    const response = await textbook.getWordsDetail(bookId, words);
 		
@@ -457,8 +527,11 @@
 		error_count: 0,
 		points: 0,
 		speak_count:0,
-		voice_file:word.sound_path,
+		audio_url:word.sound_path,
+		isHaverated:0,
 		}));
+		
+		
 
 		planWordsTwoList.value = response.data.words.map(word => ({
 		...word,
@@ -467,7 +540,8 @@
 		error_count: 0,
 		points: 0,
 		speak_count:0,
-		voice_file:word.sound_path,
+		audio_url:word.sound_path,
+		isHaverated:0,
 		}));
 
 		planWordsThreeList.value = response.data.words.map(word => ({
@@ -477,14 +551,96 @@
 		error_count: 0,
 		points: 0,
 		speak_count:0,
-		voice_file:word.sound_path,
+		audio_url:word.sound_path,
+		isHaverated:0,
 		}));
-	
 		
 		planWordsWithCounts.value = response.data.words.map(word => ({
-		  ...word,
-		  error_count: 0,
+		      ...word,
+		      error_count: 0,
 		}));
+	
+	
+		// 如果 completeList 不为空，则进行比较
+		if (completeList.length > 0) {
+		  let foundIndex = -1;
+
+		  // 检查 planWordsList
+		  for (let i = 0; i < planWordsList.value.length; i++) {
+			const word = planWordsList.value[i];
+			const exists = completeList.some(completeWord => 
+			  completeWord.content_id === word.content_id && 
+			  completeWord.content_type === word.content_type
+			);
+			if (!exists) {
+			  foundIndex = i;
+			  break;
+			}
+		  }
+
+		
+		  // 如果 planWordsList 中未找到不匹配的对象，继续检查 planWordsTwoList
+		  if (foundIndex === -1) {
+			for (let i = 0; i < planWordsTwoList.value.length; i++) {
+			  const word = planWordsTwoList.value[i];
+			  const exists = completeList.some(completeWord => 
+				completeWord.content_id === word.content_id && 
+				completeWord.content_type === word.content_type
+			  );
+			  if (!exists) {
+				foundIndex = i;
+				break;
+			  }
+			}
+			
+			console.log("foundIndex")
+			console.log(foundIndex)
+			if (foundIndex !== -1) {
+				planWordmode.value = 1
+				planWordindext.value = planWordsList.value.length
+				planWordTwoindext.value = foundIndex
+			}
+			
+		  } else {
+			  planWordindext.value = foundIndex
+		  }
+
+		  // 如果 planWordsTwoList 中未找到不匹配的对象，继续检查 planWordsThreeList
+		  if (foundIndex === -1) {
+			for (let i = 0; i < planWordsThreeList.value.length; i++) {
+			  const word = planWordsThreeList.value[i];
+			  const exists = completeList.some(completeWord => 
+				completeWord.content_id === word.content_id && 
+				completeWord.content_type === word.content_type
+			  );
+			  if (!exists) {
+				foundIndex = i;
+				break;
+			  }
+			}
+			
+			if (foundIndex !== -1) {
+				planWordmode.value = 2
+				planWordindext.value = planWordsList.value.length
+				planWordTwoindext.value = planWordsTwoList.value.length
+				planWordThreeindext.value = foundIndex
+				progressThreeindext.value = foundIndex
+			}
+			
+		  } 
+
+		  // 如果找到不存在的下标，可以根据需要进行处理
+		  if (foundIndex === -1) {
+			console.log('找不到存在的下标:', foundIndex);
+			// 你可以在这里处理找到的下标，例如跳转到对应的学习位置
+		  } 
+		}
+	
+	
+	
+		
+	
+		
 		
 	  } catch (error) {
 	    console.error('获取单词列表失败:', error);
@@ -495,46 +651,62 @@
 	  }
 	};
 	
-	const submitreslutStudyProgressReport = async(bookId, lessonId, reports)=> {
+	const submitreslutStudyProgressReport = async(bookId, lessonId, reports,isDone = true)=> {
 		try {
 		
 			// 显示加载中状态
-			uni.showLoading({
-			title: '报告生成中...',
-			mask: true, // 防止用户点击
-			});
-			const response = await study.submitStudyProgressReport(bookId, lessonId,reports);
-				
-			uni.hideLoading();
-			
-			const unitreportWords = 'unitreportWords';
-			
-			uni.setStorage({
-			  key: unitreportWords,
-			  data: JSON.stringify(planWordsWithCounts.value),
-			  success: function () {
-				console.log('数据存储成功');
-				// 跳转到学习页面
-				uni.navigateTo({
-				  url: `/pages/textbook/UnitWordreport?unitreportWords=${unitreportWords}&totalpoints=${totalpoints.value}&backPage=2`, // 将缓存键名传递给学习页面
+			if (isDone) {
+				// 显示加载中状态
+				uni.showLoading({
+				title: '报告生成中...',
+				mask: true, // 防止用户点击
 				});
-			  },
-			  fail: function (err) {
-				console.log('数据存储失败', err);
-			  }
-			});
+			}
+			let statusNum = isDone==true?1:0
+			const response = await study.submitStudyProgressReport(bookId, lessonId,reports,statusNum);
+			
+			if (isDone) {
+				uni.hideLoading();
+				
+				const zuizWordsList = planWordsWithCounts.value.filter(word => word.isHaverated === 1);
+				
+				const unitreportWords = 'unitreportWords';
+				
+				uni.setStorage({
+				  key: unitreportWords,
+				  data: JSON.stringify(zuizWordsList),
+				  success: function () {
+					// 跳转到学习页面
+					uni.navigateTo({
+					  url: `/pages/textbook/UnitWordreport?unitreportWords=${unitreportWords}&totalpoints=${totalpoints.value}&backPage=2&type=0`, // 将缓存键名传递给学习页面
+					});
+				  },
+				  fail: function (err) {
+					console.log('数据存储失败', err);
+				  }
+				});
+			} else { //直接返回了
+				//发消息更新首页积分
+				uni.$emit('refrespoints', { action: 'updatepoints' });
+				uni.navigateBack()
+			}	
+			
 				
 		} catch (error) {
 		  
-		  // 隐藏加载中状态
+		  if (isDone)  {
+		  	// 隐藏加载中状态
 			uni.hideLoading();
-
+	
 			// 请求失败后的逻辑
 			console.error('提交学习进度报告失败:', error);
 			uni.showToast({
 			title: '提交失败，请重试',
 			icon: 'none',
 			});
+		  } else { //直接返回了
+		  	uni.navigateBack()
+		  }	
 		  
 		}
 	}

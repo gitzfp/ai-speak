@@ -664,6 +664,10 @@ class StudyService:
                 speak_count = report.speak_count
                 json_data = report.json_data  # 获取 json_data 字段
                 voice_file = report.voice_file
+                chinese = report.chinese
+                audio_url = report.audio_url
+                audio_start = report.audio_start  # 新增字段，可选
+                audio_end = report.audio_end  # 新增字段，可选
 
                 # 查询是否已存在记录
                 existing_record = (
@@ -701,6 +705,8 @@ class StudyService:
                         content_type=content_type,
                         error_count=error_count,
                         points=points,
+                        chinese=chinese,
+                        audio_url=audio_url,
                         create_time=datetime.now(),
                         update_time=datetime.now(),
                     )
@@ -711,6 +717,10 @@ class StudyService:
 
                     if voice_file is not None:
                         progress_report.voice_file = voice_file
+
+                    # 如果 content_type 为 4，并且 audio_start 和 audio_end 不为空，则更新 audio_url
+                    if content_type == 4 and audio_start is not None and audio_end is not None:
+                        progress_report.audio_url = f"{audio_url},{audio_start},{audio_end}"
 
                     self.db.add(progress_report)
 
@@ -830,7 +840,19 @@ class StudyService:
                     StudyProgressReport.user_id == user_id,
                     StudyProgressReport.book_id == book_id,
                     StudyProgressReport.lesson_id == lesson_id,
-                    StudyProgressReport.content_type.in_([0, 1, 2, 3])  # 单词
+                    StudyProgressReport.content_type.in_([0, 1, 2])  # 单词
+                )
+                .all()
+            )
+
+            # 查询 content_type=3 的记录对象（拼写单词）
+            word_spell_records = (
+                self.db.query(StudyProgressReport)
+                .filter(
+                    StudyProgressReport.user_id == user_id,
+                    StudyProgressReport.book_id == book_id,
+                    StudyProgressReport.lesson_id == lesson_id,
+                    StudyProgressReport.content_type == 3  # 拼写单词
                 )
                 .all()
             )
@@ -845,6 +867,25 @@ class StudyService:
             # 创建单词摘要字典
             word_summary = self.create_word_summary(word_records)
 
+            #拼写单词摘要字典
+            word_spell_summary = {
+                "word_count": len(word_spell_records),  # 拼写单词的总数
+                "total_points": sum(record.points for record in word_spell_records),  # 获得的总积分
+                "word_spell_records": [  # 拼写单词的记录数组
+                    {
+                        "content_id": record.content_id,
+                        "content": record.content,
+                        "error_count": record.error_count,
+                        "points": record.points,
+                        "chinese": record.chinese,
+                        "audio_url": record.audio_url,
+                        "create_time": record.create_time.strftime("%Y-%m-%d %H:%M:%S") if record.create_time else None,
+                        "update_time": record.update_time.strftime("%Y-%m-%d %H:%M:%S") if record.update_time else None,
+                    }
+                    for record in word_spell_records
+                ]
+            }
+
             # 创建句子摘要字典
             sentence_summary = {
                 "sentence_count": len(sentence_records),  # 句子个数
@@ -857,6 +898,8 @@ class StudyService:
                         "points": record.points,
                         "json_data": record.json_data,
                         "voice_file": record.voice_file,
+                        "chinese": record.chinese,
+                        "audio_url": record.audio_url,
                         "create_time": record.create_time.strftime("%Y-%m-%d %H:%M:%S") if record.create_time else None,
                         "update_time": record.update_time.strftime("%Y-%m-%d %H:%M:%S") if record.update_time else None,
                     }
@@ -869,8 +912,9 @@ class StudyService:
                 "speak_count": speak_count,
                 "points": points,
                 "sentences_count": len(sentence_records),  # 句子记录数
-                "words_count": len(word_records),  # 单词记录数
+                "words_count": word_summary["word_count"],  # 单词记录数
                 "word_summary": word_summary,  # 单词摘要字典
+                "word_spell_summary":word_spell_summary,
                 "sentence_summary": sentence_summary  # 句子摘要字典
             }
 
@@ -888,6 +932,11 @@ class StudyService:
                     "total_points": 0,
                     "mastered_words": [],
                     "words_to_review": []
+                },
+                "word_spell_summary": {
+                    "word_count": 0,
+                    "total_points": 0,
+                    "word_spell_records": []
                 },
                 "sentence_summary": {
                     "sentence_count": 0,
@@ -911,7 +960,7 @@ class StudyService:
             try:
                 # 初始化单词摘要字典
                 word_summary = {
-                    "word_count": len(word_records),
+                    "word_count":  0,  # 初始化为 0，后续根据 unique_words 的长度更新,
                     "total_points": sum(record.points for record in word_records),
                     "mastered_words": [],
                     "words_to_review": []
@@ -939,7 +988,8 @@ class StudyService:
                         unique_words[content_id] = {
                             "content_id": content_id,
                             "content": record.content,
-                            "voice_file":record.voice_file,
+                            "chinese": record.chinese,
+                            "audio_url": record.audio_url,
                             "practice_error_count": record.error_count if record.content_type == 1 else 0,
                             "spell_error_count": record.error_count if record.content_type == 2 else 0
                         }
@@ -953,6 +1003,10 @@ class StudyService:
                         # 否则是待巩固的单词
                         word_summary["words_to_review"].append(word_data)
 
+
+                # 更新 word_count 为 unique_words 的个数
+                word_summary["word_count"] = len(unique_words)
+
                 return word_summary
 
             except Exception as e:
@@ -963,3 +1017,54 @@ class StudyService:
                     "mastered_words": [],
                     "words_to_review": []
                 }
+            
+
+
+    def get_study_progress_reports(
+    self,
+    user_id: str,
+    book_id: str,
+    lesson_id: int,
+) -> List[Dict]:
+        """
+        根据 user_id, book_id 和 lesson_id 查找 content_type 为 0, 1, 2 的 StudyProgressReport 对象，并返回字典数组
+        :param user_id: 用户ID
+        :param book_id: 书本ID
+        :param lesson_id: 课程ID
+        :return: 包含 StudyProgressReport 数据的字典数组
+        """
+        try:
+            # 查询 content_type 为 0, 1, 2 的记录
+            progress_reports = (
+                self.db.query(StudyProgressReport)
+                .filter(
+                    StudyProgressReport.user_id == user_id,
+                    StudyProgressReport.book_id == book_id,
+                    StudyProgressReport.lesson_id == lesson_id,
+                    StudyProgressReport.content_type.in_([0, 1, 2])  # 过滤 content_type 为 0, 1, 2 的记录
+                )
+                .all()
+            )
+
+            # 将 StudyProgressReport 对象转换为字典数组
+            report_dicts = [
+                {
+                    "id": report.id,
+                    "user_id": report.user_id,
+                    "book_id": report.book_id,
+                    "lesson_id": report.lesson_id,
+                    "content": report.content,
+                    "content_id": report.content_id,
+                    "content_type": report.content_type,
+                    "error_count": report.error_count,
+                    "points": report.points,
+                    "chinese": report.chinese,
+                }
+                for report in progress_reports
+            ]
+
+            return report_dicts
+
+        except Exception as e:
+            print(f"查询学习进度报告失败: {str(e)}")
+            return []        

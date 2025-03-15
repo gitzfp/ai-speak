@@ -98,7 +98,10 @@ class StudyProgressReport(Base):
     json_data = Column(Text, nullable=True, default=None, comment="TEXT 数据 的评分数据")
     # 新增 voice_file 字段，长度为 300
     voice_file = Column(String(300), nullable=True, default=None, comment="语音文件路径或 URL")
-
+    # 新增 chinese 字段，长度为 300
+    chinese = Column(String(300), nullable=True, default=None, comment="中文翻译")
+    # 新增 audio_url 字段，长度为 300
+    audio_url = Column(String(300), nullable=True, default=None, comment="音频文件路径或 URL")
 
     # 创建联合索引提高查询效率
     __table_args__ = (

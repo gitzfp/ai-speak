@@ -27,7 +27,6 @@
 				</view>
 				<FollowReading
 					ref="followReadingref"
-				    :trackId="optionSentence.id"
 					:isUnit="true"
 				    :sentence="optionSentence.english"
 					:optionSentence="optionSentence"
@@ -123,8 +122,6 @@
 			
 			const response = await study.submitStudyProgressReport(bookId, lessonId,reports,statusNum);
 			
-			//发消息更新首页积分
-			uni.$emit('refrespoints', { action: 'updatepoints' });
 			
 			if (isDone)  { //全部完成才会跳转了
 				uni.hideLoading();
@@ -137,7 +134,7 @@
 					console.log('数据存储成功');
 					// 跳转到学习页面
 					uni.navigateTo({
-					  url: `/pages/textbook/UnitWordreport?unitreportWords=${unitreportWords}&totalpoints=${totalpoints.value}&backPage=2`, // 将缓存键名传递给学习页面
+					  url: `/pages/textbook/UnitWordreport?unitreportWords=${unitreportWords}&totalpoints=${totalpoints.value}&backPage=2&type=4`, // 将缓存键名传递给学习页面
 					});
 				  },
 				  fail: function (err) {
@@ -145,6 +142,8 @@
 				  }
 				});
 			} else { //直接返回了
+				//发消息更新首页积分
+				uni.$emit('refrespoints', { action: 'updatepoints' });
 				uni.navigateBack()
 			}	
 			
@@ -173,27 +172,41 @@
 	
 	
 	const clicknext = () => {
-		isShowmark.value = false
-		 stopCurrentAudio()
-		if (currentIndext.value==(sentencesList.value.length-1)) {
-			progressIndext.value = sentencesList.value.length
-			
-			//这边是全部完成的
-			submitreslutStudyProgressReport(book_id.value,lesson_id.value,sentencesList.value,true)
-			
-		} else {
-			currentIndext.value++;
-			progressIndext.value = currentIndext.value
-			
-			
-			if (!(optionSentence.value.progress_data && optionSentence.value.progress_data.length > 20)) {
-				followReadingref.value.resetRefresh()
+		if (isShowmark.value) {
+			isShowmark.value = false
+			 stopCurrentAudio()
+			if (currentIndext.value==(sentencesList.value.length-1)) {
+				progressIndext.value = sentencesList.value.length
+				
+				const haveratedSentences = sentencesList.value.filter(
+				  (sentence) => sentence.isHaverated === 1
+				);
+				if (haveratedSentences.length>0) {
+					//这边是全部完成的
+					submitreslutStudyProgressReport(book_id.value,lesson_id.value,sentencesList.value,true)
+				} else {
+					uni.showToast({
+					  title: '当前没有可提交的数据，是否返回上一页',
+					  icon: 'none',
+					});
+				}
+				
+				
+			} else {
+				currentIndext.value++;
+				progressIndext.value = currentIndext.value
+				
+				
+				if (!(optionSentence.value.progress_data && optionSentence.value.progress_data.length > 20)) {
+					followReadingref.value.resetRefresh()
+				}
+				
+				setTimeout(() => {
+				    playbuttonclick()
+				}, 500);
 			}
-			
-			setTimeout(() => {
-			    playbuttonclick()
-			}, 500);
 		}
+		
 	}
 	
 	const reevaluation = () => {
@@ -321,6 +334,7 @@
 		speak_count:0,
 		isHaverated:0,
 		}));
+		
 		
 		
 		// 排序逻辑：progress_data 有值且长度大于 20 的排在前面
