@@ -277,6 +277,10 @@ class StudyProgressReportItem(BaseModel):
     points: int  # 积分
     json_data: Optional[str] = None  # 改为字符串类型
     voice_file: Optional[str] = None  # 新增字段，语音文件路径或 URL
+    chinese: Optional[str] = None
+    audio_url: Optional[str] = None
+    audio_start: Optional[int] = None  # 新增字段，可选
+    audio_end: Optional[int] = None  # 新增字段，可选
 class StudyProgressReportRequest(BaseModel):
     book_id: str  # 书籍ID
     lesson_id: int  # 课程ID

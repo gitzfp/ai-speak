@@ -290,6 +290,8 @@ defineExpose({
   z-index: 1000;
   box-sizing: border-box;
   padding-bottom: 10px;
+  max-height: 45vh;
+  overflow-y: auto
 }
 
 .result-header {

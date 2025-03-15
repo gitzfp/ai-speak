@@ -112,6 +112,10 @@ export default {
 	      speak_count: number; // 新增开口次数字段
 	      json_data?: string; // 修改为字符串类型，与后端一致
 		  voice_file?: string; // 语音文件路径或 URL
+		  chinese?: string;
+		  audio_url?: string;
+		  audio_start?: number; // 改为可选的 int 字段
+		  audio_end?: number; // 改为可选的 int 字段
 	    }>,
 	    statusNum?: number // 新增 statusNum 参数，可选
 	  ) {
@@ -127,6 +131,10 @@ export default {
 	        speak_count: report.speak_count, // 新增字段
 	        json_data: report.json_data ? JSON.stringify(report.json_data) : null, // 将 JSON 对象转为字符串
 			voice_file: report.voice_file || null, // 默认值为 null
+			chinese: report.chinese || null, // 默认值为 null
+			audio_url: report.audio_url || null, // 默认值为 null
+			audio_start: report.audio_start || null, // 默认值为 null
+			audio_end: report.audio_end || null, // 默认值为 null
 	      })),
 	      statusNum: statusNum ,
 	    });
