@@ -9,3 +9,4 @@
 aispeak-server/.DS_Store
 /aispeak-server/alembic.ini
 aispeak-server/alembic.prod.ini
+aispeak-frontend/ssl/
