@@ -52,7 +52,49 @@
 					</view>
 				</view>
 			</view>
+			
 			<template v-if="chapter.isExpansion==1">
+				<view @tap="unitwordclick(chapter)" class="recitewords">
+					<view class="leftclass">
+						<view class="tit">背单词</view>
+						<view class="subtit">学-练-拼，掌握听说读写</view>
+					</view>
+					<image class="right-icon" :src="chapter.is_learning_word==1 ? selectIcon : unselectIcon"></image>
+				</view>
+				<view @tap="unitsentenceclick(chapter,1)" class="readtextone">
+					<view class="leftclass">
+						<view class="tit">句子跟读</view>
+						<view class="subtit">告别死记硬背</view>
+					</view>
+					<image class="right-icon" :src="chapter.is_learning_text==1 ? selectIcon : unselectIcon"></image>
+				</view>
+				<view class="button-row">
+					<view class="function-button"
+					 style="background-color: #E5FEF1"
+					 @click="textbookListen(chapter)">
+					  <image class="button-icon" src="@/assets/icons/listening.svg"></image>
+					  听课文
+					</view>
+					<view class="function-button"
+					  style="background-color: #E5FEF1"
+					 @tap="wordListenWrite(chapter)">
+					  <image
+					    class="button-icon"
+					    src="@/assets/icons/word_dictation.svg"
+					  ></image>
+					  单词听写
+					</view>
+					<view class="function-button"
+					 style="background-color: #E5FEF1"
+					@click="sentenceFollow(chapter)">
+					    <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
+					    AI外教
+					</view>
+				</view>
+			</template>
+			
+			
+			<!-- <template v-if="chapter.isExpansion==1">
 				<view @tap="unitwordclick(chapter)" class="recitewords">
 					<view class="leftclass">
 						<view class="tit">背单词</view>
@@ -96,10 +138,11 @@
 					    AI外教
 					</view>
 				</view>
-			</template>
+			</template> -->
 			
 		</view>
-	
+		
+		<view style="height: 20rpx;"></view>
 		
 	</scroll-view>
 	
@@ -333,25 +376,29 @@ const textbookChapters = async(bookId) => {
 }
 
 const textbookListen = (chapter) => {
-	if (chapter.is_learning_text != 1) {
-		uni.showToast({
-		  title: "请先完成课文点读",
-		  icon: "none",
-		});
-		return
-	}
+	// if (chapter.is_learning_text != 1) {
+	// 	uni.showToast({
+	// 	  title: "请先完成课文跟读",
+	// 	  icon: "none",
+	// 	});
+	// 	return
+	// }
+	
+	let lessonId = chapter.lesson_id
+	
 	uni.navigateTo({
-	url: `/pages/textbook/TextbookListen?book_id=${book.value.book_id}`,
+	url: `/pages/textbook/TextbookListen?book_id=${book.value.book_id}&lessonId=${lessonId}`,
 	});
 };
 
 const sentenceFollow = (chapter) => {
-	
-	uni.showToast({
-	  title: "暂时没开放",
-	  icon: "none",
-	});
-	
+	if (chapter.is_learning_text != 1) {
+		uni.showToast({
+		  title: "暂时没有开放",
+		  icon: "none",
+		});
+		return
+	}
 	// uni.navigateTo({
 	// url: `/pages/textbook/TextbookListen?book_id=${book.value.book_id}&repeat_after=true`,
 	// });
@@ -493,13 +540,13 @@ const unitwordclick = (chapter) => {
 
 
 const wordListenWrite = (chapter) => {
-	if (chapter.is_learning_text != 1) {
-		uni.showToast({
-		  title: "请先完成课文点读",
-		  icon: "none",
-		});
-		return
-	}
+	// if (chapter.is_learning_text != 1) {
+	// 	uni.showToast({
+	// 	  title: "请先完成课文跟读读",
+	// 	  icon: "none",
+	// 	});
+	// 	return
+	// }
 	const selectedWords = [];
 	if (chapter.words.length>0) {
 		chapter.words.forEach(word => {
@@ -587,7 +634,7 @@ const eliminationGame = () => {
 	margin-left: 20rpx;
 }
 .book-content {
-	// height:calc(100% - 200rpx) ;
+	// height:calc(100% - 100rpx) ;
 	height:calc(100% - 80rpx) ;
 	// background-color: red;
 	overflow-y: auto;

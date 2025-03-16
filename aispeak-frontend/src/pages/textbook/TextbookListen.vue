@@ -4,7 +4,7 @@
     <view v-else-if="error" class="error">{{ error }}</view>
     <template v-else>
       <!-- 单元导航 -->
-      <scroll-view scroll-x class="unit-nav">
+      <scroll-view v-if="lesson_id.length<=0" scroll-x class="unit-nav">
         <view 
           v-for="unit in textbookData" 
           :key="unit.id"
@@ -65,6 +65,9 @@ const error = ref('')
 const bookId = ref('')
 const isRepeatAfter = ref('false')
 const currentUnitId = ref('')
+
+const lesson_id = ref('')
+const lesson_indext = ref(0)
 
 // 用于存储每个子单元的展开状态
 const expandedSubLessons = ref({})
@@ -145,9 +148,12 @@ const toggleSubLesson = (subLessonId) => {
 
 onLoad((options: any) => {
   console.log('TextbookListen onLoad options:', options)
-  const { book_id, repeat_after } = options
+  const { book_id, repeat_after,lessonId } = options
   bookId.value = book_id
   isRepeatAfter.value = repeat_after
+  if (lessonId) {
+	  lesson_id.value = lessonId
+  }
     uni.setNavigationBarTitle({
       title: repeat_after ? '句子跟读' : '听课文', // 你想要显示的标题
     })
@@ -167,7 +173,14 @@ const fetchTextbookData = async () => {
       textbookData.value = response.data
       // 默认选中第一个单元
       if (response.data.length > 0) {
-        currentUnitId.value = response.data[0].id
+		  if (lesson_id.value.length>0) {
+			  let lesson_id_int = parseInt(lesson_id.value, 10);
+			  lesson_indext.value = lesson_id_int-1
+			  currentUnitId.value = response.data[lesson_indext.value].id
+		  } else {
+			  currentUnitId.value = response.data[0].id
+		  }
+        
       }
     } else {
       error.value = response.message || '获取数据失败'
