@@ -156,6 +156,7 @@ onLoad((options) => {
 
 
 const goToWords = () => {
+  stopCurrentAudio()
   // 查找当前页面所属的章节
   console.log(currentPage.value+'章节数据:', catalogData.value)
   let lessonId = 1
@@ -275,12 +276,13 @@ function stopCurrentAudio() {
     uni.hideToast() // Hide any existing toast
     try {
       currentAudio.value.stop()
-      currentAudio.value?.destroy()
+      if(currentAudio.value)currentAudio.value?.destroy()
     } catch (error) {
       console.error("Error stopping audio:", error)
     }
     currentAudio.value = null
   }
+  isPlaying.value = false
 }
 
 function processOssKeyUrl(url) {
@@ -553,13 +555,6 @@ onMounted(() => {
   }
 })
 
-// 在组件销毁时清理
-onBeforeUnmount(() => {
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-    resizeObserver = null
-  }
-})
 
 // 修改图片加载处理函数
 function onImageLoad(e, pageId) {
@@ -627,13 +622,12 @@ const handlePageChange = (e) => {
   debounceFlag.value = true
   // 立即停止当前页音频
   stopCurrentAudio()
-  if(isContinueMode.value){
-    playCurrentPage()
-  }
+ 
   // 使用nextTick确保更新顺序
   currentPage.value = e.detail.current
-    isPlaying.value = false
-    
+  if(isContinueMode.value){
+    playCurrentPage()
+  } 
     // 更新标题逻辑
     const currentChapter = catalogData.value.find(
       chapter => chapter.page_no === e.detail.current
@@ -672,6 +666,7 @@ const getCurrentPageSentence = () => {
 
 const goToChatPage = async () => {
   try {
+    stopCurrentAudio()
     const lessonId = book_id.value + ":" + currentPage.value
     const sentences = getCurrentPageSentence()
     if (!sentences || sentences?.length <= 0) {
@@ -724,15 +719,11 @@ function playCurrentPage() {
   const currentPageData = bookPages.value[currentPage.value]
   if (!currentPageData?.track_info) return
   isContinueMode.value = true
-  isPlaying.value = true
   let currentTrackIndex = 0
 
   const playNext = () => {
-    if (!isPlaying.value) {
-      stopCurrentAudio()
-      return
-    }
-
+    stopCurrentAudio()
+    isPlaying.value = true
     if (currentTrackIndex < currentPageData.track_info.length) {
       const track = currentPageData.track_info[currentTrackIndex]
       const audio = uni.createInnerAudioContext()
@@ -754,18 +745,12 @@ function playCurrentPage() {
   }
   playNext()
 }
-// 暂停当前页面的音频
-function pauseCurrentPage() {
-  if (currentAudio.value) {
-    currentAudio.value.pause()
-    isPlaying.value = false
-  }
-}
+
 
 // 切换播放状态
 function togglePlayCurrentPage() {
   if (isPlaying.value) {
-    pauseCurrentPage()
+    stopCurrentAudio()
   } else {
     playCurrentPage()
   }
@@ -773,7 +758,7 @@ function togglePlayCurrentPage() {
 
 // 开始复读模式
 function startRepeatMode() {
-  stopAndResetStatus()
+  stopCurrentAudio()
   showRepeatSelection.value = true
   console.log('开始复读模式', bookPages.value[currentPage.value].track_info)
   // 生成复读段落选项
@@ -788,6 +773,7 @@ function startRepeatMode() {
 }
 // 开始测评
 function goToassess() {
+  stopCurrentAudio()
   showAssessSelection.value = true
   console.log("开始测评模式", bookPages.value[currentPage.value])
   // 生成测评段落选项
@@ -856,17 +842,17 @@ function playRepeat() {
 // 退出复读模式
 function exitRepeatMode() {
   isRepeatMode.value = false
-  stopAndResetStatus()
+  stopCurrentAudio()
 }
 
-const stopAndResetStatus = () => {
-   stopCurrentAudio()
-   isPlaying.value = false
-}
 
 // 页面销毁时清理音频
 onBeforeUnmount(() => {
-  stopAndResetStatus()
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+  stopCurrentAudio()
 })
 
 //-----测评用的方法-----开始------
