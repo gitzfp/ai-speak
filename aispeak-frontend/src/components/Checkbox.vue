@@ -1,9 +1,9 @@
 <template>
   <view class="checkbox-box" @tap="checkIt">
     <image :class="isCheck ? 'checkbox-box-ico' : 'checkbox-box-ico un-checkbox-box-ico'
-      " src="http://114.116.224.128:8097/static/check.png" />
+      " src="https://dingguagua.fun/static/check.png" />
     <image :class="!isCheck ? 'checkbox-box-ico' : 'checkbox-box-ico un-checkbox-box-ico'
-      " src="http://114.116.224.128:8097/static/un_check.png" />
+      " src="https://dingguagua.fun/static/un_check.png" />
   </view>
 </template>
 

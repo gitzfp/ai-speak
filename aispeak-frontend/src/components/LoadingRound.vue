@@ -2,7 +2,7 @@
   <view class="loading-round" :style="containerStyle">
     <image
       class="loading-round-img"
-      src="http://114.116.224.128:8097/static/loading.png"
+      src="https://dingguagua.fun/static/loading.png"
     ></image>
   </view>
 </template>

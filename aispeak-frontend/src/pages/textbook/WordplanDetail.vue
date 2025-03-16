@@ -20,8 +20,8 @@
 						<view @tap="pronunciationSelect" class="leftTit">{{ phonetic }} ⇌ |</view>
 						 <view class="rightTit" @tap="phonicsbegins">
 							 <view class="type-text"> 点击发音</view>
-							 <image v-if="isSecondModeReading" class="secondMode-icon" src="http://114.116.224.128:8097/static/voice_playing.gif"></image>
-							 <image v-else class="secondMode-icon" src="http://114.116.224.128:8097/static/voice_play.png"></image>
+							 <image v-if="isSecondModeReading" class="secondMode-icon" src="https://dingguagua.fun/static/voice_playing.gif"></image>
+							 <image v-else class="secondMode-icon" src="https://dingguagua.fun/static/voice_play.png"></image>
 						</view>  
 					 </view>
 			  

@@ -9,7 +9,7 @@
       <view @tap="handleClose" class="close-icon-box">
         <image
           class="close-icon"
-          src="http://114.116.224.128:8097/static/icon_close.png"
+          src="https://dingguagua.fun/static/icon_close.png"
         ></image>
       </view>
 
@@ -40,7 +40,7 @@
               <image
                 @tap="handleTranslatePrompt(prompt)"
                 class="icon-tanslate"
-                src="http://114.116.224.128:8097/static/icon_translate.png"
+                src="https://dingguagua.fun/static/icon_translate.png"
               >
               </image>
             </view>

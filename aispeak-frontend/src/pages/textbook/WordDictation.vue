@@ -335,10 +335,10 @@ const detailWords = async (bookId, words) => {
 	   if (num ==0) {
 		   playList.push(...currentAudioList.value)
 	   } else if (num ==1) { //对
-			var audioStr = 'http://114.116.224.128:8097/static/audio/answerright.mp3'
+			var audioStr = 'https://dingguagua.fun/static/audio/answerright.mp3'
 		   playList.push(audioStr)
 	   } else { //2 错
-		   var audioStr = 'http://114.116.224.128:8097/static/audio/misanswer.mp3'
+		   var audioStr = 'https://dingguagua.fun/static/audio/misanswer.mp3'
 		   playList.push(audioStr)
 	   }
 	

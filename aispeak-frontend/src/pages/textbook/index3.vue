@@ -88,7 +88,7 @@
 					 style="background-color: #E5FEF1"
 					@click="sentenceFollow(chapter)">
 					    <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
-					    AI外教
+					    课文点读
 					</view>
 				</view>
 			</template>
@@ -135,7 +135,7 @@
 					:style="chapter.is_learning_text == 1 ? { 'background-color': '#E5FEF1' } : {}"
 					@click="sentenceFollow(chapter)">
 					    <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
-					    AI外教
+					    课文点读
 					</view>
 				</view>
 			</template> -->
@@ -392,16 +392,9 @@ const textbookListen = (chapter) => {
 };
 
 const sentenceFollow = (chapter) => {
-	if (chapter.is_learning_text != 1) {
-		uni.showToast({
-		  title: "暂时没有开放",
-		  icon: "none",
-		});
-		return
-	}
-	// uni.navigateTo({
-	// url: `/pages/textbook/TextbookListen?book_id=${book.value.book_id}&repeat_after=true`,
-	// });
+	uni.navigateTo({
+		url: `/pages/textbook/books?book_id=${book.value.book_id}&repeat_after=true`,
+	});
 };
 
 const seereport = (chapter) => {

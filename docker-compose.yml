@@ -2,8 +2,9 @@ services:
   backend:
     build: ./aispeak-server
     env_file: .env
-    volumes : 
-      - ./files:/aispeak-server/files
+    user: "1001:1001"  # 显式指定容器用户 UID/GID
+    volumes:
+      - ./files:/aispeak-server/files:rw,z,uid=1001,gid=1001
     ports:
       - "8097:8097"
     environment:

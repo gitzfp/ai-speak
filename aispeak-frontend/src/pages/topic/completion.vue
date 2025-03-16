@@ -14,7 +14,7 @@
         <view class="completion-title-box">
           <image
             class="completion-icon"
-            src="http://114.116.224.128:8097/static/topic-result-pass.png"
+            src="https://dingguagua.fun/static/topic-result-pass.png"
             mode="heightFix"
           />
           <view class="completion-title">已完成</view>

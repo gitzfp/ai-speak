@@ -16,6 +16,7 @@ from app.api.topics_route import router as topic_routes
 from app.api.textbook_routes import router as textbook_routes
 from app.api.alioss_routes import router as alioss_routes
 from app.api.study_routes import router as study_routes
+from app.api.test_routes import router as test_routes
 
 app = FastAPI()
 
@@ -36,6 +37,7 @@ app.include_router(message_routes, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(textbook_routes, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(alioss_routes, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(study_routes, prefix=f"{Config.API_PREFIX}/v1")
+app.include_router(test_routes, prefix=f"{Config.API_PREFIX}/v1")
 # Serve static files
 app.mount("/static", StaticFiles(directory="./static"), name="static")
 
@@ -70,7 +72,3 @@ async def user_access_denied_error_handler(_, exc: UserAccessDeniedException):
         content=ApiResponse(code="403", status=403, message=str(exc)).__dict__,
     )
 
-
-@app.get("/health") 
-def health_check(): 
-    return 'OK', 200

@@ -628,13 +628,13 @@ class StudyService:
     
 
     def submit_study_progress_report(
-    self,
-    user_id: str,
-    book_id: str,
-    lesson_id: int,
-    reports: List[Dict],  # 使用 StudyProgressReportItem 对象
-    statusNum: int = 1,  # 新增可选参数，默认值为 1
-) -> bool:
+        self,
+        user_id: str,
+        book_id: str,
+        lesson_id: int,
+        reports: List[Dict],  # 使用 StudyProgressReportItem 对象
+        statusNum: int = 1,  # 新增可选参数，默认值为 1
+    ) -> bool:
         """
         提交学习进度报告表数据，并为用户加上积分
         :param user_id: 用户ID
@@ -778,8 +778,7 @@ class StudyService:
         except Exception as e:
             print(f"提交学习进度报告失败: {str(e)}")
             self.db.rollback()  # 回滚事务
-            return False
-        
+            return False 
      
     def get_unit_summary_report(
     self,

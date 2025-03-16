@@ -16,7 +16,7 @@
           v-if="!cannotCancel"
           @tap="handleDelete"
           class="chat-list-action btn-box"
-          src="http://114.116.224.128:8097/static/deleted.png"
+          src="https://dingguagua.fun/static/deleted.png"
           mode="heightFix"
         />
       </view>

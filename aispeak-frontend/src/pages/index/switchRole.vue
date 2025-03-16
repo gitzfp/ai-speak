@@ -10,7 +10,7 @@
         <image
           @tap="handleBackPage"
           class="back-icon"
-          src="http://114.116.224.128:8097/static/icon_home.png"
+          src="https://dingguagua.fun/static/icon_home.png"
         ></image>
       </template>
       <template v-slot:content>

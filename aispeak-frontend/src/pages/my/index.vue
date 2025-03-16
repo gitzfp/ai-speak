@@ -15,14 +15,14 @@
         >
           <image
             class="profile-avatar"
-            src="http://114.116.224.128:8097/static/default-account-avatar.png"
+            src="https://dingguagua.fun/static/default-account-avatar.png"
           />
           <text class="profile-name">请登录</text>
         </view>
         <view v-else class="profile">
           <image
             class="profile-avatar"
-            src="http://114.116.224.128:8097/static/default-account-avatar.png"
+            src="https://dingguagua.fun/static/default-account-avatar.png"
           />
           <text class="profile-name">{{ accountInfo.account_id }}</text>
         </view>
@@ -51,13 +51,13 @@
       </view>
       <view class="setting">
         <!-- <view class="setting-card" @tap="goSetting">
-					<image class="setting-card-logo" src="http://114.116.224.128:8097/static/setting.png" />
+					<image class="setting-card-logo" src="https://dingguagua.fun/static/setting.png" />
 					<text class="setting-card-title">设置</text>
 				</view> -->
         <view class="setting-card" @tap="goLearningLanguage">
           <image
             class="setting-card-logo"
-            src="http://114.116.224.128:8097/static/setting.png"
+            src="https://dingguagua.fun/static/setting.png"
           />
           <text class="setting-card-title">学习语言</text>
           <text class="setting-card-value" style="margin-right: 50rpx">{{
@@ -67,14 +67,14 @@
         <view class="setting-card" @tap="goFeedback">
           <image
             class="setting-card-logo"
-            src="http://114.116.224.128:8097/static/feedback.png"
+            src="https://dingguagua.fun/static/feedback.png"
           />
           <text class="setting-card-title">反馈</text>
         </view>
         <view class="setting-card" @tap="goContact">
           <image
             class="setting-card-logo"
-            src="http://114.116.224.128:8097/static/concat.png"
+            src="https://dingguagua.fun/static/concat.png"
           />
           <text class="setting-card-title">收藏</text>
         </view>
@@ -84,7 +84,7 @@
           class="logout-box"
           @tap="hangleLogout"
         >
-          <!-- <image class="setting-card-logo" src="http://114.116.224.128:8097/static/default-account-avatar.png" /> -->
+          <!-- <image class="setting-card-logo" src="https://dingguagua.fun/static/default-account-avatar.png" /> -->
           <text class="setting-card-title logout-text">退出登录</text>
         </view>
       </view>
