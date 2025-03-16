@@ -1,128 +1,134 @@
 <template>
   <view class="container">
-    <view @tap="ebbinghausclick" class="header">
-      <view class="hedtitle">艾宾浩斯记忆法</view>
-      <view class="subtitle">
-		  <text class="subtitlect">高效背词·科学记忆·对抗遗忘</text>
-	  </view>
-    </view>
-
-    <view class="contentone">
-		<view @tap="openResetPopup" class="replacementplan">
-			<image class="left-icon" src="@/assets/icons/word_refresh.svg"></image>
-			<view class="replacementplan-title">重置计划</view>
+	<scroll-view class="plan-content"
+	scroll-y
+	:scroll-into-view="scrollToUnitId"
+	>
+		<view @tap="ebbinghausclick" class="header">
+		  <view class="hedtitle">艾宾浩斯记忆法</view>
+		  <view class="subtitle">
+			  <text class="subtitlect">高效背词·科学记忆·对抗遗忘</text>
+		  </view>
 		</view>
-	  <view class="plan-section">
-		<image @click="switchBook" :src="book.icon_url" class="section-img"></image>
-		<view class="section-ct">
-			<view class="oneline">
-				<text class="oneline-subtitle">{{ book.grade }} {{ book.term }}</text>
-				<view @click="switchBook" class="oneline_btn">
-					<image class="left-icon" src="@/assets/icons/parallel_double_arrow.svg"></image>
-					<text class="section-title">切换单词书</text>
+		<view class="contentone">
+			<view @tap="openResetPopup" class="replacementplan">
+				<image class="left-icon" src="@/assets/icons/word_refresh.svg"></image>
+				<view class="replacementplan-title">重置计划</view>
+			</view>
+		  <view class="plan-section">
+			<image @click="switchBook" :src="book.icon_url" class="section-img"></image>
+			<view class="section-ct">
+				<view class="oneline">
+					<text class="oneline-subtitle">{{ book.grade }} {{ book.term }}</text>
+					<view @click="switchBook" class="oneline_btn">
+						<image class="left-icon" src="@/assets/icons/parallel_double_arrow.svg"></image>
+						<text class="section-title">切换单词书</text>
+					</view>
 				</view>
+				<view class="twoline">
+					{{ book.book_name }}
+				</view>
+				
+				<view class="progress-bar">
+					<view 
+					  class="progress-ct" 
+					  :style="{ width: progress + '%' }"
+					></view>
+				 </view>
+				
+				<view class="threeline">
+					<view class="threeline-title"> <text style="color: red;">{{finishLearningNum}}</text>/{{wordcountTotal}}</view>
+					<view class="threeline-title"> 剩余<text style="color: red;">{{remainingdays}}</text>天</view>
+				</view>
+				
+				
 			</view>
-			<view class="twoline">
-				{{ book.book_name }}
-			</view>
-			
-			<view class="progress-bar">
-				<view 
-				  class="progress-ct" 
-				  :style="{ width: progress + '%' }"
-				></view>
-			 </view>
-			
-			<view class="threeline">
-				<view class="threeline-title"> <text style="color: red;">{{finishLearningNum}}</text>/{{wordcountTotal}}</view>
-				<view class="threeline-title"> 剩余<text style="color: red;">{{remainingdays}}</text>天</view>
-			</view>
-			
-			
-		</view>
-	  </view>
-	  <view class="intermediate-line"></view>
-
-	  <view class="progress-section">
-		  <view class="progress-left">
-			<text class="progresslf">今日计划</text>
-			 <image class="left-icon" src="@/assets/icons/time_round.svg"></image>
-			 <text class="progressrt">预计需要<text style="color: red;">{{learnNumtoday}}</text>分钟</text> 
 		  </view>
-		  <view @tap="modifyplan" class="modify-btn">
-			<image class="left-icon" src="@/assets/icons/edit_modify.svg"></image>
-			<text class="section-title">修改计划</text>
+		  <view class="intermediate-line"></view>
+		
+		  <view class="progress-section">
+			  <view class="progress-left">
+				<text class="progresslf">今日计划</text>
+				 <image class="left-icon" src="@/assets/icons/time_round.svg"></image>
+				 <text class="progressrt">预计需要<text style="color: red;">{{learnNumtoday}}</text>分钟</text> 
+			  </view>
+			  <view @tap="modifyplan" class="modify-btn">
+				<image class="left-icon" src="@/assets/icons/edit_modify.svg"></image>
+				<text class="section-title">修改计划</text>
+			  </view>
 		  </view>
-	  </view>
-
-	  <view class="task-section">
-		<view class="task-title"><text>需新学</text> <text class="numtit" style="color: #F08833;">{{learnNumtoday}}</text> <text>词</text></view>
-		<view class="task-title"><text>需复习</text> <text class="numtit" style="color: #ED6C43;">{{review_words.length}}</text> <text>词</text></view>
-	  </view>
-	  
-	  <view class="contentonebtn">
-		  <view class="btn-view">
-			  <view @tap="startLearningword" class="learn-btn">再学一组</view>
-		  </view>
-		  <view class="btn-view">
-		  	<view @tap="goovertheword" class="review-btn">复习完成</view>		  
+		
+		  <view class="task-section">
+			<view class="task-title"><text>需新学</text> <text class="numtit" style="color: #F08833;">{{learnNumtoday}}</text> <text>词</text></view>
+			<view class="task-title"><text>需复习</text> <text class="numtit" style="color: #ED6C43;">{{review_words.length}}</text> <text>词</text></view>
 		  </view>
 		  
+		  <view class="contentonebtn">
+			  <view class="btn-view">
+				  <view @tap="startLearningword" class="learn-btn">再学一组</view>
+			  </view>
+			  <view class="btn-view">
+			  	<view @tap="goovertheword" class="review-btn">复习完成</view>		  
+			  </view>
+			  
+			  
+		  </view>
 		  
-	  </view>
-	  
-	</view>
-
-	<view class="contenttwo">
-		<view v-if="completionRecords.length>0" class="contenttwo-one">
-			<view class="calendar-section">
-			  <view class="calendar-title">本周完成情况</view>
-			</view>
-			<view class="calendar-rt">
-			  <view v-if="singledayRecord.status==1" class="calendar-subtitle">连续完成<text style="color: #ED6C43;">{{singledayRecord.continuous_days}}</text>天</view>
-			  <view v-else class="calendar-subtitle">今日计划未完成</view>
-			  <view class="share-btn">晒一晒</view>
-			</view>
 		</view>
 		
-		
-		
-		<view v-if="completionRecords.length>0" class="contenttwo-days">
-		  <view @tap="calendarItemclick(index)" class="calendar-item" v-for="(item, index) in weekstitList" :key="index">
-			  <view class="item_top">{{item.week}}</view>
-			  <view :class="completionRecords[index].status==1?'item_middle_st':'item_middle'"><text>{{item.date}}</text></view>
-			  <view :class="completionRecords[index].status==1?'item_bottom_st':'item_bottom'"></view>
-		  </view>
-		</view>
-		
-		<view class="record-container">
-		    <view class="record-header">
-		      <text class="record-title">学习记录</text>
-		    </view>
-		    <view class="record-content">
-		      <view class="record-item">
-		        <view class="record-labelone"><text>{{studyRecord.new_words+studyRecord.review_words}}</text> 词</view>
-		        <view class="record-labeltwo">今日学习/复习</view>
-		      </view>
-		      <view class="record-item">
-		        <view class="record-labelone"><text>{{studyRecord.total_mastered_words}}</text> 词</view>
-		        <view class="record-labeltwo">累计掌握</view>
-		      </view>
+		<view class="contenttwo">
+			<view v-if="completionRecords.length>0" class="contenttwo-one">
+				<view class="calendar-section">
+				  <view class="calendar-title">本周完成情况</view>
+				</view>
+				<view class="calendar-rt">
+				  <view v-if="singledayRecord.status==1" class="calendar-subtitle">连续完成<text style="color: #ED6C43;">{{singledayRecord.continuous_days}}</text>天</view>
+				  <view v-else class="calendar-subtitle">今日计划未完成</view>
+				  <view class="share-btn">晒一晒</view>
+				</view>
 			</view>
-			<view class="record-content record-content-interstice">
-				<view class="record-item">
-				  <view class="record-labelone"><text>{{studyRecord.duration}}</text> 分钟</view>
-				  <view class="record-labeltwo">今日学习时长</view>
+			
+			
+			
+			<view v-if="completionRecords.length>0" class="contenttwo-days">
+			  <view @tap="calendarItemclick(index)" class="calendar-item" v-for="(item, index) in weekstitList" :key="index">
+				  <view class="item_top">{{item.week}}</view>
+				  <view :class="completionRecords[index].status==1?'item_middle_st':'item_middle'"><text>{{item.date}}</text></view>
+				  <view :class="completionRecords[index].status==1?'item_bottom_st':'item_bottom'"></view>
+			  </view>
+			</view>
+			
+			<view class="record-container">
+			    <view class="record-header">
+			      <text class="record-title">学习记录</text>
+			    </view>
+			    <view class="record-content">
+			      <view class="record-item">
+			        <view class="record-labelone"><text>{{studyRecord.new_words+studyRecord.review_words}}</text> 词</view>
+			        <view class="record-labeltwo">今日学习/复习</view>
+			      </view>
+			      <view class="record-item">
+			        <view class="record-labelone"><text>{{studyRecord.total_mastered_words}}</text> 词</view>
+			        <view class="record-labeltwo">累计掌握</view>
+			      </view>
 				</view>
-				<view class="record-item">
-				  <view class="record-labelone"><text>{{studyRecord.total_duration}}</text> 分钟</view>
-				  <view class="record-labeltwo">累计学习时长</view>
-				</view>
-		    </view>
-		  </view>
-		
-	</view>
-      
+				<view class="record-content record-content-interstice">
+					<view class="record-item">
+					  <view class="record-labelone"><text>{{studyRecord.duration}}</text> 分钟</view>
+					  <view class="record-labeltwo">今日学习时长</view>
+					</view>
+					<view class="record-item">
+					  <view class="record-labelone"><text>{{studyRecord.total_duration}}</text> 分钟</view>
+					  <view class="record-labeltwo">累计学习时长</view>
+					</view>
+			    </view>
+			  </view>
+			
+		</view>
+		  
+	</scroll-view>
+	
+    
 
     <bookSelector ref="bookSelectors" v-if="isPopupOpen" :numType="2" :books="books" @switchbookSuccess="switchbookSuccess" @closePopup="togglePopup" />
 
@@ -818,14 +824,19 @@
 
 <style scoped lang="scss">
 .container {
-  padding: 20rpx;
+  // padding: 20rpx;
     /* background-color: #f0f0f0; /* 设置背景颜色 */ 
   background: linear-gradient(to bottom, #8cf588 0%, #f8f9fa 50%, #f8f9fa 50%, #f8f9fa 100%);
 
   // min-height: 90vh; /* 确保容器覆盖整个视口高度 */
-  height: calc(100vh - 110rpx);
-   overflow-y: auto;
+  // height: calc(100vh - 110rpx);
+  //  overflow-y: auto;
   
+}
+
+.plan-content {
+	height:calc(100vh - 120px);
+	overflow-y: auto;
 }
 
 .header {
