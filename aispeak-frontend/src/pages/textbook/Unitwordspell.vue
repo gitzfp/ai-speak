@@ -5,8 +5,8 @@
 		    <view @tap="pronunciationSelect" class="leftTit">{{ phonetic }} ⇌ |</view>
 		    <view class="rightTit" @tap="phonicsbegins(0)">
 		     <view class="type-text"> 自然拼读</view>
-		      <image v-if="isPhonicsReading" class="left-icon" src="http://114.116.224.128:8097/static/voice_playing.gif"></image>
-		      <image v-else class="left-icon" src="http://114.116.224.128:8097/static/voice_play.png"></image>
+		      <image v-if="isPhonicsReading" class="left-icon" src="https://dingguagua.fun/static/voice_playing.gif"></image>
+		      <image v-else class="left-icon" src="https://dingguagua.fun/static/voice_play.png"></image>
 		    </view>
 		  </view>
 		</view>
@@ -267,11 +267,11 @@ const phonicsbegins = (num = 0) => {
 	  if (!sound_pathLists.value || sound_pathLists.value.length <= 0) return;
   	    playList.push(...sound_pathLists.value)
   } else if (num ==1) { //对
-  		var audioStr = 'http://114.116.224.128:8097/static/audio/answerright.mp3'
+  		var audioStr = 'https://dingguagua.fun/static/audio/answerright.mp3'
 		const soundoj = { position: -1, letter: "", content: "", sound_path: audioStr, phonetic: "audioStr" };
   		playList.push(soundoj)
   } else { //2 错
-  		var audioStr = 'http://114.116.224.128:8097/static/audio/misanswer.mp3'
+  		var audioStr = 'https://dingguagua.fun/static/audio/misanswer.mp3'
 		const soundoj = { position: -1, letter: "", content: "", sound_path: audioStr, phonetic: "audioStr" };
   		playList.push(soundoj)
   }

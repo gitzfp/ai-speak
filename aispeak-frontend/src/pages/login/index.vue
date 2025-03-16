@@ -2,7 +2,7 @@
   <view class="container">
     <image
       class="logo"
-      src="http://114.116.224.128:8097/static/logo.png"
+      src="https://dingguagua.fun/static/logo.png"
     ></image>
     <text class="title"> 欢迎使用AISPeak </text>
     <text class="sub-title"> 智能语言学习助手 </text>

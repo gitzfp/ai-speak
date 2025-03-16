@@ -403,9 +403,9 @@
 		const obj = planWordsList.value[planWordindext.value];
 		obj.speak_count +=1
 		//对
-		var audioStr = 'http://114.116.224.128:8097/static/audio/answerright.mp3'
+		var audioStr = 'https://dingguagua.fun/static/audio/answerright.mp3'
 		//错
-		// var audioStr = 'http://114.116.224.128:8097/static/audio/misanswer.mp3'
+		// var audioStr = 'https://dingguagua.fun/static/audio/misanswer.mp3'
 		playAudiourl(audioStr)
 		if (pronunciationScore < 60) {
 		 // 如果积分不为0，则跳过

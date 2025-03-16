@@ -5,13 +5,13 @@
       @tap="handleCollect"
       v-show="!collectLoading && !collected"
       class="collect-icon"
-      src="http://114.116.224.128:8097/static/icon_collect.png"
+      src="https://dingguagua.fun/static/icon_collect.png"
     ></image>
     <image
       @tap="handleCancel"
       v-show="!collectLoading && collected"
       class="collect-icon"
-      src="http://114.116.224.128:8097/static/icon_collect_actived.png"
+      src="https://dingguagua.fun/static/icon_collect_actived.png"
     >
     </image>
   </view>

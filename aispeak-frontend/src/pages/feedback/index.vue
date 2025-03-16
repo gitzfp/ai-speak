@@ -33,7 +33,7 @@
       <view v-else class="feedback-box">
         <image
           class="feedback-ico"
-          src="http://114.116.224.128:8097/static/feedback_success.png"
+          src="https://dingguagua.fun/static/feedback_success.png"
         />
         <view class="feedback-success">
           <text>提交成功</text>

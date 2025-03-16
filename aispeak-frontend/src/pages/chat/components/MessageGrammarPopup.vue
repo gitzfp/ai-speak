@@ -9,7 +9,7 @@
       <view @tap="handleClose" class="close-icon-box">
         <image
           class="close-icon"
-          src="http://114.116.224.128:8097/static/icon_close.png"
+          src="https://dingguagua.fun/static/icon_close.png"
         ></image>
       </view>
       <view
@@ -19,7 +19,7 @@
       >
         <image
           class="icon"
-          src="http://114.116.224.128:8097/static/icon_header_back.png"
+          src="https://dingguagua.fun/static/icon_header_back.png"
         ></image>
       </view>
       <view v-if="!wordDetailShow" class="tab-box">

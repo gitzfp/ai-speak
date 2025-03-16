@@ -8,7 +8,7 @@
           class="icon message-playing-icon play-ico"
           style="width: 36rpx; height: 36rpx"
           :class="{ reverse: direction && direction == 'right' }"
-          src="http://114.116.224.128:8097/static/voice_playing.gif"
+          src="https://dingguagua.fun/static/voice_playing.gif"
           mode="heightFix"
         >
         </image>
@@ -17,7 +17,7 @@
           class="icon message-playing-icon playing-ico"
           style="width: 36rpx; height: 36rpx"
           :class="{ reverse: direction && direction == 'right' }"
-          src="http://114.116.224.128:8097/static/voice_play.png"
+          src="https://dingguagua.fun/static/voice_play.png"
           mode="heightFix"
         ></image>
       </template>

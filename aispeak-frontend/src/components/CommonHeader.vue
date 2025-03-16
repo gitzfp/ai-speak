@@ -13,7 +13,7 @@
             <image
               v-if="leftIcon"
               class="back-icon"
-              src="http://114.116.224.128:8097/static/icon_header_back.png"
+              src="https://dingguagua.fun/static/icon_header_back.png"
             ></image>
           </view>
         </slot>

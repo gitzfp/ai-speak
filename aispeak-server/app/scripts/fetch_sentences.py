@@ -8,7 +8,6 @@ import logging
 from contextlib import contextmanager
 from app.scripts.utils.utils import download_and_upload_to_oss
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 @contextmanager

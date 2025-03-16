@@ -62,7 +62,7 @@
                 class="level-icon"
                 v-for="index in topic.level"
                 :key="'level_icon_' + topic.id + '_' + index"
-                src="http://114.116.224.128:8097/static/img/icons/star.png"
+                src="https://dingguagua.fun/static/img/icons/star.png"
               />
             </view>
             <!-- 用户是否已经完成此次话题 -->

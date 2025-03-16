@@ -310,8 +310,8 @@ def submit_study_progress_report(
         else:
             return ApiResponse.fail("学习进度报告提交失败！")
     except Exception as e:
+        print(f"提交学习进度报告失败: {str(e)}")
         return ApiResponse.system_error(str(e))  # 捕获异常并返回系统错误
-    
 
 
     # 定义查询参数模型

@@ -16,7 +16,7 @@
       </view>
       <image
         class="contact-image"
-        src="http://114.116.224.128:8097/static/contact_us.jpeg"
+        src="https://dingguagua.fun/static/contact_us.jpeg"
       />
     </view>
   </view>

@@ -23,7 +23,7 @@
             <image
               @click="goTopicHistory"
               class="icon"
-              src="http://114.116.224.128:8097/static/img/icons/history-records.png"
+              src="https://dingguagua.fun/static/img/icons/history-records.png"
             />
           </view>
         </view>

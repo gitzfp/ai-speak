@@ -3,14 +3,14 @@
     <view @tap="handlePrompt" class="menu-item">
       <image
         class="menu-icon"
-        src="http://114.116.224.128:8097/static/icon_prompt.png"
+        src="https://dingguagua.fun/static/icon_prompt.png"
       ></image>
       <view class="menu-text"> 提示 </view>
     </view>
     <view @tap="handleTranslate" class="menu-item">
       <image
         class="menu-icon"
-        src="http://114.116.224.128:8097/static/icon_translate.png"
+        src="https://dingguagua.fun/static/icon_translate.png"
       ></image>
       <view class="menu-text"> 翻译 </view>
     </view>
