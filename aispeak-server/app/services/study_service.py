@@ -500,7 +500,8 @@ class StudyService:
                 .filter(
                     StudyCompletionRecord.user_id == user_id,
                     StudyCompletionRecord.book_id == book_id,
-                    StudyCompletionRecord.date.in_(dates)  # 使用 in_ 来匹配日期数组
+                    StudyCompletionRecord.type == 2,  # type=2
+                    StudyCompletionRecord.date.in_(dates),  # 使用 in_ 来匹配日期数组
                 )
                 .all()
             )
@@ -564,6 +565,7 @@ class StudyService:
             .filter(
                 StudyCompletionRecord.user_id == user_id,
                 StudyCompletionRecord.book_id == book_id,
+                StudyCompletionRecord.type == 2,  # type=2
                 StudyCompletionRecord.date == current_date
             )
             .first()
@@ -580,6 +582,7 @@ class StudyService:
             .filter(
                 StudyCompletionRecord.user_id == user_id,
                 StudyCompletionRecord.book_id == book_id,
+                StudyCompletionRecord.type == 2,  # type=2
                 StudyCompletionRecord.date == yesterday
             )
             .first()
@@ -596,6 +599,7 @@ class StudyService:
             book_id=book_id,
             date=current_date,
             status=1,  # 默认状态为 1（已完成）
+            type=2,
             continuous_days=continuous_days,
             create_time=datetime.now(),
             update_time=datetime.now()
@@ -762,7 +766,7 @@ class StudyService:
                     user_id=user_id,
                     book_id=book_id,
                     lesson_id=lesson_id,
-                    date=datetime.now().date(),
+                    date=datetime.now().date(), 
                     status=statusNum,  # 使用传入的 statusNum
                     type=type_value,  # 根据 content_type 判断 type
                     points=total_points,

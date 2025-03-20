@@ -536,19 +536,19 @@ class TextbookService:
                 LessonEntity.parent_id == None
             ).order_by(LessonEntity.lesson_id.asc()).all()  # 添加排序条件
 
-            print(f"获取教材章节信息失败: {main_lessons}")
+            print(f"获取教材章节信息: {main_lessons}")
 
             # 获取当前用户的信息
             user_info = self.get_user_info(user_id)  # 调用 get_user_info 方法
 
             result = []
             for lesson in main_lessons:
+                print(f"主课程ID: {lesson.id}, 标题: {lesson.title}, 课程ID: {lesson.lesson_id}")
                 # 查询当前章节的单词列表
                 words = self.db.query(Word).filter(
                     Word.book_id == book_id,
                     Word.lesson_id == lesson.lesson_id  # 使用章节 ID 作为 lesson_id
                 ).order_by(Word.word_id.asc()).all()
-
                 if words:
                     chapter_data = {
                         "id": lesson.id,
