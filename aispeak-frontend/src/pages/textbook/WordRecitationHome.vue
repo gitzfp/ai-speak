@@ -533,6 +533,7 @@
 			  title: '没有需复习的单词',
 			  icon: 'none'
 			})
+			return
 		}
 		if (studyPlan!=null && !(studyPlan.value.id > 0)) {
 			return
