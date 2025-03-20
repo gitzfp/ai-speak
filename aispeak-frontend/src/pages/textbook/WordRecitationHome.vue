@@ -152,8 +152,12 @@
 	import study from '@/api/study';
 	import ResetPlanPopup from './components/ResetPlanPopup'
 	import RelearnPlanPop from './components/RelearnPlanPop'
-	
+	import useTextbookSelector from "@/hooks/useTextbookSelector";
 
+	const {
+	  fetchBooks: fetchTextbooks, // 重命名避免冲突
+	  filteredBooks: books,
+	} = useTextbookSelector();
 	//暂时不点亮
 	const weekindext = ref(-1)
 	const isPopupOpen = ref(false)
@@ -167,8 +171,6 @@
 		term:'',
 		version_type:''
 	})
-	// 书籍数据
-	const books = ref([])
 	
 	//学习计划
 	const studyPlan = ref(null)
@@ -731,70 +733,60 @@
 	  }
 	}
 	
+	
 	// 从接口获取数据
-	const fetchBooks = (isSwitch) => {
-	  console.log("数据库的边框和")
-	  uni.request({
-	    url: "https://diandu.mypep.cn/static/textbook/bookList_pep_click_subject_web_1_0_0.json",
-	    success: (res) => {
-	      // 过滤出英语科目的书籍
-	      const englishSubject = res.data.booklist.find(
-	        (subject) => subject.subject_name === "英语"
-	      )
-	      if (englishSubject) {
-	        // 将所有版本的书籍合并到一个数组中
-	        books.value = englishSubject.versions.flatMap(
-	          (version) => version.textbooks
-	        )
-	
+	const fetchBooks = async (isSwitch) => {
+	       try {
+	        await fetchTextbooks();
+	         console.log(books.value, "书籍数据")
+	        // 处理切换教材逻辑
 	        if (isSwitch) {
-	          isPopupOpen.value = true;
-	          console.log("点击切换请求进去")
-	        // 使用 nextTick 确保 DOM 已经更新并且子组件已经挂载
-	        nextTick(() => {
-	              console.log("After DOM update:");
-	              console.log(bookSelectors.value); // 这里应该能够获取到子组件实例
-	              
-	              if (bookSelectors.value && typeof bookSelectors.value.showPopup === 'function') {
-	                bookSelectors.value.showPopup(); // 调用子组件的方法
-	              }
-	        });
+	            isPopupOpen.value = true;
+	            nextTick(() => {
+	                if (bookSelectors.value?.showPopup) {
+	                    bookSelectors.value.showPopup();
+	                }
+	            });
 	        } else {
-			
-			 if (books.value.length > 0) {
-				 uni.getStorage({
-				   key: 'planSelectionObject', // 存储的键名
-				   success: (res) => {
-				     console.log('获取的数据:', res.data);
-				 	var bookSelectionObject = res.data
-			
-				 	var  selectedbook_id = bookSelectionObject.book_id
-				 	
-				 	book.value = books.value.find(item =>
-				 	  item.book_id === selectedbook_id
-				 	);
-				 	
-				   },
-				   fail: (err) => {
-				  //    console.error('获取数据失败:', err);
-					 // console.log(books.value)
-				 	 book.value = { ...books.value[0] };
-				   }
-				 });
-			 }
-			
+				
+				
+	            // 设置默认教材（需要确保 books 是响应式引用）
+	            if (books.value.length > 0) {
+					
+					uni.getStorage({
+					  key: 'planSelectionObject', // 存储的键名
+					  success: (res) => {
+					    // console.log('获取的数据:', res.data);
+						var bookSelectionObject = res.data
+		
+						var  selectedbook_id = bookSelectionObject.book_id
+						
+					
+						book.value = books.value.find(item =>
+						  item.book_id === selectedbook_id
+						);
+						
+					  },
+					  fail: (err) => {
+					    console.error('获取数据失败:', err);
+						 book.value = { ...books.value[0] };
+					  }
+					});
+					
+					
+		
+	               
+	            }
 	        }
-	        
-	
+	      } catch (err) {
+	        console.error("Failed to fetch books:", err);
+	        uni.showToast({
+	          title: "获取教材列表失败",
+	          icon: "error",
+	        });
 	      }
-	    },
-	    fail: (err) => {
-	      console.error("Failed to fetch books:", err)
-	    },
-	  })
 	}
 	
-
 	//修改计划
 	const modifyplan = () => {
 		console.log("修改计划")

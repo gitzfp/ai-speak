@@ -290,9 +290,11 @@
             allWords.value = response.data.words
             
             // 提取所有不重复的 lesson_id
-            const uniqueLessonIds = [...new Set(response.data.words.map(word => word.lesson_id))].sort()
+            const uniqueLessonIds = [...new Set(response.data.words.map(word => word.lesson_id))].sort((a, b) => a - b)
             units.value = uniqueLessonIds.map(id => ({ lesson_id: id }))
             
+			console.log("units.value")
+			console.log(units.value)
            
             // 按单元分组单词
             groupedWords.value = uniqueLessonIds.map(lessonId => {
@@ -305,6 +307,8 @@
                     isUnitSelected: false // 初始状态根据单词的选中情况确定
                 }
             })
+			
+			
 
           }
         } catch (error) {
