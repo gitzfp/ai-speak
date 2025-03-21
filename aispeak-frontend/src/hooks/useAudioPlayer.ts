@@ -119,13 +119,13 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void, onListEn
     currentAudio.value = audio
     audio.src = sentence.audio_url
     // 设置时间范围
-    if (sentence.audio_start && sentence.audio_end) {
+    if (sentence.audio_start != undefined && sentence.audio_end != undefined) {
       const startTime = sentence.audio_start / 1000
       const endTime = sentence.audio_end / 1000
       audio.startTime = startTime
       // 监听播放进度
       audio.onTimeUpdate(() => {
-        if (audio.currentTime >= endTime - 0.1) { // 防止浮点误差
+        if (audio.currentTime >= endTime - 0.0001) { // 防止浮点误差
           handlePlayEnd(sentences)  // 处理播放结束
         }
       })
@@ -195,7 +195,6 @@ export function useAudioPlayer(onIndexChange?: (index: number) => void, onListEn
 function stopCurrentAudio() {
   isPlaying.value = false
   if (currentAudio.value) {
-    uni.hideToast()
     const audio = currentAudio.value // Store reference before nullifying
     try {
       audio.stop()
