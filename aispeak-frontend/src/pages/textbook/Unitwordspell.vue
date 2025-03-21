@@ -18,7 +18,10 @@
 				class="phonics-img"
 			/>
 		</view>
-		
+		<view class="definition">
+		    <text class="label">释义：</text>
+		    <text class="value">{{word.chinese}}</text>
+		</view>
 		<!-- 3个文本框 -->
 		<view class="input-boxes">
 			<template :key="index" v-for="(box, index) in inputBoxes">
@@ -400,6 +403,28 @@ defineExpose({
 	  
 	}
 	
+	
+	.definition {
+	  display: flex;
+	  // background: #f8f9fa;
+	  padding: 24rpx;
+	  border-radius: 12rpx;
+	  margin-bottom: 32rpx;
+	  // height: 200rpx;
+	  // justify-content: center;
+	  // align-items: center;
+	  
+	  .label {
+	    font-size: 28rpx;
+	    color: #666;
+	    flex-shrink: 0;
+	  }
+	  
+	  .value {
+	    font-size: 28rpx;
+	    color: #1a1a1a;
+	  }
+	}
 	
 	.input-boxes {
 	  display: flex;
