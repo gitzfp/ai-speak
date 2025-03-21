@@ -22,7 +22,9 @@
 		</view>
 		<view v-if="planWordsList.length>0" class="contentMiddle">
 			<template v-if="planWordmode==0">
-				<view class="topcontent">
+				<view 
+				class="topcontent"
+				>
 					<WordDisplay ref="wordDisplayref" @redefineSettingsParentC="redefineSettingsParentC" :word="optionWord" />
 					<!-- 单词图片 -->
 					<view  class="phonics-image">
@@ -31,6 +33,11 @@
 							 mode="widthFix"
 							class="phonics-img"
 						/>
+					</view>
+					<!-- 释义区域 -->
+					<view class="definition">
+					    <text class="label">释义：</text>
+					    <text class="value">{{optionWord.chinese}}</text>
 					</view>
 					<view v-if="isShowmark" class="result-header">
 					    <view class="result-score">{{ pronunciation_score }}</view>
@@ -51,7 +58,7 @@
 				
 			</template>
 			<template v-if="planWordmode==1">
-				<view class="topcontent">
+				<view class="topcontenttwo">
 					<WordDisplay ref="wordDisplayref" @redefineSettingsParentC="redefineSettingsParentC" :word="optionWord" />
 					
 					<OptionAreaPicture
@@ -154,6 +161,7 @@
 	const showPopup = ref(false);
 	const isRight = ref(false)
 	
+	
 	const uniExitreminderPopPopup = ref(false)
 	
 	// 组件挂载
@@ -217,7 +225,6 @@
 	const redefineSettingsParentC =() => {
 		// console.log("暂时没用")
 	}
-	
 	
 	
 	const getoptionAreaWords = (fixedNum, rangeStart, rangeEnd, numToSelect) => {
@@ -421,6 +428,8 @@
 			 totalpoints.value += (2 - previousPoints); // 更新总积分
 		 }
 		}
+		
+
 	}
 	
 	// 监听 planWordindext 的变化
@@ -864,10 +873,43 @@
 		flex-direction: column;
 		justify-content: space-between;
 		
+		// background-color: red;
+		
 		.topcontent {
 			margin-top: 30rpx;
+			width: 100%;
 			height: calc(100% - 330rpx);
-			// background-color: red;
+			overflow-y: auto;
+			overflow-x: hidden; /* 禁止水平滚动 */
+		}
+		
+		.definition {
+		  display: flex;
+		  // background: #f8f9fa;
+		  padding: 24rpx;
+		  border-radius: 12rpx;
+		  margin-bottom: 32rpx;
+		  // height: 200rpx;
+		  // justify-content: center;
+		  // align-items: center;
+		  
+		  .label {
+		    font-size: 28rpx;
+		    color: #666;
+		    flex-shrink: 0;
+		  }
+		  
+		  .value {
+		    font-size: 28rpx;
+		    color: #1a1a1a;
+		  }
+		}
+		
+		.topcontenttwo {
+			margin-top: 30rpx;
+			height: 100%;
+			overflow-y: auto;
+			overflow-x: hidden; /* 禁止水平滚动 */
 		}
 		.phonics-image {
 		  margin: 32rpx 0;
