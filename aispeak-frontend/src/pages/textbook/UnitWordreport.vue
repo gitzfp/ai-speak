@@ -141,16 +141,26 @@
 	
 // 这里可以定义一些响应式数据或逻辑
 	const handleBackPage = () => {
-	  uni.navigateBack({
-	      delta: backPageNum.value, // 返回几层
-	      success: () => {
+	uni.switchTab({
+		url: "/pages/textbook/index3",
+		success: () => {
 	        console.log('返回成功');
 			uni.$emit('refrespoints', { action: 'updatepoints' }); // 传递参数
 	      },
 	      fail: (err) => {
 	        console.error('返回失败', err);
 	      },
-	    });
+	})
+	//   uni.navigateBack({
+	//       delta: backPageNum.value, // 返回几层
+	//       success: () => {
+	//         console.log('返回成功');
+	// 		uni.$emit('refrespoints', { action: 'updatepoints' }); // 传递参数
+	//       },
+	//       fail: (err) => {
+	//         console.error('返回失败', err);
+	//       },
+	//     });
 	}
 	
 	const errorCountGreaterThanZero = computed(() => {
@@ -201,15 +211,10 @@
 </script>
 
 <style lang="scss" scoped>
-	// page {
-	//   background-color: #5AC467; /* 设置全局页面背景颜色 */
-	// }
-	
 	.headView {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		// height: 96rpx;
 		.head-icon {
 			margin-left: 20rpx;
 			height: 40rpx;
@@ -218,18 +223,13 @@
 		.head-text {
 			flex: 1;
 			text-align: center;
-			// scolor: #fff;
 			color: #333;
 			font-size: 36rpx;
 		}
 	}
 
 .container {
-  // display: flex;
-  // flex-direction: column;
-  // padding: 20rpx;
   background-color: #fff;
-  // background-color:  #C9FACA;
   height: 100vh;
 }
 
@@ -259,9 +259,6 @@
 	.item_icon {
 		width: calc(50% - 10rpx);
 		box-sizing: border-box;
-		// border: #f0f0f0 1rpx solid;
-		// border: #ECECEC 1rpx solid;
-		// box-shadow: 2rpx 2rpx 4rpx rgba(0, 0, 0, 0.1);
 		border-radius: 30rpx;
 		padding: 30rpx;
 		display: flex;

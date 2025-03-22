@@ -39,23 +39,17 @@
 					    <text class="label">释义：</text>
 					    <text class="value">{{optionWord.chinese}}</text>
 					</view>
-					<view v-if="isShowmark" class="result-header">
-					    <view class="result-score">{{ pronunciation_score }}</view>
-					    <view class="result-label">测评分数</view>
-					</view>
+		
 				</view>
 				<view class="btnview">
-					<view @tap="showEvaluationModal" class="action-buttons">
-					    <view class="pronunciation-btn">
-					    <uni-icons class="uniIcon" type="mic" size="20" color="#fff" />
-					    <text class="btn-text">发音测评</text>
-					    </view>
-					</view>
 					<view v-if="isShowmark" @tap="clicknext" class="tab-btn">下一个</view>
+					<view class="pronunciation-btn">
+					<Speech 
+						:ref-obj="optionWord" 
+						@success="handleEvaluationResult"
+					/>
+					</view>
 				</view>
-				<!--测评 弹窗 -->
-				<wordassessPop @evaluationResult="evaluationResult" ref="wordassessPops" :isUnit="true" :currentWord="optionWord"></wordassessPop>
-				
 			</template>
 			<template v-if="planWordmode==1">
 				<view class="topcontenttwo">
@@ -110,16 +104,15 @@
 </template>
 
 <script setup>
-	import { ref,computed,watch,onMounted, onUnmounted, Text,onUpdated,nextTick} from 'vue';
+	import { ref,computed,watch,onMounted, onUnmounted} from 'vue';
 	import { onLoad } from '@dcloudio/uni-app'
 	import textbook from '@/api/textbook'
 	import study from '@/api/study';
 	import WordDisplay from './WordDisplay.vue';
-	import wordassessPop from './wordassessPop.vue';
 	import OptionAreaPicture from './OptionAreaPicture.vue';
 	import Unitwordspell from './Unitwordspell.vue';
 	import UnitExitreminderPop from './components/UnitExitreminderPop.vue'
-	
+	import Speech from "./components/PronuciationSpeech.vue"
 	const wordDisplayref = ref(null);
 	const wordassessPops = ref(null)
 	const unitwordspellref = ref(null)
@@ -403,8 +396,8 @@
 		
 		
 	}
-	const evaluationResult = (pronunciationScore) => {
-		pronunciation_score.value = pronunciationScore
+	const handleEvaluationResult = (pronunciationScore) => {
+		pronunciation_score.value = pronunciationScore?.pronunciation_score
 		isShowmark.value = true
 		// 获取当前单词对象
 		const obj = planWordsList.value[planWordindext.value];
@@ -473,7 +466,9 @@
 			submitreslutStudyProgressReport(book_id.value,lesson_id.value,filteredWordsList,false)
 			
 		} else {
-			uni.navigateBack()
+			uni.switchTab({
+    			url: "/pages/textbook/index3",
+  			})
 		}
 	
 	}
@@ -865,45 +860,34 @@
 		}
 	}
 	.contentMiddle {
-		// flex: 1;
-		height: calc(100vh - 60px - 120rpx) ;
-		// background-color: red;
-		// position: relative;
+		flex: 1;
+		height: 100%;
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
-		
-		// background-color: red;
-		
+		height: calc(100vh - 220rpx);
 		.topcontent {
-			margin-top: 30rpx;
 			width: 100%;
-			height: calc(100% - 330rpx);
+			height: calc(100%);
 			overflow-y: auto;
 			overflow-x: hidden; /* 禁止水平滚动 */
+			.definition {
+				display: flex;
+				padding: 24rpx;
+				border-radius: 12rpx;
+				margin-bottom: 32rpx;
+				.label {
+					font-size: 28rpx;
+					color: #666;
+					flex-shrink: 0;
+				}
+				.value {
+					font-size: 28rpx;
+					color: #1a1a1a;
+				}
+			}
 		}
-		
-		.definition {
-		  display: flex;
-		  // background: #f8f9fa;
-		  padding: 24rpx;
-		  border-radius: 12rpx;
-		  margin-bottom: 32rpx;
-		  // height: 200rpx;
-		  // justify-content: center;
-		  // align-items: center;
-		  
-		  .label {
-		    font-size: 28rpx;
-		    color: #666;
-		    flex-shrink: 0;
-		  }
-		  
-		  .value {
-		    font-size: 28rpx;
-		    color: #1a1a1a;
-		  }
-		}
+
 		
 		.topcontenttwo {
 			margin-top: 30rpx;
@@ -926,86 +910,19 @@
 		  
 		}
 		
-		
-		.result-header {
-		  text-align: center;
-		  margin-bottom: 20px;
-		  .result-score {
-		    font-size: 48px;
-		    font-weight: bold;
-		    color: #007bff;
-		  }
-		  
-		  .result-label {
-		    font-size: 16px;
-		    color: #666;
-		  }
-		  
-		  .result-tips {
-		    font-size: 12px;
-		    color: #999;
-		    margin-top: 8px;
-		  }
-		}
-		
-		
-		
-		
 		.btnview {
-			
 			width: 100%;
-			height: 300rpx;
-			// background-color: blue;
-			.action-buttons {
-			  // position: absolute;
-			  // bottom: 30rpx;
-			  width: 80%;
-			  margin-left: 9%;
-			  display: flex;
-			  justify-content: center;
-			  align-items: center;
-			  .pronunciation-btn {
-			    padding: 20rpx 40rpx;
+			display: flex;
+    		flex-direction: column-reverse;
+			.pronunciation-btn {
+			    padding: 60rpx 60rpx;
 			    border-radius: 48rpx;
 			    display: flex;
 			    flex-direction: column; /* 竖向排列 */
 			    align-items: center;
-			    .uniIcon {
-			      display: flex;
-			      align-items: center;
-			      justify-content: center;
-			      background: #2b9939;
-			      width: 70rpx;
-			      height: 70rpx;
-			      border-radius: 35rpx;
-			    }
-			    .btn-text {
-			      margin-top: 10rpx;
-			      color:#666;
-			      font-size: 28rpx;
-			      margin-left: 12rpx;
-			    }
-			  }
-			
-			  .display-toggle {
-			    display: flex;
-			    align-items: center;
-			    
-			    .toggle-text {
-			      font-size: 28rpx;
-			      color: #666;
-			      margin-right: 8rpx;
-			    }
-			    
-			    .page-indicator {
-			      font-size: 28rpx;
-			      color: #1a1a1a;
-			      margin-left: 16rpx;
-			    }
-			  }
 			}
-		
 			.tab-btn {
+				margin: 20rpx 0;
 				height: 100rpx;
 				width: 80%;
 				color: #fff;
@@ -1020,9 +937,6 @@
 		}
 		
 	}
-	
-	
-	
 	
 	/* 透明蒙版 */
 	.mask {
