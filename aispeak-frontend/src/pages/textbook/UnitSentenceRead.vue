@@ -263,7 +263,7 @@
 		stopCurrentAudio();
 		const audio = uni.createInnerAudioContext();
 		currentAudio.value = audio;
-		audio.src = optionSentence.value.audio_url;
+		audio.src = optionSentence.value?.audio_url;
 		
 		// 设置时间范围
 		if (optionSentence.value.audio_start && optionSentence.value.audio_end) {

@@ -3,6 +3,20 @@ import env from '@/config/env'
 class WxShare {
   static async init(options = {}) {
     try {
+      // 新增H5环境处理
+      // #ifdef H5
+      if (options.h5DirectCopy) {
+        try {
+          const shareUrl = window.location.href;
+          await navigator.clipboard.writeText(shareUrl);
+          uni.showToast({ title: '分享链接已拷贝', icon: 'none' });
+          return true;
+        } catch (e) {
+          uni.showToast({ title: '自动复制失败，请手动复制网址', icon: 'none' });
+          return false;
+        }
+      }
+      // #endif
       // Get current URL for H5
       let currentUrl = '';
       
@@ -46,6 +60,8 @@ class WxShare {
       if (response.data.success) {
         const config = response.data.data;
         // #ifdef H5
+        // 添加默认分享图标
+        const defaultImg = `${window.location.origin}/static/logo.png`;
         wx.config({
           debug: env.development,
           appId: config.appId,
@@ -65,7 +81,7 @@ class WxShare {
             title: options.title || 'AI-Speak',
             desc: options.desc || '您的智能语言学习助手',
             link: currentUrl,
-            imgUrl: options.imgUrl,
+            imgUrl: options.imgUrl || defaultImg,  // 修改这行
             success: options.success,
             cancel: options.cancel
           };

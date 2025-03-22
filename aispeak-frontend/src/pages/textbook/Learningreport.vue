@@ -48,16 +48,39 @@
     <!-- 底部按钮 -->
     <view class="bottom-section">
       <view @tap="handleBackPage" class="action-button">再学一组</view>
-      <view class="action-button">去分享！</view>
+   
+      <view @tap="handleShare" class="action-button">去分享！</view>
     </view>
   </view>
 </template>
 
 <script setup>
-	import { ref, watch,onMounted,computed,nextTick,onUnmounted} from 'vue';
-	import CommonHeader from "@/components/CommonHeader.vue"
+	import { ref, onMounted} from 'vue';
 	import { onLoad } from '@dcloudio/uni-app'
 	import study from '@/api/study';
+    import WxShare from '@/utils/wxShare';
+      
+      // 添加分享处理函数
+    const handleShare = async () => {
+		const shareUrl = `${location.href}`;
+		try {
+			const result = await WxShare.init({
+			title: 'AI Speak学习报告',
+			link: shareUrl,
+			imgUrl: '/static/share-logo.png',
+			h5DirectCopy: true
+			});
+			
+			if (!result) {
+			uni.showToast({ title: '分享初始化失败', icon: 'none' });
+			}
+		} catch (e) {
+			console.error('分享失败:', e);
+			uni.showToast({ title: '分享功能暂不可用', icon: 'none' });
+		}
+	};
+      
+      // 修改模板中的分享按钮绑定事件
 	
 	const allWords = ref([])
 	const book_id = ref('')
