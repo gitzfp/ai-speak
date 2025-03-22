@@ -553,6 +553,19 @@ onMounted(() => {
   if (container) {
     resizeObserver.observe(container)
   }
+  
+  // 监听屏幕息屏事件
+    uni.onWindowResize((res) => {
+      if (res.size.windowHeight === 0 || res.size.windowWidth === 0) {
+        // 屏幕息屏
+        if (currentAudio.value && isPlaying.value) {
+          // 重新启动音频播放
+          currentAudio.value.play();
+        }
+      }
+    });
+  
+  
 })
 
 
@@ -728,6 +741,9 @@ function playCurrentPage() {
       const track = currentPageData.track_info[currentTrackIndex]
       const audio = uni.createInnerAudioContext()
       currentAudio.value = audio
+	  
+	  // 配置音频支持后台播放
+	  audio.obeyMuteSwitch = false;
       audio.src = track.track_url_source
       audio.onEnded(() => {
         currentTrackIndex++
@@ -853,6 +869,9 @@ onBeforeUnmount(() => {
     resizeObserver = null
   }
   stopCurrentAudio()
+  
+  uni.offWindowResize(); // 移除屏幕息屏事件监听
+  
 })
 
 //-----测评用的方法-----开始------
