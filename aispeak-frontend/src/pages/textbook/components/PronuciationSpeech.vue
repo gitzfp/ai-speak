@@ -61,6 +61,7 @@ import { ref, computed, watch } from 'vue';
 import SowNewSocketSdk from './SpeechEvaluation/index';
 import utils from '@/utils/utils'; // 导入上传函数
 import AudioPlayer from "@/components/AudioPlayer.vue"
+import env from "@/config/env" 
 const props = defineProps({
   refObj: {
     type: Object,
@@ -76,8 +77,8 @@ let sdkInstance: any = null;
 const currentAudio = ref<any>(null)
 // 将sdkConfig改为计算属性
 const sdkConfig = computed(() => ({
-  secretid: "AKIDMgrqiT1MVhLrCJQWTF1f8VhkcMtGQTNY",
-  secretkey: "286rX8avCLMD1fBWeeR3881nOcjgRzkx",
+  secretid: env.secretid,
+  secretkey: env.secretkey,
   appid: "1321827414",
   ref_text: props.refObj.word,
   sentence_info_enabled: 1,
