@@ -1,9 +1,6 @@
 [
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "2",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/6F06FFA6D28162D09214283357A97C2A.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/6F06FFA6D28162D09214283357A97C2A.jpg",
@@ -336,10 +333,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "3",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/656417240429B0689EC5F72B9227358A.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/656417240429B0689EC5F72B9227358A.jpg",
@@ -577,10 +571,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "4",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/85AB7B9F55CFE22A5C1F205F6D41B94D.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/85AB7B9F55CFE22A5C1F205F6D41B94D.jpg",
@@ -1065,10 +1056,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "5",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/1E14F492BB1AC2129C2BCFD8EF6559E9.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/1E14F492BB1AC2129C2BCFD8EF6559E9.jpg",
@@ -1553,10 +1541,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "6",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/6AF550E13F1B05496F41C8CE0754322D.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/6AF550E13F1B05496F41C8CE0754322D.jpg",
@@ -1870,10 +1855,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "7",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/5000D08B65F5DB172F48936D76B68445.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/5000D08B65F5DB172F48936D76B68445.jpg",
@@ -2187,82 +2169,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
-    "page_name": "cover",
-    "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/8926F26C7D52B82F4BB855CCADB0BE89.jpg",
-    "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/8926F26C7D52B82F4BB855CCADB0BE89.jpg",
-    "page_id": "241115SCCL_00206486756c09f105ccd000197c45e_pagecover",
-    "page_no": null,
-    "track_info": []
-  },
-  {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
-    "page_name": "cover001",
-    "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/827C9952B1B5285BB9C00B37FC22AF4E.jpg",
-    "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/827C9952B1B5285BB9C00B37FC22AF4E.jpg",
-    "page_id": "241115SCCL_00206486756c09f105ccd000197c45e_pagecover001",
-    "page_no": null,
-    "track_info": []
-  },
-  {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
-    "page_name": "cover002",
-    "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/FC031528B9188A525C2A23EC973A7F2B.jpg",
-    "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/FC031528B9188A525C2A23EC973A7F2B.jpg",
-    "page_id": "241115SCCL_00206486756c09f105ccd000197c45e_pagecover002",
-    "page_no": null,
-    "track_info": []
-  },
-  {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
-    "page_name": "cover003",
-    "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/7575183F8C19E1F64EE0DF40C840BB86.jpg",
-    "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/7575183F8C19E1F64EE0DF40C840BB86.jpg",
-    "page_id": "241115SCCL_00206486756c09f105ccd000197c45e_pagecover003",
-    "page_no": null,
-    "track_info": []
-  },
-  {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
-    "page_name": "cover004",
-    "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/6D564AB8D3E10BBB394F9AD691CB0D0C.jpg",
-    "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/6D564AB8D3E10BBB394F9AD691CB0D0C.jpg",
-    "page_id": "241115SCCL_00206486756c09f105ccd000197c45e_pagecover004",
-    "page_no": null,
-    "track_info": []
-  },
-  {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
-    "page_name": "cover005",
-    "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/E1353F6F85AF8062DC5579DE8D1856AD.jpg",
-    "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/0_7/pic/E1353F6F85AF8062DC5579DE8D1856AD.jpg",
-    "page_id": "241115SCCL_00206486756c09f105ccd000197c45e_pagecover005",
-    "page_no": null,
-    "track_info": []
-  },
-  {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "14",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/14_19/pic/4ED40F5652766343C5AC5ED4B3D4DA57.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/14_19/pic/4ED40F5652766343C5AC5ED4B3D4DA57.jpg",
@@ -2557,10 +2464,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "15",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/14_19/pic/F8B7F54BE190FFF7FBB17850E2596141.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/14_19/pic/F8B7F54BE190FFF7FBB17850E2596141.jpg",
@@ -2874,10 +2778,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "16",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/14_19/pic/644ADDD764D6DACC031EB3C7480C916D.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/14_19/pic/644ADDD764D6DACC031EB3C7480C916D.jpg",
@@ -3229,10 +3130,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "17",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/14_19/pic/42B03B5F4F5C37C7069BE724086FD303.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/14_19/pic/42B03B5F4F5C37C7069BE724086FD303.jpg",
@@ -3508,10 +3406,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "18",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/14_19/pic/1BFBC39C6044B04B9D4F98C169E2A615.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/14_19/pic/1BFBC39C6044B04B9D4F98C169E2A615.jpg",
@@ -3806,10 +3701,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "19",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/14_19/pic/4CB6E175753244A8899F5B3AF44449CB.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/14_19/pic/4CB6E175753244A8899F5B3AF44449CB.jpg",
@@ -3952,10 +3844,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "20",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/20_25/pic/2D19D0F3A66E6B3A0A8CD036FEE1ECD6.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/20_25/pic/2D19D0F3A66E6B3A0A8CD036FEE1ECD6.jpg",
@@ -4326,10 +4215,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "21",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/20_25/pic/E73D22B7092A1DFCE6436C74DC070A2C.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/20_25/pic/E73D22B7092A1DFCE6436C74DC070A2C.jpg",
@@ -4757,10 +4643,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "22",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/20_25/pic/217FFFBAD4C40CC51AC091F9F16F4261.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/20_25/pic/217FFFBAD4C40CC51AC091F9F16F4261.jpg",
@@ -5112,10 +4995,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "23",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/20_25/pic/0B4BF1D7C35376BA904411B0F30AA250.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/20_25/pic/0B4BF1D7C35376BA904411B0F30AA250.jpg",
@@ -5638,10 +5518,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "24",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/20_25/pic/54479A5D0924DCA72BF7D4301A682FAB.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/20_25/pic/54479A5D0924DCA72BF7D4301A682FAB.jpg",
@@ -5879,10 +5756,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "25",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/20_25/pic/240DE0C7019ABB25705E27EAD0E5C32C.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/20_25/pic/240DE0C7019ABB25705E27EAD0E5C32C.jpg",
@@ -6120,10 +5994,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "26",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/26_31/pic/1D3744EB0490619DD6758CD2B203460D.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/26_31/pic/1D3744EB0490619DD6758CD2B203460D.jpg",
@@ -6342,10 +6213,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "27",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/26_31/pic/4D5D681D9E47AD4B80EC88DFAEBD1873.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/26_31/pic/4D5D681D9E47AD4B80EC88DFAEBD1873.jpg",
@@ -6773,10 +6641,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "28",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/26_31/pic/84B46E06507078E71C118F5A6639D36A.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/26_31/pic/84B46E06507078E71C118F5A6639D36A.jpg",
@@ -6995,10 +6860,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "29",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/26_31/pic/004CE58B4E9E2384AE7EED8D534F8829.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/26_31/pic/004CE58B4E9E2384AE7EED8D534F8829.jpg",
@@ -7293,10 +7155,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "30",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/26_31/pic/CA2F079F82DFD9EC56DD7DD0CE138305.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/26_31/pic/CA2F079F82DFD9EC56DD7DD0CE138305.jpg",
@@ -7591,10 +7450,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "31",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/26_31/pic/A4E2FC7D043BC9C52D9E5DE8DBF51540.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/26_31/pic/A4E2FC7D043BC9C52D9E5DE8DBF51540.jpg",
@@ -7946,10 +7802,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "32",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/32_37/pic/BB628BC08019133447453CC086E0F78B.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/32_37/pic/BB628BC08019133447453CC086E0F78B.jpg",
@@ -8206,10 +8059,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "33",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/32_37/pic/DFE911AE1953705BF7DDE0D24BC8E603.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/32_37/pic/DFE911AE1953705BF7DDE0D24BC8E603.jpg",
@@ -8485,10 +8335,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "34",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/32_37/pic/D5DFCC8005E70F78FB3E4D487DE1B7B2.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/32_37/pic/D5DFCC8005E70F78FB3E4D487DE1B7B2.jpg",
@@ -8688,10 +8535,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "35",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/32_37/pic/406E4085BB8BB306CC0EA7CC737460FE.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/32_37/pic/406E4085BB8BB306CC0EA7CC737460FE.jpg",
@@ -9043,10 +8887,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "36",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/32_37/pic/9D9132BECD454C676AB4F7ED25C233D1.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/32_37/pic/9D9132BECD454C676AB4F7ED25C233D1.jpg",
@@ -9227,10 +9068,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "37",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/32_37/pic/C1A57FA82857584CC4511F50B1D475FB.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/32_37/pic/C1A57FA82857584CC4511F50B1D475FB.jpg",
@@ -9582,10 +9420,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "38",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/38_43/pic/228E0F5C8F6EAA56E5276F8142C97511.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/38_43/pic/228E0F5C8F6EAA56E5276F8142C97511.jpg",
@@ -9842,10 +9677,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "39",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/38_43/pic/1FE6CC54ABE7892BAFBE7CEC2330492F.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/38_43/pic/1FE6CC54ABE7892BAFBE7CEC2330492F.jpg",
@@ -10254,10 +10086,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "40",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/38_43/pic/8564A1ADC55B1684B55F7A75C2D1B490.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/38_43/pic/8564A1ADC55B1684B55F7A75C2D1B490.jpg",
@@ -10476,10 +10305,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "41",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/38_43/pic/D7139C82641186D1892E97CDD943E1FD.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/38_43/pic/D7139C82641186D1892E97CDD943E1FD.jpg",
@@ -11097,10 +10923,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "42",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/38_43/pic/D5932E3A8F90A91552BC9E08390FB331.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/38_43/pic/D5932E3A8F90A91552BC9E08390FB331.jpg",
@@ -11395,10 +11218,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "43",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/38_43/pic/53D358AB7911B4BE5542B0295DDE3D73.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/38_43/pic/53D358AB7911B4BE5542B0295DDE3D73.jpg",
@@ -11731,10 +11551,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "44",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/44_49/pic/0125E83EF6FEDA679B106F3A1A9A4560.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/44_49/pic/0125E83EF6FEDA679B106F3A1A9A4560.jpg",
@@ -12010,10 +11827,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "45",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/44_49/pic/BEEAF3A2D9319199AA0CB360D41A88F3.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/44_49/pic/BEEAF3A2D9319199AA0CB360D41A88F3.jpg",
@@ -12327,10 +12141,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "46",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/44_49/pic/1977102EB47C6AEF4E83DC6696CC6DE7.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/44_49/pic/1977102EB47C6AEF4E83DC6696CC6DE7.jpg",
@@ -12492,10 +12303,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "47",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/44_49/pic/477553AA113F8FFF899E121D45BCA345.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/44_49/pic/477553AA113F8FFF899E121D45BCA345.jpg",
@@ -12771,10 +12579,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "48",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/44_49/pic/A05627AF4F65EAA8FD2B45D8D3572A11.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/44_49/pic/A05627AF4F65EAA8FD2B45D8D3572A11.jpg",
@@ -13012,10 +12817,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "49",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/44_49/pic/767A9B90A9BC7EC67DEE27C1DEF8FA4C.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/44_49/pic/767A9B90A9BC7EC67DEE27C1DEF8FA4C.jpg",
@@ -13158,10 +12960,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "50",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/50_55/pic/744AFACDEAA4868B77C58A195B5B1CA5.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/50_55/pic/744AFACDEAA4868B77C58A195B5B1CA5.jpg",
@@ -13437,10 +13236,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "51",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/50_55/pic/CD67DE606B99462FBCAE8928F4625928.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/50_55/pic/CD67DE606B99462FBCAE8928F4625928.jpg",
@@ -13754,10 +13550,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "52",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/50_55/pic/D3BBB155E8D92AA05F576EAC2DF668A7.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/50_55/pic/D3BBB155E8D92AA05F576EAC2DF668A7.jpg",
@@ -13900,10 +13693,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "53",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/50_55/pic/223971BDB1AED06C0AE8DCF08E4BB6CD.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/50_55/pic/223971BDB1AED06C0AE8DCF08E4BB6CD.jpg",
@@ -14369,10 +14159,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "54",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/50_55/pic/1003C082EB7EC5DD7D5A465A1282EA60.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/50_55/pic/1003C082EB7EC5DD7D5A465A1282EA60.jpg",
@@ -14629,10 +14416,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "55",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/50_55/pic/A230CB9E97B5D999293317FF9B534204.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/50_55/pic/A230CB9E97B5D999293317FF9B534204.jpg",
@@ -14908,10 +14692,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "56",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/56_61/pic/8D0F9638547B0CE8CBDCCD4F68A30524.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/56_61/pic/8D0F9638547B0CE8CBDCCD4F68A30524.jpg",
@@ -15168,10 +14949,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "57",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/56_61/pic/74FA7F53F679D962BDB30239A727937A.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/56_61/pic/74FA7F53F679D962BDB30239A727937A.jpg",
@@ -15485,10 +15263,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "58",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/56_61/pic/91FF3446DDCA30735144246E5BA64D6B.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/56_61/pic/91FF3446DDCA30735144246E5BA64D6B.jpg",
@@ -15650,10 +15425,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "59",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/56_61/pic/DF835991127590E140BC74B53EE880A4.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/56_61/pic/DF835991127590E140BC74B53EE880A4.jpg",
@@ -16309,10 +16081,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "60",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/56_61/pic/93D8E4D7754407FD9185B886C55ED464.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/56_61/pic/93D8E4D7754407FD9185B886C55ED464.jpg",
@@ -16550,10 +16319,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "61",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/56_61/pic/E90A8AD82E6BE9E01D45CA9FFD527BB4.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/56_61/pic/E90A8AD82E6BE9E01D45CA9FFD527BB4.jpg",
@@ -16962,10 +16728,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "62",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/62_65/pic/6BB180956CA6BC0C03A6F5949688CCB3.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/62_65/pic/6BB180956CA6BC0C03A6F5949688CCB3.jpg",
@@ -17165,10 +16928,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "63",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/62_65/pic/F6BD28D6A6D72D6B79E0722849E3A20B.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/62_65/pic/F6BD28D6A6D72D6B79E0722849E3A20B.jpg",
@@ -17444,10 +17204,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "64",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/62_65/pic/1BCD2C792671331B68FE3A7ADAEF84AF.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/62_65/pic/1BCD2C792671331B68FE3A7ADAEF84AF.jpg",
@@ -17628,10 +17385,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "65",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/62_65/pic/5934698E18017E628DC2A779ECA9446F.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/62_65/pic/5934698E18017E628DC2A779ECA9446F.jpg",
@@ -17831,10 +17585,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "66",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/66_68/pic/19AF47C823F6FB9DD8CC0ECC537C6A8B.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/66_68/pic/19AF47C823F6FB9DD8CC0ECC537C6A8B.jpg",
@@ -18281,10 +18032,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "67",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/66_68/pic/A3FE74EE7A5D47A7ED0EDE2FFEBDA703.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/66_68/pic/A3FE74EE7A5D47A7ED0EDE2FFEBDA703.jpg",
@@ -18826,10 +18574,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "68",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/66_68/pic/38BA0590379478EF21170F0AD4831ED4.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/66_68/pic/38BA0590379478EF21170F0AD4831ED4.jpg",
@@ -19238,10 +18983,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "69",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/69_71/pic/F6D7FE17FCAFB8E042CF14B04C6D7372.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/69_71/pic/F6D7FE17FCAFB8E042CF14B04C6D7372.jpg",
@@ -19250,10 +18992,7 @@
     "track_info": []
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "70",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/69_71/pic/E8BB96829B460D93E81944BD18C938BD.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/69_71/pic/E8BB96829B460D93E81944BD18C938BD.jpg",
@@ -19262,10 +19001,7 @@
     "track_info": []
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "71",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/69_71/pic/BF051FAE3491CEA9E4F2F5203E11B896.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/69_71/pic/BF051FAE3491CEA9E4F2F5203E11B896.jpg",
@@ -19274,10 +19010,7 @@
     "track_info": []
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "72",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/72_72/pic/6441EB6F60CC54BD86BBCA0F9996DBCA.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/72_72/pic/6441EB6F60CC54BD86BBCA0F9996DBCA.jpg",
@@ -19286,10 +19019,7 @@
     "track_info": []
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "73",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/73_73/pic/34EACD3C8ECABCFAEE2EE162CD09BE1E.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/73_73/pic/34EACD3C8ECABCFAEE2EE162CD09BE1E.jpg",
@@ -19298,10 +19028,7 @@
     "track_info": []
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "74",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/FB3A2B90C49AB868A36C2E4AE5F355BE.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/FB3A2B90C49AB868A36C2E4AE5F355BE.jpg",
@@ -19444,10 +19171,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "75",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/59AF584C70E68B86DB4E205CC82F30EF.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/59AF584C70E68B86DB4E205CC82F30EF.jpg",
@@ -19609,10 +19333,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "76",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/B8261CC175B060EC2A1AD161B81B26C0.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/B8261CC175B060EC2A1AD161B81B26C0.jpg",
@@ -19831,10 +19552,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "77",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/10B486006D8E7355FC261E5E0D3835B9.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/10B486006D8E7355FC261E5E0D3835B9.jpg",
@@ -20110,10 +19828,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "78",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/3D344C0179DDBBE214EC1B8788A02912.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/3D344C0179DDBBE214EC1B8788A02912.jpg",
@@ -20275,10 +19990,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "79",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/366C475082B5826DF88E83DB434717F0.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/366C475082B5826DF88E83DB434717F0.jpg",
@@ -20478,10 +20190,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "80",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/1569B6A5F6E18316DE01E1D73ED33946.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/1569B6A5F6E18316DE01E1D73ED33946.jpg",
@@ -20871,10 +20580,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "81",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/80E79359601F25BAE680D0945EE02043.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/80E79359601F25BAE680D0945EE02043.jpg",
@@ -21093,10 +20799,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "82",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/69375356E0A41FC9BB306B5D4C7244AF.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/69375356E0A41FC9BB306B5D4C7244AF.jpg",
@@ -21258,10 +20961,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "83",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/4E3DD35E24854483D94944FF39982D8E.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/4E3DD35E24854483D94944FF39982D8E.jpg",
@@ -21442,10 +21142,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "84",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/BE44C2A1800C964CC81B00BEC4027D1E.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/BE44C2A1800C964CC81B00BEC4027D1E.jpg",
@@ -21607,10 +21304,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "85",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/DA6DFE95BBE3091471B685B1F1CD8886.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/DA6DFE95BBE3091471B685B1F1CD8886.jpg",
@@ -21772,10 +21466,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "86",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/2B38EC82EDCF2B8AF83BA96BC14F1FBA.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/2B38EC82EDCF2B8AF83BA96BC14F1FBA.jpg",
@@ -21899,10 +21590,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "87",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/25BB45FAF9F2864079032025B3FE01B7.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/25BB45FAF9F2864079032025B3FE01B7.jpg",
@@ -22064,10 +21752,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "88",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/D9BFE85279FCD37FA10ED645AF83D30B.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/74_88/pic/D9BFE85279FCD37FA10ED645AF83D30B.jpg",
@@ -22381,10 +22066,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "89",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/89_end/pic/D17F850042E930350B230677285C7A06.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/89_end/pic/D17F850042E930350B230677285C7A06.jpg",
@@ -22546,10 +22228,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "90",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/89_end/pic/464D3F2A3712FC8251294A10DC3A56F9.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/89_end/pic/464D3F2A3712FC8251294A10DC3A56F9.jpg",
@@ -22616,10 +22295,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "91",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/89_end/pic/1E003F132B8E9F3AC33E54F75916B40E.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/89_end/pic/1E003F132B8E9F3AC33E54F75916B40E.jpg",
@@ -22743,10 +22419,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "append001",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/89_end/pic/9D06691849B04639C12ED3219B85862B.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/89_end/pic/9D06691849B04639C12ED3219B85862B.jpg",
@@ -22755,10 +22428,7 @@
     "track_info": []
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "append002",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/89_end/pic/0678B6817072841CDDDA3BEA718D506E.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/89_end/pic/0678B6817072841CDDDA3BEA718D506E.jpg",
@@ -22767,22 +22437,7 @@
     "track_info": []
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
-    "page_name": "backcover",
-    "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/89_end/pic/483D0D2A3C73B16FBC69C50C068320BE.jpg",
-    "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/89_end/pic/483D0D2A3C73B16FBC69C50C068320BE.jpg",
-    "page_id": "241115SCCL_00206486756c09f105ccd000197c45e_pagebackcover",
-    "page_no": null,
-    "track_info": []
-  },
-  {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "10",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/8_13/pic/3C70A4146DD8790D70D2B8E020A6C1F6.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/8_13/pic/3C70A4146DD8790D70D2B8E020A6C1F6.jpg",
@@ -23001,10 +22656,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "11",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/8_13/pic/955AAEB4B3FFD4B8AB46C231C2C7A7FA.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/8_13/pic/955AAEB4B3FFD4B8AB46C231C2C7A7FA.jpg",
@@ -23432,10 +23084,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "12",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/8_13/pic/101BBCA42FF0FD294FE58A561141F501.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/8_13/pic/101BBCA42FF0FD294FE58A561141F501.jpg",
@@ -23692,10 +23341,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "13",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/8_13/pic/A63910840F0F5B775883B71342F9C027.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/8_13/pic/A63910840F0F5B775883B71342F9C027.jpg",
@@ -24085,10 +23731,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "8",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/8_13/pic/1EC98527172608B44ED31AFC31495AAD.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/8_13/pic/1EC98527172608B44ED31AFC31495AAD.jpg",
@@ -24307,10 +23950,7 @@
     ]
   },
   {
-    "version": [
-      "标准版",
-      "高级版"
-    ],
+    "version": ["标准版", "高级版"],
     "page_name": "9",
     "page_url_source": "https://books-bct.oss-cn-beijing.aliyuncs.com/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/8_13/pic/AF98C1F7ABC8BCC701B77AC35F7D4739.jpg",
     "page_url": "https://enres.diplotalk.unischool.cn/digitalBookWX/241115SCCL_00206486756c09f105ccd000197c45e/8_13/pic/AF98C1F7ABC8BCC701B77AC35F7D4739.jpg",

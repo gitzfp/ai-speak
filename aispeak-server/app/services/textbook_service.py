@@ -4,6 +4,7 @@ from app.db.textbook_entities import TextbookEntity,  LessonEntity, TaskTargetsE
 from app.db.words_entities import Word, WordSyllable, Syllable  # 添加这行导入
 from app.db.study_entities import  StudyCompletionRecord,StudyProgressReport  # 假设实体类在 study_entities.py 中
 from app.db.account_entities import  AccountEntity
+from sqlalchemy import cast, Integer, func
 
 import datetime
 
@@ -299,6 +300,7 @@ class TextbookService:
                     word_syllable_map[ws.word_id] = []
                 syllable = syllable_dict.get(ws.syllable_id)
                 if syllable:
+                    print(syllable, 'syllable++++')
                     word_syllable_map[ws.word_id].append({
                         "position": ws.position,
                         "letter": syllable.letter,
@@ -530,26 +532,41 @@ class TextbookService:
         同时返回当前用户的信息
         """
         try:
-            # 1. 查询主课程，并按 lesson_id 升序排序
+            # 1. 查询主课程
             main_lessons = self.db.query(LessonEntity).filter(
                 LessonEntity.book_id == book_id,
                 LessonEntity.parent_id == None
-            ).order_by(LessonEntity.lesson_id.asc()).all()  # 添加排序条件
+            ).all()
+            
+            # 2. 对查询结果进行自定义排序
+            def custom_sort_key(lesson):
+                # 检查lesson_id是否只包含数字
+                if lesson.lesson_id and lesson.lesson_id.isdigit():
+                    # 如果是纯数字，返回其整数值用于排序
+                    return (0, int(lesson.lesson_id))
+                else:
+                    # 如果不是纯数字，则使用字符串排序，但确保排在所有数字后面
+                    return (1, lesson.lesson_id)
+            
+            # 使用自定义排序函数
+            main_lessons.sort(key=custom_sort_key)
 
             print(f"获取教材章节信息: {main_lessons}")
 
             # 获取当前用户的信息
             user_info = self.get_user_info(user_id)  # 调用 get_user_info 方法
-
+            print("chapter长度：",len(main_lessons))
             result = []
             for lesson in main_lessons:
                 print(f"主课程ID: {lesson.id}, 标题: {lesson.title}, 课程ID: {lesson.lesson_id}")
                 # 查询当前章节的单词列表
+                print(lesson.lesson_id, 'lessonididididididi')
                 words = self.db.query(Word).filter(
                     Word.book_id == book_id,
                     Word.lesson_id == lesson.lesson_id  # 使用章节 ID 作为 lesson_id
                 ).order_by(Word.word_id.asc()).all()
                 if words:
+                    print(lesson.title, 'lesson.title++++')
                     chapter_data = {
                         "id": lesson.id,
                         "title": lesson.title,
