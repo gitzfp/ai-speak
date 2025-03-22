@@ -68,17 +68,16 @@
     <!-- 底部按钮 -->
     <view class="bottom-section">
       <view @tap="handleBackPage" class="action-button">返回</view>
-      <view class="action-button">去分享！</view>
+      <view @tap="handleShare" class="action-button">去分享！</view>
     </view>
   </view>
 </template>
 
 <script setup>
-	import { ref, watch,onMounted,computed,nextTick,onUnmounted} from 'vue';
-	import CommonHeader from "@/components/CommonHeader.vue"
+	import { ref, onMounted, computed } from 'vue';
 	import { onLoad } from '@dcloudio/uni-app'
-	import study from '@/api/study';
-	
+	import WxShare from '@/utils/wxShare';
+
 	const allWords = ref([])
 	const total_points = ref(0)
 	const currentAudio = ref(null);
@@ -88,16 +87,28 @@
 	
 	const statusBarHeight = ref(0);
 	const customBarHeight = ref(0);
-	//学习记录
-	const studyRecord = ref({
-		new_words: 0,
-		review_words: 0,
-		duration:0,
-		total_duration: 0,
-		total_mastered_words: 0,
-		total_learned_words:0,
-		
-	})
+
+	// 在script setup部分添加以下内容
+
+	// 添加分享处理函数
+	const handleShare = async () => {
+	const shareUrl = `${window.location.href}`;
+	try {
+		const result = await WxShare.init({
+		title: 'AI Speak学习报告',
+		link: shareUrl,
+		imgUrl: '/static/share-logo.png',
+		h5DirectCopy: true
+		});
+		if (!result) {
+			uni.showToast({ title: '分享初始化失败', icon: 'none' });
+		}
+	} catch (e) {
+		console.error('分享失败:', e);
+		uni.showToast({ title: '分享功能暂不可用', icon: 'none' });
+	}
+	};
+
 	// 组件挂载
 		onMounted(() => {
 			const systemInfo = uni.getSystemInfoSync();
