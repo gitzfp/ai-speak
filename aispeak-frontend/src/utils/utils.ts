@@ -71,7 +71,7 @@ const uploadFileToOSS = async (ossKey: string, fileData: any, retries = MAX_RETR
     }
 
     // 上传二进制文件
-    uploadBinaryData(ossKey, fileData);
+    return uploadBinaryData(ossKey, fileData);
   } catch (error) {
     if (retries > 0) {
       console.warn(`上传失败，剩余重试次数: ${retries - 1}`, error);

@@ -396,9 +396,12 @@
 		
 		
 	}
-	const handleEvaluationResult = (pronunciationScore) => {
-		pronunciation_score.value = pronunciationScore?.pronunciation_score
+	
+	const handleEvaluationResult = (result) => {
+		pronunciation_score.value = result?.pronunciation_score
 		isShowmark.value = true
+		optionWord.value.isHaverated = 1
+		optionWord.value.voice_file = result.voice_file
 		// 获取当前单词对象
 		const obj = planWordsList.value[planWordindext.value];
 		obj.speak_count +=1
@@ -407,13 +410,13 @@
 		//错
 		// var audioStr = 'https://dingguagua.fun/static/audio/misanswer.mp3'
 		playAudiourl(audioStr)
-		if (pronunciationScore < 60) {
+		if (pronunciation_score.value < 60) {
 		 // 如果积分不为0，则跳过
 		 if (obj.points === 0) {
 			 obj.points += 1; // 积分加1
 			 totalpoints.value += 1; // 总积分加1
 		 }
-		} else if (pronunciationScore >= 60) {
+		} else if (pronunciation_score.value >= 60) {
 		 // 如果积分不为2，则更新为2，并更新总积分
 		 if (obj.points !== 2) {
 			 const previousPoints = obj.points; // 保存原有积分
@@ -421,8 +424,6 @@
 			 totalpoints.value += (2 - previousPoints); // 更新总积分
 		 }
 		}
-		
-
 	}
 	
 	// 监听 planWordindext 的变化

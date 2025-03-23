@@ -143,7 +143,9 @@
 			} else { //直接返回了
 				//发消息更新首页积分
 				uni.$emit('refrespoints', { action: 'updatepoints' });
-				uni.navigateBack()
+				uni.switchTab({
+					url: `/pages/textbook/index3`,
+				})
 			}	
 			
 			
@@ -307,9 +309,9 @@
 				await submitreslutStudyProgressReport(book_id.value,lesson_id.value,haveratedSentences,false)
 			} 	
 		} 
-		// uni.switchTab({
-		// 	url: `/pages/textbook/index3`,
-		// })
+		uni.switchTab({
+			url: `/pages/textbook/index3`,
+		})
 	}
 	
 

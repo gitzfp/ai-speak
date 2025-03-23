@@ -631,7 +631,7 @@ const submitreslutStudyProgressReport = async(reports)=> {
 			title: '报告生成中...',
 			mask: true, // 防止用户点击
 			});
-			const response = await study.submitStudyProgressReport(book_id.value,lesson_id.value,reports);
+			await study.submitStudyProgressReport(book_id.value,lesson_id.value,reports);
 				
 			uni.hideLoading();
 					
