@@ -126,14 +126,18 @@ const loginSuccess = (data: any) => {
     return
   }
   let storageToken = data.data.token
-  loginSucessByToken(storageToken)
+  const userId = data.data.user_id
+  console.log("登录成功，token:", data.data)
+  loginSucessByToken(storageToken, userId)
 }
 
 /**
  * 通过用户token加载后续逻辑
  */
-const loginSucessByToken = (storageToken: string) => {
+const loginSucessByToken = (storageToken: string, userId: string) => {
+  
   uni.setStorageSync("x-token", storageToken)
+  uni.setStorageSync("userId", userId) 
   uni.switchTab({
     url: "/pages/textbook/index3",
   })

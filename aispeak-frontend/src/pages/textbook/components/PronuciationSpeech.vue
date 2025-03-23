@@ -148,9 +148,7 @@ const initSDK = () => {
       wavData.set(int8Data, WAV_HEADER_SIZE);
       // 创建 Blob
       const blob = new Blob([wavData], {type: 'audio/wav'});
-      // 生成文件名，去除所有标点符号，可以使用正则表达式来替换标点符号为空字符串。
-      const content = props.refObj.word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '').replace(/\s+/g, '-');
-      const ossKey = `recordings/${content}.wav`;
+      const ossKey = `recordings/${uni.getStorageSync("userId")}/${props.refObj.id}.wav`;
       await utils.uploadFileToOSS(ossKey, blob).then(async response => {
         console.log('文件上传成功:', response);
         const data = await utils.getFileFromOSS(ossKey, false)
@@ -205,6 +203,7 @@ const initSDK = () => {
 // 添加单词变化监听
 watch(() => props.refObj, (newWord) => {
   finalResult.value = null;
+  if (isRecording.value) return;
   if (sdkInstance) {
     console.log('SDK配置已更新：', newWord, sdkConfig.value);
     // 检查当前单词是否与SDK配置中的单词不同
