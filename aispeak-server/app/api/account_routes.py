@@ -60,6 +60,15 @@ def phone_login(request: Request, dto: PhoneLoginDTO, db: Session = Depends(get_
     )
 
 
+@router.post("/account/register")
+def phone_register(request: Request, dto: PhoneLoginDTO, db: Session = Depends(get_db)):
+    service = AccountService(db)
+    client_host = request.client.host
+    return ApiResponse(
+        data=service.phone_login(dto, client_host)
+    )
+
+
 @router.get("/account/info", name="Get User info")
 def get_account_info(
     db: Session = Depends(get_db), account_id: str = Depends(get_current_account)

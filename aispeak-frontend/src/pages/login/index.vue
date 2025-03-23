@@ -17,8 +17,8 @@
       <text class="mp-weixin-login-btn">微信一键登录</text>
     </button>
 
-    <!-- 手机号登录表单（非微信环境显示） -->
-    <view v-else class="phone-login-form">
+    <!-- 手机号登录表单 -->
+    <view v-if="!showRegisterForm" class="phone-login-form">
       <input
         v-model="phoneNumber"
         class="input"
@@ -32,6 +32,41 @@
         placeholder="请输入密码"
       />
       <button class="login-btn" @tap="handlePhoneLogin">登录</button>
+      <text class="register-link" @tap="showRegisterForm = true">还没有账号？立即注册</text>
+    </view>
+
+    <!-- 注册表单 -->
+    <view v-if="showRegisterForm" class="register-form">
+      <input
+        v-model="registerUsername"
+        class="input"
+        type="text"
+        placeholder="请输入用户名"
+      />
+      <input
+        v-model="registerPhoneNumber"
+        class="input"
+        type="number"
+        placeholder="请输入手机号"
+      />
+      <input
+        v-model="registerPassword"
+        class="input"
+        type="password"
+        placeholder="请输入密码"
+      />
+      <picker 
+        v-model="grade" 
+        :range="gradeOptions" 
+        class="grade-picker"
+        @change="handleGradeChange"
+      >
+        <view class="input picker-text">
+          {{ gradeOptions[grade - 1] || '请选择年级' }}
+        </view>
+      </picker>
+      <button class="register-btn" @tap="handleRegister">注册</button>
+      <text class="login-link" @tap="showRegisterForm = false">已有账号？返回登录</text>
     </view>
   </view>
 </template>
@@ -41,10 +76,17 @@ import { ref, onMounted } from "vue"
 import accountReqeust from "@/api/account"
 import utils from "@/utils/utils"
 const X_TOKEN = "x-token"
+const USER_ID = 'user_id'
 const loginLoading = ref(false)
 const isWeixin = ref(false) // 是否为微信环境
 const phoneNumber = ref("") // 手机号
 const password = ref("") // 密码
+const registerPhoneNumber = ref("") // 注册手机号
+const registerPassword = ref("") // 注册密码
+const showRegisterForm = ref(false)
+const grade = ref(1) // 年级
+const registerUsername = ref("") // 注册用户名
+const gradeOptions = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级']
 
 onMounted(() => {
   uni.setNavigationBarTitle({
@@ -57,8 +99,9 @@ onMounted(() => {
 
   // 是否有保存登录的token
   let storageToken = uni.getStorageSync(X_TOKEN)
+  let userId = uni.getStorageSync(USER_ID)
   if (storageToken) {
-    loginSucessByToken(storageToken)
+    loginSucessByToken(storageToken, userId)
   }
 })
 
@@ -141,6 +184,36 @@ const loginSucessByToken = (storageToken: string, userId: string) => {
   uni.switchTab({
     url: "/pages/textbook/index3",
   })
+}
+
+/**
+ * 注册处理
+ */
+const handleRegister = () => {
+  console.log("注册")
+  accountReqeust
+    .register({
+      username: registerUsername.value,
+      phone_number: registerPhoneNumber.value,
+      password: registerPassword.value,
+      grade: grade.value
+    })
+    .then((data) => {
+      if (data.code === 1000) {
+        uni.showToast({
+          title: "注册成功",
+          icon: "success",
+        })
+      } else {
+        uni.showToast({
+          title: data.message,
+          icon: "none",
+        })
+      }
+    })
+}
+const handleGradeChange = (e: any) => {
+  grade.value = Number(e.detail.value) + 1;  // picker 的索引从0开始，所以需要加1
 }
 </script>
 
@@ -228,6 +301,35 @@ const loginSucessByToken = (storageToken: string, userId: string) => {
     }
   }
 
+  .register-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20rpx;
+
+    .input, .select {
+      width: 100%;
+      height: 90rpx;
+      padding: 0 10rpx;
+      border: 1rpx solid #ccc;
+      border-radius: 20rpx;
+      font-size: 32rpx;
+      box-sizing: border-box;
+    }
+
+    .register-btn {
+      width: 100%;
+      height: 90rpx;
+      border-radius: 20rpx;
+      background-color: #5456eb;
+      color: #fff;
+      font-size: 32rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
   .visitor-login {
     margin-top: 40rpx;
     height: 45rpx;
@@ -238,4 +340,100 @@ const loginSucessByToken = (storageToken: string, userId: string) => {
     letter-spacing: 1px;
   }
 }
+.toggle-register-btn {
+  margin-top: 20rpx;
+  width: 100%;
+  height: 90rpx;
+  border-radius: 20rpx;
+  background-color: #5456eb;
+  color: #fff;
+  font-size: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 </style>
+
+.auth-switch {
+  display: flex;
+  gap: 40rpx;
+  margin: 40rpx 0;
+
+  .switch-btn {
+    padding: 0 40rpx;
+    height: 60rpx;
+    line-height: 60rpx;
+    background: #f5f5f5;
+    border-radius: 30rpx;
+    font-size: 28rpx;
+    color: #666;
+    
+    &.active {
+      background: #5456eb;
+      color: white;
+    }
+  }
+}
+
+.register-form {
+  margin-top: 40rpx;
+}
+
+.register-link, .login-link {
+  margin-top: 20rpx;
+  font-size: 28rpx;
+  color: #5456eb;
+  text-align: center;
+}
+
+.register-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+
+  .register-content {
+    width: 80%;
+    background: #fff;
+    border-radius: 20rpx;
+    padding: 40rpx;
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30rpx;
+
+      .modal-title {
+        font-size: 32rpx;
+        font-weight: bold;
+      }
+
+      .close-btn {
+        font-size: 40rpx;
+        color: #999;
+        padding: 10rpx;
+      }
+    }
+
+    .grade-picker {
+      width: 100%;
+      height: 90rpx;
+      border: 1rpx solid #ccc;
+      border-radius: 20rpx;
+      margin-bottom: 20rpx;
+      
+      .picker-text {
+        padding: 20rpx 20rpx;
+        font-size: 32rpx;
+        color: #333;
+      }
+    }
+  }
+}

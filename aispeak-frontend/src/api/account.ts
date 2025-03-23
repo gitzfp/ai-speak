@@ -9,6 +9,9 @@ export default {
   wechatLogin: (data: any) => {
     return request("/account/wechat-login", "POST", data, true);
   },
+  register: (data: any) => {
+    return request("/account/register", "POST", data, true);
+  },
   accountInfoGet: () => {
     return request("/account/info", "GET");
   },
