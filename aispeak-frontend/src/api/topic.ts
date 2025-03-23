@@ -20,7 +20,7 @@ export default {
   },
 
   getSessionByTopicId: (data: any) => {
-    return request(`/sessions/topic/${data.topic_id}/`, "GET", data, true);
+    return request(`/sessions/topic/${data.topic_id}`, "GET", data, true);
   },
   
   getSessionByLessonId: (data: any) => {
