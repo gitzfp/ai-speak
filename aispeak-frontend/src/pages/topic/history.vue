@@ -47,7 +47,7 @@
               <view @click="handleDelete(history)" class="delete-btn-box">
                 <image
                   class="delete-btn"
-                  src="http://114.116.224.128:8097/static/deleted.png"
+                  src="https://dingguagua.fun/static/deleted.png"
                   mode="heightFix"
                 />
               </view>

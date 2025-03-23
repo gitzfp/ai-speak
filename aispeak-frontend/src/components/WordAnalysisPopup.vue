@@ -9,7 +9,7 @@
         <image
           @tap="handleClose"
           class="close-icon"
-          src="http://114.116.224.128:8097/static/icon_close.png"
+          src="https://dingguagua.fun/static/icon_close.png"
         ></image>
       </view>
       <LoadingRound v-if="wordDetailLoading" :min-height="200"></LoadingRound>

@@ -13,7 +13,7 @@
         <view class="tips-box">
           <image
             class="grammar-icon-tips"
-            src="http://114.116.224.128:8097/static/icon_incorrect.png"
+            src="https://dingguagua.fun/static/icon_incorrect.png"
           ></image>
           <view class="grammar-result-content red">{{
             grammarAnalysisResult.original
@@ -23,7 +23,7 @@
         <view class="tips-box">
           <image
             class="grammar-icon-tips"
-            src="http://114.116.224.128:8097/static/icon_correct.png"
+            src="https://dingguagua.fun/static/icon_correct.png"
           ></image>
           <view class="grammar-result-content green">
             {{ grammarAnalysisResult.correct_content }}
@@ -53,7 +53,7 @@
             <image
               class="translate-icon icon"
               @tap="handleTranlate(grammarAnalysisResult.better)"
-              src="http://114.116.224.128:8097/static/icon_translate.png"
+              src="https://dingguagua.fun/static/icon_translate.png"
             ></image>
           </view>
           <view class="collect-icon-box icon-box">
@@ -66,7 +66,7 @@
             <image
               @tap="handleCopy(grammarAnalysisResult.better)"
               class="copy-icon icon"
-              src="http://114.116.224.128:8097/static/icon_copy_text.png"
+              src="https://dingguagua.fun/static/icon_copy_text.png"
             ></image>
           </view>
         </view>

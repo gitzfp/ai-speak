@@ -16,6 +16,10 @@
             "autoclose" : true,
             "delay" : 0
         },
+		/* 添加后台播放音频配置 */
+		"background": {
+			"audio": true
+		},
         /* 模块配置 */
         "modules" : {
             "Record" : {}

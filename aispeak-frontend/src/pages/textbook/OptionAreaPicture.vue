@@ -126,10 +126,10 @@ const handleItemClick = (optionWord,indext) => {
 	
 	stopCurrentAudio();
 	var num = 2 //答错
-	var audioStr = 'http://114.116.224.128:8097/static/audio/misanswer.mp3'
+	var audioStr = 'https://dingguagua.fun/static/audio/misanswer.mp3'
 	if (props.word.word_id == optionWord.word_id) {
 		num = 1 //答对		
-		audioStr = 'http://114.116.224.128:8097/static/audio/answerright.mp3'
+		audioStr = 'https://dingguagua.fun/static/audio/answerright.mp3'
 	}
 	
 	const audio = uni.createInnerAudioContext();

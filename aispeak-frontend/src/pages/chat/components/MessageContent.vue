@@ -25,7 +25,7 @@
               <image
                 class="action-icon"
                 @tap="handleTranslateText"
-                src="http://114.116.224.128:8097/static/icon_translate.png"
+                src="https://dingguagua.fun/static/icon_translate.png"
               />
             </view>
             <view class="btn-box collect-btn-box">
@@ -35,14 +35,14 @@
               <image
                 class="action-icon"
                 @tap="handleCopyText"
-                src="http://114.116.224.128:8097/static/icon_copy_text.png"
+                src="https://dingguagua.fun/static/icon_copy_text.png"
               />
             </view>
             <view class="btn-box" :class="{ active: textShadow }">
               <image
                 class="action-icon"
                 @tap="handleHint"
-                src="http://114.116.224.128:8097/static/icon_hint.png"
+                src="https://dingguagua.fun/static/icon_hint.png"
               />
             </view>
           </view>
@@ -76,11 +76,11 @@
           <image
             v-if="message.achieved_target === true"
             class="grammar-icon"
-            src="http://114.116.224.128:8097/static/img/icons/star.png"
+            src="https://dingguagua.fun/static/img/icons/star.png"
           />
           <image
             class="grammar-icon"
-            src="http://114.116.224.128:8097/static/icon_grammar.png"
+            src="https://dingguagua.fun/static/icon_grammar.png"
           />
           <text class="grammar-score">{{
             utils.removeDecimal(message.pronunciation.pronunciation_score)
@@ -89,7 +89,7 @@
         <view v-else class="grammar-box" @tap="handleGrammar">
           <image
             class="grammar-icon"
-            src="http://114.116.224.128:8097/static/icon_grammar.png"
+            src="https://dingguagua.fun/static/icon_grammar.png"
           />
           <text>语法</text>
         </view>

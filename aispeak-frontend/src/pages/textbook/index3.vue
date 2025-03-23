@@ -1,8 +1,34 @@
 <template>
   <view class="container">
     <!-- 头部 -->
-    <view class="header">
-      <view class="book-info">
+	<!-- #ifdef H5 -->
+	<view class="header" :style="{ paddingTop: statusBarHeight + 'px', height: '44px' }">
+	  <view class="book-info"> 
+		  <view class="qiuhuan" @click="switchCatalogue">
+			<view>目录选择</view> 
+			<image
+			  class="qiuhuan-icon"
+			  src="@/assets/icons/parallel_double_arrow.svg"
+			></image>
+		  </view>
+		   <view>积分：{{user_info?.points}}</view>
+		  <view class="qiuhuan" @click="switchBook">
+			<view>{{ book.grade }} {{ book.term }}</view> 
+			<image
+			  class="qiuhuan-icon"
+			  src="@/assets/icons/parallel_double_arrow.svg"
+			></image>
+		  </view>
+	  </view>
+	</view>
+	<!-- #endif -->
+	
+	<!-- #ifdef MP-WEIXIN -->
+    <view class="header" :style="{ paddingTop: statusBarHeight + 'px', height: '84px' }">
+      <view class="book-info"> 
+		  <view>积分：{{user_info?.points}}</view>
+      </view>
+	  <view class="book-bottom">
 		  <view class="qiuhuan" @click="switchCatalogue">
 		  	<view>目录选择</view> 
 		  	<image
@@ -10,16 +36,16 @@
 		  	  src="@/assets/icons/parallel_double_arrow.svg"
 		  	></image>
 		  </view>
-		  <view>积分：{{user_info.points}}</view>
-        <view class="qiuhuan" @click="switchBook">
-			<view>{{ book.grade }} {{ book.term }}</view> 
-			<image
-			  class="qiuhuan-icon"
-			  src="@/assets/icons/parallel_double_arrow.svg"
-			></image>
-		</view>
-      </view>
+		  <view class="qiuhuan" @click="switchBook">
+		  	<view>{{ book.grade }} {{ book.term }}</view> 
+		  	<image
+		  	  class="qiuhuan-icon"
+		  	  src="@/assets/icons/parallel_double_arrow.svg"
+		  	></image>
+		  </view>
+	  </view>
     </view>
+	<!-- #endif -->
     <!-- 功能按钮区域 -->
 	<scroll-view class="book-content"
 	scroll-y
@@ -88,7 +114,7 @@
 					 style="background-color: #E5FEF1"
 					@click="sentenceFollow(chapter)">
 					    <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
-					    AI外教
+					    课文点读
 					</view>
 				</view>
 			</template>
@@ -135,7 +161,7 @@
 					:style="chapter.is_learning_text == 1 ? { 'background-color': '#E5FEF1' } : {}"
 					@click="sentenceFollow(chapter)">
 					    <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
-					    AI外教
+					    课文点读
 					</view>
 				</view>
 			</template> -->
@@ -200,6 +226,10 @@ const isCataloguePopupOpen = ref(false);
 const catalogueSelectors = ref(null);
 const scrollToUnitId = ref('')
 
+// 获取设备的安全区域高度
+const statusBarHeight = ref(0);
+const customBarHeight = ref(0);
+
 const user_info = ref({
 	points:0
 })
@@ -216,8 +246,12 @@ watch(
 
 // 组件挂载时获取数据
 onMounted(() => {
+	const systemInfo = uni.getSystemInfoSync();
+	statusBarHeight.value = systemInfo.statusBarHeight || 0;
+	customBarHeight.value = (systemInfo.statusBarHeight || 0) + 44; // 44 是导航栏的默认高度
+	
   console.log(books.value, "书籍数据");
-
+  
   fetchBooks(false);
   
   uni.$on('refrespoints', (params) => {
@@ -392,16 +426,9 @@ const textbookListen = (chapter) => {
 };
 
 const sentenceFollow = (chapter) => {
-	if (chapter.is_learning_text != 1) {
-		uni.showToast({
-		  title: "暂时没有开放",
-		  icon: "none",
-		});
-		return
-	}
-	// uni.navigateTo({
-	// url: `/pages/textbook/TextbookListen?book_id=${book.value.book_id}&repeat_after=true`,
-	// });
+	uni.navigateTo({
+		url: `/pages/textbook/books?book_id=${book.value.book_id}&repeat_after=true`,
+	});
 };
 
 const seereport = (chapter) => {
@@ -591,8 +618,9 @@ const eliminationGame = () => {
 .container {
   background-color: #D5F0F1;
   // background: linear-gradient(to bottom, #59c160 0%, #f8f9fa 100%);
-  padding-top: 10px;
-  height:calc(100vh - 60px);
+  // padding-top: 10px;
+  // height:calc(100vh - 60px);
+  // background-color: blue;
 }
 
 .header {
@@ -604,16 +632,54 @@ const eliminationGame = () => {
   height: 80rpx;
 }
 
+  /* #ifdef H5 */
+  
+  .book-info {
+    display: flex;
+    align-items: center;
+    /* margin-bottom: 20px; */
+    // background-color: red;
+    width: 100%;
+    height: 100%;
+    justify-content: space-between; 
+  }
+  .book-content {
+  	height:calc(100vh - 120px);
+  	// height:calc(100% - 60px) ;
+  	// background-color: red;
+  	overflow-y: auto;
+  }
+  
+  /* #endif */
 
-.book-info {
-  display: flex;
-  align-items: center;
-  /* margin-bottom: 20px; */
-  // background-color: red;
-  width: 100%;
-  height: 100%;
-  justify-content: space-between;
-}
+ /* #ifdef MP-WEIXIN */
+ 
+ .book-info {
+   display: flex;
+   align-items: center;
+   /* margin-bottom: 20px; */
+   // background-color: red;
+   width: 100%;
+   height: 37px;
+   justify-content: center; 
+ }
+ .book-bottom {
+ 	display: flex;
+ 	align-items: center;
+ 	/* margin-bottom: 20px; */
+ 	// background-color: red;
+ 	width: 100%;
+ 	height: 47px;
+ 	justify-content: space-between; 
+ }
+ .book-content {
+ 	height:calc(100vh - 160px) ;
+ 	// height:calc(100% - 60px) ;
+ 	// background-color: red;
+ 	overflow-y: auto;
+ }
+ /* #endif */
+
 .qiuhuan {
   // margin-top: 30rpx;
   background-color: #FEF8E5;
@@ -633,12 +699,7 @@ const eliminationGame = () => {
 	width: 20rpx;
 	margin-left: 20rpx;
 }
-.book-content {
-	// height:calc(100% - 100rpx) ;
-	height:calc(100% - 80rpx) ;
-	// background-color: red;
-	overflow-y: auto;
-}
+
 .book-unit {
 	margin: 0 20rpx 20rpx 20rpx;
 	background-color: #fff;

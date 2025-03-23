@@ -1,128 +1,134 @@
 <template>
   <view class="container">
-    <view @tap="ebbinghausclick" class="header">
-      <view class="hedtitle">艾宾浩斯记忆法</view>
-      <view class="subtitle">
-		  <text class="subtitlect">高效背词·科学记忆·对抗遗忘</text>
-	  </view>
-    </view>
-
-    <view class="contentone">
-		<view @tap="openResetPopup" class="replacementplan">
-			<image class="left-icon" src="@/assets/icons/word_refresh.svg"></image>
-			<view class="replacementplan-title">重置计划</view>
+	<scroll-view class="plan-content"
+	scroll-y
+	:scroll-into-view="scrollToUnitId"
+	>
+		<view @tap="ebbinghausclick" class="header">
+		  <view class="hedtitle">艾宾浩斯记忆法</view>
+		  <view class="subtitle">
+			  <text class="subtitlect">高效背词·科学记忆·对抗遗忘</text>
+		  </view>
 		</view>
-	  <view class="plan-section">
-		<image @click="switchBook" :src="book.icon_url" class="section-img"></image>
-		<view class="section-ct">
-			<view class="oneline">
-				<text class="oneline-subtitle">{{ book.grade }} {{ book.term }}</text>
-				<view @click="switchBook" class="oneline_btn">
-					<image class="left-icon" src="@/assets/icons/parallel_double_arrow.svg"></image>
-					<text class="section-title">切换单词书</text>
+		<view class="contentone">
+			<view @tap="openResetPopup" class="replacementplan">
+				<image class="left-icon" src="@/assets/icons/word_refresh.svg"></image>
+				<view class="replacementplan-title">重置计划</view>
+			</view>
+		  <view class="plan-section">
+			<image @click="switchBook" :src="book.icon_url" class="section-img"></image>
+			<view class="section-ct">
+				<view class="oneline">
+					<text class="oneline-subtitle">{{ book.grade }} {{ book.term }}</text>
+					<view @click="switchBook" class="oneline_btn">
+						<image class="left-icon" src="@/assets/icons/parallel_double_arrow.svg"></image>
+						<text class="section-title">切换单词书</text>
+					</view>
 				</view>
+				<view class="twoline">
+					{{ book.book_name }}
+				</view>
+				
+				<view class="progress-bar">
+					<view 
+					  class="progress-ct" 
+					  :style="{ width: progress + '%' }"
+					></view>
+				 </view>
+				
+				<view class="threeline">
+					<view class="threeline-title"> <text style="color: red;">{{finishLearningNum}}</text>/{{wordcountTotal}}</view>
+					<view class="threeline-title"> 剩余<text style="color: red;">{{remainingdays}}</text>天</view>
+				</view>
+				
+				
 			</view>
-			<view class="twoline">
-				{{ book.book_name }}
-			</view>
-			
-			<view class="progress-bar">
-				<view 
-				  class="progress-ct" 
-				  :style="{ width: progress + '%' }"
-				></view>
-			 </view>
-			
-			<view class="threeline">
-				<view class="threeline-title"> <text style="color: red;">{{finishLearningNum}}</text>/{{wordcountTotal}}</view>
-				<view class="threeline-title"> 剩余<text style="color: red;">{{remainingdays}}</text>天</view>
-			</view>
-			
-			
-		</view>
-	  </view>
-	  <view class="intermediate-line"></view>
-
-	  <view class="progress-section">
-		  <view class="progress-left">
-			<text class="progresslf">今日计划</text>
-			 <image class="left-icon" src="@/assets/icons/time_round.svg"></image>
-			 <text class="progressrt">预计需要<text style="color: red;">{{learnNumtoday}}</text>分钟</text> 
 		  </view>
-		  <view @tap="modifyplan" class="modify-btn">
-			<image class="left-icon" src="@/assets/icons/edit_modify.svg"></image>
-			<text class="section-title">修改计划</text>
+		  <view class="intermediate-line"></view>
+		
+		  <view class="progress-section">
+			  <view class="progress-left">
+				<text class="progresslf">今日计划</text>
+				 <image class="left-icon" src="@/assets/icons/time_round.svg"></image>
+				 <text class="progressrt">预计需要<text style="color: red;">{{learnNumtoday}}</text>分钟</text> 
+			  </view>
+			  <view @tap="modifyplan" class="modify-btn">
+				<image class="left-icon" src="@/assets/icons/edit_modify.svg"></image>
+				<text class="section-title">修改计划</text>
+			  </view>
 		  </view>
-	  </view>
-
-	  <view class="task-section">
-		<view class="task-title"><text>需新学</text> <text class="numtit" style="color: #F08833;">{{learnNumtoday}}</text> <text>词</text></view>
-		<view class="task-title"><text>需复习</text> <text class="numtit" style="color: #ED6C43;">{{review_words.length}}</text> <text>词</text></view>
-	  </view>
-	  
-	  <view class="contentonebtn">
-		  <view class="btn-view">
-			  <view @tap="startLearningword" class="learn-btn">再学一组</view>
-		  </view>
-		  <view class="btn-view">
-		  	<view @tap="goovertheword" class="review-btn">复习完成</view>		  
+		
+		  <view class="task-section">
+			<view class="task-title"><text>需新学</text> <text class="numtit" style="color: #F08833;">{{learnNumtoday}}</text> <text>词</text></view>
+			<view class="task-title"><text>需复习</text> <text class="numtit" style="color: #ED6C43;">{{review_words.length}}</text> <text>词</text></view>
 		  </view>
 		  
+		  <view class="contentonebtn">
+			  <view class="btn-view">
+				  <view @tap="startLearningword" class="learn-btn">再学一组</view>
+			  </view>
+			  <view class="btn-view">
+			  	<view @tap="goovertheword" class="review-btn">复习完成</view>		  
+			  </view>
+			  
+			  
+		  </view>
 		  
-	  </view>
-	  
-	</view>
-
-	<view class="contenttwo">
-		<view v-if="completionRecords.length>0" class="contenttwo-one">
-			<view class="calendar-section">
-			  <view class="calendar-title">本周完成情况</view>
-			</view>
-			<view class="calendar-rt">
-			  <view v-if="singledayRecord.status==1" class="calendar-subtitle">连续完成<text style="color: #ED6C43;">{{singledayRecord.continuous_days}}</text>天</view>
-			  <view v-else class="calendar-subtitle">今日计划未完成</view>
-			  <view class="share-btn">晒一晒</view>
-			</view>
 		</view>
 		
-		
-		
-		<view v-if="completionRecords.length>0" class="contenttwo-days">
-		  <view @tap="calendarItemclick(index)" class="calendar-item" v-for="(item, index) in weekstitList" :key="index">
-			  <view class="item_top">{{item.week}}</view>
-			  <view :class="completionRecords[index].status==1?'item_middle_st':'item_middle'"><text>{{item.date}}</text></view>
-			  <view :class="completionRecords[index].status==1?'item_bottom_st':'item_bottom'"></view>
-		  </view>
-		</view>
-		
-		<view class="record-container">
-		    <view class="record-header">
-		      <text class="record-title">学习记录</text>
-		    </view>
-		    <view class="record-content">
-		      <view class="record-item">
-		        <view class="record-labelone"><text>{{studyRecord.new_words+studyRecord.review_words}}</text> 词</view>
-		        <view class="record-labeltwo">今日学习/复习</view>
-		      </view>
-		      <view class="record-item">
-		        <view class="record-labelone"><text>{{studyRecord.total_mastered_words}}</text> 词</view>
-		        <view class="record-labeltwo">累计掌握</view>
-		      </view>
+		<view class="contenttwo">
+			<view v-if="completionRecords.length>0" class="contenttwo-one">
+				<view class="calendar-section">
+				  <view class="calendar-title">本周完成情况</view>
+				</view>
+				<view class="calendar-rt">
+				  <view v-if="singledayRecord.status==1" class="calendar-subtitle">连续完成<text style="color: #ED6C43;">{{singledayRecord.continuous_days}}</text>天</view>
+				  <view v-else class="calendar-subtitle">今日计划未完成</view>
+				  <view class="share-btn">晒一晒</view>
+				</view>
 			</view>
-			<view class="record-content record-content-interstice">
-				<view class="record-item">
-				  <view class="record-labelone"><text>{{studyRecord.duration}}</text> 分钟</view>
-				  <view class="record-labeltwo">今日学习时长</view>
+			
+			
+			
+			<view v-if="completionRecords.length>0" class="contenttwo-days">
+			  <view @tap="calendarItemclick(index)" class="calendar-item" v-for="(item, index) in weekstitList" :key="index">
+				  <view class="item_top">{{item.week}}</view>
+				  <view :class="completionRecords[index].status==1?'item_middle_st':'item_middle'"><text>{{item.date}}</text></view>
+				  <view :class="completionRecords[index].status==1?'item_bottom_st':'item_bottom'"></view>
+			  </view>
+			</view>
+			
+			<view class="record-container">
+			    <view class="record-header">
+			      <text class="record-title">学习记录</text>
+			    </view>
+			    <view class="record-content">
+			      <view class="record-item">
+			        <view class="record-labelone"><text>{{studyRecord.new_words+studyRecord.review_words}}</text> 词</view>
+			        <view class="record-labeltwo">今日学习/复习</view>
+			      </view>
+			      <view class="record-item">
+			        <view class="record-labelone"><text>{{studyRecord.total_mastered_words}}</text> 词</view>
+			        <view class="record-labeltwo">累计掌握</view>
+			      </view>
 				</view>
-				<view class="record-item">
-				  <view class="record-labelone"><text>{{studyRecord.total_duration}}</text> 分钟</view>
-				  <view class="record-labeltwo">累计学习时长</view>
-				</view>
-		    </view>
-		  </view>
-		
-	</view>
-      
+				<view class="record-content record-content-interstice">
+					<view class="record-item">
+					  <view class="record-labelone"><text>{{studyRecord.duration}}</text> 分钟</view>
+					  <view class="record-labeltwo">今日学习时长</view>
+					</view>
+					<view class="record-item">
+					  <view class="record-labelone"><text>{{studyRecord.total_duration}}</text> 分钟</view>
+					  <view class="record-labeltwo">累计学习时长</view>
+					</view>
+			    </view>
+			  </view>
+			
+		</view>
+		  
+	</scroll-view>
+	
+    
 
     <bookSelector ref="bookSelectors" v-if="isPopupOpen" :numType="2" :books="books" @switchbookSuccess="switchbookSuccess" @closePopup="togglePopup" />
 
@@ -146,8 +152,12 @@
 	import study from '@/api/study';
 	import ResetPlanPopup from './components/ResetPlanPopup'
 	import RelearnPlanPop from './components/RelearnPlanPop'
-	
+	import useTextbookSelector from "@/hooks/useTextbookSelector";
 
+	const {
+	  fetchBooks: fetchTextbooks, // 重命名避免冲突
+	  filteredBooks: books,
+	} = useTextbookSelector();
 	//暂时不点亮
 	const weekindext = ref(-1)
 	const isPopupOpen = ref(false)
@@ -161,8 +171,6 @@
 		term:'',
 		version_type:''
 	})
-	// 书籍数据
-	const books = ref([])
 	
 	//学习计划
 	const studyPlan = ref(null)
@@ -525,6 +533,7 @@
 			  title: '没有需复习的单词',
 			  icon: 'none'
 			})
+			return
 		}
 		if (studyPlan!=null && !(studyPlan.value.id > 0)) {
 			return
@@ -725,70 +734,60 @@
 	  }
 	}
 	
+	
 	// 从接口获取数据
-	const fetchBooks = (isSwitch) => {
-	  console.log("数据库的边框和")
-	  uni.request({
-	    url: "https://diandu.mypep.cn/static/textbook/bookList_pep_click_subject_web_1_0_0.json",
-	    success: (res) => {
-	      // 过滤出英语科目的书籍
-	      const englishSubject = res.data.booklist.find(
-	        (subject) => subject.subject_name === "英语"
-	      )
-	      if (englishSubject) {
-	        // 将所有版本的书籍合并到一个数组中
-	        books.value = englishSubject.versions.flatMap(
-	          (version) => version.textbooks
-	        )
-	
+	const fetchBooks = async (isSwitch) => {
+	       try {
+	        await fetchTextbooks();
+	         console.log(books.value, "书籍数据")
+	        // 处理切换教材逻辑
 	        if (isSwitch) {
-	          isPopupOpen.value = true;
-	          console.log("点击切换请求进去")
-	        // 使用 nextTick 确保 DOM 已经更新并且子组件已经挂载
-	        nextTick(() => {
-	              console.log("After DOM update:");
-	              console.log(bookSelectors.value); // 这里应该能够获取到子组件实例
-	              
-	              if (bookSelectors.value && typeof bookSelectors.value.showPopup === 'function') {
-	                bookSelectors.value.showPopup(); // 调用子组件的方法
-	              }
-	        });
+	            isPopupOpen.value = true;
+	            nextTick(() => {
+	                if (bookSelectors.value?.showPopup) {
+	                    bookSelectors.value.showPopup();
+	                }
+	            });
 	        } else {
-			
-			 if (books.value.length > 0) {
-				 uni.getStorage({
-				   key: 'planSelectionObject', // 存储的键名
-				   success: (res) => {
-				     console.log('获取的数据:', res.data);
-				 	var bookSelectionObject = res.data
-			
-				 	var  selectedbook_id = bookSelectionObject.book_id
-				 	
-				 	book.value = books.value.find(item =>
-				 	  item.book_id === selectedbook_id
-				 	);
-				 	
-				   },
-				   fail: (err) => {
-				  //    console.error('获取数据失败:', err);
-					 // console.log(books.value)
-				 	 book.value = { ...books.value[0] };
-				   }
-				 });
-			 }
-			
+				
+				
+	            // 设置默认教材（需要确保 books 是响应式引用）
+	            if (books.value.length > 0) {
+					
+					uni.getStorage({
+					  key: 'planSelectionObject', // 存储的键名
+					  success: (res) => {
+					    // console.log('获取的数据:', res.data);
+						var bookSelectionObject = res.data
+		
+						var  selectedbook_id = bookSelectionObject.book_id
+						
+					
+						book.value = books.value.find(item =>
+						  item.book_id === selectedbook_id
+						);
+						
+					  },
+					  fail: (err) => {
+					    console.error('获取数据失败:', err);
+						 book.value = { ...books.value[0] };
+					  }
+					});
+					
+					
+		
+	               
+	            }
 	        }
-	        
-	
+	      } catch (err) {
+	        console.error("Failed to fetch books:", err);
+	        uni.showToast({
+	          title: "获取教材列表失败",
+	          icon: "error",
+	        });
 	      }
-	    },
-	    fail: (err) => {
-	      console.error("Failed to fetch books:", err)
-	    },
-	  })
 	}
 	
-
 	//修改计划
 	const modifyplan = () => {
 		console.log("修改计划")
@@ -818,14 +817,19 @@
 
 <style scoped lang="scss">
 .container {
-  padding: 20rpx;
+  // padding: 20rpx;
     /* background-color: #f0f0f0; /* 设置背景颜色 */ 
   background: linear-gradient(to bottom, #8cf588 0%, #f8f9fa 50%, #f8f9fa 50%, #f8f9fa 100%);
 
   // min-height: 90vh; /* 确保容器覆盖整个视口高度 */
-  height: calc(100vh - 110rpx);
-   overflow-y: auto;
+  // height: calc(100vh - 110rpx);
+  //  overflow-y: auto;
   
+}
+
+.plan-content {
+	height:calc(100vh - 120px);
+	overflow-y: auto;
 }
 
 .header {

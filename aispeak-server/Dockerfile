@@ -53,5 +53,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl --fail http://localhost:8097/health || exit 1
 
 # 启动命令
-CMD ["sh", "-c", "until mysqladmin ping -h db -u${DB_USER} -p${DB_PASSWORD} --silent; do sleep 2; done && \
-    gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8097"]
+# 在 Dockerfile 或启动命令中修改
+CMD ["gunicorn", "app.main:app", "--bind", "0.0.0.0:8097", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--access-logfile", "-", "--error-logfile", "-", "--log-level", "debug"]

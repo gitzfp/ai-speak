@@ -9,7 +9,7 @@
         <view class="voice-circle">
           <image
             class="voice-icon"
-            src="http://114.116.224.128:8097/static/icon_voice.png"
+            src="https://dingguagua.fun/static/icon_voice.png"
           ></image>
         </view>
       </view>
@@ -31,21 +31,21 @@
       <view @tap="handleTrash" class="trash-btn-box">
         <image
           class="trash-btn"
-          src="http://114.116.224.128:8097/static/icon_trash.png"
+          src="https://dingguagua.fun/static/icon_trash.png"
         ></image>
       </view>
       <view @tap="handlePlaySpeech" class="play-btn-box">
         <image
           v-if="!voicePlaying"
           class="play-btn"
-          src="http://114.116.224.128:8097/static/icon_menu_play.png"
+          src="https://dingguagua.fun/static/icon_menu_play.png"
         >
         </image>
         <image
           v-else="voicePlaying"
           class="play-btn"
           style="width: 100%; height: 100%"
-          src="http://114.116.224.128:8097/static/menu_voice_playing.gif"
+          src="https://dingguagua.fun/static/menu_voice_playing.gif"
         ></image>
       </view>
       <view @tap="handleSend" class="send-btn-box">
@@ -53,7 +53,7 @@
         <image
           v-if="!recorder.processing"
           class="send-btn"
-          src="http://114.116.224.128:8097/static/icon_send.png"
+          src="https://dingguagua.fun/static/icon_send.png"
         ></image>
       </view>
     </view>

@@ -65,7 +65,7 @@ class StudyCompletionRecord(Base):
     lesson_id = Column(Integer, nullable=True, comment="课程ID")  # 新增 lesson_id 字段
     date = Column(Date, nullable=False, comment="完成日期")
     status = Column(Integer, default=0, comment="完成状态（0: 未完成, 1: 已完成）")  # 改为 Integer 类型
-    type = Column(Integer, default=0, comment="类型（0: 单词, 1: 别的）")  # 新增 type 字段
+    type = Column(Integer, default=0, comment="类型（0: 单词, 1: 别的,2.背词计划用了）")  # 新增 type 字段
     continuous_days = Column(Integer, default=0, comment="连续完成天数")
     points = Column(Integer, default=0, comment="积分")  # 新增 points 字段
     speak_count = Column(Integer, default=0, comment="开口次数")  # 新增 speak_count 字段

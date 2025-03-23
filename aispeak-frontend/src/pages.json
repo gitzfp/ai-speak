@@ -72,7 +72,7 @@
     {
       "path": "pages/textbook/books",
       "style": {
-        "navigationBarTitleText": "书籍"
+        "navigationBarTitleText": "课文点读"
       }
     },
     {

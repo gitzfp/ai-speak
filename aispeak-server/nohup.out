@@ -8,3 +8,195 @@ INFO:     Shutting down
 INFO:     Waiting for application shutdown.
 INFO:     Application shutdown complete.
 INFO:     Finished server process [25560]
+/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/pydub/utils.py:170: RuntimeWarning: Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work
+  warn("Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work", RuntimeWarning)
+Traceback (most recent call last):
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/bin/uvicorn", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/click/core.py", line 1161, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/click/core.py", line 1082, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/click/core.py", line 1443, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/click/core.py", line 788, in invoke
+    return __callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/uvicorn/main.py", line 404, in main
+    run(
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/uvicorn/main.py", line 569, in run
+    server.run()
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 60, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 67, in serve
+    config.load()
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/uvicorn/config.py", line 477, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/ubuntu/ai-speak/aispeak-server/app/main.py", line 11, in <module>
+    from app.api.sys_routes import router as sys_routes
+  File "/home/ubuntu/ai-speak/aispeak-server/app/api/sys_routes.py", line 8, in <module>
+    from app.services.sys_service import SysService
+  File "/home/ubuntu/ai-speak/aispeak-server/app/services/__init__.py", line 2, in <module>
+    from app.services.account_service import AccountService
+  File "/home/ubuntu/ai-speak/aispeak-server/app/services/account_service.py", line 11, in <module>
+    from app.core import auth, azure_voice
+  File "/home/ubuntu/ai-speak/aispeak-server/app/core/azure_voice.py", line 379, in <module>
+    voice_vo_list = get_voice_list()
+                    ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/app/core/azure_voice.py", line 358, in get_voice_list
+    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/azure/cognitiveservices/speech/speech.py", line 2270, in __init__
+    _call_hr_fn(fn=_sdk_lib.synthesizer_create_speech_synthesizer_from_config, *[
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/azure/cognitiveservices/speech/interop.py", line 62, in _call_hr_fn
+    _raise_if_failed(hr)
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/azure/cognitiveservices/speech/interop.py", line 55, in _raise_if_failed
+    __try_get_error(_spx_handle(hr))
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/azure/cognitiveservices/speech/interop.py", line 50, in __try_get_error
+    raise RuntimeError(message)
+RuntimeError: Exception with error code: 
+[CALL STACK BEGIN]
+
+/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/azure/cognitiveservices/speech/libMicrosoft.CognitiveServices.Speech.core.so(+0xc002f) [0x7653682c002f]
+/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/azure/cognitiveservices/speech/libMicrosoft.CognitiveServices.Speech.core.so(+0x90534) [0x765368290534]
+/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/azure/cognitiveservices/speech/libMicrosoft.CognitiveServices.Speech.core.so(synthesizer_create_speech_synthesizer_from_config+0xfa) [0x7653683cb332]
+/lib/x86_64-linux-gnu/libffi.so.8(+0x7b16) [0x76536a5fbb16]
+/lib/x86_64-linux-gnu/libffi.so.8(+0x43ef) [0x76536a5f83ef]
+/lib/x86_64-linux-gnu/libffi.so.8(ffi_call+0x12e) [0x76536a5fb0be]
+/usr/lib/python3.12/lib-dynload/_ctypes.cpython-312-x86_64-linux-gnu.so(+0xe11c) [0x76536b27a11c]
+/usr/lib/python3.12/lib-dynload/_ctypes.cpython-312-x86_64-linux-gnu.so(+0x92af) [0x76536b2752af]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3(PyObject_Call+0x6c) [0x54b30c]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3(_PyEval_EvalFrameDefault+0x4c1b) [0x5db55b]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3(_PyObject_Call_Prepend+0x18a) [0x54aa9a]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3() [0x59e09f]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3() [0x599b63]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3(_PyObject_MakeTpCall+0x13e) [0x54924e]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3(_PyEval_EvalFrameDefault+0xa89) [0x5d73c9]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3(PyEval_EvalCode+0x15b) [0x5d58eb]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3() [0x5d347c]
+[CALL STACK END]
+
+Exception with an error code: 0x38 (SPXERR_AUDIO_SYS_LIBRARY_NOT_FOUND)
+/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/pydub/utils.py:170: RuntimeWarning: Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work
+  warn("Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work", RuntimeWarning)
+Traceback (most recent call last):
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/bin/uvicorn", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/click/core.py", line 1161, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/click/core.py", line 1082, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/click/core.py", line 1443, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/click/core.py", line 788, in invoke
+    return __callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/uvicorn/main.py", line 404, in main
+    run(
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/uvicorn/main.py", line 569, in run
+    server.run()
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 60, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 67, in serve
+    config.load()
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/uvicorn/config.py", line 477, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/uvicorn/importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/ubuntu/ai-speak/aispeak-server/app/main.py", line 11, in <module>
+    from app.api.sys_routes import router as sys_routes
+  File "/home/ubuntu/ai-speak/aispeak-server/app/api/sys_routes.py", line 8, in <module>
+    from app.services.sys_service import SysService
+  File "/home/ubuntu/ai-speak/aispeak-server/app/services/__init__.py", line 2, in <module>
+    from app.services.account_service import AccountService
+  File "/home/ubuntu/ai-speak/aispeak-server/app/services/account_service.py", line 11, in <module>
+    from app.core import auth, azure_voice
+  File "/home/ubuntu/ai-speak/aispeak-server/app/core/azure_voice.py", line 379, in <module>
+    voice_vo_list = get_voice_list()
+                    ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/app/core/azure_voice.py", line 358, in get_voice_list
+    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/azure/cognitiveservices/speech/speech.py", line 2270, in __init__
+    _call_hr_fn(fn=_sdk_lib.synthesizer_create_speech_synthesizer_from_config, *[
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/azure/cognitiveservices/speech/interop.py", line 62, in _call_hr_fn
+    _raise_if_failed(hr)
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/azure/cognitiveservices/speech/interop.py", line 55, in _raise_if_failed
+    __try_get_error(_spx_handle(hr))
+  File "/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/azure/cognitiveservices/speech/interop.py", line 50, in __try_get_error
+    raise RuntimeError(message)
+RuntimeError: Exception with error code: 
+[CALL STACK BEGIN]
+
+/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/azure/cognitiveservices/speech/libMicrosoft.CognitiveServices.Speech.core.so(+0xc002f) [0x7cada40c002f]
+/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/azure/cognitiveservices/speech/libMicrosoft.CognitiveServices.Speech.core.so(+0x90534) [0x7cada4090534]
+/home/ubuntu/ai-speak/aispeak-server/.venv/lib/python3.12/site-packages/azure/cognitiveservices/speech/libMicrosoft.CognitiveServices.Speech.core.so(synthesizer_create_speech_synthesizer_from_config+0xfa) [0x7cada41cb332]
+/lib/x86_64-linux-gnu/libffi.so.8(+0x7b16) [0x7cada635eb16]
+/lib/x86_64-linux-gnu/libffi.so.8(+0x43ef) [0x7cada635b3ef]
+/lib/x86_64-linux-gnu/libffi.so.8(ffi_call+0x12e) [0x7cada635e0be]
+/usr/lib/python3.12/lib-dynload/_ctypes.cpython-312-x86_64-linux-gnu.so(+0xe11c) [0x7cada56c011c]
+/usr/lib/python3.12/lib-dynload/_ctypes.cpython-312-x86_64-linux-gnu.so(+0x92af) [0x7cada56bb2af]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3(PyObject_Call+0x6c) [0x54b30c]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3(_PyEval_EvalFrameDefault+0x4c1b) [0x5db55b]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3(_PyObject_Call_Prepend+0x18a) [0x54aa9a]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3() [0x59e09f]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3() [0x599b63]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3(_PyObject_MakeTpCall+0x13e) [0x54924e]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3(_PyEval_EvalFrameDefault+0xa89) [0x5d73c9]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3(PyEval_EvalCode+0x15b) [0x5d58eb]
+/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3() [0x5d347c]
+[CALL STACK END]
+
+Exception with an error code: 0x38 (SPXERR_AUDIO_SYS_LIBRARY_NOT_FOUND)

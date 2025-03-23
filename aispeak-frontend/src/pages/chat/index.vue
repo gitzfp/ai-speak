@@ -37,7 +37,7 @@
         <view @tap="handleSwitchInputType" class="voice-icon-box">
           <image
             class="voice-icon"
-            src="http://114.116.224.128:8097/static/icon_voice_fixed.png"
+            src="https://dingguagua.fun/static/icon_voice_fixed.png"
           ></image>
         </view>
         <view class="input-box">
@@ -59,7 +59,7 @@
         >
           <image
             class="send-icon"
-            src="http://114.116.224.128:8097/static/icon_send.png"
+            src="https://dingguagua.fun/static/icon_send.png"
           >
           </image>
         </view>
@@ -76,14 +76,14 @@
               <image
                 @tap="handleSwitchInputType"
                 class="keybord-icon"
-                src="http://114.116.224.128:8097/static/icon_keybord.png"
+                src="https://dingguagua.fun/static/icon_keybord.png"
               ></image>
             </template>
             <template v-slot:rightMenu>
               <image
                 @tap="handleSwitchMenu"
                 class="input-type-switch-btn"
-                src="http://114.116.224.128:8097/static/icon_settings.png"
+                src="https://dingguagua.fun/static/icon_settings.png"
               ></image>
             </template>
           </Speech>
@@ -101,7 +101,7 @@
     <!-- 悬浮按钮 -->
     <view class="floating-button" @tap="handleShowModal">
       <image
-        src="http://114.116.224.128:8097/static/img/note.png"
+        src="https://dingguagua.fun/static/img/note.png"
         mode="aspectFit"
       />
     </view>
@@ -125,7 +125,7 @@
                   <text class="text-en">{{ target.info_en }}</text>
                   <view class="audio-icon" @tap="playAudio(target.info_en)">
                     <image
-                      src="http://114.116.224.128:8097/static/icon_audio.png"
+                      src="https://dingguagua.fun/static/icon_audio.png"
                       mode="aspectFit"
                     ></image>
                   </view>

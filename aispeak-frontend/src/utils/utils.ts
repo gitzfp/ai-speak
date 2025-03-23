@@ -71,7 +71,7 @@ const uploadFileToOSS = async (ossKey: string, fileData: any, retries = MAX_RETR
     }
 
     // 上传二进制文件
-    uploadBinaryData(ossKey, fileData);
+    return uploadBinaryData(ossKey, fileData);
   } catch (error) {
     if (retries > 0) {
       console.warn(`上传失败，剩余重试次数: ${retries - 1}`, error);
@@ -134,12 +134,13 @@ const isWechat = () => {
     if (!ua) {
       return true
     }
-    return /micromessenger/i.test(ua) || /miniprogram/i.test(ua);
+    // 只检测小程序环境
+    return /miniprogram/i.test(ua);
   } catch (e) {
     const systemInfo = uni.getDeviceInfo()
     console.log('System Info:', systemInfo);
-    return systemInfo.platform === 'wechat' ||
-      systemInfo.platform === 'devtools';
+    // 只在小程序和开发者工具中返回 true
+    return systemInfo.platform === 'devtools';
   }
 }
 
