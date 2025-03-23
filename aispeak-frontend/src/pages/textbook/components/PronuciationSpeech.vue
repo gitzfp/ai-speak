@@ -57,7 +57,7 @@
 
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 import SowNewSocketSdk from './SpeechEvaluation/index';
 import utils from '@/utils/utils'; // 导入上传函数
 import AudioPlayer from "@/components/AudioPlayer.vue"
@@ -226,14 +226,16 @@ const startLongPress = () => {
 };
 
 
+const recordingTimeout = ref<number | null>(null);
+
 const startRecording = () => {
   if (!sdkInstance) initSDK();
   isRecording.value = true;
   finalResult.value = null;
   sdkInstance.start();
-  // 设置5秒后自动停止录音
-  const delay = props.refObj.english ? 12000 : 3500;
-  setTimeout(() => {
+  // 设置定时器以自动停止录音
+  const delay = props.refObj.english ? 10000 : 3500;
+  recordingTimeout.value = setTimeout(() => {
     if (isRecording.value) {
       stopRecording();
     }
@@ -244,7 +246,19 @@ const stopRecording = () => {
   isRecording.value = false;
   sdkInstance?.stop();
   sdkInstance = null;
+  if (recordingTimeout.value !== null) {
+    clearTimeout(recordingTimeout.value);
+    recordingTimeout.value = null;
+  }
 };
+
+// 页面销毁时清除定时器
+onUnmounted(() => {
+  if (recordingTimeout.value !== null) {
+    clearTimeout(recordingTimeout.value);
+    recordingTimeout.value = null;
+  }
+});
 // Add this declaration after other reactive variables
 const finalResult = ref<{
   pronunciation_score?: string;
