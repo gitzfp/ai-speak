@@ -20,11 +20,12 @@ export default {
   },
 
   getSessionByTopicId: (data: any) => {
-    return request(`/sessions/topic/${data.topic_id}/`, "GET", data, true);
+    return request(`/sessions/topic/${data.topic_id}`, "GET", data, true);
   },
   
   getSessionByLessonId: (data: any) => {
-    return request(`/topics/lesson/${data.lesson_id}/session/`, "GET", data, true);
+    const encodedLessonId = encodeURIComponent(data.lesson_id); 
+    return request(`/topics/lesson/${encodedLessonId}/session`, "GET", data, true);
   },
  
   completeTopic: (data: any) => {
