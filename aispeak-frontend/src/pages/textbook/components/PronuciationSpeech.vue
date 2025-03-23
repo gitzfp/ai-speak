@@ -83,7 +83,7 @@ const sdkConfig = computed(() => ({
   ref_text: props.refObj.word,
   sentence_info_enabled: 1,
   server_engine_type: '16k_en',
-  eval_mode: 2,
+  eval_mode: props.refObj.word.split(' ').length === 1 ? 7 : 2, // 根据单词数量设置模式
 }));
 
 const getScoreClass = (score: number) => {
@@ -93,21 +93,10 @@ const getScoreClass = (score: number) => {
     return 'score-poor'
 }
 
-
-const initSDK = () => {
-  // 每次初始化使用最新的配置
-  sdkInstance = new SowNewSocketSdk(sdkConfig.value, true);
-  console.log('SDK配置已更新，当前单词或句子：', props.refObj.word,); 
-  sdkInstance.OnEvaluationResultChange = (res: any) => {
-      console.log('实时评测结果:', res);
-    
-    };
-
-  sdkInstance.OnEvaluationComplete = (res: any) => {
-    console.log('完整评测结果:', res, props.refObj.english);
-    if (res?.result) {
-      // 转换 Words 数据格式
-      const words = res.result.Words.map((word: any) => ({
+const handlePronuciationResult = (res: any) => {
+  console.log('实时评测结果:', res);
+  if(res?.result){
+     const words = res.result.Words.map((word: any) => ({
         word: word.Word,
         accuracy_score: word.PronAccuracy.toFixed(1), // 保留一位小数
         error_type: word.MatchTag === 0 ? 'None' : 'Error' // 根据 MatchTag 判断错误类型
@@ -118,10 +107,22 @@ const initSDK = () => {
         completeness_score: (res.result.PronCompletion * 100).toFixed(1),
         accuracy: (res.result.PronAccuracy || 0).toFixed(1),
         fluency: (res.result.PronFluency * 100).toFixed(1),
-        words: props.refObj.english ? words : words[0] || null
+        words: words 
       };
-    }
+  }
+};
+const initSDK = () => {
+  // 每次初始化使用最新的配置
+  sdkInstance = new SowNewSocketSdk(sdkConfig.value, true);
+  console.log('SDK配置已更新，当前单词或句子：', props.refObj.word,); 
+  sdkInstance.OnEvaluationResultChange = (res: any) => {
+      console.log('实时评测结果:', res);
+      handlePronuciationResult(res)
+    };
 
+  sdkInstance.OnEvaluationComplete = (res: any) => {
+    console.log('完整评测结果:', res, props.refObj.english);
+    handlePronuciationResult(res) 
   };
 
   sdkInstance.OnAudioComplete = async function(int8Data: Int8Array) {
@@ -165,6 +166,7 @@ const initSDK = () => {
 // 播放录音功能
 	const playbuttonclick = () => {
 		if(!props.refObj?.audio_url)return
+    console.log('播放语音====', props.refObj?.audio_url);
 		stopCurrentAudio();
 		const audio = uni.createInnerAudioContext();
 		currentAudio.value = audio;
@@ -217,6 +219,12 @@ watch(() => props.refObj, (newWord) => {
 });
 // 长按处理逻辑
 const startLongPress = () => {
+  if(isRecording.value == true && finalResult?.value?.words?.length < props.refObj.word.split(' ').length){
+    setTimeout(() => {
+      startLongPress();
+    }, 500);
+    return
+  }
   if(isRecording.value == true){
    stopRecording(); 
   }else{

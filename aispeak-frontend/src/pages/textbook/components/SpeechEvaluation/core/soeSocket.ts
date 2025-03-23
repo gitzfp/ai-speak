@@ -83,6 +83,7 @@ export default class SoeNewConnect {
             this.OnEvaluationComplete(response);
             return;
           }
+          console.log('实时评测结果', response);
           if (response.result) {
             this.OnEvaluationResultChange(response);
           }

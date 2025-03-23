@@ -2,7 +2,7 @@
 	<view class="container">
 		<view class="headView" :style="{ paddingTop: statusBarHeight + 'px', height: '44px' }">
 			<image @tap="handleBackPage" class="head-icon" src="@/assets/icons/black_back.svg"></image>
-			<view class="head-text">句子单元跟读</view>
+			<view class="head-text">句子跟读</view>
 		</view>
 		
 		<view v-if="sentencesList.length>0" class="content_view">
@@ -29,22 +29,12 @@
 						:ref-obj="optionSentence" 
 						@success="handleEvaluationResult"
 					/>
-				<!-- <FollowReading
-					ref="followReadingref"
-					:isUnit="true"
-				    :sentence="optionSentence.english"
-					:optionSentence="optionSentence"
-					@evaluationResult="evaluationResult"
-					@reevaluation="reevaluation"
-				/> -->
 			</view>
-			
 		</view>
 		
 		<view v-if="isShowmark" class="btnview">
 			<view @tap="clicknext" class="tab-btn">下一个</view>
 		</view>
-		
 
 	</view>
 </template>
@@ -79,7 +69,7 @@
 		customBarHeight.value = (systemInfo.statusBarHeight || 0) + 44; // 44 是导航栏的默认高度
 		
 		setTimeout(() => {
-		    playbuttonclick()
+		    // playbuttonclick()
 			console.log('当前进度:', optionSentence.value);
 			isShowmark.value = (optionSentence?.value?.progress_data && optionSentence?.value?.progress_data.length > 20)
 		}, 500);
@@ -147,10 +137,6 @@
 					url: `/pages/textbook/index3`,
 				})
 			}	
-			
-			
-			
-				
 		} catch (error) {
 		  
 		  if (isDone)  {
@@ -169,8 +155,6 @@
 		  
 		}
 	}
-	
-	
 	
 	const clicknext = () => {
 		if (isShowmark.value) {
@@ -191,12 +175,9 @@
 					  icon: 'none',
 					});
 				}
-				
-				
 			} else {
 				currentIndext.value++;
 				progressIndext.value = currentIndext.value
-				
 				
 				if (!(optionSentence.value.progress_data && optionSentence.value.progress_data.length > 20)) {
 					// followReadingref.value.resetRefresh()
@@ -208,12 +189,6 @@
 			}
 		}
 		
-	}
-	
-	const reevaluation = () => {
-		optionSentence.value.isHaverated = 0
-		optionSentence.value.progress_data=""
-		isShowmark.value = false
 	}
 	
 	const handleEvaluationResult = (pronunciationResult) => {
@@ -269,7 +244,7 @@
 		audio.src = optionSentence?.value?.audio_url;
 		
 		// 设置时间范围
-		if (optionSentence.value.audio_start && optionSentence.value.audio_end) {
+		if (optionSentence.value.audio_start != undefined && optionSentence.value.audio_end != undefined) {
 		  const startTime = optionSentence.value.audio_start / 1000
 		  const endTime = optionSentence.value.audio_end / 1000
 		  audio.startTime = startTime
@@ -298,13 +273,11 @@
 
 	// 这里可以定义一些响应式数据或逻辑
 	const handleBackPage = async () => {
-		console.log("句子====>>>sss", sentencesList.value)
 		if (progressIndext.value != sentencesList.value.length) {
 			// 筛选已评分的句子的数组
 			const haveratedSentences = sentencesList.value.filter(
 			  (sentence) => sentence.isHaverated === 1
 			);
-			console.log(haveratedSentences, "句子====>>>", sentencesList.value)
 			if (haveratedSentences.length>0) {
 				await submitreslutStudyProgressReport(book_id.value,lesson_id.value,haveratedSentences,false)
 			} 	
@@ -338,8 +311,6 @@
 		speak_count:0,
 		isHaverated:0,
 		}));
-		
-		
 		
 		// 排序逻辑：progress_data 有值且长度大于 20 的排在前面
 		sentences.sort((a, b) => {
