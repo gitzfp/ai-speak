@@ -24,7 +24,8 @@ export default {
   },
   
   getSessionByLessonId: (data: any) => {
-    return request(`/topics/lesson/${data.lesson_id}/session/`, "GET", data, true);
+    const encodedLessonId = encodeURIComponent(data.lesson_id); 
+    return request(`/topics/lesson/${encodedLessonId}/session/`, "GET", data, true);
   },
  
   completeTopic: (data: any) => {

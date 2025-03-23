@@ -69,9 +69,6 @@
         <view class="tool-item" @click="startRepeatMode">
           <text>复读</text>
         </view>
-        <view class="tool-item" @click="goToassess">
-          <text>跟读</text>
-        </view>
         <view class="tool-item" @click="goToWords">
           <text>单词</text>
         </view>
