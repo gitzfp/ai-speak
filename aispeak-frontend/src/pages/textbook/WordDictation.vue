@@ -98,7 +98,7 @@
 </template>
 
 <script setup>
-import { ref, watch,onMounted,computed,nextTick,onUnmounted,getCurrentInstance} from 'vue';
+import { ref, watch,onMounted,computed,nextTick,onUnmounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app'
 import { processZm } from '@/utils/stringUtils'
 import textbook from '@/api/textbook'

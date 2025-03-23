@@ -8,7 +8,11 @@
             <!-- 预留跟读按钮位置 -->
             <view class="assess-actions-placeholder">
                 <view class="assess-actions">
-                <speech  @success="submitRecording"></speech>
+                <!-- <speech  @success="submitRecording"></speech> -->
+                  <Speech 
+                    :ref-obj="currentWord" 
+                    @success="handleEvaluationResult"
+                  />
                 </view>
             </view>
             <view class="modal-footer">
@@ -86,13 +90,13 @@
 
 <script setup>
 
-    import { ref,defineEmits,computed} from 'vue';
-    import Speech from "./components/PronuciationSpeech.vue"
+  import { ref,defineEmits,computed} from 'vue';
+  import Speech from "./components/PronuciationSpeech.vue"
 	import chatRequest from "@/api/chat";
 	
 	const emit = defineEmits();
 
-    const props = defineProps({
+  const props = defineProps({
         currentWord: {
         type: Object, 
         required: true
@@ -104,7 +108,7 @@
 		 }
     })
 
-    const isModalVisible = ref(false);
+  const isModalVisible = ref(false);
 	
 	const currentStep = ref('select') // 测评 步骤状态：select/result
 	const initPronunciation = {
@@ -123,7 +127,7 @@
 	    return 'score-poor'
 	}
 
-    const hideEvaluationModal = () => {
+  const hideEvaluationModal = () => {
 		if (currentStep.value === "select") {
 			isModalVisible.value = false;
 		} else {
@@ -132,7 +136,11 @@
         
     };
 	
-	
+	const handleEvaluationResult = (result) => {
+    console.log('发音评分:', result.score);
+    console.log('详细结果:', result.detail);
+    // 显示评分结果...
+  };
 	const phonemes = computed(() => {
 		
 		const result = [];

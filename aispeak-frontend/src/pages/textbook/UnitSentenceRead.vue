@@ -25,15 +25,18 @@
 						<image @tap="playbuttonclick" class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
 					</view>
 				</view>
-				<FollowReading
+				<Speech 
+						:ref-obj="optionSentence" 
+						@success="handleEvaluationResult"
+					/>
+				<!-- <FollowReading
 					ref="followReadingref"
 					:isUnit="true"
 				    :sentence="optionSentence.english"
 					:optionSentence="optionSentence"
 					@evaluationResult="evaluationResult"
 					@reevaluation="reevaluation"
-				/>
-				
+				/> -->
 			</view>
 			
 		</view>
@@ -47,12 +50,11 @@
 </template>
 
 <script setup>
-	import { ref,computed,watch,onMounted, onUnmounted, Text,onUpdated,nextTick} from 'vue';
-	
+	import { ref,computed,watch,onMounted, onUnmounted} from 'vue';
+	import Speech from "./components/PronuciationSpeech.vue"
 	import { onLoad } from '@dcloudio/uni-app'
 	import textbook from '@/api/textbook'
 	import study from '@/api/study';
-	import FollowReading from './components/FollowReading.vue'
 	
 	// 获取设备的安全区域高度
 	const statusBarHeight = ref(0);
@@ -71,8 +73,6 @@
 	const isShowmark = ref(false)
 	const currentAudio = ref(null)
 	
-	const followReadingref = ref(null)
-	
 	onMounted(() => {
 		const systemInfo = uni.getSystemInfoSync();
 		statusBarHeight.value = systemInfo.statusBarHeight || 0;
@@ -80,7 +80,8 @@
 		
 		setTimeout(() => {
 		    playbuttonclick()
-			isShowmark.value = (optionSentence.value.progress_data && optionSentence.value.progress_data.length > 20)
+			console.log('当前进度:', optionSentence.value);
+			isShowmark.value = (optionSentence?.value?.progress_data && optionSentence?.value?.progress_data.length > 20)
 		}, 500);
 		
 		uni.$on('start_recording', (params) => {
@@ -119,9 +120,7 @@
 			}
 			let statusNum = isDone==true?1:0
 			
-			
-			const response = await study.submitStudyProgressReport(bookId, lessonId,reports,statusNum);
-			
+			await study.submitStudyProgressReport(bookId, lessonId,reports,statusNum);
 			
 			if (isDone)  { //全部完成才会跳转了
 				uni.hideLoading();
@@ -198,7 +197,7 @@
 				
 				
 				if (!(optionSentence.value.progress_data && optionSentence.value.progress_data.length > 20)) {
-					followReadingref.value.resetRefresh()
+					// followReadingref.value.resetRefresh()
 				}
 				
 				setTimeout(() => {
@@ -215,9 +214,10 @@
 		isShowmark.value = false
 	}
 	
-	const evaluationResult = (pronunciationResult,voiceFile) => {
+	const handleEvaluationResult = (pronunciationResult) => {
+		console.log(pronunciationResult, "句子测评结果", pronunciationResult)
 		optionSentence.value.json_data = pronunciationResult
-		optionSentence.value.voice_file = voiceFile
+		optionSentence.value.voice_file = pronunciationResult.voice_file
 		optionSentence.value.isHaverated = 1
 		isShowmark.value = true
 		optionSentence.value.speak_count +=1
@@ -260,10 +260,11 @@
 
 	
 	const playbuttonclick = () => {
+		if(!optionSentence?.value?.audio_url)return
 		stopCurrentAudio();
 		const audio = uni.createInnerAudioContext();
 		currentAudio.value = audio;
-		audio.src = optionSentence.value.audio_url;
+		audio.src = optionSentence?.value?.audio_url;
 		
 		// 设置时间范围
 		if (optionSentence.value.audio_start && optionSentence.value.audio_end) {
@@ -294,20 +295,21 @@
 	}
 
 	// 这里可以定义一些响应式数据或逻辑
-	const handleBackPage = () => {
+	const handleBackPage = async () => {
+		console.log("句子====>>>sss", sentencesList.value)
 		if (progressIndext.value != sentencesList.value.length) {
 			// 筛选已评分的句子的数组
 			const haveratedSentences = sentencesList.value.filter(
 			  (sentence) => sentence.isHaverated === 1
 			);
+			console.log(haveratedSentences, "句子====>>>", sentencesList.value)
 			if (haveratedSentences.length>0) {
-				submitreslutStudyProgressReport(book_id.value,lesson_id.value,haveratedSentences,false)
-			} else {
-				uni.navigateBack()
-			}	
-		} else {
-			uni.navigateBack()
-		}
+				await submitreslutStudyProgressReport(book_id.value,lesson_id.value,haveratedSentences,false)
+			} 	
+		} 
+		// uni.switchTab({
+		// 	url: `/pages/textbook/index3`,
+		// })
 	}
 	
 
