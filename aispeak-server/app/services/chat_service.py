@@ -861,8 +861,6 @@ class ChatService:
     def __add_account_message(
         self, account_id: str, session_id: str, content: str, sequence: int, file_name: str = None
     ):
-        if isinstance(style, list):
-            style = None  # 或 style = "" （根据业务需求）
         """添加用户消息"""
         message = MessageEntity(
             id=short_uuid(),
