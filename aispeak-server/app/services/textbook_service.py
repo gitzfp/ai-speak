@@ -836,29 +836,44 @@ class TextbookService:
         根据 book_id 和 lesson_id 查询指定课程的句子信息，并关联用户的学习进度报告
         """
         try:
-            # 1. 查询指定的课程
-            lesson = self.db.query(LessonEntity).filter(
+            # 1. 查询主课程
+            main_lesson = self.db.query(LessonEntity).filter(
                 LessonEntity.book_id == book_id,
-                LessonEntity.lesson_id == lesson_id
+                LessonEntity.lesson_id == lesson_id,
+                LessonEntity.parent_id == None  # 确保查询的是主课程
             ).first()
             
-            if not lesson:
-                print(f"未找到 book_id={book_id}, lesson_id={lesson_id} 的课程")
+            if not main_lesson:
+                print(f"未找到 book_id={book_id}, lesson_id={lesson_id} 的主课程")
                 return None
             
-            print(f"\n=== 开始获取课程句子，book_id: {book_id}, lesson_id: {lesson_id} ===")
-            print(f"课程标题: {lesson.title}")
+            print(f"\n=== 开始获取课程句子, book_id: {book_id}, lesson_id: {lesson_id} ===")
+            print(f"课程标题: {main_lesson.title}")
 
-            # 2. 查询该课程的句子
+            # 2. 检查是否存在子课程
+            sub_lessons = self.db.query(LessonEntity).filter(
+                LessonEntity.parent_id == main_lesson.lesson_id,
+                LessonEntity.book_id == book_id
+            ).all()
+            
+            # 3. 确定要查询的课程ID
+            target_lesson_ids = [main_lesson.id]  # 默认包含主课程自身ID
+            if sub_lessons:
+                print(f"发现 {len(sub_lessons)} 个子课程")
+                target_lesson_ids = [s.id for s in sub_lessons]  # 如果有子课程则只查询子课程
+            else:
+                print("没有子课程，直接使用主课程ID查询句子")
+                
+            # 4. 查询所有关联的句子
             sentences = self.db.query(LessonSentenceEntity).filter(
-                LessonSentenceEntity.lesson_id == lesson.id
+                LessonSentenceEntity.lesson_id.in_(target_lesson_ids)
             ).all()
             
             print(f"找到句子数量: {len(sentences)}")
             for s in sentences:
                 print(f"句子: id={s.id}, english={s.english[:30]}...")
 
-            # 3. 构建句子信息并关联学习进度报告
+            # 5. 构建句子信息并关联学习进度报告
             sentence_list = []
             for s in sentences:
                 sentence_content = s.english.strip()  # 去掉前后空格
@@ -885,15 +900,16 @@ class TextbookService:
                     "audio_start": s.audio_start,
                     "audio_end": s.audio_end,
                     "is_lock": s.is_lock,
-                    "progress_data": json_data,  # 关联学习进度数据
-                    "voice_file":voice_file
+                    "progress_data": json_data, 
+                    "voice_file":voice_file,
+                    "lesson_id": s.lesson_id
                 }
                 sentence_list.append(sentence_info)
 
             return {
                 "book_id": book_id,
                 "lesson_id": lesson_id,
-                "title": lesson.title,
+                "title": main_lesson.title,
                 "sentences": sentence_list
             }
 
