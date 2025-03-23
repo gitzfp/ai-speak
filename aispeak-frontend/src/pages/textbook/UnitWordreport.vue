@@ -68,17 +68,16 @@
     <!-- 底部按钮 -->
     <view class="bottom-section">
       <view @tap="handleBackPage" class="action-button">返回</view>
-      <view class="action-button">去分享！</view>
+      <view @tap="handleShare" class="action-button">去分享！</view>
     </view>
   </view>
 </template>
 
 <script setup>
-	import { ref, watch,onMounted,computed,nextTick,onUnmounted} from 'vue';
-	import CommonHeader from "@/components/CommonHeader.vue"
+	import { ref, onMounted, computed } from 'vue';
 	import { onLoad } from '@dcloudio/uni-app'
-	import study from '@/api/study';
-	
+	import WxShare from '@/utils/wxShare';
+
 	const allWords = ref([])
 	const total_points = ref(0)
 	const currentAudio = ref(null);
@@ -88,16 +87,28 @@
 	
 	const statusBarHeight = ref(0);
 	const customBarHeight = ref(0);
-	//学习记录
-	const studyRecord = ref({
-		new_words: 0,
-		review_words: 0,
-		duration:0,
-		total_duration: 0,
-		total_mastered_words: 0,
-		total_learned_words:0,
-		
-	})
+
+	// 在script setup部分添加以下内容
+
+	// 添加分享处理函数
+	const handleShare = async () => {
+	const shareUrl = `${window.location.href}`;
+	try {
+		const result = await WxShare.init({
+		title: 'AI Speak学习报告',
+		link: shareUrl,
+		imgUrl: '/static/share-logo.png',
+		h5DirectCopy: true
+		});
+		if (!result) {
+			uni.showToast({ title: '分享初始化失败', icon: 'none' });
+		}
+	} catch (e) {
+		console.error('分享失败:', e);
+		uni.showToast({ title: '分享功能暂不可用', icon: 'none' });
+	}
+	};
+
 	// 组件挂载
 		onMounted(() => {
 			const systemInfo = uni.getSystemInfoSync();
@@ -130,16 +141,26 @@
 	
 // 这里可以定义一些响应式数据或逻辑
 	const handleBackPage = () => {
-	  uni.navigateBack({
-	      delta: backPageNum.value, // 返回几层
-	      success: () => {
+	uni.switchTab({
+		url: "/pages/textbook/index3",
+		success: () => {
 	        console.log('返回成功');
 			uni.$emit('refrespoints', { action: 'updatepoints' }); // 传递参数
 	      },
 	      fail: (err) => {
 	        console.error('返回失败', err);
 	      },
-	    });
+	})
+	//   uni.navigateBack({
+	//       delta: backPageNum.value, // 返回几层
+	//       success: () => {
+	//         console.log('返回成功');
+	// 		uni.$emit('refrespoints', { action: 'updatepoints' }); // 传递参数
+	//       },
+	//       fail: (err) => {
+	//         console.error('返回失败', err);
+	//       },
+	//     });
 	}
 	
 	const errorCountGreaterThanZero = computed(() => {
@@ -190,15 +211,10 @@
 </script>
 
 <style lang="scss" scoped>
-	// page {
-	//   background-color: #5AC467; /* 设置全局页面背景颜色 */
-	// }
-	
 	.headView {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		// height: 96rpx;
 		.head-icon {
 			margin-left: 20rpx;
 			height: 40rpx;
@@ -207,18 +223,13 @@
 		.head-text {
 			flex: 1;
 			text-align: center;
-			// scolor: #fff;
 			color: #333;
 			font-size: 36rpx;
 		}
 	}
 
 .container {
-  // display: flex;
-  // flex-direction: column;
-  // padding: 20rpx;
   background-color: #fff;
-  // background-color:  #C9FACA;
   height: 100vh;
 }
 
@@ -248,9 +259,6 @@
 	.item_icon {
 		width: calc(50% - 10rpx);
 		box-sizing: border-box;
-		// border: #f0f0f0 1rpx solid;
-		// border: #ECECEC 1rpx solid;
-		// box-shadow: 2rpx 2rpx 4rpx rgba(0, 0, 0, 0.1);
 		border-radius: 30rpx;
 		padding: 30rpx;
 		display: flex;

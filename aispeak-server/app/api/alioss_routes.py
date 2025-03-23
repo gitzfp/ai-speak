@@ -39,21 +39,17 @@ async def check_file(oss_key: str):
 @router.post("/ali-oss/upload-file/")
 async def upload_file(request: Request, oss_key: str, file: UploadFile = File(None)):
     """
-    上传文件到阿里云 OSS，支持文件上传和 JSON 内容直接上传
+    上传文件到阿里云 OSS...
     """
     try:
         if file:
-            # 处理文件上传
-            bucket.put_object(oss_key, await file.read())
-        else:
-            # 处理 JSON 内容直接上传
-            body = await request.json()
-            content = body.get('content')
-            if not content:
-                return ApiResponse.error("未提供内容", code=400)
-            bucket.put_object(oss_key, content.encode('utf-8'))
-            
-        return ApiResponse.success(data={"oss_key": oss_key}, message="上传成功")
+            # 添加上传结果检查
+            result = bucket.put_object(oss_key, await file.read())
+            if result.status != 200:
+                print(f"OSS上传失败，状态码：{result.status}")
+                return ApiResponse.error("OSS服务返回错误", code=result.status)
+                
+        return ApiResponse.success(data={"oss_key": oss_key,  "url": f"{public_endpoint}/{oss_key}"}, message="上传成功")
     except Exception as e:
         return ApiResponse.system_error(f"上传失败: {str(e)}")
 

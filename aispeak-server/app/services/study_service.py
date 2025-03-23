@@ -640,23 +640,38 @@ class StudyService:
         statusNum: int = 1,  # 新增可选参数，默认值为 1
     ) -> bool:
         """
-        提交学习进度报告表数据，并为用户加上积分
-        :param user_id: 用户ID
-        :param book_id: 书籍ID
-        :param lesson_id: 课程ID
-        :param reports: 报告数据列表，格式为 [{"word": "", "content_type": "", "error_count": "", "points": ""}]
-        :param statusNum: 状态值，默认值为 1
-        :return: 是否提交成功
+        提交学习进度报告表数据...
         """
         try:
+            # 新增调试信息
+            print(f"[DEBUG] 开始处理学习进度报告，用户: {user_id}，书本: {book_id}，课程: {lesson_id}")
+            print(f"[DEBUG] 收到 {len(reports)} 条报告数据")
+
             # 查询当前用户
             user = self.db.query(AccountEntity).filter_by(id=user_id).first()
             if not user:
+                print(f"[ERROR] 用户不存在: {user_id}")
                 raise Exception("用户不存在")
+            else:
+                print(f"[DEBUG] 找到用户记录: {user_id}")
 
             total_points = 0  # 记录本次操作的总积分
             totalspeak_count = 0
-            has_content_type_4 = False  # 记录是否存在 content_type 为 4 的记录
+            has_content_type_4 = len(reports) > 0 and reports[0].content_type == 4
+            # 记录是否存在 content_type 为 4 的记录
+            type_value = 1 if has_content_type_4 else 0  # 根据 content_type 判断 type
+
+            # 查询 StudyCompletionRecord 是否存在
+            completion_record = (
+                self.db.query(StudyCompletionRecord)
+                .filter(
+                    StudyCompletionRecord.user_id == user_id,
+                    StudyCompletionRecord.book_id == book_id,
+                    StudyCompletionRecord.lesson_id == lesson_id,
+                    StudyCompletionRecord.type == type_value
+                ).order_by(StudyCompletionRecord.create_time.desc())
+                .first()
+            )
 
             for report in reports:
                 # 提取报告数据，并去除 word 字段的前后空格
@@ -686,7 +701,7 @@ class StudyService:
                     .first()
                 )
 
-                if existing_record:
+                if existing_record and completion_record.status != 1:
                     # 如果记录存在，则更新字段
                     existing_record.error_count = error_count
                     existing_record.points = points
@@ -732,28 +747,14 @@ class StudyService:
                 total_points += points
                 # 累积总开口次数
                 totalspeak_count += speak_count
-                # 检查是否存在 content_type 为 4 的记录
-                if content_type == 4:
-                    has_content_type_4 = True
+       
 
             # 为用户加上积分
             user.points += total_points
             user.update_time = datetime.now()
 
-            type_value = 1 if has_content_type_4 else 0  # 根据 content_type 判断 type
-            # 查询 StudyCompletionRecord 是否存在
-            completion_record = (
-                self.db.query(StudyCompletionRecord)
-                .filter(
-                    StudyCompletionRecord.user_id == user_id,
-                    StudyCompletionRecord.book_id == book_id,
-                    StudyCompletionRecord.lesson_id == lesson_id,
-                    StudyCompletionRecord.type == type_value
-                )
-                .first()
-            )
-
-            if completion_record:
+          
+            if completion_record and completion_record.status != 1:
                 # 如果记录存在，则更新积分字段
                 completion_record.points += total_points
                 completion_record.speak_count += totalspeak_count

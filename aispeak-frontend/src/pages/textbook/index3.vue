@@ -11,7 +11,7 @@
 			  src="@/assets/icons/parallel_double_arrow.svg"
 			></image>
 		  </view>
-		   <view>积分：{{user_info.points}}</view>
+		   <view>积分：{{user_info?.points}}</view>
 		  <view class="qiuhuan" @click="switchBook">
 			<view>{{ book.grade }} {{ book.term }}</view> 
 			<image
@@ -26,7 +26,7 @@
 	<!-- #ifdef MP-WEIXIN -->
     <view class="header" :style="{ paddingTop: statusBarHeight + 'px', height: '84px' }">
       <view class="book-info"> 
-		  <view>积分：{{user_info.points}}</view>
+		  <view>积分：{{user_info?.points}}</view>
       </view>
 	  <view class="book-bottom">
 		  <view class="qiuhuan" @click="switchCatalogue">

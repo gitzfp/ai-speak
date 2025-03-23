@@ -98,7 +98,7 @@
 </template>
 
 <script setup>
-import { ref, watch,onMounted,computed,nextTick,onUnmounted,getCurrentInstance} from 'vue';
+import { ref, watch,onMounted,computed,nextTick,onUnmounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app'
 import { processZm } from '@/utils/stringUtils'
 import textbook from '@/api/textbook'
@@ -631,7 +631,7 @@ const submitreslutStudyProgressReport = async(reports)=> {
 			title: '报告生成中...',
 			mask: true, // 防止用户点击
 			});
-			const response = await study.submitStudyProgressReport(book_id.value,lesson_id.value,reports);
+			await study.submitStudyProgressReport(book_id.value,lesson_id.value,reports);
 				
 			uni.hideLoading();
 					
