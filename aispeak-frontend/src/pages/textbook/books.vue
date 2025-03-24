@@ -151,7 +151,6 @@ onLoad((options) => {
   console.log("Received book_id:", book_id.value)
 })
 
-
 const goToWords = () => {
   stopCurrentAudio()
   // 查找当前页面所属的章节
@@ -551,17 +550,6 @@ onMounted(() => {
     resizeObserver.observe(container)
   }
   
-  // 监听屏幕息屏事件
-    uni.onWindowResize((res) => {
-      if (res.size.windowHeight === 0 || res.size.windowWidth === 0) {
-        // 屏幕息屏
-        if (currentAudio.value && isPlaying.value) {
-          // 重新启动音频播放
-          currentAudio.value.play();
-        }
-      }
-    });
-  
   
 })
 
@@ -661,6 +649,19 @@ function toggleCatalog() {
 // 跳转到指定页面
 function goToPage(index) {
   currentPage.value = index
+   
+  if (currentPage.value>=bookPages.value.length) {
+	  currentPage.value = bookPages.value.length-1
+  } 
+  
+  
+  console.log("currentPage.value")
+  console.log(currentPage.value)
+  
+  console.log("bookPages.value.length")
+  console.log(bookPages.value.length)
+  
+  
   showCatalog.value = false
 }
 
@@ -866,8 +867,7 @@ onBeforeUnmount(() => {
     resizeObserver = null
   }
   stopCurrentAudio()
-  
-  uni.offWindowResize(); // 移除屏幕息屏事件监听
+
   
 })
 
