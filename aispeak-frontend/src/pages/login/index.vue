@@ -32,7 +32,7 @@
         placeholder="请输入密码"
       />
       <button class="login-btn" @tap="handlePhoneLogin">登录</button>
-      <text class="register-link" @tap="showRegisterForm = true">还没有账号？立即注册</text>
+      <text class="register-link" @tap="showRegisterForm = true">未注册手机号登陆时将自动注册</text>
     </view>
 
     <!-- 注册表单 -->
@@ -138,7 +138,21 @@ const handleWechatLogin = (e: any) => {
 /**
  * 手机号登录
  */
+// 添加手机号验证方法
+const validatePhoneNumber = (phone: string): boolean => {
+  const reg = /^1[3-9]\d{9}$/;
+  return reg.test(phone);
+}
+
+// 修改手机号登录方法
 const handlePhoneLogin = () => {
+  if (!validatePhoneNumber(phoneNumber.value)) {
+    uni.showToast({
+      title: '请输入正确的手机号',
+      icon: 'none'
+    });
+    return;
+  }
   console.log("手机号登录")
   if (loginLoading.value) return
   loginLoading.value = true
@@ -299,6 +313,12 @@ const handleGradeChange = (e: any) => {
       align-items: center;
       justify-content: center;
     }
+    .register-link, .login-link {
+        margin-top: 20rpx;
+        font-size: 28rpx;
+        color: #5456eb;
+        text-align: center;
+      }
   }
 
   .register-form {
@@ -379,12 +399,6 @@ const handleGradeChange = (e: any) => {
   margin-top: 40rpx;
 }
 
-.register-link, .login-link {
-  margin-top: 20rpx;
-  font-size: 28rpx;
-  color: #5456eb;
-  text-align: center;
-}
 
 .register-modal {
   position: fixed;

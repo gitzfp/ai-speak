@@ -93,9 +93,11 @@ class AccountService:
     
     def phone_login(self, dto: PhoneLoginDTO, client_host: str):
         """手机登录，支持验证码和密码登录"""
-        # 检查手机号是否为空
+        # 检查手机号是否为空和格式
         if not dto.phone_number:
             raise Exception("手机号不能为空")
+        if not re.match(r'^1[3-9]\d{9}$', dto.phone_number):
+            raise Exception("手机号格式不正确")
 
         # 查找用户
         account = self.db.query(AccountEntity).filter_by(
@@ -105,6 +107,8 @@ class AccountService:
         if not account:
             if not dto.password:
                 raise Exception("新用户必须设置密码")
+            if len(dto.password) < 6:
+                raise Exception("密码长度不能少于6位")
             # 自动注册新用户
             account = AccountEntity(
                 id=f"user_{short_uuid()}",
