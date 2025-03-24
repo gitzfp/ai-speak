@@ -86,6 +86,25 @@ const sdkConfig = computed(() => ({
   eval_mode: props.refObj.word.split(' ').length === 1 ? 7 : 2, // 根据单词数量设置模式
 }));
 
+// Add this declaration after other reactive variables
+const finalResult = ref<{
+  pronunciation_score?: string;
+  completeness_score?: string;
+  accuracy?: string;
+  fluency?: string;
+  words?: any;
+  voice_file?: string;
+} | null>(null);
+
+const realTimeResult = ref<{
+  pronunciation_score?: string;
+  completeness_score?: string;
+  accuracy?: string;
+  fluency?: string;
+  words?: any;
+  voice_file?: string;
+} | null>(null);
+
 const getScoreClass = (score: number) => {
     if (score >= 90) return 'score-excellent'
     if (score >= 80) return 'score-good'
@@ -93,31 +112,40 @@ const getScoreClass = (score: number) => {
     return 'score-poor'
 }
 
-const handlePronuciationResult = (res: any) => {
-  console.log('实时评测结果:', res);
-  if(res?.result){
-     const words = res.result.Words.map((word: any) => ({
-        word: word.Word,
-        accuracy_score: word.PronAccuracy.toFixed(1), // 保留一位小数
-        error_type: word.MatchTag === 0 ? 'None' : 'Error' // 根据 MatchTag 判断错误类型
-      }));
-  
-      finalResult.value = {
-        pronunciation_score: res.result.SuggestedScore.toFixed(1),
-        completeness_score: (res.result.PronCompletion * 100).toFixed(1),
-        accuracy: (res.result.PronAccuracy || 0).toFixed(1),
-        fluency: (res.result.PronFluency * 100).toFixed(1),
-        words: words 
-      };
+const handlePronuciationResult = (res: any, isRealTime: boolean = false) => {
+    console.log('实时评测结果:', res);
+    if(res?.result){
+      const words = res.result.Words.map((word: any) => ({
+          word: word.Word,
+          accuracy_score: word.PronAccuracy.toFixed(1), // 保留一位小数
+          error_type: word.MatchTag === 0 ? 'None' : 'Error' // 根据 MatchTag 判断错误类型
+        }));
+        if(isRealTime){
+          realTimeResult.value = {
+            pronunciation_score: res.result.SuggestedScore.toFixed(1),
+            completeness_score: (res.result.PronCompletion * 100).toFixed(1),
+            accuracy: (res.result.PronAccuracy || 0).toFixed(1),
+            fluency: (res.result.PronFluency * 100).toFixed(1),
+            words: words 
+          }
+        }else{
+          finalResult.value = {
+          pronunciation_score: res.result.SuggestedScore.toFixed(1),
+          completeness_score: (res.result.PronCompletion * 100).toFixed(1),
+          accuracy: (res.result.PronAccuracy || 0).toFixed(1),
+          fluency: (res.result.PronFluency * 100).toFixed(1),
+          words: words 
+        }
+    }
   }
 };
 const initSDK = () => {
   // 每次初始化使用最新的配置
   sdkInstance = new SowNewSocketSdk(sdkConfig.value, true);
-  console.log('SDK配置已更新，当前单词或句子：', props.refObj.word,); 
+  console.log('SDK配置已更新，当前单词或句子：', props.refObj); 
   sdkInstance.OnEvaluationResultChange = (res: any) => {
       console.log('实时评测结果:', res);
-      handlePronuciationResult(res)
+      handlePronuciationResult(res, true)
     };
 
   sdkInstance.OnEvaluationComplete = (res: any) => {
@@ -126,7 +154,7 @@ const initSDK = () => {
   };
 
   sdkInstance.OnAudioComplete = async function(int8Data: Int8Array) {
-      console.log('[DEBUG] 音频数据接收完成', int8Data.byteLength);
+      console.log('[DEBUG] 完整评测结果，音频数据接收完成', int8Data.byteLength);
       const WAV_HEADER_SIZE = 44;
       const buffer = new ArrayBuffer(WAV_HEADER_SIZE + int8Data.length);
       const view = new DataView(buffer);
@@ -149,7 +177,7 @@ const initSDK = () => {
       wavData.set(int8Data, WAV_HEADER_SIZE);
       // 创建 Blob
       const blob = new Blob([wavData], {type: 'audio/wav'});
-      const ossKey = `recordings/${uni.getStorageSync("userId")}/${props.refObj.id}.wav`;
+      const ossKey = `recordings/${uni.getStorageSync("userId")}/${props.refObj.id || props.refObj.word_id}.wav`;
       await utils.uploadFileToOSS(ossKey, blob).then(async response => {
         console.log('文件上传成功:', response);
         const data = await utils.getFileFromOSS(ossKey, false)
@@ -205,21 +233,23 @@ const initSDK = () => {
 // 添加单词变化监听
 watch(() => props.refObj, (newWord) => {
   finalResult.value = null;
+  realTimeResult.value = null;
   if (isRecording.value) return;
   if (sdkInstance) {
-    console.log('SDK配置已更新：', newWord, sdkConfig.value);
+    console.log('SDK配置已更新111：', newWord, sdkConfig.value);
     // 检查当前单词是否与SDK配置中的单词不同
     if (sdkInstance.config.ref_text !== newWord) {
       sdkInstance = new SowNewSocketSdk(sdkConfig.value, true);
     }
   } else {
+     console.log('SDK配置已更新222：', newWord, sdkConfig.value);
     // 如果sdkInstance尚未初始化，则初始化
     initSDK();
   }
 });
 // 长按处理逻辑
 const startLongPress = () => {
-  if(isRecording.value == true && finalResult?.value?.words?.length < props.refObj.word.split(' ').length){
+  if(isRecording.value == true && realTimeResult?.value?.words?.length < props.refObj.word.split(' ').length){
     setTimeout(() => {
       startLongPress();
     }, 500);
@@ -239,6 +269,7 @@ const startRecording = () => {
   if (!sdkInstance) initSDK();
   isRecording.value = true;
   finalResult.value = null;
+  realTimeResult.value = null;
   sdkInstance.start();
   // 设置定时器以自动停止录音
   const delay = props.refObj.english ? 10000 : 3500;
@@ -266,15 +297,8 @@ onUnmounted(() => {
     recordingTimeout.value = null;
   }
 });
-// Add this declaration after other reactive variables
-const finalResult = ref<{
-  pronunciation_score?: string;
-  completeness_score?: string;
-  accuracy?: string;
-  fluency?: string;
-  words?: any;
-  voice_file?: string;
-} | null>(null);
+
+
 </script>
 
 <style scoped>
