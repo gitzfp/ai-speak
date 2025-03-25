@@ -42,7 +42,8 @@
 		
 				</view>
 				<view class="btnview">
-					<view v-if="isShowmark" @tap="clicknext" class="tab-btn">下一个</view>
+					<view  :class="['tab-btn', !isShowmark ? 'tab-btn-disabled' : '']" 
+        @tap="clicknext">下一个</view>
 					<view class="pronunciation-btn">
 					<Speech 
 						:ref-obj="optionWord" 
@@ -474,17 +475,6 @@
 	
 	}
 	
-	
-	
-	const showEvaluationModal = () => {
-		
-			wordDisplayref.value.redefineSettings()
-		
-	      if (wordassessPops.value && typeof wordassessPops.value.showPopup === 'function') {
-	        wordassessPops.value.showPopup(); // 调用子组件的方法
-	      }
-	};
-		
 	onLoad(async (options) => {
 		const { bookId, sessionKey,lessonId} = options;
 		book_id.value = bookId
@@ -640,13 +630,6 @@
 			// 你可以在这里处理找到的下标，例如跳转到对应的学习位置
 		  } 
 		}
-	
-	
-	
-		
-	
-		
-		
 	  } catch (error) {
 	    console.error('获取单词列表失败:', error);
 	    uni.showToast({
@@ -934,6 +917,11 @@
 				background-color: #05c160;
 				 border-radius: 50rpx; /* 高度的一半 */
 				 margin-left: 10%;
+			}
+			.tab-btn-disabled {
+				opacity: 0.5;
+				background-color: #999 !important;
+				pointer-events: none;
 			}
 		}
 		

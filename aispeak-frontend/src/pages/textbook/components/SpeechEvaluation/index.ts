@@ -1,224 +1,257 @@
+import { ref, reactive, onUnmounted } from 'vue';
 import WebRecorder from "./core/webRecorder";
 import SoeNewConnect from "./core/soeSocket";
 import LogReport from "./lib/LogReport";
 import { guid } from "./lib/credential";
 import { LOG_TYPE_MAP } from "./core/constants";
-class SowNewSocketSdk {
-  recorder: any;
-  soeRecognizer: any;
-  params: any;
-  isCanSendData: boolean;
-  audioData: Array<any>;
-  timer: any;
-  private logServer: any;
-  isLog: boolean;
-  requestId: string;
-  // 添加录音停止回调
-  OnAudioComplete: (data: Int8Array) => void = () => {};
-  constructor(params: any, isLog: boolean = false) {
-    this.params = params;
-    this.recorder = null;
-    this.soeRecognizer = null;
-    this.isCanSendData = false;
-    this.audioData = [];
-    this.timer = null;
-    this.isLog = isLog;
-    this.requestId = "";
-    if (isLog) {
-      (async () => {
-        try {
-          const that = this;
-          this.logServer = new LogReport(isLog);
-          await this.logServer.LogInit();
-        } catch (error) {}
-      })();
-    }
+
+export function useSpeechEvaluation(params: any, isLog: boolean = false) {
+  const recorder = ref<any>(null);
+  const soeRecognizer = ref<any>(null);
+  const isCanSendData = ref(false);
+  const audioData = reactive<Array<any>>([]);
+  const timer = ref<any>(null);
+  const logServer = ref<any>(null);
+  const requestId = ref("");
+  
+  // 回调函数
+  const onAudioComplete = ref<(data: Int8Array) => void>(() => {});
+  const onEvaluationStart = ref<(res: any) => void>((res) => {
+    console.log("OnEvaluationStart", res);
+  });
+  const onEvaluationResultChange = ref<(res: any) => void>((res) => {
+    console.log("OnEvaluationResultChange", res);
+  });
+  const onEvaluationComplete = ref<(res: any) => void>((res) => {
+    console.log("OnEvaluationComplete", res);
+  });
+  const onError = ref<(err: any) => void>((err) => {
+    console.log("error2222", err);
+  });
+  const onRecorderStop = ref<(res: any) => void>(() => {});
+
+  // 初始化日志服务
+  if (isLog) {
+    (async () => {
+      try {
+        logServer.value = new LogReport(isLog);
+        await logServer.value.LogInit();
+      } catch (error) {}
+    })();
   }
-  start() {
-    this.requestId = guid();
+
+  // 收集用户轨迹日志
+  const collectLog = (res: any, type: string) => {
+    if (!logServer.value || !isLog) {
+      return;
+    }
+    logServer.value.LogAdd({
+      type,
+      message:
+        (typeof res === "string" || res?.length ? res : res?.message) || res?.reason || "",
+      requestId: requestId.value,
+      timeStamp: new Date().getTime(),
+      error: res,
+      code: res?.code || 0,
+    });
+  };
+
+  // 开始录音和识别
+  const start = () => {
+    requestId.value = guid();
     try {
-      this.recorder = new WebRecorder(
-        this.isLog,
-        this.logServer,
-        this.requestId
+      recorder.value = new WebRecorder(
+        isLog,
+        logServer.value,
+        requestId.value
       );
-      console.log("录音开始.....",this.recorder)
-      this.recorder.OnReceivedData = (data: any) => {
-        console.log('收到录音数据...', data, this.isCanSendData)
-        if (this.isCanSendData) {
-          this.soeRecognizer.write(data);
+      console.log("录音开始.....", recorder.value);
+      recorder.value.OnReceivedData = (data: any) => {
+        console.log('收到录音数据...', data, isCanSendData.value);
+        if (isCanSendData.value) {
+          soeRecognizer.value.write(data);
         }
-        this._collectLog('', LOG_TYPE_MAP.RECORD_DATA);
+        collectLog('', LOG_TYPE_MAP.RECORD_DATA);
       };
+      
       // 录音失败时
-      this.recorder.OnError = async (err: any) => {
-        this._collectLog(err, LOG_TYPE_MAP.RECORD_ERROR);
-        this.soeRecognizer && this.soeRecognizer.close();
-        this.stop();
-        this.OnError(err);
+      recorder.value.OnError = async (err: any) => {
+        collectLog(err, LOG_TYPE_MAP.RECORD_ERROR);
+        soeRecognizer.value && soeRecognizer.value.close();
+        stop();
+        onError.value(err);
       };
-      this.recorder.OnStop = (res: any) => {
-        this._collectLog(res, LOG_TYPE_MAP.RECORD_STOP);
-        if (this.soeRecognizer) {
-          this.soeRecognizer.stop();
+      
+      recorder.value.OnStop = (res: any) => {
+        collectLog(res, LOG_TYPE_MAP.RECORD_STOP);
+        if (soeRecognizer.value) {
+          soeRecognizer.value.stop();
         }
-        console.log('录音停止...')
-        this.OnRecorderStop(res);
+        console.log('录音停止...');
+        onRecorderStop.value(res);
         
         // 添加数据验证和错误处理
         try {
-          if (!this.recorder.allAudioData || this.recorder.allAudioData.length === 0) {
+          if (!recorder.value.allAudioData || recorder.value.allAudioData.length === 0) {
             console.error('No audio data available');
             return;
           }
-          const audioData = new Int8Array(this.recorder.allAudioData);
-          console.log('Triggering OnAudioComplete with data length:', audioData.length);
-          this.OnAudioComplete(audioData);
+          const audioDataArray = new Int8Array(recorder.value.allAudioData);
+          console.log('Triggering OnAudioComplete with data length:', audioDataArray.length);
+          onAudioComplete.value(audioDataArray);
         } catch (e) {
           console.error('Error in OnAudioComplete:', e);
         }
       };
-      this.recorder.start();
+      
+      recorder.value.start();
 
       // 修改soeRecognizer初始化逻辑
-      if (!this.soeRecognizer) {
-        this.soeRecognizer = new SoeNewConnect(
-          { ...this.params, voice_id: this.requestId },
-          this.isLog,
-          this.logServer
+      if (!soeRecognizer.value) {
+        soeRecognizer.value = new SoeNewConnect(
+          { ...params, voice_id: requestId.value },
+          isLog,
+          logServer.value
         );
       
-        // 将事件监听移至构造函数内部（关键修改）
-        this.soeRecognizer.OnEvaluationStart = (res: any) => {
-          if (this.recorder) {
-            this._collectLog(res, LOG_TYPE_MAP.RECOGNIZER_START);
-            this.OnEvaluationStart(res);
-            this.isCanSendData = true;
-            console.log('识别已启动'); // 添加调试日志
+        // 将事件监听移至构造函数内部
+        soeRecognizer.value.OnEvaluationStart = (res: any) => {
+          if (recorder.value) {
+            collectLog(res, LOG_TYPE_MAP.RECOGNIZER_START);
+            onEvaluationStart.value(res);
+            isCanSendData.value = true;
+            console.log('识别已启动');
           }
         };
       
-        this.soeRecognizer.OnEvaluationResultChange = (res: any) => {
-          this._collectLog(res, LOG_TYPE_MAP.RECOGNIZER_RESULT_CHANGE);
-          console.log('收到实时结果:', res); // 添加详细日志
-          this.OnEvaluationResultChange(res);
+        soeRecognizer.value.OnEvaluationResultChange = (res: any) => {
+          collectLog(res, LOG_TYPE_MAP.RECOGNIZER_RESULT_CHANGE);
+          console.log('收到实时结果:', res);
+          onEvaluationResultChange.value(res);
         };
       }
       
-      // 建立连接前添加超时处理（新增代码）
-      this.soeRecognizer.OnConnectTimeout = () => {
+      // 建立连接前添加超时处理
+      soeRecognizer.value.OnConnectTimeout = () => {
         console.error('连接超时');
-        this.OnError({ code: 'CONNECT_TIMEOUT' });
+        onError.value({ code: 'CONNECT_TIMEOUT' });
       };
-      this.soeRecognizer.start();
+      
       // 开始识别
-      this.soeRecognizer.OnEvaluationStart = (res: any) => {
-        if (this.recorder) {
+      soeRecognizer.value.OnEvaluationStart = (res: any) => {
+        if (recorder.value) {
           // 录音正常
-          this._collectLog(res, LOG_TYPE_MAP.RECOGNIZER_START);
-          this.OnEvaluationStart(res);
-          this.isCanSendData = true;
+          collectLog(res, LOG_TYPE_MAP.RECOGNIZER_START);
+          onEvaluationStart.value(res);
+          isCanSendData.value = true;
         } else {
-          this.soeRecognizer && this.soeRecognizer.close();
+          soeRecognizer.value && soeRecognizer.value.close();
         }
       };
+      
       // 识别变化时
-      this.soeRecognizer.OnEvaluationResultChange = (res: any) => {
-        this._collectLog(res, LOG_TYPE_MAP.RECOGNIZER_RESULT_CHANGE);
-        this.OnEvaluationResultChange(res);
+      soeRecognizer.value.OnEvaluationResultChange = (res: any) => {
+        collectLog(res, LOG_TYPE_MAP.RECOGNIZER_RESULT_CHANGE);
+        onEvaluationResultChange.value(res);
       };
+      
       // 识别结束
-      this.soeRecognizer.OnEvaluationComplete = async (res: any) => {
-        this._collectLog(res, LOG_TYPE_MAP.RECOGNIZER_COMPLETE);
-        this.isLog && await this.logServer?.LogInsert();
-        this.soeRecognizer && this.soeRecognizer.close();
-        this.OnEvaluationComplete(res);
-        this.isCanSendData = false;
+      soeRecognizer.value.OnEvaluationComplete = async (res: any) => {
+        collectLog(res, LOG_TYPE_MAP.RECOGNIZER_COMPLETE);
+        isLog && await logServer.value?.LogInsert();
+        soeRecognizer.value && soeRecognizer.value.close();
+        onEvaluationComplete.value(res);
+        isCanSendData.value = false;
+        soeRecognizer.value = null;
       };
+      
       // 识别错误
-      this.soeRecognizer.OnError = async (res: any) => {
-        if (this.isLog) {
+      soeRecognizer.value.OnError = async (res: any) => {
+        if (isLog) {
           const type = res?.type;
-          this._collectLog(
+          collectLog(
             res,
             type === "close"
               ? LOG_TYPE_MAP.SOCKET_CLOSE
               : LOG_TYPE_MAP.SOCKET_ERROR
           );
-          type === "close" && (await this.logServer?.LogInsert());
+          type === "close" && (await logServer.value?.LogInsert());
         }
-        this.OnError(res);
-        this.recorder && this.recorder.stop();
-        this.isCanSendData = false;
-        if (this.timer) {
-          clearInterval(this.timer);
-          this.timer = null;
+        onError.value(res);
+        recorder.value && recorder.value.stop();
+        isCanSendData.value = false;
+        if (timer.value) {
+          clearInterval(timer.value);
+          timer.value = null;
         }
       };
+      
       // 建立连接
-      this.soeRecognizer.start();
+      soeRecognizer.value.start();
     } catch (error) {
-      this._collectLog(error, LOG_TYPE_MAP.SDK_INIT_ERROR);
+      collectLog(error, LOG_TYPE_MAP.SDK_INIT_ERROR);
     }
-  }
-  destroyStream() {
-    if (this.recorder) {
-      this.recorder.destroyStream();
+  };
+
+  // 停止录音和识别
+  const stop = () => {
+    if (recorder.value) {
+      recorder.value.stop();
+      recorder.value = null;
     }
-  }
-  // 开始识别的时候
-  OnEvaluationStart(res: any) {
-    console.log("OnEvaluationStart", res);
-  }
-  // 识别结果发生变化的时候
-  OnEvaluationResultChange(res: any) {
-    console.log("OnEvaluationResultChange", res);
-  }
-  // 识别结束的时候
-  OnEvaluationComplete(res: any) {
-    console.log("OnEvaluationComplete", res);
-  }
-  stop() {
-    if (this.recorder) {
-      this.recorder.stop();
+    if (soeRecognizer.value) {
+      soeRecognizer.value.stop();
     }
-    if (this.soeRecognizer) {
-      this.soeRecognizer.stop();
+    if (timer.value) {
+      clearInterval(timer.value);
+      timer.value = null;
     }
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = null;
+  };
+
+  // 销毁录音流
+  const destroyStream = () => {
+    if (recorder.value) {
+      recorder.value.destroyStream();
     }
-  }
-  // 识别失败
-  OnError(err: any) {
-    console.log("error2222", err);
-  }
-  OnRecorderStop(res: any) {}
-  async OndownloadLogs() {
-    if (!this.logServer) {
+  };
+
+  // 下载日志
+  const downloadLogs = async () => {
+    if (!logServer.value) {
       return;
     }
-    const res = await this.logServer.QueryLog();
+    const res = await logServer.value.QueryLog();
     return res;
-  }
-  // 收集用户轨迹日志
-  private _collectLog(res: any, type: string) {
-    if (!this.logServer || !this.isLog){
-      return;
-    }
-    this.logServer.LogAdd({
-      type,
-      message:
-        (typeof res === "string" || res?.length ? res : res?.message) || res?.reason || "",
-      requestId: this.requestId,
-      timeStamp: new Date().getTime(),
-      error: res,
-      code: res?.code || 0,
-    });
-  }
+  };
+
+  // 组件卸载时清理资源
+  onUnmounted(() => {
+    stop();
+    destroyStream();
+  });
+
+  return {
+    // 状态
+    recorder,
+    soeRecognizer,
+    isCanSendData,
+    audioData,
+    requestId,
+    
+    // 方法
+    start,
+    stop,
+    destroyStream,
+    downloadLogs,
+    
+    // 回调设置
+    onAudioComplete,
+    onEvaluationStart,
+    onEvaluationResultChange,
+    onEvaluationComplete,
+    onError,
+    onRecorderStop
+  };
 }
 
-export default SowNewSocketSdk;
-
-window && ((window as any).SowNewSocketSdk = SowNewSocketSdk);
+export default useSpeechEvaluation;

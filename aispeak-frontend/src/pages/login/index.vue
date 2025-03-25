@@ -100,7 +100,7 @@ onMounted(() => {
   // 是否有保存登录的token
   let storageToken = uni.getStorageSync(X_TOKEN)
   let userId = uni.getStorageSync(USER_ID)
-  if (storageToken) {
+  if (storageToken && userId) {
     loginSucessByToken(storageToken, userId)
   }
 })
@@ -194,7 +194,7 @@ const loginSuccess = (data: any) => {
 const loginSucessByToken = (storageToken: string, userId: string) => {
   
   uni.setStorageSync("x-token", storageToken)
-  uni.setStorageSync("userId", userId) 
+  uni.setStorageSync(USER_ID, userId) 
   uni.switchTab({
     url: "/pages/textbook/index3",
   })

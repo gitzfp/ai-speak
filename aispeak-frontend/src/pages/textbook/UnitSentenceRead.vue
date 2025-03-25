@@ -25,18 +25,12 @@
 						<image @tap="playbuttonclick" class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
 					</view>
 				</view>
-				<Speech 
-						:ref-obj="optionSentence" 
-						@success="handleEvaluationResult"
-					/>
-				<!-- <FollowReading
-					ref="followReadingref"
-					:isUnit="true"
-				    :sentence="optionSentence.english"
-					:optionSentence="optionSentence"
-					@evaluationResult="evaluationResult"
-					@reevaluation="reevaluation"
-				/> -->
+				<view class="sentence-bottom">
+					<Speech 
+							:ref-obj="optionSentence" 
+							@success="handleEvaluationResult"
+						/>
+				</view>
 			</view>
 			
 		</view>
@@ -448,6 +442,8 @@
 			padding: 20rpx 0;
 			overflow-y: auto;
 			height: calc(100% - 180rpx);
+			display: flex;
+			flex-direction: column;
 			.sentence-top {
 				 margin-top: 50rpx;
 				 margin-bottom: 100rpx;
@@ -470,6 +466,11 @@
 				.audio-icon {
 					margin-right: 30rpx;
 				}
+			}
+			.sentence-bottom {
+				flex: 1;
+				position: relative;
+				background-color: red;
 			}
 			
 		}

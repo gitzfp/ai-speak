@@ -58,7 +58,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue';
-import SowNewSocketSdk from './SpeechEvaluation/index';
+// 修改导入，使用 Hook 版本
+import { useSpeechEvaluation } from './SpeechEvaluation/index';
 import utils from '@/utils/utils'; // 导入上传函数
 import AudioPlayer from "@/components/AudioPlayer.vue"
 import env from "@/config/env" 
@@ -72,9 +73,13 @@ const props = defineProps({
 const emit = defineEmits(['success']);
 
 const isRecording = ref(false);
-let sdkInstance: any = null;
+// 移除 sdkInstance 变量，因为它将由 hook 管理
+// let sdkInstance: any = null;
 
 const currentAudio = ref<any>(null)
+// 将 SDK 实例和配置相关的引用改为 ref，以便能够更新它们
+const sdkInstance = ref<any>(null);
+
 // 将sdkConfig改为计算属性
 const sdkConfig = computed(() => ({
   secretid: env.secretid,
@@ -84,6 +89,7 @@ const sdkConfig = computed(() => ({
   sentence_info_enabled: 1,
   server_engine_type: '16k_en',
   eval_mode: props.refObj.word.split(' ').length === 1 ? 7 : 2, // 根据单词数量设置模式
+  score_coeff: 1.0
 }));
 
 // Add this declaration after other reactive variables
@@ -105,6 +111,68 @@ const realTimeResult = ref<{
   voice_file?: string;
 } | null>(null);
 
+// 使用 Hook 创建语音评测实例
+const { 
+  start: startSdk, 
+  stop: stopSdk,
+  onEvaluationResultChange,
+  onEvaluationComplete,
+  onAudioComplete
+} = useSpeechEvaluation(sdkConfig.value, true);
+
+// 设置回调函数
+onEvaluationResultChange.value = (res: any) => {
+  console.log('实时评测结果:', res);
+  handlePronuciationResult(res, true);
+};
+
+onEvaluationComplete.value = (res: any) => {
+  console.log('完整评测结果:', res, props.refObj.english);
+  handlePronuciationResult(res);
+};
+
+onAudioComplete.value = async (int8Data: Int8Array) => {
+  console.log('[DEBUG] 完整评测结果，音频数据接收完成', int8Data.byteLength);
+  const WAV_HEADER_SIZE = 44;
+  const buffer = new ArrayBuffer(WAV_HEADER_SIZE + int8Data.length);
+  const view = new DataView(buffer);
+  // 写入WAV头
+  view.setUint32(0, 0x52494646, false); // "RIFF"
+  view.setUint32(4, 36 + int8Data.length, true); 
+  view.setUint32(8, 0x57415645, false); // "WAVE"
+  view.setUint32(12, 0x666d7420, false); // "fmt "
+  view.setUint32(16, 16, true); // 子块大小
+  view.setUint16(20, 1, true); // PCM格式
+  view.setUint16(22, 1, true); // 单声道
+  view.setUint32(24, 16000, true); // 采样率
+  view.setUint32(28, 32000, true); // 字节率 (16000*2)
+  view.setUint16(32, 2, true); // 块对齐
+  view.setUint16(34, 16, true); // 位深
+  view.setUint32(36, 0x64617461, false); // "data"
+  view.setUint32(40, int8Data.length, true); // 数据大小
+  // 合并头和数据
+  const wavData = new Uint8Array(buffer);
+  wavData.set(int8Data, WAV_HEADER_SIZE);
+  // 创建 Blob
+  const blob = new Blob([wavData], {type: 'audio/wav'});
+  const userId = uni.getStorageSync("user_id")
+  console.log('用户id', userId)
+  // 生成包含年月日时分秒的时间戳
+  const now = new Date();
+  const timeString = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+  const ossKey = `recordings/${userId}/${timeString}_${props.refObj.id || props.refObj.word_id}.wav`;
+  await utils.uploadFileToOSS(ossKey, blob).then(async response => {
+    const data = await utils.getFileFromOSS(ossKey, false)
+    console.log(data, '上传后的链接', ossKey)
+    finalResult.value!.voice_file = data; // 存储录音文件的URL
+    emit('success', finalResult.value);
+    isRecording.value = false;
+  }).catch(error => {
+    console.error('文件上传失败:', error);
+    isRecording.value = false;
+  });
+};
+
 const getScoreClass = (score: number) => {
     if (score >= 90) return 'score-excellent'
     if (score >= 80) return 'score-good'
@@ -113,7 +181,6 @@ const getScoreClass = (score: number) => {
 }
 
 const handlePronuciationResult = (res: any, isRealTime: boolean = false) => {
-    console.log('实时评测结果:', res);
     if(res?.result){
       const words = res.result.Words.map((word: any) => ({
           word: word.Word,
@@ -139,122 +206,57 @@ const handlePronuciationResult = (res: any, isRealTime: boolean = false) => {
     }
   }
 };
-const initSDK = () => {
-  // 每次初始化使用最新的配置
-  sdkInstance = new SowNewSocketSdk(sdkConfig.value, true);
-  console.log('SDK配置已更新，当前单词或句子：', props.refObj); 
-  sdkInstance.OnEvaluationResultChange = (res: any) => {
-      console.log('实时评测结果:', res);
-      handlePronuciationResult(res, true)
-    };
 
-  sdkInstance.OnEvaluationComplete = (res: any) => {
-    console.log('完整评测结果:', res, props.refObj.english);
-    handlePronuciationResult(res) 
-  };
-
-  sdkInstance.OnAudioComplete = async function(int8Data: Int8Array) {
-      console.log('[DEBUG] 完整评测结果，音频数据接收完成', int8Data.byteLength);
-      const WAV_HEADER_SIZE = 44;
-      const buffer = new ArrayBuffer(WAV_HEADER_SIZE + int8Data.length);
-      const view = new DataView(buffer);
-      // 写入WAV头
-      view.setUint32(0, 0x52494646, false); // "RIFF"
-      view.setUint32(4, 36 + int8Data.length, true); 
-      view.setUint32(8, 0x57415645, false); // "WAVE"
-      view.setUint32(12, 0x666d7420, false); // "fmt "
-      view.setUint32(16, 16, true); // 子块大小
-      view.setUint16(20, 1, true); // PCM格式
-      view.setUint16(22, 1, true); // 单声道
-      view.setUint32(24, 16000, true); // 采样率
-      view.setUint32(28, 32000, true); // 字节率 (16000*2)
-      view.setUint16(32, 2, true); // 块对齐
-      view.setUint16(34, 16, true); // 位深
-      view.setUint32(36, 0x64617461, false); // "data"
-      view.setUint32(40, int8Data.length, true); // 数据大小
-      // 合并头和数据
-      const wavData = new Uint8Array(buffer);
-      wavData.set(int8Data, WAV_HEADER_SIZE);
-      // 创建 Blob
-      const blob = new Blob([wavData], {type: 'audio/wav'});
-      const ossKey = `recordings/${uni.getStorageSync("userId")}/${props.refObj.id || props.refObj.word_id}.wav`;
-      await utils.uploadFileToOSS(ossKey, blob).then(async response => {
-        console.log('文件上传成功:', response);
-        const data = await utils.getFileFromOSS(ossKey, false)
-        console.log(data, '上传后的链接', ossKey)
-        finalResult.value!.voice_file = data; // 存储录音文件的URL
-        emit('success', finalResult.value);
-      }).catch(error => {
-        console.error('文件上传失败:', error);
-      });
-
-  }
-};
+// 移除 initSDK 函数，直接使用 hook 提供的 start 方法
+// const initSDK = () => { ... }
 
 // 播放录音功能
-	const playbuttonclick = () => {
-		if(!props.refObj?.audio_url)return
-    console.log('播放语音====', props.refObj?.audio_url);
-		stopCurrentAudio();
-		const audio = uni.createInnerAudioContext();
-		currentAudio.value = audio;
-		audio.src = props.refObj?.audio_url;
-	  console.log(
-      props.refObj);
-		// 设置时间范围
-		if (props.refObj.audio_start && props.refObj.audio_end) {
+const playbuttonclick = () => {
+  // 保持原有代码不变
+  if(!props.refObj?.audio_url)return
+  console.log('播放语音====', props.refObj?.audio_url);
+  stopCurrentAudio();
+  const audio = uni.createInnerAudioContext();
+  currentAudio.value = audio;
+  audio.src = props.refObj?.audio_url;
+  console.log(props.refObj);
+  // 设置时间范围
+  if (props.refObj.audio_start && props.refObj.audio_end) {
+    const startTime = props.refObj.audio_start / 1000
+    const endTime = props.refObj.audio_end / 1000
+    audio.startTime = startTime
+    // 监听播放进度
+    audio.onTimeUpdate(() => {
+      if (audio.currentTime >= endTime - 0.1) { // 防止浮点误差
+        stopCurrentAudio()  // 处理播放结束
+      }
+    })
+  }
+  console.log(props.refObj, '播放录音功能');
+  audio.play();
+}
 
-		  const startTime = props.refObj.audio_start / 1000
-		  const endTime = props.refObj.audio_end / 1000
-		  audio.startTime = startTime
-		  // 监听播放进度
-		  audio.onTimeUpdate(() => {
-		    if (audio.currentTime >= endTime - 0.1) { // 防止浮点误差
-		      stopCurrentAudio()  // 处理播放结束
-		    }
-		  })
-		}
-		console.log(
-      props.refObj, '播放录音功能');
-		audio.play();
-	}
-	const stopCurrentAudio = () => {
-		if (currentAudio.value) {
-		  currentAudio.value.pause();
-		  try {
-		    currentAudio.value.stop();
-			  currentAudio.value = null;
-		  } catch (error) {
-		    console.error("Error stopping audio:", error);
-		  }
-		  currentAudio.value = null;
-		}
-	}
+const stopCurrentAudio = () => {
+  // 保持原有代码不变
+  if (currentAudio.value) {
+    currentAudio.value.pause();
+    try {
+      currentAudio.value.stop();
+      currentAudio.value = null;
+    } catch (error) {
+      console.error("Error stopping audio:", error);
+    }
+    currentAudio.value = null;
+  }
+}
+
 // 添加单词变化监听
 watch(() => props.refObj, (newWord) => {
   finalResult.value = null;
   realTimeResult.value = null;
-  if (isRecording.value) return;
-  if (sdkInstance) {
-    console.log('SDK配置已更新111：', newWord, sdkConfig.value);
-    // 检查当前单词是否与SDK配置中的单词不同
-    if (sdkInstance.config.ref_text !== newWord) {
-      sdkInstance = new SowNewSocketSdk(sdkConfig.value, true);
-    }
-  } else {
-     console.log('SDK配置已更新222：', newWord, sdkConfig.value);
-    // 如果sdkInstance尚未初始化，则初始化
-    initSDK();
-  }
 });
-// 长按处理逻辑
+
 const startLongPress = () => {
-  if(isRecording.value == true && realTimeResult?.value?.words?.length < props.refObj.word.split(' ').length){
-    setTimeout(() => {
-      startLongPress();
-    }, 500);
-    return
-  }
   if(isRecording.value == true){
    stopRecording(); 
   }else{
@@ -262,15 +264,107 @@ const startLongPress = () => {
   }
 };
 
-
 const recordingTimeout = ref<number | null>(null);
 
+// 初始化 SDK 函数
+const initSpeechEvaluation = () => {
+  // 如果已经有实例且正在录音，先停止
+  if (sdkInstance.value && isRecording.value) {
+    stopRecording();
+  }
+  
+  // 使用最新的配置创建 SDK 实例
+  const sdk = useSpeechEvaluation(sdkConfig.value, true);
+  sdkInstance.value = sdk;
+
+  sdk.onEvaluationStart.value = (res: any) => {
+    console.log('评测开始:', res);
+    isRecording.value = true;
+  };
+  
+  // 设置回调函数
+  sdk.onEvaluationResultChange.value = (res: any) => {
+    console.log('实时评测结果:', res);
+    handlePronuciationResult(res, true);
+  };
+  
+  sdk.onEvaluationComplete.value = (res: any) => {
+    console.log('完整评测结果:', res, props.refObj.english);
+    handlePronuciationResult(res);
+  };
+  
+  sdk.onAudioComplete.value = async (int8Data: Int8Array) => {
+    // 使用已定义的函数处理音频数据，避免代码重复
+    await processAudioData(int8Data);
+  };
+  
+  return sdk;
+};
+
+// 提取音频处理逻辑为单独函数，避免代码重复
+const processAudioData = async (int8Data: Int8Array) => {
+  console.log('[DEBUG] 完整评测结果，音频数据接收完成', int8Data.byteLength);
+  const WAV_HEADER_SIZE = 44;
+  const buffer = new ArrayBuffer(WAV_HEADER_SIZE + int8Data.length);
+  const view = new DataView(buffer);
+  // 写入WAV头
+  view.setUint32(0, 0x52494646, false); // "RIFF"
+  view.setUint32(4, 36 + int8Data.length, true); 
+  view.setUint32(8, 0x57415645, false); // "WAVE"
+  view.setUint32(12, 0x666d7420, false); // "fmt "
+  view.setUint32(16, 16, true); // 子块大小
+  view.setUint16(20, 1, true); // PCM格式
+  view.setUint16(22, 1, true); // 单声道
+  view.setUint32(24, 16000, true); // 采样率
+  view.setUint32(28, 32000, true); // 字节率 (16000*2)
+  view.setUint16(32, 2, true); // 块对齐
+  view.setUint16(34, 16, true); // 位深
+  view.setUint32(36, 0x64617461, false); // "data"
+  view.setUint32(40, int8Data.length, true); // 数据大小
+  // 合并头和数据
+  const wavData = new Uint8Array(buffer);
+  wavData.set(int8Data, WAV_HEADER_SIZE);
+  // 创建 Blob
+  const blob = new Blob([wavData], {type: 'audio/wav'});
+  const userId = uni.getStorageSync("user_id")
+  console.log('用户id', userId)
+  // 生成包含年月日时分秒的时间戳
+  const now = new Date();
+  const timeString = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+  const ossKey = `recordings/${userId}/${timeString}_${props.refObj.id || props.refObj.word_id}.wav`;
+  try {
+    await utils.uploadFileToOSS(ossKey, blob);
+    const data = await utils.getFileFromOSS(ossKey, false);
+    console.log(data, '上传后的链接', ossKey);
+    if (finalResult.value) {
+      finalResult.value.voice_file = data; // 存储录音文件的URL
+      emit('success', finalResult.value);
+    }
+    isRecording.value = false;
+  } catch (error) {
+    console.error('文件上传失败:', error);
+    isRecording.value = false;
+  }
+};
+
+// 初始化 SDK
+initSpeechEvaluation();
+
+// 监听单词变化，重新初始化 SDK
+watch(() => props.refObj.word, () => {
+  console.log('单词变化，重新初始化 SDK:', props.refObj.word);
+  initSpeechEvaluation();
+});
+
+// 修改 startRecording 和 stopRecording 函数，使用当前的 SDK 实例
 const startRecording = () => {
-  if (!sdkInstance) initSDK();
-  isRecording.value = true;
+  if (!sdkInstance.value) {
+    initSpeechEvaluation();
+  }
+  sdkInstance.value.start();
   finalResult.value = null;
   realTimeResult.value = null;
-  sdkInstance.start();
+  
   // 设置定时器以自动停止录音
   const delay = props.refObj.english ? 10000 : 3500;
   recordingTimeout.value = setTimeout(() => {
@@ -280,10 +374,18 @@ const startRecording = () => {
   }, delay);
 };
 
-const stopRecording = () => {
+const stopRecording = (count = 0) => {
+  if(realTimeResult.value?.words?.length < props.refObj.word.split(' ').length && count < 3){
+    setTimeout(() => {
+      stopRecording(count + 1);
+    }, 500);
+    return
+  }
+  console.log(realTimeResult.value?.words, '实时录音结果', props.refObj.word.split(' '))
+  if (sdkInstance.value) {
+    sdkInstance.value.stop();
+  }
   isRecording.value = false;
-  sdkInstance?.stop();
-  sdkInstance = null;
   if (recordingTimeout.value !== null) {
     clearTimeout(recordingTimeout.value);
     recordingTimeout.value = null;
@@ -292,13 +394,8 @@ const stopRecording = () => {
 
 // 页面销毁时清除定时器
 onUnmounted(() => {
-  if (recordingTimeout.value !== null) {
-    clearTimeout(recordingTimeout.value);
-    recordingTimeout.value = null;
-  }
+  stopRecording();
 });
-
-
 </script>
 
 <style scoped>
@@ -308,6 +405,7 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   position: relative; /* 添加相对定位 */
+  height: 100%;
   width: 100%;
   .uniIcon {
     display: flex;
@@ -329,8 +427,8 @@ onUnmounted(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 300rpx;
-  height: 300rpx;
+  width: 200rpx;
+  height: 200rpx;
   background: rgba(1, 1, 1, 0.7);
   border-radius: 50%;
   display: flex;
@@ -444,9 +542,9 @@ onUnmounted(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 170rpx;
-  height: 170rpx;
-  background: rgba(1, 1, 1, 0.7);
+  width: 370rpx;
+  height: 370rpx;
+  background: rgba(1, 1, 1, 0.5);
   border-radius: 50%;
   display: flex;
   align-items: center;
