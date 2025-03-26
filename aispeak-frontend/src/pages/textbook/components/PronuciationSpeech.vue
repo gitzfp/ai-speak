@@ -442,16 +442,9 @@ onUnmounted(() => {
   height: 100%;
   width: 100%;
   .uniIcon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #2b9939;
-    width: 70rpx;
-    height: 70rpx;
-    border-radius: 35rpx;
-    position: relative; /* 添加相对定位 */
-    z-index: 1; /* 确保按钮在蒙板上方 */
-    margin-top: 40rpx;
+    margin-top: 30rpx;
+    width: 100rpx;
+    height: 100rpx; 
   }
 }
 
@@ -739,27 +732,6 @@ onUnmounted(() => {
 
 .score-poor {
   background-color: #f8d7da;
-}
-
-.pronunciation-speech {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  width: 100%;
-  .uniIcon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #2b9939;
-    width: 70rpx;
-    height: 70rpx;
-    border-radius: 35rpx;
-    position: relative;
-    z-index: 1;
-    margin-top: 40rpx;
-  }
 }
 
 .audio-icons-container {
