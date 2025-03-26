@@ -1,31 +1,46 @@
 <template>
   <view class="pronunciation-speech">
     <!-- 最终结果展示 -->
-    <view v-if="finalResult" class="final-result-panel">
+    <view v-if="finalResult && !hasInvalidScores" class="final-result-panel">
       <view class="score-item">
         <text class="label">准确度：</text>
-        <text class="value">{{ finalResult.accuracy }}%</text>
+        <text class="value">{{ `${finalResult.accuracy}%` }}</text>
       </view>
       <view class="score-item">
         <text class="label">流畅度：</text>
-        <text class="value">{{ finalResult.fluency }}%</text>
+        <text class="value">{{ `${finalResult.fluency}%` }}</text>
       </view>
-        <view class="score-item">
+      <view class="score-item">
         <text class="label">完整度：</text>
-        <text class="value">{{ finalResult.completeness_score }}%</text>
+        <text class="value">{{ `${finalResult.completeness_score}%` }}</text>
       </view>
     </view>
-    <view class="word-scores-container" v-if="finalResult">
+    <view v-if="finalResult && hasInvalidScores" class="final-result-panel">
+       <view class="score-item">继续加油喔</view>
+    </view>
+    <view class="word-scores-container" v-if="finalResult && !hasInvalidScores">
           <view 
             v-for="(word, index) in finalResult.words"
             :key="index" 
             class="word-score-item"
             :class="getScoreClass(word.accuracy_score)"
           >
-            <view class="word-text">{{ word.word }}</view>
-            <view class="word-score">{{ word.accuracy_score }}</view>
+            <view v-if="word.phones?.length == 0" class="word-text">{{ word.word }}</view>
+            <view v-if="word.phones?.length == 0" class="word-score">{{ word.accuracy_score }}</view>
             <view class="word-error-type" v-if="word.error_type !== 'None'">{{ word.error_type }}</view>
+            <view class="phones-container">
+              <view 
+                v-for="(phone, phoneIndex) in word.phones" 
+                :key="phoneIndex"
+                class="phone-item"
+                :class="getScoreClass(phone.accuracy)"
+              >
+                <text class="phone-text">[{{ phone.phone }}]</text>
+                <text class="phone-score">{{ phone.accuracy }}</text>
+              </view>
+            </view>
           </view>
+    
     </view>
     
     <!-- 语音波动动画 -->
@@ -180,31 +195,50 @@ const getScoreClass = (score: number) => {
     return 'score-poor'
 }
 
+// 添加计算属性
+const hasInvalidScores = computed(() => {
+  if (!finalResult.value) return false;
+  const scores = [
+    parseFloat(finalResult.value.accuracy),
+    parseFloat(finalResult.value.fluency),
+    parseFloat(finalResult.value.completeness_score)
+  ];
+  return scores.some(score => score <= 0 || score === -100);
+});
+
 const handlePronuciationResult = (res: any, isRealTime: boolean = false) => {
     if(res?.result){
       const words = res.result.Words.map((word: any) => ({
           word: word.Word,
-          accuracy_score: word.PronAccuracy.toFixed(1), // 保留一位小数
-          error_type: word.MatchTag === 0 ? 'None' : 'Error' // 根据 MatchTag 判断错误类型
+          accuracy_score: word.PronAccuracy.toFixed(1),
+          error_type: word.MatchTag === 0 ? 'None' : 'Error',
+          phones: word.PhoneInfos.map((phone: any) => ({
+            phone: phone.Phone,
+            accuracy: phone.PronAccuracy.toFixed(1)
+          }))
         }));
-        if(isRealTime){
-          realTimeResult.value = {
-            pronunciation_score: res.result.SuggestedScore.toFixed(1),
-            completeness_score: (res.result.PronCompletion * 100).toFixed(1),
-            accuracy: (res.result.PronAccuracy || 0).toFixed(1),
-            fluency: (res.result.PronFluency * 100).toFixed(1),
-            words: words 
-          }
-        }else{
-          finalResult.value = {
-          pronunciation_score: res.result.SuggestedScore.toFixed(1),
-          completeness_score: (res.result.PronCompletion * 100).toFixed(1),
-          accuracy: (res.result.PronAccuracy || 0).toFixed(1),
-          fluency: (res.result.PronFluency * 100).toFixed(1),
-          words: words 
-        }
+
+      const scores = {
+        pronunciation_score: res.result.SuggestedScore,
+        completeness_score: res.result.PronCompletion * 100,
+        accuracy: res.result.PronAccuracy || 0,
+        fluency: res.result.PronFluency * 100
+      };
+
+      const validResult = {
+        pronunciation_score: scores.pronunciation_score.toFixed(1),
+        completeness_score: scores.completeness_score.toFixed(1),
+        accuracy: scores.accuracy.toFixed(1),
+        fluency: scores.fluency.toFixed(1),
+        words: words
+      };
+
+      if(isRealTime) {
+        realTimeResult.value = validResult;
+      } else {
+        finalResult.value = validResult;
+      }
     }
-  }
 };
 
 // 移除 initSDK 函数，直接使用 hook 提供的 start 方法
@@ -605,6 +639,69 @@ onUnmounted(() => {
   color: #1890ff;
   font-weight: 500;
   font-size: 32rpx;
+}
+
+.word-error-type {
+  color: #ff4d4f;
+  font-size: 24rpx;
+}
+.word-text {
+  flex: 1;
+  color: #333;
+}
+
+.word-score {
+  flex: 1;
+  text-align: right;
+  color: #1890ff;
+}
+
+.word-error-type {
+  flex: 1;
+  text-align: right;
+  color: #ff4d4f;
+}
+
+.score-excellent {
+  background-color: #e6fffb;
+}
+
+.score-good {
+  background-color: #fffbe6;
+}
+
+.score-fair {
+  background-color: #fff1f0;
+}
+
+.score-poor {
+  background-color: #f8d7da;
+}
+
+.phones-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4rpx;
+  margin-top: 8rpx;
+}
+
+.phone-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rpx 8rpx;
+  border-radius: 4rpx;
+  background-color: #f5f5f5;
+}
+
+.phone-text {
+  font-size: 20rpx;
+  color: #666;
+}
+
+.phone-score {
+  font-size: 18rpx;
+  color: #1890ff;
 }
 
 .word-error-type {

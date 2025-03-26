@@ -470,7 +470,6 @@
 			.sentence-bottom {
 				flex: 1;
 				position: relative;
-				background-color: red;
 			}
 			
 		}
