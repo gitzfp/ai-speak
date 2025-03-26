@@ -59,8 +59,8 @@
         <Text>标准</Text>
       </view>
       <view class="audio-icon" v-if="!isRecording">
-        <uni-icons @tap="startLongPress" class="uniIcon" type="mic" size="20" color="#fff" :class="{ 'recording-active': isRecording }" />
-        <Text>测评</Text>
+        <image @tap="startLongPress" class="uniIcon" src="https://dingguagua.fun/static/img/pronucation.png" :class="{ 'recording-active': isRecording }" />
+        <!-- <Text>测评</Text> -->
       </view>
       <view v-if="finalResult?.voice_file" class="audio-icon right-view" aria-disabled="!recordingUrl">
         <AudioPlayer :audioUrl="finalResult?.voice_file" />
