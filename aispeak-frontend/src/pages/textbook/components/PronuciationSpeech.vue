@@ -291,6 +291,7 @@ watch(() => props.refObj, (newWord) => {
 });
 
 const startLongPress = () => {
+  uni.$emit('start_recording', { action: 'recording' });
   if(isRecording.value == true){
    stopRecording(); 
   }else{

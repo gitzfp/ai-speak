@@ -233,11 +233,6 @@ watch(() => props.word, (newWord) => {
   }
 }, { immediate: true });
 
-onMounted(() => {
-  // if (props.word) {
-  //   updateInputBoxesAndLetterKeys(props.word.word);
-  // }
-});
 
 
 const sound_pathLists = computed(() => {

@@ -230,9 +230,15 @@ const redefineSettings = () => {
   isPlaying.value = true;
 };
 
-onMounted(()=>{
-	
-})
+onMounted(() => {
+  	uni.$on('start_recording', (params) => {
+		    console.log('uniwordspell 收到全局事件，参数:', params);
+		    if (params.action === 'recording') {
+				stopCurrentAudio()
+		    }
+		  });
+});
+
 // 组件卸载时停止自动滑动
 	onUnmounted(() => {
 		stopCurrentAudio();
