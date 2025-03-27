@@ -86,12 +86,12 @@
 					<view class="sentence_grasp_content" v-for="sentence in reportData.sentence_summary.sentence_records">
 						<view class="s_grasp_content_top">
 							<view class="grasp_item_one_t">{{sentence.content}}</view>
-							<image @tap="playSentenceclick(sentence.audio_url)" class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
+							<image @tap="playSentenceclick(sentence.audio_url,sentence.audio_start,sentence.audio_end)" class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
 						</view>
 						<view class="s_grasp_content_bottom">
 							<view class="grasp_item_one_t">{{sentence.chinese}}</view>
 							<view @tap="lookpronunciationResult(sentence)" class="grasp_item_one_ins">
-								<view>评分:{{JSON.parse(sentence.json_data).pronunciation_score}}</view>
+								<view>评分:{{sentence.json_data ? JSON.parse(sentence.json_data).pronunciation_score : '--'}}</view>
 								<view class="rTit">详情</view>
 							</view>
 						</view>
@@ -218,19 +218,14 @@
 		audio.play();
 	}
 	
-	const playSentenceclick = (audio_url)=> {
+	const playSentenceclick = (audio_url,audio_start,audio_end)=> {
 		stopCurrentAudio();
 		// 将 audio_url 根据逗号分割
-		const parts = audio_url.split(',');
-		// 检查数组长度，确保格式正确
-		if (parts.length < 3) {
-			console.error("Invalid audio_url format");
-			return;
-		}
+	
 		// 提取真正的 audio_url、audio_start 和 audio_end
-		const actualAudioUrl = parts[0]; // 第 0 位是真正的 audio_url
-		const audioStart = parseInt(parts[1], 10); // 第 1 位是 audio_start，转换为 int
-		const audioEnd = parseInt(parts[2], 10);   // 第 2 位是 audio_end，转换为 int
+		const actualAudioUrl = audio_url; // 第 0 位是真正的 audio_url
+		const audioStart = audio_start; // 第 1 位是 audio_start，转换为 int
+		const audioEnd = audio_end;   // 第 2 位是 audio_end，转换为 int
 
 		
 		const audio = uni.createInnerAudioContext();
@@ -263,6 +258,25 @@
 			
 			if (response.code == 1000) {
 				reportData.value = response.data
+				
+			
+			
+				
+			
+					var ss = reportData.value.sentence_summary.sentence_records[0]
+					
+					
+					
+				   var fdfd = JSON.parse(ss.json_data)
+				   
+				   
+				   console.log("fdfd=====")
+				   console.log(fdfd)
+				
+				console.log("fdfd.pronunciation_score")
+				console.log(fdfd.pronunciation_score)
+				
+				
 			}
 			console.log("response")
 			

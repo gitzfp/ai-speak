@@ -65,12 +65,16 @@ class StudyCompletionRecord(Base):
     lesson_id = Column(Integer, nullable=True, comment="课程ID")  # 新增 lesson_id 字段
     date = Column(Date, nullable=False, comment="完成日期")
     status = Column(Integer, default=0, comment="完成状态（0: 未完成, 1: 已完成）")  # 改为 Integer 类型
-    type = Column(Integer, default=0, comment="类型（0: 单词, 1: 别的,2.背词计划用了）")  # 新增 type 字段
+    type = Column(Integer, default=0, comment="类型（0: 单词, 1: 句子,2.背词计划用了, 3:真正的单词拼写）")  # 新增 type 字段
     continuous_days = Column(Integer, default=0, comment="连续完成天数")
     points = Column(Integer, default=0, comment="积分")  # 新增 points 字段
     speak_count = Column(Integer, default=0, comment="开口次数")  # 新增 speak_count 字段
     create_time = Column(DateTime, default=datetime.datetime.now, comment="创建时间")
     update_time = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now, comment="更新时间")
+
+    # 新增 progress_data 字段，用于存储类似 study_progress_reports 表的数据，默认可以为空
+    progress_data = Column(Text, nullable=True, comment="存储类似 study_progress_reports 表的数据")
+
 
     # 创建联合索引提高查询效率
     __table_args__ = (

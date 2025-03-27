@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional,Union
+from typing import Dict, List, Optional,Union,Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import func  # 导入 func
 from datetime import datetime, date
@@ -7,6 +7,7 @@ from app.db.study_entities import StudyPlan, StudyWordProgress, StudyRecord,Stud
 from app.db.account_entities import AccountEntity 
 from app.db.words_entities import Word  # 假设 Word 是单词表实体
 from datetime import datetime, date, timedelta
+import json
 
 class StudyService:
     def __init__(self, db: Session):
@@ -632,15 +633,15 @@ class StudyService:
     
 
     def submit_study_progress_report(
-        self,
-        user_id: str,
-        book_id: str,
-        lesson_id: int,
-        reports: List[Dict],  # 使用 StudyProgressReportItem 对象
-        statusNum: int = 1,  # 新增可选参数，默认值为 1
+    self,
+    user_id: str,
+    book_id: str,
+    lesson_id: int,
+    reports: List[Dict],  # 使用 StudyProgressReportItem 对象
+    statusNum: int = 1,  # 新增可选参数，默认值为 1
     ) -> bool:
         """
-        提交学习进度报告表数据...
+        提交学习进度报告表数据，仅处理 StudyCompletionRecord 中的 progress_data 字段
         """
         try:
             # 新增调试信息
@@ -655,127 +656,31 @@ class StudyService:
             else:
                 print(f"[DEBUG] 找到用户记录: {user_id}")
 
-            total_points = 0  # 记录本次操作的总积分
-            totalspeak_count = 0
-            has_content_type_4 = len(reports) > 0 and reports[0].content_type == 4
-            # 记录是否存在 content_type 为 4 的记录
-            type_value = 1 if has_content_type_4 else 0  # 根据 content_type 判断 type
+            # 计算总积分和总开口次数
+            total_points, totalspeak_count = self._calculate_total_points_and_speak_count(reports)
 
-            # 查询 StudyCompletionRecord 是否存在
-            completion_record = (
-                self.db.query(StudyCompletionRecord)
-                .filter(
-                    StudyCompletionRecord.user_id == user_id,
-                    StudyCompletionRecord.book_id == book_id,
-                    StudyCompletionRecord.lesson_id == lesson_id,
-                    StudyCompletionRecord.type == type_value
-                ).order_by(StudyCompletionRecord.create_time.desc())
-                .first()
-            )
+            print(f"[total_points] : {total_points}")
+            print(f"[totalspeak_count] : {totalspeak_count}")
 
-            for report in reports:
-                # 提取报告数据，并去除 word 字段的前后空格
-                word = report.word.strip()
-                content_type = report.content_type
-                content_id = report.content_id
-                error_count = report.error_count
-                points = report.points
-                speak_count = report.speak_count
-                json_data = report.json_data  # 获取 json_data 字段
-                voice_file = report.voice_file
-                chinese = report.chinese
-                audio_url = report.audio_url
-                audio_start = report.audio_start  # 新增字段，可选
-                audio_end = report.audio_end  # 新增字段，可选
-
-                # 查询是否已存在记录
-                existing_record = (
-                    self.db.query(StudyProgressReport)
-                    .filter(
-                        StudyProgressReport.user_id == user_id,
-                        StudyProgressReport.book_id == book_id,
-                        StudyProgressReport.lesson_id == lesson_id,
-                        StudyProgressReport.content_id == content_id,
-                        StudyProgressReport.content_type == content_type,
-                    )
-                    .first()
-                )
-
-                if existing_record and completion_record.status != 1:
-                    # 如果记录存在，则更新字段
-                    existing_record.error_count = error_count
-                    existing_record.points = points
-                    existing_record.update_time = datetime.now()
-
-                    # 如果 content_type 为 4，则更新 json_data
-                    if content_type == 4 and json_data is not None:
-                        existing_record.json_data = json_data
-
-                    if voice_file is not None:
-                        existing_record.voice_file = voice_file
+            # 根据 content_type 判断 type
+            # 根据 content_type 判断 type
+            if len(reports) > 0:
+                content_type = reports[0].content_type
+                if content_type == 4:
+                    type_value = 1
+                elif content_type == 3:
+                    type_value = 3
                 else:
-                    # 如果记录不存在，则插入新记录
-                    progress_report = StudyProgressReport(
-                        user_id=user_id,
-                        book_id=book_id,
-                        lesson_id=lesson_id,
-                        content=word,  # 使用去除空格后的 word
-                        content_id=content_id,
-                        content_type=content_type,
-                        error_count=error_count,
-                        points=points,
-                        chinese=chinese,
-                        audio_url=audio_url,
-                        create_time=datetime.now(),
-                        update_time=datetime.now(),
-                    )
+                    type_value = 0
+            else:
+                type_value = 0  # 默认值，如果没有报告数据
 
-                    # 如果 content_type 为 4，则插入 json_data
-                    if content_type == 4 and json_data is not None:
-                        progress_report.json_data = json_data
-
-                    if voice_file is not None:
-                        progress_report.voice_file = voice_file
-
-                    # 如果 content_type 为 4，并且 audio_start 和 audio_end 不为空，则更新 audio_url
-                    if content_type == 4 and audio_start is not None and audio_end is not None:
-                        progress_report.audio_url = f"{audio_url},{audio_start},{audio_end}"
-
-                    self.db.add(progress_report)
-
-                # 累加总积分
-                total_points += points
-                # 累积总开口次数
-                totalspeak_count += speak_count
-       
+            # 处理 StudyCompletionRecord 记录
+            self._process_study_completion_record(user_id, book_id, lesson_id, type_value, total_points, totalspeak_count, statusNum, reports)
 
             # 为用户加上积分
             user.points += total_points
             user.update_time = datetime.now()
-
-          
-            if completion_record and completion_record.status != 1:
-                # 如果记录存在，则更新积分字段
-                completion_record.points += total_points
-                completion_record.speak_count += totalspeak_count
-                completion_record.update_time = datetime.now()
-                if statusNum == 1:
-                    completion_record.status = statusNum
-            else:
-                # 如果记录不存在，则插入新记录
-                completion_record = StudyCompletionRecord(
-                    user_id=user_id,
-                    book_id=book_id,
-                    lesson_id=lesson_id,
-                    date=datetime.now().date(), 
-                    status=statusNum,  # 使用传入的 statusNum
-                    type=type_value,  # 根据 content_type 判断 type
-                    points=total_points,
-                    speak_count=totalspeak_count,
-                    create_time=datetime.now(),
-                    update_time=datetime.now(),
-                )
-                self.db.add(completion_record)
 
             # 提交事务
             self.db.commit()
@@ -783,7 +688,99 @@ class StudyService:
         except Exception as e:
             print(f"提交学习进度报告失败: {str(e)}")
             self.db.rollback()  # 回滚事务
-            return False 
+            return False
+
+    def _calculate_total_points_and_speak_count(self, reports: List[Dict]) -> Tuple[int, int]:
+        """
+        计算总积分和总开口次数
+        """
+        total_points = 0
+        totalspeak_count = 0
+        for report in reports:
+            total_points += report.points
+            totalspeak_count += report.speak_count
+        return total_points, totalspeak_count
+
+    def _process_study_completion_record(
+        self,
+        user_id: str,
+        book_id: str,
+        lesson_id: int,
+        type_value: int,
+        total_points: int,
+        totalspeak_count: int,
+        statusNum: int,
+        reports: List[Dict],
+   ):
+        """
+        处理 StudyCompletionRecord 记录，包括更新 progress_data 字段
+        """
+        # 查询 StudyCompletionRecord 是否存在
+        completion_record = (
+            self.db.query(StudyCompletionRecord)
+            .filter(
+                StudyCompletionRecord.user_id == user_id,
+                StudyCompletionRecord.book_id == book_id,
+                StudyCompletionRecord.lesson_id == lesson_id,
+                StudyCompletionRecord.type == type_value,
+                StudyCompletionRecord.status == 0,
+            )
+            .order_by(StudyCompletionRecord.create_time.desc())
+            .first()
+        )
+
+        # 处理 progress_data 字段
+        progress_data = []
+        if completion_record and completion_record.progress_data:
+            # 如果 progress_data 有值，则反序列化为数组
+            progress_data = json.loads(completion_record.progress_data)
+
+        # 将新的 reports 数据插入到 progress_data 中
+        for report in reports:
+            progress_data.append({
+                "word": report.word.strip(),
+                "content_type": report.content_type,
+                "content_id": report.content_id,
+                "error_count": report.error_count,
+                "points": report.points,
+                "speak_count": report.speak_count,
+                "json_data": report.json_data,
+                "voice_file": report.voice_file,
+                "chinese": report.chinese,
+                "audio_url": report.audio_url,
+                "audio_start": report.audio_start,
+                "audio_end": report.audio_end,
+            })
+
+        # 将 progress_data 序列化为字符串
+        progress_data_str = json.dumps(progress_data)
+
+        if completion_record and completion_record.status != 1:
+            # 如果记录存在，则更新字段
+            completion_record.points += total_points
+            completion_record.speak_count += totalspeak_count
+            completion_record.progress_data = progress_data_str  # 更新 progress_data
+            completion_record.update_time = datetime.now()
+            if statusNum == 1:
+                completion_record.status = statusNum
+        else:
+            # 如果记录不存在，则插入新记录
+            completion_record = StudyCompletionRecord(
+                user_id=user_id,
+                book_id=book_id,
+                lesson_id=lesson_id,
+                date=datetime.now().date(),
+                status=statusNum,  # 使用传入的 statusNum
+                type=type_value,  # 根据 content_type 判断 type
+                points=total_points,
+                speak_count=totalspeak_count,
+                progress_data=progress_data_str,  # 设置 progress_data
+                create_time=datetime.now(),
+                update_time=datetime.now(),
+            )
+            self.db.add(completion_record)
+
+
      
     def get_unit_summary_report(
     self,
@@ -792,279 +789,299 @@ class StudyService:
     lesson_id: int,
 ) -> Dict[str, Union[int, List[Dict], Dict]]:
         """
-        根据 user_id, book_id 和 lesson_id 创建进度摘要字典
-        包含：
-        - speak_count: 总开口次数
-        - points: 总积分
-        - sentences_count: 句子记录数
-        - words_count: 单词记录数
-        - word_summary: 单词摘要字典
-        - sentence_summary: 句子摘要字典（包含句子记录数组、总积分和句子个数）
+        获取单元总结报告，结合两种数据来源：
+        1. 从completed_records计算总开口次数和积分
+        2. 从progress_data获取详细记录
         """
         try:
-            # 查询 completion_record_type_0 和 completion_record_type_1
-            completion_record_type_0 = (
-                self.db.query(StudyCompletionRecord)
-                .filter(
-                    StudyCompletionRecord.user_id == user_id,
-                    StudyCompletionRecord.book_id == book_id,
-                    StudyCompletionRecord.lesson_id == lesson_id,
-                    StudyCompletionRecord.type == 0  # type=0
+            # 1. 查询三种类型的所有已完成记录（用于计算总指标）
+            def get_all_completed_records(record_type):
+                return (
+                    self.db.query(StudyCompletionRecord)
+                    .filter(
+                        StudyCompletionRecord.user_id == user_id,
+                        StudyCompletionRecord.book_id == book_id,
+                        StudyCompletionRecord.lesson_id == lesson_id,
+                        StudyCompletionRecord.type == record_type,
+                        StudyCompletionRecord.status == 1
+                    )
+                    .order_by(StudyCompletionRecord.create_time.desc())
+                    .all()
                 )
-                .first()
+
+            completed_word_records = get_all_completed_records(0)      # type=0 单词
+            completed_sentence_records = get_all_completed_records(1)  # type=1 句子
+            completed_spelling_records = get_all_completed_records(3)  # type=3 拼写单词
+
+            # 2. 计算总开口次数和积分（使用所有已完成记录）
+            total_speak_count = (
+                sum(record.speak_count for record in completed_word_records) +
+                sum(record.speak_count for record in completed_sentence_records) +
+                sum(record.speak_count for record in completed_spelling_records)
             )
 
-            completion_record_type_1 = (
-                self.db.query(StudyCompletionRecord)
-                .filter(
-                    StudyCompletionRecord.user_id == user_id,
-                    StudyCompletionRecord.book_id == book_id,
-                    StudyCompletionRecord.lesson_id == lesson_id,
-                    StudyCompletionRecord.type == 1  # type=1
-                )
-                .first()
+            total_points = (
+                sum(record.points for record in completed_word_records) +
+                sum(record.points for record in completed_sentence_records) +
+                sum(record.points for record in completed_spelling_records)
             )
 
-            # 查询 content_type=4 的记录对象（句子）
-            sentence_records = (
-                self.db.query(StudyProgressReport)
-                .filter(
-                    StudyProgressReport.user_id == user_id,
-                    StudyProgressReport.book_id == book_id,
-                    StudyProgressReport.lesson_id == lesson_id,
-                    StudyProgressReport.content_type == 4  # 句子
-                )
-                .all()
-            )
+            # 3. 从各种类型的最新记录中获取progress_data（用于构建详细报告）
+            def get_latest_record(records):
+                return records[0] if records else None
 
-            # 查询 content_type=0,1,2,3 的记录对象（单词）
-            word_records = (
-                self.db.query(StudyProgressReport)
-                .filter(
-                    StudyProgressReport.user_id == user_id,
-                    StudyProgressReport.book_id == book_id,
-                    StudyProgressReport.lesson_id == lesson_id,
-                    StudyProgressReport.content_type.in_([0, 1, 2])  # 单词
-                )
-                .all()
-            )
+            latest_word_record = get_latest_record(completed_word_records)
+            latest_sentence_record = get_latest_record(completed_sentence_records)
+            latest_spelling_record = get_latest_record(completed_spelling_records)
 
-            # 查询 content_type=3 的记录对象（拼写单词）
-            word_spell_records = (
-                self.db.query(StudyProgressReport)
-                .filter(
-                    StudyProgressReport.user_id == user_id,
-                    StudyProgressReport.book_id == book_id,
-                    StudyProgressReport.lesson_id == lesson_id,
-                    StudyProgressReport.content_type == 3  # 拼写单词
-                )
-                .all()
-            )
+            # 解析progress_data
+            word_records = json.loads(latest_word_record.progress_data) if latest_word_record else []
+            sentence_records = json.loads(latest_sentence_record.progress_data) if latest_sentence_record else []
+            word_spell_records = json.loads(latest_spelling_record.progress_data) if latest_spelling_record else []
 
-            # 从 completion_record_type_0 和 completion_record_type_1 中获取 speak_count 和 points
-            speak_count = (completion_record_type_0.speak_count if completion_record_type_0 else 0) + \
-                        (completion_record_type_1.speak_count if completion_record_type_1 else 0)
+            # 4. 构建各种摘要
+            word_summary = self._create_word_summary(word_records)
+            word_spell_summary = self._create_word_spell_summary(word_spell_records)
+            sentence_summary = self._create_sentence_summary(sentence_records)
 
-            points = (completion_record_type_0.points if completion_record_type_0 else 0) + \
-                    (completion_record_type_1.points if completion_record_type_1 else 0)
-
-            # 创建单词摘要字典
-            word_summary = self.create_word_summary(word_records)
-
-            #拼写单词摘要字典
-            word_spell_summary = {
-                "word_count": len(word_spell_records),  # 拼写单词的总数
-                "total_points": sum(record.points for record in word_spell_records),  # 获得的总积分
-                "word_spell_records": [  # 拼写单词的记录数组
-                    {
-                        "content_id": record.content_id,
-                        "content": record.content,
-                        "error_count": record.error_count,
-                        "points": record.points,
-                        "chinese": record.chinese,
-                        "audio_url": record.audio_url,
-                        "create_time": record.create_time.strftime("%Y-%m-%d %H:%M:%S") if record.create_time else None,
-                        "update_time": record.update_time.strftime("%Y-%m-%d %H:%M:%S") if record.update_time else None,
-                    }
-                    for record in word_spell_records
-                ]
+            # 5. 构建最终结果
+            return {
+                "speak_count": total_speak_count,
+                "points": total_points,
+                "sentences_count": len(sentence_records),
+                "words_count": word_summary["word_count"],
+                "word_summary": word_summary,
+                "word_spell_summary": word_spell_summary,
+                "sentence_summary": sentence_summary
             }
-
-            # 创建句子摘要字典
-            sentence_summary = {
-                "sentence_count": len(sentence_records),  # 句子个数
-                "total_points": sum(record.points for record in sentence_records),  # 句子总积分
-                "sentence_records": [  # 句子记录数组
-                    {
-                        "content_id": record.content_id,
-                        "content": record.content,
-                        "error_count": record.error_count,
-                        "points": record.points,
-                        "json_data": record.json_data,
-                        "voice_file": record.voice_file,
-                        "chinese": record.chinese,
-                        "audio_url": record.audio_url,
-                        "create_time": record.create_time.strftime("%Y-%m-%d %H:%M:%S") if record.create_time else None,
-                        "update_time": record.update_time.strftime("%Y-%m-%d %H:%M:%S") if record.update_time else None,
-                    }
-                    for record in sentence_records
-                ]
-            }
-
-            # 构建返回的字典
-            summary_dict = {
-                "speak_count": speak_count,
-                "points": points,
-                "sentences_count": len(sentence_records),  # 句子记录数
-                "words_count": word_summary["word_count"],  # 单词记录数
-                "word_summary": word_summary,  # 单词摘要字典
-                "word_spell_summary":word_spell_summary,
-                "sentence_summary": sentence_summary  # 句子摘要字典
-            }
-
-            return summary_dict
 
         except Exception as e:
-            print(f"创建进度摘要失败: {str(e)}")
+            print(f"获取单元总结报告失败: {str(e)}")
+            return self._create_empty_summary()
+
+
+    def _create_word_summary(self, word_records: List[Dict]) -> Dict:
+        """
+        保持原始字段结构的单词摘要
+        """
+        try:
+            # 按content_id分组处理
+            word_map = {}
+            for record in word_records or []:
+                content_id = record.get("content_id")
+                if content_id not in word_map:
+                    word_map[content_id] = {
+                        "content_id": content_id,
+                        "content": record.get("word", ""),
+                        "chinese": record.get("chinese", ""),
+                        "audio_url": record.get("audio_url", ""),
+                        "practice_error_count": 0,
+                        "spell_error_count": 0,
+                        "points": 0
+                    }
+                
+                # 累计错误次数
+                content_type = record.get("content_type")
+                if content_type == 1:  # 跟读练习
+                    word_map[content_id]["practice_error_count"] += record.get("error_count", 0)
+                elif content_type == 2:  # 拼写练习
+                    word_map[content_id]["spell_error_count"] += record.get("error_count", 0)
+                
+                word_map[content_id]["points"] += record.get("points", 0)
+
+            # 分类处理
+            mastered_words = []
+            words_to_review = []
+            for word in word_map.values():
+                if word["practice_error_count"] == 0 and word["spell_error_count"] == 0:
+                    mastered_words.append({
+                        "content_id": word["content_id"],
+                        "content": word["content"],
+                        "chinese": word["chinese"],
+                        "audio_url": word["audio_url"]
+                    })
+                else:
+                    words_to_review.append({
+                        "content_id": word["content_id"],
+                        "content": word["content"],
+                        "chinese": word["chinese"],
+                        "practice_error_count": word["practice_error_count"],
+                        "spell_error_count": word["spell_error_count"]
+                    })
+
             return {
-                "speak_count": 0,
-                "points": 0,
-                "sentences_count": 0,
-                "words_count": 0,
-                "word_summary": {
-                    "word_count": 0,
-                    "total_points": 0,
-                    "mastered_words": [],
-                    "words_to_review": []
-                },
-                "word_spell_summary": {
-                    "word_count": 0,
-                    "total_points": 0,
-                    "word_spell_records": []
-                },
-                "sentence_summary": {
-                    "sentence_count": 0,
-                    "total_points": 0,
-                    "sentence_records": []
-                }
+                "word_count": len(word_map),
+                "total_points": sum(w["points"] for w in word_map.values()),
+                "mastered_words": mastered_words,
+                "words_to_review": words_to_review
             }
 
-    def create_word_summary(
-        self,
-        word_records: List[StudyProgressReport],
-    ) -> Dict[str, Union[int, List[Dict]]]:
-            """
-            根据 word_records 创建单词摘要字典
-            包含：
-            - word_count: 单词学习个数
-            - total_points: 获得的积分
-            - mastered_words: 已掌握的单词数组
-            - words_to_review: 待巩固的单词数组
-            """
-            try:
-                # 初始化单词摘要字典
-                word_summary = {
-                    "word_count":  0,  # 初始化为 0，后续根据 unique_words 的长度更新,
-                    "total_points": sum(record.points for record in word_records),
-                    "mastered_words": [],
-                    "words_to_review": []
-                }
+        except Exception as e:
+            print(f"创建单词摘要失败: {str(e)}")
+            return {
+                "word_count": 0,
+                "total_points": 0,
+                "mastered_words": [],
+                "words_to_review": []
+            }
+    
+    def _create_word_spell_summary(self, spell_records: List[Dict]) -> Dict:
+        """
+        保持原始字段结构的拼写单词摘要
+        """
+        try:
+            return {
+                "word_count": len(spell_records),
+                "total_points": sum(r.get("points", 0) for r in spell_records),
+                "word_spell_records": [
+                    {
+                        "content_id": r.get("content_id"),
+                        "content": r.get("word", ""),
+                        "error_count": r.get("error_count", 0),
+                        "points": r.get("points", 0),
+                        "chinese": r.get("chinese", ""),
+                        "audio_url": r.get("audio_url", ""),
+                        "create_time": r.get("create_time"),
+                        "update_time": r.get("update_time")
+                    }
+                    for r in spell_records
+                ] if spell_records else []
+            }
+        except Exception as e:
+            print(f"创建拼写单词摘要失败: {str(e)}")
+            return {
+                "word_count": 0,
+                "total_points": 0,
+                "word_spell_records": []
+            }
+   
+    def _create_sentence_summary(self, sentence_records: List[Dict]) -> Dict:
+        """
+        保持原始字段结构的句子摘要
+        """
+        try:
+            return {
+                "sentence_count": len(sentence_records),
+                "total_points": sum(r.get("points", 0) for r in sentence_records),
+                "sentence_records": [
+                    {
+                        "content_id": r.get("content_id"),
+                        "content": r.get("word", ""),
+                        "error_count": r.get("error_count", 0),
+                        "points": r.get("points", 0),
+                        "json_data": r.get("json_data"),
+                        "voice_file": r.get("voice_file"),
+                        "chinese": r.get("chinese", ""),
+                        "audio_url": r.get("audio_url"),
+                        "audio_start": r.get("audio_start"),
+                        "audio_end": r.get("audio_end")
+                    }
+                    for r in sentence_records
+                ] if sentence_records else []
+            }
+        except Exception as e:
+            print(f"创建句子摘要失败: {str(e)}")
+            return {
+                "sentence_count": 0,
+                "total_points": 0,
+                "sentence_records": []
+            }
 
-                # 用于去重的字典，key 是 content_id，value 是单词对象
-                unique_words = {}
-
-                # 遍历 word_records，处理已掌握和待巩固的单词
-                for record in word_records:
-                    content_id = record.content_id
-
-                    # 如果 content_id 已存在，则更新待巩固单词的 error_count
-                    if content_id in unique_words:
-                        existing_record = unique_words[content_id]
-
-                        # 如果 type=1，更新练_error_count
-                        if record.content_type == 1:
-                            existing_record["practice_error_count"] += record.error_count
-                        # 如果 type=2，更新拼_error_count
-                        elif record.content_type == 2:
-                            existing_record["spell_error_count"] += record.error_count
-                    else:
-                        # 如果 content_id 不存在，则创建新的记录
-                        unique_words[content_id] = {
-                            "content_id": content_id,
-                            "content": record.content,
-                            "chinese": record.chinese,
-                            "audio_url": record.audio_url,
-                            "practice_error_count": record.error_count if record.content_type == 1 else 0,
-                            "spell_error_count": record.error_count if record.content_type == 2 else 0
-                        }
-
-                # 遍历去重后的单词，分类为已掌握和待巩固
-                for content_id, word_data in unique_words.items():
-                    # 如果 practice_error_count 和 spell_error_count 都为 0，则是已掌握的单词
-                    if word_data["practice_error_count"] == 0 and word_data["spell_error_count"] == 0:
-                        word_summary["mastered_words"].append(word_data)
-                    else:
-                        # 否则是待巩固的单词
-                        word_summary["words_to_review"].append(word_data)
-
-
-                # 更新 word_count 为 unique_words 的个数
-                word_summary["word_count"] = len(unique_words)
-
-                return word_summary
-
-            except Exception as e:
-                print(f"创建单词摘要失败: {str(e)}")
-                return {
-                    "word_count": 0,
-                    "total_points": 0,
-                    "mastered_words": [],
-                    "words_to_review": []
-                }
-            
-
+    def _create_empty_summary(self) -> Dict[str, Union[int, Dict, List]]:
+        """
+        创建空白的摘要数据结构（用于错误处理或默认返回）
+        :return: 完整但为空的所有摘要结构 {
+            "speak_count": 0,
+            "points": 0,
+            "sentences_count": 0,
+            "words_count": 0,
+            "word_summary": {...},
+            "word_spell_summary": {...},
+            "sentence_summary": {...}
+        }
+        """
+        return {
+            "speak_count": 0,
+            "points": 0,
+            "sentences_count": 0,
+            "words_count": 0,
+            "word_summary": {
+                "word_count": 0,
+                "total_points": 0,
+                "mastered_words": [],
+                "words_to_review": []
+            },
+            "word_spell_summary": {
+                "word_count": 0,
+                "total_points": 0,
+                "word_spell_records": []
+            },
+            "sentence_summary": {
+                "sentence_count": 0,
+                "total_points": 0,
+                "sentence_records": []
+            }
+        }
 
     def get_study_progress_reports(
     self,
     user_id: str,
     book_id: str,
     lesson_id: int,
+    content_type: Optional[int] = None
 ) -> List[Dict]:
         """
-        根据 user_id, book_id 和 lesson_id 查找 content_type 为 0, 1, 2 的 StudyProgressReport 对象，并返回字典数组
+        根据用户ID、书本ID、课程ID和内容类型查询学习进度报告
         :param user_id: 用户ID
         :param book_id: 书本ID
         :param lesson_id: 课程ID
-        :return: 包含 StudyProgressReport 数据的字典数组
+        :param content_type: 可选的内容类型(0:单词,1:句子,2:背词计划用,3:真正的单词拼写)
+        :return: 包含学习进度报告的字典
         """
         try:
-            # 查询 content_type 为 0, 1, 2 的记录
-            progress_reports = (
-                self.db.query(StudyProgressReport)
+            # 查询最新的一条记录
+            record = (
+                self.db.query(StudyCompletionRecord)
                 .filter(
-                    StudyProgressReport.user_id == user_id,
-                    StudyProgressReport.book_id == book_id,
-                    StudyProgressReport.lesson_id == lesson_id,
-                    StudyProgressReport.content_type.in_([0, 1, 2])  # 过滤 content_type 为 0, 1, 2 的记录
+                    StudyCompletionRecord.user_id == user_id,
+                    StudyCompletionRecord.book_id == book_id,
+                    StudyCompletionRecord.lesson_id == lesson_id,
+                    StudyCompletionRecord.type == content_type
                 )
-                .all()
+                .order_by(StudyCompletionRecord.create_time.desc())
+                .first()
             )
 
+            # 如果没有记录或status=1，返回空数组
+            if not record or record.status == 1:
+                return []
+
+            # 解析progress_data
+            progress_data = json.loads(record.progress_data) if record.progress_data else []
+
+
             # 将 StudyProgressReport 对象转换为字典数组
+            # 格式化返回数据
             report_dicts = [
                 {
-                    "id": report.id,
-                    "user_id": report.user_id,
-                    "book_id": report.book_id,
-                    "lesson_id": report.lesson_id,
-                    "content": report.content,
-                    "content_id": report.content_id,
-                    "content_type": report.content_type,
-                    "error_count": report.error_count,
-                    "points": report.points,
-                    "chinese": report.chinese,
+                    "id": data.get("id", ""),
+                    "user_id": user_id,
+                    "book_id": book_id,
+                    "lesson_id": lesson_id,
+                    "content": data.get("word", ""),  # 注意这里使用word字段
+                    "content_id": data.get("content_id", 0),
+                    "content_type": data.get("content_type", 0),
+                    "error_count": data.get("error_count", 0),
+                    "points": data.get("points", 0),
+                    "chinese": data.get("chinese", ""),
+                    # 可以添加其他需要的字段
+                    "json_data": data.get("json_data"),
+                    "voice_file": data.get("voice_file"),
+                    "audio_url": data.get("audio_url"),
+                    "audio_start": data.get("audio_start"),
+                    "audio_end": data.get("audio_end"),
                 }
-                for report in progress_reports
+                for data in progress_data
             ]
 
             return report_dicts

@@ -171,7 +171,8 @@
 	  const totalWords = allWords.value.length;
 	  if (totalWords === 0) return 0; // 避免除以零
 	  var correctCountGreaterThanZero = allWords.value.filter(word => word.error_count <= 0).length;
-	  return (correctCountGreaterThanZero / totalWords) * 100;
+	  const percentage = (correctCountGreaterThanZero / totalWords) * 100;
+	  return percentage.toFixed(2); // 保留两位小数
 	});
 	
 	const totalSpeakCount = computed(() => {

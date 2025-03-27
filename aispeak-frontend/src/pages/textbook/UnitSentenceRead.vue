@@ -178,7 +178,7 @@
 				);
 				if (haveratedSentences.length>0) {
 					//这边是全部完成的
-					submitreslutStudyProgressReport(book_id.value,lesson_id.value,sentencesList.value,true)
+					submitreslutStudyProgressReport(book_id.value,lesson_id.value,haveratedSentences,true)
 				} else {
 					uni.showToast({
 					  title: '当前没有可提交的数据，是否返回上一页',
@@ -316,13 +316,32 @@
 		const { bookId,lessonId} = options;
 		book_id.value = bookId
 		lesson_id.value = lessonId
-		lessonSentences(bookId,lessonId)
+		gethistorySentences()
 	})
 	
-	const lessonSentences = async (bookId, lessonId) => {
+	const gethistorySentences = async() => {
+		try {
+			const response = await study.getStudyProgressReports(book_id.value, lesson_id.value,1);
+			
+		    const completeList = response.data
+			
+			lessonSentences(completeList)
+			
+		} catch (error) {
+			console.error('获取列表失败:', error);
+			uni.showToast({
+			  title: '获取列表失败',
+			  icon: 'none',
+			});
+	  }
+		
+	}
+	
+	
+	const lessonSentences = async (completeList) => {
 	  try {
 		  console.log("开始请求")
-	    const response = await textbook.getLessonSentences(bookId, lessonId);
+	    const response = await textbook.getLessonSentences(book_id.value, lesson_id.value);
 		
 		// 创建新数组，并添加 error_count 和 points 字段，默认值为 0
 		const sentences = response.data.sentences.map(sentence => ({
@@ -336,28 +355,11 @@
 		isHaverated:0,
 		}));
 		
-		
-		
-		// 排序逻辑：progress_data 有值且长度大于 20 的排在前面
-		sentences.sort((a, b) => {
-		  const aHasProgress = a.progress_data && a.progress_data.length > 20;
-		  const bHasProgress = b.progress_data && b.progress_data.length > 20;
-	
-		  if (aHasProgress && !bHasProgress) return -1; // a 排在 b 前面
-		  if (!aHasProgress && bHasProgress) return 1; // b 排在 a 前面
-		  return 0; // 保持原有顺序
-		});
-	
-		// 在排序后的数组中，找到第一个不满足条件的下标
-		const firstInvalidIndex = sentences.findIndex(
-		  (sentence) => !(sentence.progress_data && sentence.progress_data.length > 20)
-		);
-		
-		if (firstInvalidIndex != -1) {
-			console.log("跑进去了")
-			currentIndext.value = firstInvalidIndex;
+		if (completeList.length<sentences.length && completeList.length>0) {
+			currentIndext.value = completeList.length;
 			progressIndext.value = currentIndext.value
 		}
+		
 		sentencesList.value = sentences;
 		
 	  } catch (error) {

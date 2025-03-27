@@ -345,6 +345,7 @@ def get_unit_summary_report(
 def get_study_progress_reports(
     book_id: str = Query(..., description="书本ID"),  # 从查询参数中获取书本ID
     lesson_id: int = Query(..., description="课程ID"),  # 从查询参数中获取课程ID
+    content_type: Optional[int] = Query(None, description="内容类型(0:单词,1:句子,2:单词拼写, 3:真正的单词拼写)"),  # 新增可选参数
     db: Session = Depends(get_db),  # 数据库会话依赖
     account_id: str = Depends(get_current_account)  # 当前用户ID依赖
 ) -> ApiResponse:
@@ -362,7 +363,8 @@ def get_study_progress_reports(
         reports = service.get_study_progress_reports(
             user_id=account_id,  # 使用当前用户ID
             book_id=book_id,
-            lesson_id=lesson_id
+            lesson_id=lesson_id,
+            content_type=content_type  # 传递新的参数
         )
         return ApiResponse.success(reports)  # 返回成功消息
     except Exception as e:

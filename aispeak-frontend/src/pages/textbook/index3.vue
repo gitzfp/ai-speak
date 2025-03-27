@@ -13,7 +13,7 @@
 		  </view>
 		   <view>积分：{{user_info?.points}}</view>
 		  <view class="qiuhuan" @click="switchBook">
-			<view>{{ book.grade }} {{ book.term }}</view> 
+			<view class="grade-term-text">{{ gradeTerm}}</view> 
 			<image
 			  class="qiuhuan-icon"
 			  src="@/assets/icons/parallel_double_arrow.svg"
@@ -37,7 +37,7 @@
 		  	></image>
 		  </view>
 		  <view class="qiuhuan" @click="switchBook">
-		  	<view>{{ book.grade }} {{ book.term }}</view> 
+		  	<view class="grade-term-text">{{gradeTerm}}</view> 
 		  	<image
 		  	  class="qiuhuan-icon"
 		  	  src="@/assets/icons/parallel_double_arrow.svg"
@@ -190,7 +190,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted, Text,watch,onUnmounted } from "vue";
+import { ref, nextTick, onMounted, Text,watch,onUnmounted,computed } from "vue";
 import bookSelector from "./bookSelector.vue"
 import CatalogueSelector from "./CatalogueSelector.vue"
 import env from "@/config/env"; // 导入 env.ts
@@ -243,6 +243,22 @@ watch(
     }
   }
 );
+
+// 添加计算属性
+const gradeTerm = computed(() => {
+  const { version_type, grade, term } = book.value;
+  // 处理 term 显示
+  let displayTerm = term;
+  if (term.includes("上")) {
+    displayTerm = "上";
+  } else if (term.includes("下")) {
+    displayTerm = "下";
+  }
+  // 否则保持原样
+
+  // 组合最终字符串
+  return `${version_type} ${grade} ${displayTerm}`;
+});
 
 // 组件挂载时获取数据
 onMounted(() => {
@@ -297,9 +313,10 @@ const handleCatalogueSelect = (index) => {
   scrollToUnitId.value = 'unit-' + index
 };
 
+
 const switchbookSuccess = (newbook) => {
   book.value = { ...newbook };
-  console.log(book.value.term);
+  console.log(book.value);
 };
 
 const switchBook = () => {
@@ -614,6 +631,13 @@ const eliminationGame = () => {
 </script>
 
 <style scoped lang="less">
+
+.grade-term-text {
+  white-space: nowrap;      /* 禁止换行 */
+  overflow: hidden;         /* 隐藏超出部分 */
+  text-overflow: ellipsis;  /* 显示省略号 */
+  max-width: 200rpx;        /* 设置一个合适的最大宽度 */
+}
 
 .container {
   background-color: #D5F0F1;
