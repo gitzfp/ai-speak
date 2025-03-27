@@ -59,10 +59,10 @@
         <Text>标准</Text>
       </view>
       <view class="audio-icon" v-if="!isRecording">
-        <image @tap="startLongPress" class="uniIcon" src="https://dingguagua.fun/static/img/pronucation.png" :class="{ 'recording-active': isRecording }" />
+        <image @tap="startLongPress" class="mid-icon" src="https://dingguagua.fun/static/img/pronucation.png" :class="{ 'recording-active': isRecording }" />
         <!-- <Text>测评</Text> -->
       </view>
-      <view v-if="finalResult?.voice_file" class="audio-icon right-view" aria-disabled="!recordingUrl">
+      <view v-if="finalResult?.voice_file" class="audio-icon">
         <AudioPlayer :audioUrl="finalResult?.voice_file" />
         <Text>我的</Text>
       </view>
@@ -441,11 +441,7 @@ onUnmounted(() => {
   position: relative; /* 添加相对定位 */
   height: 100%;
   width: 100%;
-  .uniIcon {
-    margin-top: 30rpx;
-    width: 100rpx;
-    height: 100rpx; 
-  }
+
 }
 
 /* 修改蒙板样式 */
@@ -479,8 +475,8 @@ onUnmounted(() => {
   top: auto;
   left: auto;
   transform: none;
-  width: 100rpx;
-  height: 100rpx;
+  width: 50rpx;
+  height: 50rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -569,8 +565,8 @@ onUnmounted(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 370rpx;
-  height: 370rpx;
+  width: 190rpx;
+  height: 190rpx;
   background: rgba(1, 1, 1, 0.5);
   border-radius: 50%;
   display: flex;
@@ -744,23 +740,19 @@ onUnmounted(() => {
 }
 
 .audio-icon {
+  margin-top: 36rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-}
-
-.left-view {
-  margin-top: 36rpx;
-  width: 100rpx;
-  height: 100rpx;
   .left-icon {
     width: 38rpx;
     height: 38rpx;
   }
+  .mid-icon {
+    width: 100rpx;
+    height: 100rpx; 
+  }
 }
 
-.right-view {
-  margin-top: 40rpx;
-}
 </style>

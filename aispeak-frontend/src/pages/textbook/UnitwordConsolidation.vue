@@ -115,7 +115,6 @@
 	import UnitExitreminderPop from './components/UnitExitreminderPop.vue'
 	import Speech from "./components/PronuciationSpeech.vue"
 	const wordDisplayref = ref(null);
-	const wordassessPops = ref(null)
 	const unitwordspellref = ref(null)
 		
 	//模式1的数组和下标
