@@ -263,17 +263,19 @@
 		audio.src = optionSentence?.value?.audio_url;
 		
 		// 设置时间范围
-		if (optionSentence.value.audio_start >=0 && optionSentence.value.audio_end >=0) {
-		  const startTime = optionSentence.value.audio_start / 1000
-		  const endTime = optionSentence.value.audio_end / 1000
-		  	  
-		  audio.startTime = startTime
-		  // 监听播放进度
-		  audio.onTimeUpdate(() => {
-		    if (audio.currentTime >= endTime - 0.1) { // 防止浮点误差
-		      stopCurrentAudio()  // 处理播放结束
-		    }
-		  })
+		if (optionSentence.value.audio_start != undefined && optionSentence.value.audio_end != undefined) {
+			if (optionSentence.value.audio_start >=0 && optionSentence.value.audio_end >=0) {
+				const startTime = optionSentence.value.audio_start / 1000
+				const endTime = optionSentence.value.audio_end / 1000
+					
+				audio.startTime = startTime
+				// 监听播放进度
+				audio.onTimeUpdate(() => {
+					if (audio.currentTime >= endTime - 0.1) { // 防止浮点误差
+					stopCurrentAudio()  // 处理播放结束
+					}
+				})
+			}
 		}
 		
 		audio.play();
