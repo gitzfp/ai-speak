@@ -455,8 +455,6 @@
 		const filteredWordsList = combinedWordsList.filter(word => word.isHaverated === 1);
 		
 		
-		console.log("filteredWordsList.length")
-		console.log(filteredWordsList.length)
 		
 		if (filteredWordsList.length>0) {
 			//这边全部结束了要直接其他操作

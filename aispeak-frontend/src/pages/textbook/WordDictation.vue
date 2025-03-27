@@ -221,6 +221,7 @@ const word_mode = ref(0)
 					points: 0,
 					speak_count: 0,
 					audio_url: word.sound_path,
+					isHaverated:0,
 				}));
 			   
 				//获取生词本数组
@@ -631,8 +632,8 @@ const submitreslutStudyProgressReport = async(reports)=> {
 			title: '报告生成中...',
 			mask: true, // 防止用户点击
 			});
-			await study.submitStudyProgressReport(book_id.value,lesson_id.value,reports);
-				
+			await study.submitStudyProgressReport(book_id.value,lesson_id.value,reports,1);
+			
 			uni.hideLoading();
 					
 			let unitreportWords = 'unitreportWords'

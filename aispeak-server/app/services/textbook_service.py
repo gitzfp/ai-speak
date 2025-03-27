@@ -585,7 +585,8 @@ class TextbookService:
                         StudyCompletionRecord.user_id == user_id,
                         StudyCompletionRecord.book_id == book_id,
                         StudyCompletionRecord.lesson_id == lesson.lesson_id,  # 使用章节 ID 作为 lesson_id
-                        StudyCompletionRecord.type == 0  # type=0 表示单词学习状态
+                        StudyCompletionRecord.type == 0,  # type=0 表示单词学习状态
+                        StudyCompletionRecord.status == 1  # status=1 表示已完成
                     ).first()
 
                     # 查询当前章节的学习状态（type=1 表示文本学习状态）
@@ -593,12 +594,13 @@ class TextbookService:
                         StudyCompletionRecord.user_id == user_id,
                         StudyCompletionRecord.book_id == book_id,
                         StudyCompletionRecord.lesson_id == lesson.lesson_id,  # 使用章节 ID 作为 lesson_id
-                        StudyCompletionRecord.type == 1  # type=1 表示文本学习状态
+                        StudyCompletionRecord.type == 1,  # type=1 表示文本学习状态
+                        StudyCompletionRecord.status == 1  # status=1 表示已完成
                     ).first()
 
                     # 设置学习状态
-                    chapter_data["is_learning_word"] = study_word_status.status if study_word_status else 0
-                    chapter_data["is_learning_text"] = study_text_status.status if study_text_status else 0
+                    chapter_data["is_learning_word"] = 1 if study_word_status else 0
+                    chapter_data["is_learning_text"] = 1 if study_text_status else 0
 
                     result.append(chapter_data)
 

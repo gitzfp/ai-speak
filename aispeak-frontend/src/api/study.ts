@@ -151,10 +151,11 @@ export default {
 		
 		
 		// 获取 content_type 为 0, 1, 2 的学习进度报告
-		getStudyProgressReports(bookId: string, lessonId: number) {
+		getStudyProgressReports(bookId: string, lessonId: number,contentType: number = 0) {
 		  return request("/study/progress-reports", "GET", {
 			book_id: bookId,
 			lesson_id: lessonId,
+			content_type: contentType // 传递content_type参数
 		  });
 		},
   
