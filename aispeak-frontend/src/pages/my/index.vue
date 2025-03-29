@@ -24,7 +24,7 @@
             class="profile-avatar"
             src="https://dingguagua.fun/static/default-account-avatar.png"
           />
-          <text class="profile-name">{{ accountInfo.account_id }}</text>
+          <text class="profile-name">{{ accountInfo.user_name || accountInfo.account_id }}</text>
         </view>
       </view>
       <view class="mine-message-box">
@@ -94,7 +94,7 @@
 
 <script setup lang="ts">
 import CommonHeader from "@/components/CommonHeader.vue"
-import { ref, reactive, onMounted } from "vue"
+import { ref, onMounted } from "vue"
 
 import accountRequest from "@/api/account"
 import type { AccountInfo } from "@/models/models"
@@ -105,6 +105,7 @@ const accountInfo = ref<AccountInfo>({
   today_chat_count: 0,
   total_chat_count: 0,
   target_language_label: "",
+  user_name: "",
 })
 
 onMounted(() => {

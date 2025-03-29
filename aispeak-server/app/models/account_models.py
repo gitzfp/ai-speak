@@ -19,6 +19,7 @@ class WechatLoginDTO(BaseModel):
 class PhoneLoginDTO(BaseModel):
     phone_number: str
     password: str
+    user_name: str | None = None 
 
 class VisitorLoginDTO(BaseModel):
     fingerprint: constr(min_length=15)

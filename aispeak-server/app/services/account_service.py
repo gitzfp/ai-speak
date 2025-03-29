@@ -91,51 +91,86 @@ class AccountService:
         token = auth.init_token(account.id, account.id)
         return {"token": token, "openid": openid}
     
-    def phone_login(self, dto: PhoneLoginDTO, client_host: str):
+    def phone_login(self, dto: PhoneLoginDTO, client_host: str, is_register: bool = False):
         """手机登录，支持验证码和密码登录"""
+        logging.debug(f"开始处理手机登录请求，手机号：{dto.phone_number[-4:]}，注册模式：{is_register}")
+
         # 检查手机号是否为空和格式
         if not dto.phone_number:
+            logging.error("手机号为空")
             raise Exception("手机号不能为空")
-        if not re.match(r'^1[3-9]\d{9}$', dto.phone_number):
+
+        phone_valid = re.match(r'^1[3-9]\d{9}$', dto.phone_number)
+        logging.debug(f"手机号格式验证结果：{phone_valid is not None}")
+        if not phone_valid:
+            logging.error(f"无效手机号格式：{dto.phone_number}")
             raise Exception("手机号格式不正确")
 
         # 查找用户
+        logging.debug(f"查询用户：{dto.phone_number[-4:]}")
         account = self.db.query(AccountEntity).filter_by(
             phone_number=dto.phone_number).first()
+        logging.info(f"用户存在性检查结果：{account is not None}")
+
+        if account and is_register:
+            logging.warning(f"用户已存在，手机号：{dto.phone_number[-4:]}")
+            raise UserAccessDeniedException("用户已存在，请直接登录")
+        
+        if not account and not is_register:
+            logging.warning(f"用户不存在，手机号：{dto.phone_number[-4:]}")
+            raise UserAccessDeniedException("用户不存在，请先注册")
 
         # 如果用户不存在，自动注册
-        if not account:
+        if not account and is_register:
+            logging.info("进入注册流程")
             if not dto.password:
+                logging.error("注册时未提供密码")
                 raise Exception("新用户必须设置密码")
-            if len(dto.password) < 6:
+
+            pwd_length_valid = len(dto.password) >= 6
+            logging.debug(f"密码长度验证结果：{pwd_length_valid}")
+            if not pwd_length_valid:
+                logging.error(f"密码长度不足：{len(dto.password)}")
                 raise Exception("密码长度不能少于6位")
-            # 自动注册新用户
+
+            logging.info(f"创建新用户：{dto.phone_number[-4:]}")
             account = AccountEntity(
                 id=f"user_{short_uuid()}",
+                user_name=dto.user_name,
                 phone_number=dto.phone_number,
-                password=generate_password_hash(dto.password),  # 加密密码
+                password=generate_password_hash(dto.password),
                 client_host=client_host
             )
             self.db.add(account)
             self.db.commit()
+            logging.debug(f"用户创建成功，ID：{account.id}")
         else:
             # 验证密码或验证码
             if dto.password:
-                # 密码登录
-                if not check_password_hash(account.password, dto.password):
+                logging.debug("尝试密码登录")
+                pwd_valid = check_password_hash(account.password, dto.password)
+                logging.info(f"密码验证结果：{pwd_valid}")
+                if not pwd_valid:
+                    logging.warning(f"密码错误：{dto.phone_number[-4:]}")
                     raise Exception("密码错误")
             elif dto.code:
-                # 验证码登录（假设验证码已通过短信发送并验证）
-                if not self.verify_sms_code(dto.phone_number, dto.code):
+                logging.debug("尝试验证码登录")
+                code_valid = self.verify_sms_code(dto.phone_number, dto.code)
+                logging.info(f"验证码验证结果：{code_valid}")
+                if not code_valid:
+                    logging.warning(f"验证码错误：{dto.code}")
                     raise Exception("验证码错误")
             else:
+                logging.error("未提供任何认证方式")
                 raise Exception("必须提供密码或验证码")
 
         self.__check_and_init_default_settings(account.id)
-        # 生成自定义登录态（如 JWT）
-        token = auth.init_token(account.id, account.id)
-        return {"token": token, "user_id": account.id}
+        logging.debug(f"初始化用户设置完成：{account.id}")
 
+        token = auth.init_token(account.id, account.id)
+        logging.info(f"生成登录令牌成功，用户ID：{account.id}")
+
+        return {"token": token, "user_id": account.id}
     def verify_sms_code(self, phone_number: str, code: str) -> bool:
         """验证短信验证码（示例逻辑）"""
         # 这里可以实现验证码的验证逻辑，比如从 Redis 中获取验证码并比对
@@ -219,9 +254,10 @@ class AccountService:
                 id=account_id).first()
         if not account:
             raise Exception("User not found")
-        logging.info(f"账号id>>>account_id: {account_id}")
+        logging.info(f"账号account_id: {account_id}, user_name: {account.user_name}")
         result = {
             "account_id": account_id,
+            "user_name": account.user_name,
             "today_chat_count": self.get_user_current_day_system_message_count(
                 account_id
             ),

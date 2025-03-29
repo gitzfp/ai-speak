@@ -32,17 +32,17 @@
         placeholder="请输入密码"
       />
       <button class="login-btn" @tap="handlePhoneLogin">登录</button>
-      <text class="register-link" @tap="showRegisterForm = true">未注册手机号登陆时将自动注册</text>
+      <text class="register-link" @tap="showRegisterForm = true">未有账号，去注册</text>
     </view>
 
     <!-- 注册表单 -->
     <view v-if="showRegisterForm" class="register-form">
-      <input
+      <!-- <input
         v-model="registerUsername"
         class="input"
         type="text"
         placeholder="请输入用户名"
-      />
+      /> -->
       <input
         v-model="registerPhoneNumber"
         class="input"
@@ -55,14 +55,16 @@
         type="password"
         placeholder="请输入密码"
       />
+      <!-- 年级选择器 -->
       <picker 
-        v-model="grade" 
+        :value="gradeIndex"
         :range="gradeOptions" 
+        range-key="grade"
         class="grade-picker"
         @change="handleGradeChange"
       >
         <view class="input picker-text">
-          {{ gradeOptions[grade - 1] || '请选择年级' }}
+          {{ grade.grade || '请选择年级' }}
         </view>
       </picker>
       <button class="register-btn" @tap="handleRegister">注册</button>
@@ -84,10 +86,14 @@ const password = ref("") // 密码
 const registerPhoneNumber = ref("") // 注册手机号
 const registerPassword = ref("") // 注册密码
 const showRegisterForm = ref(false)
-const grade = ref(1) // 年级
+const grade = ref({grade: '一年级', book_id: '1l1_V2' }) // 年级
+const gradeIndex = ref(0) // 年级选择器索引
 const registerUsername = ref("") // 注册用户名
-const gradeOptions = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级']
+const gradeOptions = [{grade: '一年级', book_id: '1l1_V2' }, {grade: '二年级', book_id: '1l3_V2' }, {grade: '三年级', book_id: '1l5_V2' }, {grade: '四年级', book_id: '1l7_V2' }, {grade: '五年级', book_id: '1l9_V2' }, {grade: '六年级', book_id: '1l11_V2' }]
 
+const emit = defineEmits<{
+  (e: 'switchbookSuccess', book: any): void  // 根据实际类型替换 any
+}>();
 onMounted(() => {
   uni.setNavigationBarTitle({
     title: "AISPeak",
@@ -204,22 +210,37 @@ const loginSucessByToken = (storageToken: string, userId: string) => {
  * 注册处理
  */
 const handleRegister = () => {
-  console.log("注册")
   accountReqeust
     .register({
-      username: registerUsername.value,
+      user_name: registerUsername.value,
       phone_number: registerPhoneNumber.value,
       password: registerPassword.value,
-      grade: grade.value
     })
     .then((data) => {
       if (data.code === 1000) {
-        uni.showToast({
-          title: "注册成功",
-          icon: "success",
-        })
+        console.log("注册成功", grade)
+        const bookSelectionObject = {
+          version_type: "外研社（一起）",
+          grade: grade.value.grade,
+          term: "上册",
+          publisher: "全部",
+          book_id: "1l5_V2"
+        }
+      
+      uni.setStorage({
+        key: 'bookSelectionObject',
+        data: bookSelectionObject,
+        success: () => {
+          console.log('数据已存储');
+        emit("switchbookSuccess", grade.value);
+        },
+        fail: (err) => {
+          console.error('存储失败:', err);
+        }
+      }); 
+        loginSuccess(data)
       } else {
-        uni.showToast({
+        uni.showToast({ 
           title: data.message,
           icon: "none",
         })
@@ -227,7 +248,10 @@ const handleRegister = () => {
     })
 }
 const handleGradeChange = (e: any) => {
-  grade.value = Number(e.detail.value) + 1;  // picker 的索引从0开始，所以需要加1
+  const index = e.detail.value;
+  gradeIndex.value = index;
+  grade.value = gradeOptions[index];
+  console.log("选择的年级:", grade.value);
 }
 </script>
 
@@ -313,11 +337,11 @@ const handleGradeChange = (e: any) => {
       align-items: center;
       justify-content: center;
     }
-    .register-link, .login-link {
+    .register-link {
         margin-top: 20rpx;
+        margin-left: 10rpx;
         font-size: 28rpx;
-        color: #5456eb;
-        text-align: center;
+        color: #666
       }
   }
 
@@ -337,6 +361,11 @@ const handleGradeChange = (e: any) => {
       box-sizing: border-box;
     }
 
+    .picker-text {
+      display: flex;
+      align-items: center;
+    }
+
     .register-btn {
       width: 100%;
       height: 90rpx;
@@ -348,6 +377,12 @@ const handleGradeChange = (e: any) => {
       align-items: center;
       justify-content: center;
     }
+    .login-link {
+        margin-top: 20rpx;
+        margin-left: 10rpx;
+        font-size: 28rpx;
+        color: #666
+      }
   }
 
   .visitor-login {

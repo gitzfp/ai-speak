@@ -425,13 +425,6 @@ const textbookChapters = async(bookId) => {
 }
 
 const textbookListen = (chapter) => {
-	// if (chapter.is_learning_text != 1) {
-	// 	uni.showToast({
-	// 	  title: "请先完成课文跟读",
-	// 	  icon: "none",
-	// 	});
-	// 	return
-	// }
 	
 	let lessonId = chapter.lesson_id
 	

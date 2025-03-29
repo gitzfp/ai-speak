@@ -3,6 +3,7 @@ export interface AccountInfo {
   today_chat_count: number;
   total_chat_count: number;
   target_language_label: string;
+  user_name?: string;
 }
 
 export interface AccountSettings {

@@ -56,7 +56,7 @@ def phone_login(request: Request, dto: PhoneLoginDTO, db: Session = Depends(get_
     service = AccountService(db)
     client_host = request.client.host
     return ApiResponse(
-        data=service.phone_login(dto, client_host)
+        data=service.phone_login(dto, client_host, False)
     )
 
 
@@ -65,7 +65,7 @@ def phone_register(request: Request, dto: PhoneLoginDTO, db: Session = Depends(g
     service = AccountService(db)
     client_host = request.client.host
     return ApiResponse(
-        data=service.phone_login(dto, client_host)
+        data=service.phone_login(dto, client_host, True)
     )
 
 

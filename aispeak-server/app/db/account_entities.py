@@ -15,10 +15,12 @@ class AccountEntity(Base):
     fingerprint = Column("fingerprint", String(64), nullable=True)
     status = Column("status", String(50), default="ACTIVE")
     openid = Column("openid", String(100), unique=True)
-    session_key = Column("session_key", String(200))  # 保存 session_key
+    session_key = Column("session_key", String(200))  
+    user_name = Column("user_name", String(
+        100), nullable=True, comment="用户昵称")  
     phone_number = Column("phone_number", String(20), unique=True)
     password = Column("password", String(300), nullable=True)
-    points = Column(Integer, default=0, comment="积分")  # 新增 points 字段
+    points = Column(Integer, default=0, comment="积分") 
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)
     update_time = Column("update_time", DateTime, default=datetime.datetime.now)
 
