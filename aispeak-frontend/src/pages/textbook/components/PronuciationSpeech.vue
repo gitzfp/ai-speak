@@ -746,14 +746,16 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  .left-icon {
-    width: 38rpx;
-    height: 38rpx;
-  }
-  .mid-icon {
-    width: 100rpx;
-    height: 100rpx; 
-  }
+  
 }
 
+.left-icon {
+	width: 38rpx;
+	height: 38rpx;
+}
+.mid-icon {
+	width: 100rpx;
+	height: 100rpx; 
+}
+  
 </style>

@@ -131,7 +131,9 @@ onMounted(() => {
         console.log('wordDisplayref----.value:', wordDisplayref.value);
         if (wordDisplayref.value) {
           wordDisplayref.value.phonicsbegins();
-        }
+        } else {
+			phonicsbegins()
+		}
 		console.log("subsidiaryList")
 		console.log(subsidiaryList.value)
 		
