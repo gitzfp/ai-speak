@@ -72,7 +72,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted,onUnmounted, getCurrentInstance, nextTick } from 'vue';
+import { ref, computed, onMounted,onUnmounted, getCurrentInstance, nextTick,watch } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import WordDisplay from './WordDisplay.vue';
 import textbook from '@/api/textbook';
@@ -127,21 +127,14 @@ const status_num = ref(0)
 onMounted(() => {
 	enterTime.value = new Date(); // 记录用户进入页面的时间
 	
-  setTimeout(() => {
-        console.log('wordDisplayref----.value:', wordDisplayref.value);
-        if (wordDisplayref.value) {
-          wordDisplayref.value.phonicsbegins();
-        } else {
-			phonicsbegins()
-		}
-		console.log("subsidiaryList")
-		console.log(subsidiaryList.value)
-		
-		console.log("optionAreaWords")
-		console.log(optionAreaWords.value)
-		
-		
-  }, 500); // 延迟 100ms
+  // setTimeout(() => {
+  //       console.log('wordDisplayref----.value:', wordDisplayref.value);
+  //       if (wordDisplayref.value) {
+  //         wordDisplayref.value.phonicsbegins();
+  //       } else {
+		// 	phonicsbegins()
+		// }
+  // }, 500); // 延迟 100ms
   
   
 });
@@ -156,7 +149,26 @@ onHide(() => {
 	
 });
 
+// 监听 wordDisplayref 和 planWordmode 变化
+	  const stopWatch = watch(
+	    [() => wordDisplayref.value, () => planWordmode.value],
+	    ([displayRef, mode]) => {
+	      if (mode === 0 && displayRef) {
+	        nextTick(() => {
+	          displayRef.phonicsbegins();
+	          stopWatch();
+	        });
+	      } else if (mode === 1) {
+	        nextTick(() => phonicsbegins());
+	        stopWatch();
+	      }
+	    },
+	    { immediate: true }
+	  );
+
 onUnmounted(() => {
+	stopWatch();
+	
 	let storageKey = 'progresscacheObject'+book_id.value
 	if (progressindext.value == (planWordsWithCounts.value.length*3)) {
 		

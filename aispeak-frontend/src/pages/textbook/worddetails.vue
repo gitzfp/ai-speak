@@ -740,8 +740,8 @@ const isUnfamiliarWord =(word)=> {
 
   
   .action-buttons {
-    position: absolute;
-    bottom: 30rpx;
+    // position: absolute;
+    // bottom: 30rpx;
     width: 100%;
     display: flex;
     justify-content: center;

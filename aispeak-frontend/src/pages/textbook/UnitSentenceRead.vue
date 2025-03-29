@@ -44,7 +44,7 @@
 </template>
 
 <script setup>
-	import { ref,computed,watch,onMounted, onUnmounted} from 'vue';
+	import { ref,computed,watch,onMounted, onUnmounted,nextTick} from 'vue';
 	import Speech from "./components/PronuciationSpeech.vue"
 	import { onLoad } from '@dcloudio/uni-app'
 	import textbook from '@/api/textbook'
@@ -71,12 +71,12 @@
 		const systemInfo = uni.getSystemInfoSync();
 		statusBarHeight.value = systemInfo.statusBarHeight || 0;
 		customBarHeight.value = (systemInfo.statusBarHeight || 0) + 44; // 44 是导航栏的默认高度
-		
-		setTimeout(() => {
-		    playbuttonclick()
-			console.log('当前进度:', optionSentence.value);
-			isShowmark.value = (optionSentence?.value?.progress_data && optionSentence?.value?.progress_data.length > 20)
-		}, 500);
+			
+		// setTimeout(() => {
+		//     playbuttonclick()
+		// 	console.log('当前进度:', optionSentence.value);
+		// 	isShowmark.value = (optionSentence?.value?.progress_data && optionSentence?.value?.progress_data.length > 20)
+		// }, 500);
 		
 		uni.$on('start_recording', (params) => {
 		    console.log('收到全局事件，参数:', params);
@@ -88,6 +88,7 @@
 	});
 	
 	onUnmounted(() => {
+		stopWatch(); // 确保无论如何都会清理
 		stopCurrentAudio()
 		uni.$off('start_recording'); // 组件卸载时移除监听
 		
@@ -253,6 +254,23 @@
 	const optionSentence = computed(() => {
 		return sentencesList.value[currentIndext.value]
 	});
+	
+	// 监听 optionSentence 变化（推荐）
+	  const stopWatch = watch(
+	    () => optionSentence.value,
+	    (newVal) => {
+	      if (newVal) {
+	        nextTick(() => {
+	          playbuttonclick();
+	          isShowmark.value = Boolean(
+	            newVal.progress_data?.length > 20
+	          );
+	          stopWatch(); // 执行后停止监听
+	        });
+	      }
+	    },
+	    { immediate: true } // 立即检查初始值
+	  );
 
 	
 	const playbuttonclick = () => {

@@ -163,23 +163,48 @@
 		statusBarHeight.value = systemInfo.statusBarHeight || 0;
 		customBarHeight.value = (systemInfo.statusBarHeight || 0) + 44; // 44 是导航栏的默认高度
 		
-		setTimeout(() => {
+		// setTimeout(() => {
 			
-			if (planWordmode.value == 2) {
-				if (unitwordspellref.value) {
-				  unitwordspellref.value.phonicsbegins(0);
-				}
-			} else {
-				if (wordDisplayref.value) {
-				  wordDisplayref.value.phonicsbegins();
-				}	
-			}
+		// 	if (planWordmode.value == 2) {
+		// 		if (unitwordspellref.value) {
+		// 		  unitwordspellref.value.phonicsbegins(0);
+		// 		}
+		// 	} else {
+		// 		console.log("wordDisplayref.value")
+		// 		console.log(wordDisplayref.value)
+		// 		if (wordDisplayref.value) {
+		// 		  wordDisplayref.value.phonicsbegins();
+		// 		}	
+		// 	}
 				
-		}, 500); // 延迟 100ms
+		// }, 500); // 延迟 100ms
 	});
+	
+	// 监听两个 ref 并根据模式执行
+	const stopWatch = watch(
+	  [() => unitwordspellref.value, () => wordDisplayref.value, () => planWordmode.value],
+	  ([unitRefVal, wordRefVal, mode]) => {
+	    if (mode === 2) {
+	      if (unitRefVal) {
+	        unitRefVal.phonicsbegins(0);
+	        stopWatch();
+	      }
+	    } else {
+	      if (wordRefVal) {
+	        wordRefVal.phonicsbegins();
+	        stopWatch();
+	      }
+	    }
+	  },
+	  { immediate: true }
+	);
+	
+	
+	
 	
 	onUnmounted(() => {
 		stopCurrentAudio()
+		stopWatch();
 	})
 	
 	const rightTit = computed(() => {
