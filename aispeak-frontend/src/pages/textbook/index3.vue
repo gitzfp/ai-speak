@@ -169,7 +169,7 @@
 		</view>
 		
 		<view style="height: 20rpx;"></view>
-		
+		<beian-footer></beian-footer>	
 	</scroll-view>
 	
     <bookSelector
@@ -193,9 +193,7 @@
 import { ref, nextTick, onMounted, Text,watch,onUnmounted,computed } from "vue";
 import bookSelector from "./bookSelector.vue"
 import CatalogueSelector from "./CatalogueSelector.vue"
-import env from "@/config/env"; // 导入 env.ts
-
-const baseUrl = env.basePath; // 获取
+import BeianFooter from '@/components/BeianFooter.vue';
 import textbook from "@/api/textbook";
 import useTextbookSelector from "@/hooks/useTextbookSelector";
 

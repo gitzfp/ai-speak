@@ -54,17 +54,17 @@
     </view>
 
     <view class="audio-icons-container">
-      <view v-if="finalResult?.voice_file" class="audio-icon left-view">
+      <view v-if="finalResult?.voice_file" class="audio-icon">
         <image @tap="playbuttonclick" class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
-        <Text>标准</Text>
+        <Text class="icon-text">标准</Text>
       </view>
       <view class="audio-icon" v-if="!isRecording">
         <image @tap="startLongPress" class="mid-icon" src="https://dingguagua.fun/static/img/pronucation.png" :class="{ 'recording-active': isRecording }" />
-        <!-- <Text>测评</Text> -->
+        <Text class="mid-text">跟读测评</Text>
       </view>
       <view v-if="finalResult?.voice_file" class="audio-icon">
         <AudioPlayer :audioUrl="finalResult?.voice_file" />
-        <Text>我的</Text>
+        <Text class="icon-text">我的</Text>
       </view>
     </view>
   </view>
@@ -736,26 +736,35 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   width: 100%;
-  margin-top: 20rpx;
+  margin-top: 50rpx;
   gap: 100rpx;
 }
 
 .audio-icon {
-  margin-top: 36rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  
 }
 
 .left-icon {
 	width: 38rpx;
 	height: 38rpx;
 }
+.icon-text {
+  font-size: 24rpx;
+	color: #666;
+	margin-top: 18rpx;
+}
 .mid-icon {
-	width: 100rpx;
-	height: 100rpx; 
+  margin-top: -12rpx;
+	width: 60rpx;
+	height: 60rpx; 
+}
+.mid-text {
+	font-size: 24rpx;
+	color: #666;
+	margin-top: 10rpx;
 }
   
 </style>
