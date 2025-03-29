@@ -464,7 +464,6 @@
 	// 这里可以定义一些响应式数据或逻辑
 	const handleBackPage = () => {
 		stopCurrentAudio()
-		uni.$emit('start_recording', { action: 'recording' });
 		uniExitreminderPopPopup.value = true
 	}
 	const keepdoing = () => {
@@ -724,6 +723,7 @@
 	}
 	
 	const stopCurrentAudio =() => {
+		uni.$emit('start_recording', { action: 'recording' });
 	    if (currentAudio.value) {
 	      currentAudio.value.pause()
 	      // ispagePlaying.value = false
