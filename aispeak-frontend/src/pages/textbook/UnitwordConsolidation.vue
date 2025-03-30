@@ -41,7 +41,7 @@
 					</view>
 		
 				</view>
-				<view class="btnview">
+				<view class="btnview" :style="{ paddingBottom: (safeAreaInsetBottom) + 'rpx' }">
 					<view  :class="['tab-btn', !isShowmark ? 'tab-btn-disabled' : '']" 
         @tap="clicknext">下一个</view>
 					<view class="pronunciation-btn">
@@ -114,6 +114,7 @@
 	import Unitwordspell from './Unitwordspell.vue';
 	import UnitExitreminderPop from './components/UnitExitreminderPop.vue'
 	import Speech from "./components/PronuciationSpeech.vue"
+	import utils from "@/utils/utils";
 	const wordDisplayref = ref(null);
 	const unitwordspellref = ref(null)
 		
@@ -156,13 +157,18 @@
 	
 	
 	const uniExitreminderPopPopup = ref(false)
-	
+	const safeAreaInsetBottom = ref(0);
+
 	// 组件挂载
 	onMounted(() => {
 		const systemInfo = uni.getSystemInfoSync();
 		statusBarHeight.value = systemInfo.statusBarHeight || 0;
 		customBarHeight.value = (systemInfo.statusBarHeight || 0) + 44; // 44 是导航栏的默认高度
 		
+		// 获取底部安全区域高度
+		safeAreaInsetBottom.value = utils.getSafeAreaBottom();
+		console.log('底部安全区域高度:', safeAreaInsetBottom.value);
+
 		// setTimeout(() => {
 			
 		// 	if (planWordmode.value == 2) {
@@ -756,7 +762,7 @@
 	  flex-direction: column;
 	  align-items: center;
 	  justify-content: space-between;
-	  height: 100vh;
+	  height: 100%;
 	  /* background-color: #ffffff; */
 	  background-color: #f5f5f5;
 	  // background-color: red;
@@ -919,11 +925,10 @@
 		}
 		
 		.btnview {
-			width: 100%;
-			display: flex;
-    		flex-direction: column-reverse;
+		width: 100%;
+		display: flex;
+		flex-direction: column-reverse;
 			.pronunciation-btn {
-			    padding: 60rpx 60rpx;
 			    border-radius: 48rpx;
 			    display: flex;
 			    flex-direction: column; /* 竖向排列 */
@@ -931,8 +936,8 @@
 			}
 			.tab-btn {
 				margin: 20rpx 0;
-				height: 100rpx;
-				width: 80%;
+				height: 90rpx;
+				width: 60%;
 				color: #fff;
 				font-size: 36rpx;
 				display: flex;
@@ -940,7 +945,7 @@
 				align-items: center; /* 垂直居中 */
 				background-color: #05c160;
 				 border-radius: 50rpx; /* 高度的一半 */
-				 margin-left: 10%;
+				 margin-left: 20%;
 			}
 			.tab-btn-disabled {
 				opacity: 0.5;

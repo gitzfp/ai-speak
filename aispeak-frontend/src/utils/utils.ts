@@ -144,6 +144,40 @@ const isWechat = () => {
   }
 }
 
+/**
+ * 获取底部安全区域高度
+ * @returns {number} 安全区域高度(rpx单位)
+ */
+const getSafeAreaBottom = () => {
+  try {
+    // 获取系统信息
+    const systemInfo = uni.getSystemInfoSync();
+    
+    // 检测浏览器类型
+    const ua = navigator?.userAgent?.toLowerCase() || '';
+    const isSafari = /safari/.test(ua) && !/chrome/.test(ua);
+    const isChrome = /chrome/.test(ua);
+    
+    // Safari或Chrome浏览器设置固定值
+    if (isSafari || isChrome) {
+      return 180; // 返回60rpx
+    }
+    
+    // 如果系统信息中有安全区域数据，则使用系统提供的值
+    if (systemInfo.safeAreaInsets && systemInfo.safeAreaInsets.bottom) {
+      // 将px转换为rpx (假设屏幕宽度为750rpx标准)
+      const rpxRatio = 750 / systemInfo.windowWidth;
+      return Math.ceil(systemInfo.safeAreaInsets.bottom * rpxRatio);
+    }
+    
+    // 默认返回0
+    return 0;
+  } catch (error) {
+    console.error('获取安全区域高度失败:', error);
+    return 0; // 出错时返回0
+  }
+};
+
 export default {
   isWechat: isWechat,
   removeDecimal: (num: number) => {
@@ -154,6 +188,7 @@ export default {
   },
   uploadBinaryData,
   uploadFileToOSS: uploadFileToOSS,
+  getSafeAreaBottom, // 导出新方法
 
   getFileFromOSS: async (ossKey: string, isBinary: false) => {
     try {
