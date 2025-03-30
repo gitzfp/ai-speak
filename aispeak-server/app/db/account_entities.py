@@ -36,7 +36,7 @@ class AccountSettingsEntity(Base):
     speech_role_name = Column("speech_role_name", String(80), nullable=True)
     auto_playing_voice = Column("auto_playing_voice", Integer, default=1)
     playing_voice_speed = Column("playing_voice_speed", String(50), default='1.0')
-    auto_text_shadow = Column("auto_text_shadow", Integer, default=1)
+    auto_text_shadow = Column("auto_text_shadow", Integer, default=0)
     auto_pronunciation = Column("auto_pronunciation", Integer, default=1)
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)
     update_time = Column("update_time", DateTime, default=datetime.datetime.now)   
