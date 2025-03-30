@@ -1,10 +1,3 @@
-<template>
-  <view>
-    <router-view></router-view>
-    <beian-footer></beian-footer>
-  </view>
-</template>
-
 <script setup lang="ts">
 import { ref } from "vue";
 import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
