@@ -467,8 +467,8 @@
 			display: flex;
 			flex-direction: column;
 			.sentence-top {
-				 margin-top: 50rpx;
-				 margin-bottom: 100rpx;
+				margin-top: 50rpx;
+				margin-bottom: 0rpx;
 				display: flex;
 				align-items: center;
 				justify-content: center;
