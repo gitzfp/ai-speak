@@ -205,6 +205,19 @@ class ChatGPTAI(ChatAI):
         self, dto: AITopicCompleteParams
     ) -> AITopicCompleteResult:
         """场景 结束"""
+        # 添加参数检查
+        if dto is None:
+            logging.error("AITopicCompleteParams is None in topic_invoke_complete")
+            raise ValueError("Invalid parameters: dto cannot be None")
+            
+        if not hasattr(dto, 'messages') or dto.messages is None:
+            logging.error("Messages attribute is missing or None")
+            raise ValueError("Invalid parameters: messages cannot be None")
+            
+        if not hasattr(dto, 'targets') or dto.targets is None:
+            logging.error("Targets attribute is missing or None")
+            raise ValueError("Invalid parameters: targets cannot be None")
+            
         system_content = "下面是一场对话\n"
         for message in dto.messages:
             if message.role.lower() == "system":
@@ -220,17 +233,36 @@ class ChatGPTAI(ChatAI):
             system_content
            + "现在你需要计算出 <用户:> 所说的所有话中使用了多少单词数量（仅需要数字结果，重复单词不需要计算），对应后面的目标实现了多少个（仅需要数字结果），对用户的表达给出评分（满分100分，仅需要数字结果），还要给出300字以内的建议（包含中文讲解与英文示例），返回结果只需要有json格式,使用单词量放在words字段，目标实现数量放在targets字段，评分放在score字段，建议放在suggestion字段，不需要再额外的任何信息，记住，只需要统计<用户:>下的内容\n"
         )
-        json_result = self._original_invoke_chat_json(
-            MessageInvokeDTO(messages=[{"role": "system", "content": system_content}])
-        )
-        logging.info(f"计算结果:{json_result}")
-        # 组装成AITopicCompleteResult返回
-        return AITopicCompleteResult(
-            targets=json_result["targets"],
-            score=json_result["score"],
-            words=json_result["words"],
-            suggestion=json_result["suggestion"],
-        )
+        
+        try:
+            json_result = self._original_invoke_chat_json(
+                MessageInvokeDTO(messages=[{"role": "system", "content": system_content}])
+            )
+            logging.info(f"计算结果:{json_result}")
+            
+            # 验证返回结果包含所需字段
+            required_fields = ["targets", "score", "words", "suggestion"]
+            for field in required_fields:
+                if field not in json_result:
+                    logging.error(f"缺少必要字段 '{field}' 在AI响应中")
+                    json_result[field] = 0 if field != "suggestion" else "无可用建议"
+            
+            # 组装成AITopicCompleteResult返回
+            return AITopicCompleteResult(
+                targets=json_result["targets"],
+                score=json_result["score"],
+                words=json_result["words"],
+                suggestion=json_result["suggestion"],
+            )
+        except Exception as e:
+            logging.error(f"topic_invoke_complete 执行错误: {str(e)}")
+            # 返回默认结果避免程序崩溃
+            return AITopicCompleteResult(
+                targets=0,
+                score=0,
+                words=0,
+                suggestion="处理完成时发生错误。"
+            )
 
 
     def invoke_translate(self, dto: TranslateParams) -> str:
@@ -348,30 +380,48 @@ class ChatGPTAI(ChatAI):
 
     def _original_invoke_chat_json(self, dto: MessageInvokeDTO):
         logging.info(f"request_dto:{dto}")
-        resp = self.client.chat.completions.create(
-            model=self.model,
-            temperature=dto.temperature,
-            messages=dto.messages,
-            max_tokens=dto.max_tokens,
-            response_format={"type": "json_object"},
-        )
-        logging.info(f"response:{resp}")
-        result = resp.choices[0].message.content
-        return json.loads(result)
+        try:
+            resp = self.client.chat.completions.create(
+                model=self.model,
+                temperature=dto.temperature,
+                messages=dto.messages,
+                max_tokens=dto.max_tokens,
+                response_format={"type": "json_object"},
+            )
+            logging.info(f"response:{resp}")
+            
+            if not resp or not hasattr(resp, 'choices') or not resp.choices:
+                logging.error("OpenAI API返回无效响应: 空或缺少choices")
+                raise ValueError("OpenAI API返回无效响应")
+                
+            result = resp.choices[0].message.content
+            return json.loads(result)
+        except Exception as e:
+            logging.error(f"_original_invoke_chat_json 错误: {str(e)}")
+            raise
 
     def _original_invoke_chat(self, dto: MessageInvokeDTO):
         logging.info(f"dto:{dto}")
-        resp = self.client.chat.completions.create(
-            model=self.model,
-            temperature=dto.temperature,
-            messages=dto.messages,
-            max_tokens=dto.max_tokens,
-        )
-        logging.info(f"response:{resp}")
-        result = resp.choices[0].message.content
-        # 去掉俩边的 " " ' '
-        result = result.strip('"')
-        result = result.strip("'")
-        # 去掉json的转义字符
-        result = result.replace('\\"', '"').replace("\\n", "\n").replace("\\", "")
-        return result
+        try:
+            resp = self.client.chat.completions.create(
+                model=self.model,
+                temperature=dto.temperature,
+                messages=dto.messages,
+                max_tokens=dto.max_tokens,
+            )
+            logging.info(f"response:{resp}")
+            
+            if not resp or not hasattr(resp, 'choices') or not resp.choices:
+                logging.error("OpenAI API返回无效响应: 空或缺少choices")
+                raise ValueError("OpenAI API返回无效响应")
+                
+            result = resp.choices[0].message.content
+            # 去掉俩边的 " " ' '
+            result = result.strip('"')
+            result = result.strip("'")
+            # 去掉json的转义字符
+            result = result.replace('\\"', '"').replace("\\n", "\n").replace("\\", "")
+            return result
+        except Exception as e:
+            logging.error(f"_original_invoke_chat 错误: {str(e)}")
+            raise

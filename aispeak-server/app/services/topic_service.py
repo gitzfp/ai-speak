@@ -406,7 +406,7 @@ class TopicService:
             targets.append(target.description)
         invoke_result = chat_ai.topic_invoke_complete(
             AITopicCompleteParams(
-                language=topic_entity.language, messages=messages, targets=targets
+                language='en-US', messages=messages, targets=targets
             )
         )
         # 获取history 并进行记录

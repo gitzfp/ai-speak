@@ -23,22 +23,30 @@
           <view class="complete-item">
             <view class="item-data">
               {{
-                topicHistory.main_target_completed_count +
-                topicHistory.trial_target_completed_count
+               achieved_targets.length 
               }}/{{
-                topicHistory.main_target_count + topicHistory.trial_target_count
+                 achieved_targets.length +
+                task_targets.length 
               }}
             </view>
             <view class="item-title">已达成目标</view>
           </view>
           <view class="complete-item">
-            <view class="item-data">{{ topicHistory.content_score }}%</view>
+           
+            <view class="item-data">{{ (achieved_targets.length / 
+                 achieved_targets.length +
+                task_targets.length ) * 10
+              }}</view>
             <view class="item-title">分数</view>
           </view>
-          <view class="complete-item">
+           <view class="complete-item">
+              <view class="item-data">{{ openMouthCount }}</view>
+              <view class="item-title">开口次数</view>
+            </view> 
+          <!-- <view class="complete-item">
             <view class="item-data">{{ topicHistory.word_count }}</view>
             <view class="item-title">已用单词数</view>
-          </view>
+          </view> -->
         </view>
       </template>
       <view v-if="topicHistory" class="completion-suggestion-box">
@@ -90,6 +98,9 @@ const loading = ref(false)
 const messageLoading = ref(false)
 const topicHistory = ref(null)
 const redirectType = ref(null)
+const task_targets = ref([])
+const achieved_targets = ref([])
+const openMouthCount = ref(0)
 const messageSession = ref<MessageSession>({
   id: undefined,
   speech_role_name: "",
@@ -123,6 +134,8 @@ const initData = (topicId: string, sessionId: string) => {
   chatRequest.sessionDetailsGet({ sessionId: sessionId }).then((res) => {
     messageLoading.value = false
     messageSession.value = res.data
+    task_targets.value = res.data.task_targets
+    achieved_targets.value = res.data.achieved_targets
     messageSession.value.messages.list.forEach((item) => {
       messages.value.push({
         id: item.id,
@@ -137,6 +150,9 @@ const initData = (topicId: string, sessionId: string) => {
         pronunciation: item.pronunciation,
       })
     })
+    openMouthCount.value = messageSession.value.messages.list.filter(
+      (item: Message) => item.role === "USER"
+    ).length 
   })
 }
 

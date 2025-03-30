@@ -13,7 +13,7 @@
 
     <!-- 聊天内容 -->
     <view class="chat-container">
-      <template v-for="(message, index) in messages" :key="message.id">
+      <template v-for="(message, _index) in messages" :key="message.id">
         <view class="message-content-item">
           <message-content
             :auto-hint="messages.auto_text_shadow"
@@ -172,8 +172,8 @@ const session = ref<Session>({
   messages: { total: 0, list: [] } as MessagePage,
   name: "",
   completed: 0,
-  topicOrLessonId: "",
 })
+const topicOrLessonId = ref("")
 const messages = ref<Message[]>([])
 const inputTypeVoice = ref(true)
 const inputText = ref("")
@@ -217,7 +217,7 @@ onLoad(async (option: any) => {
   }else{
     session.value.type = "TOPIC"
   }
-  session.value.topicOrLessonId = option.topicOrLessonId
+  topicOrLessonId.value = option.topicOrLessonId
   initData(option.sessionId, option.sessionName)
   uni.setNavigationBarTitle({
     title: "AI-Speak",
@@ -354,9 +354,11 @@ const sendMessage = (message?: string, fileName?: string) => {
 
       // Check for achieved targets and mark messages accordingly
       if (data?.achieved_targets) {
+        console.log(message ==
+            data.achieved_targets[data.achieved_targets?.length - 1]?.user_say, "相等Achieved targets:", data.achieved_targets[data.achieved_targets.length - 1]?.user_say, message)
         if (
           data.achieved_targets?.length > 0 &&
-          message ===
+          message ==
             data.achieved_targets[data.achieved_targets.length - 1].user_say
         ) {
           ownMessage.achieved_target = true
@@ -380,7 +382,6 @@ const sendMessage = (message?: string, fileName?: string) => {
         auto_hint: accountSetting.value.auto_text_shadow == 1,
         auto_play: accountSetting.value.auto_playing_voice == 1,
       })
-
       // AI消息自动播放与模糊
       nextTick(() => {
         scrollToBottom()
@@ -536,13 +537,13 @@ const completeTopic = () => {
   })
 }
 const handlePracticeAgain = () => {
-  const topicOrLessonId = session.value.topicOrLessonId
   if(session.value.type === "TOPIC"){
-    topicRequest.createTopicSession({ topic_id: topicOrLessonId }).then((res) => {
+    topicRequest.createTopicSession({ topic_id: topicOrLessonId.value }).then((res) => {
       initData(res.data.id, res.data.name)
     })
   }else{
-    topicRequest.createLessonSession({ lesson_id: topicOrLessonId }).then((res) => {
+    console.log("lesson_id", topicOrLessonId.value, session.value.task_targets)
+    topicRequest.createLessonSession({ lesson_id: topicOrLessonId.value, sentences: session.value.task_targets}).then((res) => {
       initData(res.data.id, res.data.name)
     })
   }

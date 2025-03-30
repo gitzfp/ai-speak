@@ -64,6 +64,7 @@ class ChatService:
         session = self.__get_and_check_session(session_id, account_id)
         result = self.__convert_session_model(session)
         result["task_targets"] = self.get_topic_task_targets(session_id)
+        result["achieved_targets"] = json.loads(session.achieved_targets or '[]')
         # 获取会话下的消息
         result["messages"] = self.get_session_messages(session_id, account_id, 1, 100)
         return result
@@ -877,10 +878,17 @@ class ChatService:
         return message
 
     def __add_system_message(
-        self, session_id, account_id: str, content: str, style: str, sequence: int
-    ) -> MessageEntity:
+        self, session_id: str, account_id: str, content: str, style, sequence: int
+    ):
         """添加系统消息"""
-        add_message = MessageEntity(
+        # 处理 style 字段，确保它是 JSON 字符串而不是 Python 对象
+        if style is not None:
+            if isinstance(style, (list, dict)):
+                style = json.dumps(style)
+            elif style == "":
+                style = None
+        
+        message = MessageEntity(
             id=short_uuid(),
             account_id=account_id,
             sender=MESSAGE_SYSTEM,
@@ -888,11 +896,11 @@ class ChatService:
             receiver=account_id,
             type=MessageType.SYSTEM.value,
             content=content,
-            style=style,
+            style=style,  # 使用处理后的 style 值
             length=len(content),
             sequence=sequence,
         )
-        return add_message
+        return message
 
     def __refresh_session_message_count(self, session_id: str):
         """刷新session的消息数量, 需要排除deleted为1的数据"""
@@ -967,7 +975,7 @@ class ChatService:
 4. 通过一对一的提问让学生更投入
 5. 创造轻松愉快的学习氛围
 6. 目标句子要自然地融入对话中
-7. 先示范给学生听，再邀请学生模仿
+7. 先示范让学生听，再邀请学生模仿
 8. 回答不要有旁白信息，全程对同一个学生说话
 
 示例引导方式：
