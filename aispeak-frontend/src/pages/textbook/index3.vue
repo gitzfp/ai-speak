@@ -169,7 +169,6 @@
 		</view>
 		
 		<view style="height: 20rpx;"></view>
-		<beian-footer></beian-footer>	
 	</scroll-view>
 	
     <bookSelector
