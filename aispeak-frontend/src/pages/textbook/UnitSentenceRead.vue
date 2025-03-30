@@ -490,7 +490,7 @@
 				}
 			}
 			.sentence-bottom {
-				flex: 1;
+				margin-top: 80rpx;
 				position: relative;
 			}
 			
