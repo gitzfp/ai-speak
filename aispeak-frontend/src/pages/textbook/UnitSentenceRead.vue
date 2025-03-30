@@ -498,8 +498,8 @@
 	}
 	
 	.left-icon {
-		height: 100rpx;
-		width: 100rpx;
+		height: 50rpx;
+		width: 50rpx;
 	}
 	.btnview {
 		position: fixed;
