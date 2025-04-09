@@ -127,6 +127,45 @@ const uploadBinaryData = async (ossKey: string, compressedData: any) => {
   }
 };
 
+const processAudioToWAV = async (
+  int8Data: Int8Array,
+  userId: string,
+  refObj: { id?: string; word_id?: string }
+): Promise<string> => {
+  const WAV_HEADER_SIZE = 44;
+  const buffer = new ArrayBuffer(WAV_HEADER_SIZE + int8Data.length);
+  const view = new DataView(buffer);
+  
+  // 写入WAV头
+  view.setUint32(0, 0x52494646, false); // "RIFF"
+  view.setUint32(4, 36 + int8Data.length, true); 
+  view.setUint32(8, 0x57415645, false); // "WAVE"
+  view.setUint32(12, 0x666d7420, false); // "fmt "
+  view.setUint32(16, 16, true); // 子块大小
+  view.setUint16(20, 1, true); // PCM格式
+  view.setUint16(22, 1, true); // 单声道
+  view.setUint32(24, 16000, true); // 采样率
+  view.setUint32(28, 32000, true); // 字节率 (16000*2)
+  view.setUint16(32, 2, true); // 块对齐
+  view.setUint16(34, 16, true); // 位深
+  view.setUint32(36, 0x64617461, false); // "data"
+  view.setUint32(40, int8Data.length, true); // 数据大小
+
+  const wavData = new Uint8Array(buffer);
+  wavData.set(int8Data, WAV_HEADER_SIZE);
+  const blob = new Blob([wavData], {type: 'audio/wav'});
+
+  const now = new Date();
+  const timeString = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+  const ossKey = `recordings/${userId}/${timeString}_${refObj.id || refObj.word_id}.wav`;
+  
+  await uploadFileToOSS(ossKey, blob);
+  const url = await getFileFromOSS(ossKey, false);
+  
+  return url
+};
+
+
 const isWechat = () => {
   try {
     const ua = navigator?.userAgent?.toLowerCase() || '';
@@ -178,19 +217,7 @@ const getSafeAreaBottom = () => {
   }
 };
 
-export default {
-  isWechat: isWechat,
-  removeDecimal: (num: number) => {
-    return Math.floor(num);
-  },
-  getVoiceFileUrl: (fileName: string) => {
-    return `${__config.basePath}/voices/${fileName}`;
-  },
-  uploadBinaryData,
-  uploadFileToOSS: uploadFileToOSS,
-  getSafeAreaBottom, // 导出新方法
-
-  getFileFromOSS: async (ossKey: string, isBinary: false) => {
+const getFileFromOSS = async (ossKey: string, isBinary: false) => {
     try {
       const { data }: any = await uni.request({
         url: `${baseUrl}/ali-oss/get-${isBinary ? 'binary-' : ''}file/?oss_key=${ossKey}`,
@@ -219,7 +246,20 @@ export default {
       console.error('获取文件失败:', error);
       return null;
     }
+  }
+
+export default {
+  isWechat: isWechat,
+  removeDecimal: (num: number) => {
+    return Math.floor(num);
   },
+  getVoiceFileUrl: (fileName: string) => {
+    return `${__config.basePath}/voices/${fileName}`;
+  },
+  uploadBinaryData,
+  uploadFileToOSS: uploadFileToOSS,
+  getSafeAreaBottom, // 导出新方法
+  getFileFromOSS,
   checkFileInOSS: async (ossKey: string) => {
     try {
       // if(isWechat()){
@@ -246,5 +286,9 @@ export default {
     if (!oldUrl) return oldUrl;
     return oldUrl.replace(/^https?:\/\/[^\/]+/, 'https://books-bct.oss-cn-beijing.aliyuncs.com');
   },
-  base64ToArrayBuffer
+  base64ToArrayBuffer,
+
+  processAudioToWAV,
+  
 };
+

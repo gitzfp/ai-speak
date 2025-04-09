@@ -36,7 +36,7 @@ class MessageEntity(Base):
     content = Column("content", String(2500), nullable=False)
     style = Column("style", String(80), nullable=True)
     length = Column("length", Integer, nullable=False)
-    file_name = Column("file_name", String(80), nullable=True)
+    file_name = Column("file_name", String(800), nullable=True)
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)
     deleted = Column("deleted", Integer, default="0")
     # 设置一个自增的sequence 排序使用

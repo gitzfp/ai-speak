@@ -74,7 +74,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue';
 // 修改导入，使用 Hook 版本
-import { useSpeechEvaluation } from './SpeechEvaluation/index';
+import { useSpeechEvaluation } from '@/components/SpeechEvaluation/index';
 import utils from '@/utils/utils'; // 导入上传函数
 import AudioPlayer from "@/components/AudioPlayer.vue"
 import env from "@/config/env" 
@@ -148,40 +148,11 @@ onEvaluationComplete.value = (res: any) => {
 
 onAudioComplete.value = async (int8Data: Int8Array) => {
   console.log('[DEBUG] 完整评测结果，音频数据接收完成', int8Data.byteLength);
-  const WAV_HEADER_SIZE = 44;
-  const buffer = new ArrayBuffer(WAV_HEADER_SIZE + int8Data.length);
-  const view = new DataView(buffer);
-  // 写入WAV头
-  view.setUint32(0, 0x52494646, false); // "RIFF"
-  view.setUint32(4, 36 + int8Data.length, true); 
-  view.setUint32(8, 0x57415645, false); // "WAVE"
-  view.setUint32(12, 0x666d7420, false); // "fmt "
-  view.setUint32(16, 16, true); // 子块大小
-  view.setUint16(20, 1, true); // PCM格式
-  view.setUint16(22, 1, true); // 单声道
-  view.setUint32(24, 16000, true); // 采样率
-  view.setUint32(28, 32000, true); // 字节率 (16000*2)
-  view.setUint16(32, 2, true); // 块对齐
-  view.setUint16(34, 16, true); // 位深
-  view.setUint32(36, 0x64617461, false); // "data"
-  view.setUint32(40, int8Data.length, true); // 数据大小
-  // 合并头和数据
-  const wavData = new Uint8Array(buffer);
-  wavData.set(int8Data, WAV_HEADER_SIZE);
-  // 创建 Blob
-  const blob = new Blob([wavData], {type: 'audio/wav'});
   const userId = uni.getStorageSync("user_id")
-  console.log('用户id', userId)
-  // 生成包含年月日时分秒的时间戳
-  const now = new Date();
-  const timeString = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-  const ossKey = `recordings/${userId}/${timeString}_${props.refObj.id || props.refObj.word_id}.wav`;
-  await utils.uploadFileToOSS(ossKey, blob).then(async response => {
-    const data = await utils.getFileFromOSS(ossKey, false)
-    console.log(data, '上传后的链接', ossKey)
+  utils.processAudioToWAV(int8Data, userId, props.refObj).then(data => {
+    isRecording.value = false;
     finalResult.value!.voice_file = data; // 存储录音文件的URL
     emit('success', finalResult.value);
-    isRecording.value = false;
   }).catch(error => {
     console.error('文件上传失败:', error);
     isRecording.value = false;
@@ -339,38 +310,9 @@ const initSpeechEvaluation = () => {
 // 提取音频处理逻辑为单独函数，避免代码重复
 const processAudioData = async (int8Data: Int8Array) => {
   console.log('[DEBUG] 完整评测结果，音频数据接收完成', int8Data.byteLength);
-  const WAV_HEADER_SIZE = 44;
-  const buffer = new ArrayBuffer(WAV_HEADER_SIZE + int8Data.length);
-  const view = new DataView(buffer);
-  // 写入WAV头
-  view.setUint32(0, 0x52494646, false); // "RIFF"
-  view.setUint32(4, 36 + int8Data.length, true); 
-  view.setUint32(8, 0x57415645, false); // "WAVE"
-  view.setUint32(12, 0x666d7420, false); // "fmt "
-  view.setUint32(16, 16, true); // 子块大小
-  view.setUint16(20, 1, true); // PCM格式
-  view.setUint16(22, 1, true); // 单声道
-  view.setUint32(24, 16000, true); // 采样率
-  view.setUint32(28, 32000, true); // 字节率 (16000*2)
-  view.setUint16(32, 2, true); // 块对齐
-  view.setUint16(34, 16, true); // 位深
-  view.setUint32(36, 0x64617461, false); // "data"
-  view.setUint32(40, int8Data.length, true); // 数据大小
-  // 合并头和数据
-  const wavData = new Uint8Array(buffer);
-  wavData.set(int8Data, WAV_HEADER_SIZE);
-  // 创建 Blob
-  const blob = new Blob([wavData], {type: 'audio/wav'});
   const userId = uni.getStorageSync("user_id")
-  console.log('用户id', userId)
-  // 生成包含年月日时分秒的时间戳
-  const now = new Date();
-  const timeString = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-  const ossKey = `recordings/${userId}/${timeString}_${props.refObj.id || props.refObj.word_id}.wav`;
   try {
-    await utils.uploadFileToOSS(ossKey, blob);
-    const data = await utils.getFileFromOSS(ossKey, false);
-    console.log(data, '上传后的链接', ossKey);
+    const data = await utils.processAudioToWAV(int8Data, userId, props.refObj);
     if (finalResult.value) {
       finalResult.value.voice_file = data; // 存储录音文件的URL
       emit('success', finalResult.value);

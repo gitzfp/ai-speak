@@ -71,22 +71,10 @@
 
         <!-- 语音输入 -->
         <view class="speech-box">
-          <Speech :session-id="session.id">
-            <template v-slot:leftMenu>
-              <image
-                @tap="handleSwitchInputType"
-                class="keybord-icon"
-                src="https://dingguagua.fun/static/icon_keybord.png"
-              ></image>
-            </template>
-            <template v-slot:rightMenu>
-              <image
-                @tap="handleSwitchMenu"
-                class="input-type-switch-btn"
-                src="https://dingguagua.fun/static/icon_settings.png"
-              ></image>
-            </template>
-          </Speech>
+          <SpeechRecognition
+            language="en-US"
+            @success="handleSuccess"
+          />
         </view>
       </view>
     </view>
@@ -146,7 +134,8 @@
 import CommonHeader from "@/components/CommonHeader.vue"
 import MessageContent from "./components/MessageContent.vue"
 import Prompt from "./components/Prompt.vue"
-import Speech from "./components/MessageSpeech.vue"
+import SpeechRecognition from '@/components/SpeechRecognition/SpeechRecognition.vue';
+
 import {
   ref,
   computed,
@@ -192,6 +181,14 @@ const accountSetting = ref<AccountSettings>({
 
 const $bus: any = getCurrentInstance()?.appContext.config.globalProperties.$bus
 const popup = ref<any>(null)
+
+
+const handleSuccess = (result: { text: string; audioUrl: string }) => {
+  console.log('最终识别结果:', result.text);
+  console.log('录音文件地址:', result.audioUrl);
+  // 这里可以添加发送消息的逻辑
+  sendMessage(result.text, result.audioUrl);
+};
 
 const inputFocus = (e: any) => {
   inputBottom.value = e.detail.height

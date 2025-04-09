@@ -395,6 +395,7 @@ class ChatGPTAI(ChatAI):
                 raise ValueError("OpenAI API返回无效响应")
                 
             result = resp.choices[0].message.content
+            console.log(f"_original_invoke_chat_json返回的response:{result}")
             return json.loads(result)
         except Exception as e:
             logging.error(f"_original_invoke_chat_json 错误: {str(e)}")
