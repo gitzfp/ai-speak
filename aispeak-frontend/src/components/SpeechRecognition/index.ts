@@ -1,6 +1,6 @@
 import { ref, reactive, onUnmounted } from 'vue';
 import WebRecorder from "../SpeechEvaluation/core/webRecorder";
-import WebAudioSpeechRecognizer from "./asr/webaudiospeechrecognizer";
+import WebAudioSpeechRecognizer from './asr/webaudiospeechrecognizer';
 import LogReport from "../SpeechEvaluation/lib/LogReport";
 import { guid } from "../SpeechEvaluation/lib/credential";
 import { LOG_TYPE_MAP } from "../SpeechEvaluation/core/constants";
@@ -41,15 +41,24 @@ export function useSpeechRecognition(params: any, isLog: boolean = false) {
   }
 
   // 收集用户轨迹日志
+  // 在收集日志处增加类型检查
   const collectLog = (res: any, type: string) => {
     if (!logServer.value || !isLog) return;
+    
+    // 过滤不可序列化的数据
+    const safeRes = JSON.parse(JSON.stringify(res, (key, value) => {
+      return typeof value === 'symbol' ? value.toString() : value;
+    }));
+  
     logServer.value.LogAdd({
       type,
-      message: (typeof res === "string" || res?.length ? res : res?.message) || res?.reason || "",
+      message: (typeof safeRes === "string" || safeRes?.length) 
+        ? safeRes 
+        : safeRes?.message || safeRes?.reason || "",
       requestId: requestId.value,
       timeStamp: new Date().getTime(),
-      error: res,
-      code: res?.code || 0,
+      error: safeRes,
+      code: safeRes?.code || 0,
     });
   };
 

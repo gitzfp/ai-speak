@@ -49,45 +49,51 @@ export default class LogReport {
   }
   async LogInsert() {
     try {
-      if (this.Log.length === 0) {
-        return ;
+      if (this.Log.length === 0 || !this.LogDb) {
+        return;
       }
-      return new Promise((reslove, reject) => {
+      return new Promise((resolve, reject) => {
         const transaction = this.LogDb.transaction(
           [DB_STORE_NAME],
           "readwrite"
         );
-        // 在所有数据添加完毕后的处理
-        transaction.oncomplete = (event: any) => {
+        
+        // Add null check for transaction
+        if (!transaction) {
+          reject(new Error("Transaction creation failed"));
+          return;
+        }
+
+        transaction.oncomplete = (event: Event) => {
           console.log("日志全部添加完成了！");
         };
 
-        transaction.onerror = (event: any) => {
-          // 不要忘记错误处理！
+        transaction.onerror = (event: Event) => {
+          reject(event.target.error);
         };
 
         const objectStore = transaction.objectStore(DB_STORE_NAME);
         const request = objectStore.add(JSON.stringify(this.Log));
-        request.onsuccess = (event: any) => {
-          console.log("日志添加成功！");
-          // event.target.result === customer.ssn;
+        
+        request.onsuccess = (event: Event) => {
           this.Log = [];
-          reslove(true);
+          resolve(true);
         };
-        request.onerror = (event: any) => {
-          // 不要忘记错误处理！
-          reslove(true);
+        
+        request.onerror = (event: Event) => {
+          reject(event.target.error);
         };
       });
     } catch (error) {
       console.log("日志存储失败", error);
+      throw error;
     }
   }
   QueryLog() {
     try {
       return new Promise((reslove, reject) => {
-        const transaction = this.LogDb.transaction([DB_STORE_NAME]);
-        const objectStore = transaction.objectStore(DB_STORE_NAME);
+        const transaction = this.LogDb?.transaction([DB_STORE_NAME]);
+        const objectStore = transaction?.objectStore(DB_STORE_NAME);
         objectStore.getAll().onsuccess = (event: any) => {
           reslove(event.target.result);
         };

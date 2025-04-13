@@ -217,28 +217,37 @@ const handlePronuciationResult = (res: any, isRealTime: boolean = false) => {
 
 // 播放录音功能
 const playbuttonclick = () => {
-  // 保持原有代码不变
-  if(!props.refObj?.audio_url)return
-  console.log('播放语音====', props.refObj?.audio_url);
-  stopCurrentAudio();
-  const audio = uni.createInnerAudioContext();
-  currentAudio.value = audio;
-  audio.src = props.refObj?.audio_url;
-  console.log(props.refObj);
+  if(!props.refObj?.audio_url) return
+  
+  // 微信小程序使用 wx.createInnerAudioContext()
+  const audio = uni.createInnerAudioContext()
+  currentAudio.value = audio
+  audio.src = props.refObj.audio_url
+  
+  // 微信小程序音频事件监听
+  audio.onPlay(() => {
+    console.log('开始播放')
+  })
+  
+  audio.onError((err) => {
+    console.error('播放错误:', err)
+    stopCurrentAudio()
+  })
+  
   // 设置时间范围
   if (props.refObj.audio_start && props.refObj.audio_end) {
     const startTime = props.refObj.audio_start / 1000
     const endTime = props.refObj.audio_end / 1000
     audio.startTime = startTime
-    // 监听播放进度
+    
     audio.onTimeUpdate(() => {
-      if (audio.currentTime >= endTime - 0.1) { // 防止浮点误差
-        stopCurrentAudio()  // 处理播放结束
+      if (audio.currentTime >= endTime - 0.1) {
+        stopCurrentAudio()
       }
     })
   }
-  console.log(props.refObj, '播放录音功能');
-  audio.play();
+  
+  audio.play()
 }
 
 const stopCurrentAudio = () => {
@@ -309,20 +318,42 @@ const initSpeechEvaluation = () => {
 
 // 提取音频处理逻辑为单独函数，避免代码重复
 const processAudioData = async (int8Data: Int8Array) => {
-  console.log('[DEBUG] 完整评测结果，音频数据接收完成', int8Data.byteLength);
+  console.log('[DEBUG] 完整评测结果，音频数据接收完成', int8Data.byteLength)
   const userId = uni.getStorageSync("user_id")
+  
   try {
-    const data = await utils.processAudioToWAV(int8Data, userId, props.refObj);
-    if (finalResult.value) {
-      finalResult.value.voice_file = data; // 存储录音文件的URL
-      emit('success', finalResult.value);
+    let data;
+    if (utils.isWechat()) {
+      // 微信小程序处理方式
+      const tempFilePath = await new Promise((resolve, reject) => {
+        const fs = uni.getFileSystemManager()
+        const tempFilePath = `${wx.env.USER_DATA_PATH}/${Date.now()}.wav`
+        
+        fs.writeFile({
+          filePath: tempFilePath,
+          data: int8Data,
+          encoding: 'binary',
+          success: () => resolve(tempFilePath),
+          fail: reject
+        })
+      })
+      data = await utils.processAudioToWAV(tempFilePath, userId, props.refObj)
+    } else {
+      // H5处理方式：直接使用二进制数据
+      const blob = new Blob([int8Data], { type: 'audio/wav' })
+      data = await utils.processAudioToWAV(int8Data, userId, props.refObj)
     }
-    isRecording.value = false;
+
+    if (finalResult.value) {
+      finalResult.value.voice_file = data
+      emit('success', finalResult.value)
+    }
+    isRecording.value = false
   } catch (error) {
-    console.error('文件上传失败:', error);
-    isRecording.value = false;
+    console.error('文件上传失败:', error)
+    isRecording.value = false
   }
-};
+}
 
 // 初始化 SDK
 initSpeechEvaluation();

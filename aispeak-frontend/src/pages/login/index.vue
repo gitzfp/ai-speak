@@ -18,7 +18,7 @@
     </button>
 
     <!-- 手机号登录表单 -->
-    <view v-if="!showRegisterForm" class="phone-login-form">
+    <view v-if="!isWeixin && !showRegisterForm" class="phone-login-form">
       <input
         v-model="phoneNumber"
         class="input"
@@ -36,7 +36,7 @@
     </view>
 
     <!-- 注册表单 -->
-    <view v-if="showRegisterForm" class="register-form">
+    <view v-if="!isWeixin && !isshowRegisterForm" class="register-form">
       <!-- <input
         v-model="registerUsername"
         class="input"

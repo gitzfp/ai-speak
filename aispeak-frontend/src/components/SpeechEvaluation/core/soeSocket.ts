@@ -1,52 +1,58 @@
 import { SoeNewCredential } from "../lib/credential";
 import * as CryptoJS from "crypto-js";
+import utils from '@/utils/utils';
+
 export default class SoeNewConnect {
   appid: string;
   secretid: string;
   secretkey: string;
-  socket: WebSocket | null;
+  socket: UniApp.SocketTask | null;
   isSignSuccess: boolean;
   isRecognizeComplete: boolean;
   isSentenceBegin: boolean;
   query: any;
   isLog: boolean;
   logServer: any;
+  isWechat: boolean;
+
   constructor(query: any, isLog: boolean = false, logServer: any) {
     this.appid = query.appid || "";
     this.secretid = query.secretid || "";
     this.secretkey = query.secretkey || "";
     this.socket = null;
-    this.isSignSuccess = false; // 是否鉴权成功
-    this.isSentenceBegin = false; // 是否一句话开始
-    // 用户鉴权函数
-    this.isRecognizeComplete = false; // 当前是否识别结束
+    this.isSignSuccess = false;
+    this.isSentenceBegin = false;
+    this.isRecognizeComplete = false;
     this.query = query;
     this.isLog = isLog;
     this.logServer = logServer;
+    this.isWechat = utils.isWechat();
   }
-  // 签名函数示例
-  signCallback(signStr: string) {
-    // 使用CryptoJS的HmacSHA1方法计算HMAC
-    const hmac = CryptoJS.HmacSHA1(signStr, this.secretkey);
 
-    // 将计算结果转换为Base64编码的字符串
+  // 签名函数
+  signCallback(signStr: string) {
+    const hmac = CryptoJS.HmacSHA1(signStr, this.secretkey);
     const signature = CryptoJS.enc.Base64.stringify(hmac);
     return signature;
   }
+
   // 暂停识别，关闭连接
   stop() {
-    if (this.socket && this.socket.readyState === 1) {
-      this.socket.send(JSON.stringify({ type: "end" }));
-    } else {
-      // this.OnError("连接未建立或连接已关闭");
-      if (this.socket && this.socket.readyState === 1) {
-        this.socket.close();
-      }
+    if (this.socket) {
+      this.socket.send({
+        data: JSON.stringify({ type: "end" }),
+        success: () => {},
+        fail: (err) => {
+          this.OnError(err);
+        }
+      });
     }
   }
+
   // 拼接鉴权数据
   async getUrl() {
     if (!this.appid || !this.secretid) {
+      throw new Error("缺少appid或secretid");
     }
     const soe = new SoeNewCredential(this.query);
     const { urlStr, signStr } = await soe.getSignStr();
@@ -54,75 +60,107 @@ export default class SoeNewConnect {
       this.signCallback(signStr)
     )}`;
   }
+
   async start() {
     const url = await this.getUrl();
     const self = this;
-    if ("WebSocket" in window) {
-      this.socket = new WebSocket(`wss://${url}`);
-    } else {
-      return;
-    }
+
+    // 使用UniApp的WebSocket API
+    this.socket = uni.connectSocket({
+      url: `wss://${url}`,
+      success: () => {
+        console.log('WebSocket连接已建立');
+      },
+      fail: (err) => {
+        this.OnError(err);
+      }
+    });
+
     if (this.socket) {
-      this.socket.onopen = (e) => {
-        // 连接建立时触发
-      };
-      this.socket.onmessage = (e) => {
-        // 连接建立时触发
-        const response = JSON.parse(e.data);
+      // 监听WebSocket打开事件
+      this.socket.onOpen(() => {
+        console.log('WebSocket连接已打开', this.isWechat);
+      });
+
+      // 监听消息接收
+      this.socket.onMessage((res) => {
+        const response = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+        
         if (response.code !== 0) {
           this.OnError(response.message);
-          self.socket?.close();
+          this.close();
           return;
-        } else {
-          if (!this.isSignSuccess) {
-            this.OnEvaluationStart(response);
-            this.isSignSuccess = true;
-          }
-          if (response.final === 1) {
-            this.isRecognizeComplete = true;
-            this.OnEvaluationComplete(response);
-            return;
-          }
-          console.log('实时评测结果', response);
-          if (response.result) {
-            this.OnEvaluationResultChange(response);
-          }
         }
-      };
-      this.socket.onerror = (e: any) => {
-        // 通信发生错误时触发
-        this.socket?.close();
-        this.OnError(e);
-      };
-      this.socket.onclose = (event: any) => {
+
+        if (!this.isSignSuccess) {
+          this.OnEvaluationStart(response);
+          this.isSignSuccess = true;
+        }
+
+        if (response.final === 1) {
+          this.isRecognizeComplete = true;
+          this.OnEvaluationComplete(response);
+          return;
+        }
+
+        console.log('实时评测结果', response);
+        if (response.result) {
+          this.OnEvaluationResultChange(response);
+        }
+      });
+
+      // 监听错误事件
+      this.socket.onError((err) => {
+        this.OnError(err);
+        this.close();
+      });
+
+      // 监听关闭事件
+      this.socket.onClose((res) => {
         if (!this.isRecognizeComplete) {
-          this.OnError(event);
+          this.OnError(res);
         }
-      };
+      });
     }
   }
+
   // 发送数据
   write(data: any) {
-    if (!this.socket || this.socket.readyState !== 1) {
+    if (!this.socket) {
       this.OnError("连接未建立，请稍后发送数据！");
       return;
     }
-    this.socket.send(data);
+
+    this.socket.send({
+      data: data,
+      success: () => {},
+      fail: (err) => {
+        this.OnError(err);
+      }
+    });
   }
-  // 开始识别的时候
-  OnEvaluationStart(res: any) {}
-  // 识别结果发生变化的时候
-  OnEvaluationResultChange(res: any) {}
-  // 识别结束的时候
-  OnEvaluationComplete(res: any) {}
-  // 识别失败
-  OnError(err: any) {}
+
+  // 关闭连接
   close() {
-    // if (this.socket && this.socket.readyState === 1) {
-    this.socket && this.socket.close(1000);
-    return;
-    // }
+    if (this.socket) {
+      this.socket.close({
+        code: 1000,
+        success: () => {
+          this.socket = null;
+        },
+        fail: (err) => {
+          this.OnError(err);
+        }
+      });
+    }
   }
+
+  // 以下方法需要由使用者实现
+  OnEvaluationStart(res: any) {}
+  OnEvaluationResultChange(res: any) {}
+  OnEvaluationComplete(res: any) {}
+  OnError(err: any) {}
+
   async OndownloadLogs() {
     if (!this.logServer) {
       return;
@@ -132,4 +170,7 @@ export default class SoeNewConnect {
   }
 }
 
-window && ((window as any).SoeNewConnect = SoeNewConnect);
+// 全局注册（仅在浏览器环境下）
+if (typeof window !== 'undefined') {
+  (window as any).SoeNewConnect = SoeNewConnect;
+}
