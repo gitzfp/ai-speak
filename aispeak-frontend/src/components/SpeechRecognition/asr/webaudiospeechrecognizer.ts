@@ -1,18 +1,15 @@
-import WebRecorder from "../../SpeechEvaluation/core/webRecorder";
 import { SpeechRecognizer, guid} from "./speechrecognizer";
-
+import RecorderModule from "../../webRecorder";
 declare global {
     interface Window {
         WebAudioSpeechRecognizer: typeof WebAudioSpeechRecognizer;
     }
 }
 
-
-// Existing class declaration remains unchanged
 export default class WebAudioSpeechRecognizer {
     // 类属性类型声明
     params: any;
-    recorder: WebRecorder | null = null;
+    recorder: RecorderModule | null = null;
     speechRecognizer: SpeechRecognizer | null = null;
     isCanSendData: boolean = false;
     isNormalEndStop: boolean = false;
@@ -25,16 +22,34 @@ export default class WebAudioSpeechRecognizer {
         this.isLog = isLog;
     }
 
+    // 修改数据回调增加空数据检测
+    private validateAudioData(data: ArrayBuffer) {
+        if (!data || data.byteLength === 0) {
+            throw new Error("无效的音频数据");
+        }
+        
+        // 增加采样率校验（16kHz）
+        const sampleRate = this.recorder?.sampleRate;
+        if (sampleRate && sampleRate !== 16000) {
+            throw new Error(`不支持的采样率: ${sampleRate}`);
+        }
+    }
+
     start(): void {
         try {
             this.isLog && console.log('start function is click');
             this.requestId = guid();
-            this.recorder = new WebRecorder(this.requestId!, this.params, this.isLog);
+            this.recorder = new RecorderModule(this.requestId!, this.params, this.isLog);
             
             // 录音数据回调
             this.recorder.OnReceivedData = (data: ArrayBuffer) => {
-                if (this.isCanSendData) {
-                    this.speechRecognizer?.write(data);
+                try {
+                    this.validateAudioData(data);
+                    if (this.isCanSendData) {
+                        this.speechRecognizer?.write(data);
+                    }
+                } catch (error) {
+                    this.OnError(error);
                 }
             };
 

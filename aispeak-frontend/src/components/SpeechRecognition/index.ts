@@ -1,5 +1,5 @@
 import { ref, reactive, onUnmounted } from 'vue';
-import WebRecorder from "../SpeechEvaluation/core/webRecorder";
+import WebRecorder from "../webRecorder";
 import WebAudioSpeechRecognizer from './asr/webaudiospeechrecognizer';
 import LogReport from "../SpeechEvaluation/lib/LogReport";
 import { guid } from "../SpeechEvaluation/lib/credential";
@@ -68,11 +68,12 @@ export function useSpeechRecognition(params: any, isLog: boolean = false) {
     try {
       // 初始化录音器
       recorder.value = new WebRecorder(isLog, logServer.value, requestId.value);
-      
+
       recorder.value.OnReceivedData = (data: any) => {
         if (isCanSendData.value && asrRecognizer.value) {
           asrRecognizer.value.write(data);
         }
+        console.log("SpeechRecognition OnReceivedData", data);
         collectLog('', LOG_TYPE_MAP.RECORD_DATA);
       };
       
@@ -84,19 +85,9 @@ export function useSpeechRecognition(params: any, isLog: boolean = false) {
         OnError.value(err);
       };
 
-      // 识别结束
-      recorder.value.OnRecognitionComplete = async (res: any) => {
-        collectLog(res, LOG_TYPE_MAP.RECOGNIZER_COMPLETE);
-        isLog && await logServer.value?.LogInsert();
-        recorder.value && recorder.value.close();
-        OnRecognitionComplete.value(res);
-        isCanSendData.value = false;
-        recorder.value = null;
-      };
-      
-      
       // 录音停止处理
       recorder.value.OnStop = (res: any) => {
+        console.log("SpeechRecognition recorder.value.OnStop执行停止录音，关闭通道");
         collectLog(res, LOG_TYPE_MAP.RECORD_STOP);
         if (asrRecognizer.value) {
           asrRecognizer.value.stop();
@@ -122,8 +113,8 @@ export function useSpeechRecognition(params: any, isLog: boolean = false) {
       if (!asrRecognizer.value) {
         asrRecognizer.value = new WebAudioSpeechRecognizer({
           ...params,
-          requestId: requestId.value
-        });
+          requestId: requestId.value,
+        }, true);
         
         // 识别开始回调
         asrRecognizer.value.onStart = () => {
@@ -184,7 +175,7 @@ export function useSpeechRecognition(params: any, isLog: boolean = false) {
   
         // 识别完成
         asrRecognizer.value.OnRecognitionComplete = async (res: any) => {
-          console.log("index.ts OnRecognitionComplete 完整处理后的识别结果:", res);
+          console.log('asrRecognizer.value识别结束')
           collectLog(res, LOG_TYPE_MAP.RECOGNIZER_COMPLETE);
           isLog && await logServer.value?.LogInsert();
           OnRecognitionComplete.value(res);

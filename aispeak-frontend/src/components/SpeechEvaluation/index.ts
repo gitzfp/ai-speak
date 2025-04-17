@@ -1,5 +1,5 @@
 import { ref, reactive, onUnmounted } from 'vue';
-import WebRecorder from "./core/webRecorder";
+import WebRecorder from "../webRecorder";
 import SoeNewConnect from "./core/soeSocket";
 import LogReport from "./lib/LogReport";
 import { guid } from "./lib/credential";
