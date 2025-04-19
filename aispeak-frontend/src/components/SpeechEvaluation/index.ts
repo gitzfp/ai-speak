@@ -87,7 +87,7 @@ export function useSpeechEvaluation(params: any, isLog: boolean = false) {
         if (soeRecognizer.value) {
           soeRecognizer.value.stop();
         }
-        console.log('录音停止...');
+        console.log('SpeechEvaluation/index.ts:录音停止...', res);
         onRecorderStop.value(res);
         
         // 添加数据验证和错误处理
@@ -195,9 +195,9 @@ export function useSpeechEvaluation(params: any, isLog: boolean = false) {
 
   // 停止录音和识别
   const stop = () => {
+    console.log("SpeechEvaluation/index.ts:停止录音和识别");
     if (recorder.value) {
       recorder.value.stop();
-      recorder.value = null;
     }
     if (soeRecognizer.value) {
       soeRecognizer.value.stop();

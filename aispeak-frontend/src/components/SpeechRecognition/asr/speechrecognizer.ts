@@ -40,15 +40,32 @@ async function createQuery(query: QueryParams): Promise<QueryParams> {
 
   const getServerTime = (): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("GET", 'https://asr.cloud.tencent.com/server_time', true);
-      xhr.send();
-      xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-          resolve(xhr.responseText);
-        }
-      };
-      xhr.onerror = reject;
+      // 使用 uni-app 的 API 替代 XMLHttpRequest
+      if (typeof uni !== 'undefined') {
+        uni.request({
+          url: 'https://asr.cloud.tencent.com/server_time',
+          success: (res) => {
+            resolve(res.data);
+          },
+          fail: (err) => {
+            reject(err);
+          }
+        });
+      } else if (typeof XMLHttpRequest !== 'undefined') {
+        // 浏览器环境
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", 'https://asr.cloud.tencent.com/server_time', true);
+        xhr.send();
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            resolve(xhr.responseText);
+          }
+        };
+        xhr.onerror = reject;
+      } else {
+        // 其他环境，使用当前时间
+        resolve(String(Math.round(time / 1000)));
+      }
     });
   };
 
@@ -121,19 +138,53 @@ function Uint8ArrayToString(fileData: Uint8Array): string {
   return Array.from(fileData).map(byte => String.fromCharCode(byte)).join('');
 }
 
+// 添加 btoa 的兼容实现
+function customBtoa(str: string): string {
+  if (typeof btoa !== 'undefined') {
+    return btoa(str);
+  } else {
+    // 简单的 base64 编码实现
+    const base64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    let result = '';
+    let i = 0;
+    
+    while (i < str.length) {
+      const a = str.charCodeAt(i++);
+      const b = i < str.length ? str.charCodeAt(i++) : 0;
+      const c = i < str.length ? str.charCodeAt(i++) : 0;
+      
+      const triplet = (a << 16) | (b << 8) | c;
+      
+      for (let j = 0; j < 4; j++) {
+        if (i - 3 > str.length && j === 3) {
+          result += '=';
+        } else if (i - 2 > str.length && j === 2) {
+          result += '=';
+        } else {
+          const index = (triplet >>> (6 * (3 - j))) & 0x3F;
+          result += base64chars[index];
+        }
+      }
+    }
+    
+    return result;
+  }
+}
+
 function signCallback(secretKey: string, signStr: string): string {
   const hash = CryptoJS.HmacSHA1(signStr, secretKey);
   const bytes = Uint8ArrayToString(toUint8Array(hash));
-  return btoa(bytes);
+  return customBtoa(bytes);
 }
 
 export class SpeechRecognizer {
-  private socket: WebSocket | null = null;
+  private socket: any = null; // 改为 any 类型以适应不同环境
   private isSignSuccess = false;
   private isSentenceBegin = false;
   private isRecognizeComplete = false;
   private sendCount = 0;
   private getMessageList: string[] = [];
+  private socketTaskId: string = '';
 
   constructor(
     private query: QueryParams,
@@ -142,7 +193,14 @@ export class SpeechRecognizer {
   ) {}
 
   stop(): void {
-    if (this.socket?.readyState === WebSocket.OPEN) {
+    if (typeof uni !== 'undefined' && this.socket) {
+      this.socket.send({
+        data: JSON.stringify({ type: 'end' }),
+        success: () => {
+          this.isRecognizeComplete = true;
+        }
+      });
+    } else if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify({ type: 'end' }));
       this.isRecognizeComplete = true;
     } else if (this.socket) {
@@ -159,57 +217,120 @@ export class SpeechRecognizer {
 
     this.isLog && console.log(this.requestId, 'get ws url', url, TAG);
     
-    if (typeof WebSocket !== 'undefined') {
+    if (typeof uni !== 'undefined') {
+      // uni-app 环境
+      this.socket = uni.connectSocket({
+        url: url,
+        success: () => {
+          this.isLog && console.log(this.requestId, '连接建立成功', TAG);
+        },
+        fail: (error) => {
+          this.OnError(error);
+        }
+      });
+      
+      // 监听 WebSocket 连接打开事件
+      uni.onSocketOpen((res) => {
+        this.isLog && console.log(this.requestId, '连接已打开', res, TAG);
+      });
+      
+      // 监听 WebSocket 接收到服务器的消息事件
+      uni.onSocketMessage((res) => {
+        try {
+          this.getMessageList.push(JSON.stringify(res));
+          const response = JSON.parse(res.data);
+          
+          if (response.code !== 0) {
+            uni.closeSocket();
+            this.OnError(response);
+          } else {
+            this.handleResponse(response);
+          }
+        } catch (error) {
+          this.logError('socket.onmessage', error);
+        }
+      });
+      
+      // 监听 WebSocket 错误事件
+      uni.onSocketError((res) => {
+        uni.closeSocket();
+        this.OnError(res);
+      });
+      
+      // 监听 WebSocket 关闭事件
+      uni.onSocketClose((res) => {
+        if (!this.isRecognizeComplete) {
+          this.OnError(res);
+        }
+      });
+    } else if (typeof WebSocket !== 'undefined') {
+      // 浏览器环境
       this.socket = new WebSocket(url);
+      
+      this.socket.onopen = (e: Event) => {
+        this.isLog && console.log(this.requestId, '连接建立', e, TAG);
+      };
+
+      this.socket.onmessage = async (e: MessageEvent) => {
+        try {
+          this.getMessageList.push(JSON.stringify(e));
+          const response = JSON.parse(e.data);
+          
+          if (response.code !== 0) {
+            this.socket?.close();
+            this.OnError(response);
+          } else {
+            this.handleResponse(response);
+          }
+        } catch (error) {
+          this.logError('socket.onmessage', error);
+        }
+      };
+
+      this.socket.onerror = (e: Event) => {
+        this.socket?.close();
+        this.OnError(e);
+      };
+
+      this.socket.onclose = (e: CloseEvent) => {
+        if (!this.isRecognizeComplete) {
+          this.OnError(e);
+        }
+      };
     } else {
-      this.OnError('浏览器不支持WebSocket');
+      this.OnError('当前环境不支持WebSocket');
       return;
     }
-
-    this.socket.onopen = (e: Event) => {
-      this.isLog && console.log(this.requestId, '连接建立', e, TAG);
-    };
-
-    this.socket.onmessage = async (e: MessageEvent) => {
-      try {
-        this.getMessageList.push(JSON.stringify(e));
-        const response = JSON.parse(e.data);
-        
-        if (response.code !== 0) {
-          this.socket?.close();
-          this.OnError(response);
-        } else {
-          this.handleResponse(response);
-        }
-      } catch (error) {
-        this.logError('socket.onmessage', error);
-      }
-    };
-
-    this.socket.onerror = (e: Event) => {
-      this.socket?.close();
-      this.OnError(e);
-    };
-
-    this.socket.onclose = (e: CloseEvent) => {
-      if (!this.isRecognizeComplete) {
-        this.OnError(e);
-      }
-    };
   }
 
   close(): void {
-    this.socket?.close(1000);
+    if (typeof uni !== 'undefined') {
+      uni.closeSocket({
+        code: 1000
+      });
+    } else if (this.socket) {
+      this.socket.close(1000);
+    }
   }
 
   write(data: string | ArrayBuffer | Blob): void {
     try {
-      if (this.socket?.readyState !== WebSocket.OPEN) {
+      if (typeof uni !== 'undefined') {
+        // uni-app 环境
+        uni.sendSocketMessage({
+          data: data,
+          fail: (error) => {
+            setTimeout(() => this.trySend(data), 100);
+          }
+        });
+        this.sendCount++;
+      } else if (this.socket?.readyState !== WebSocket.OPEN) {
         setTimeout(() => this.trySend(data), 100);
         return;
+      } else {
+        this.sendCount++;
+        this.socket.send(data);
       }
-      this.sendCount++;
-      this.socket.send(data);
     } catch (error) {
       this.logError('发送数据', error);
     }
@@ -251,7 +372,11 @@ export class SpeechRecognizer {
   }
 
   private trySend(data: string | ArrayBuffer | Blob): void {
-    if (this.socket?.readyState === WebSocket.OPEN) {
+    if (typeof uni !== 'undefined') {
+      uni.sendSocketMessage({
+        data: data
+      });
+    } else if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(data);
     }
   }
@@ -261,6 +386,7 @@ export class SpeechRecognizer {
   }
 }
 
+// 全局声明保持不变
 declare global {
   interface Window {
     SpeechRecognizer: typeof SpeechRecognizer;

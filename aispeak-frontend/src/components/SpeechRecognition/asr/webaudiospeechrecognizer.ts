@@ -39,13 +39,15 @@ export default class WebAudioSpeechRecognizer {
         try {
             this.isLog && console.log('start function is click');
             this.requestId = guid();
-            this.recorder = new RecorderModule(this.requestId!, this.params, this.isLog);
+            this.recorder = new RecorderModule(this.isLog,  this.params, this.requestId);
             
             // 录音数据回调
-            this.recorder.OnReceivedData = (data: ArrayBuffer) => {
+            this.recorder.OnReceivedData = (data: Int8Array) => {
                 try {
                     this.validateAudioData(data);
+                    console.log('webaudiospeechrecognizer录音数据:', data);
                     if (this.isCanSendData) {
+                        console.log('发送webaudiospeechrecognizer录音数据:', data);
                         this.speechRecognizer?.write(data);
                     }
                 } catch (error) {
@@ -62,6 +64,7 @@ export default class WebAudioSpeechRecognizer {
 
             // 录音停止
             this.recorder.OnStop = (res: any) => {
+                console.log('webaudiospeechrecognizer.ts录音停止回调OnStop', res);
                 this.speechRecognizer?.stop();
                 this.OnRecorderStop(res);
             };

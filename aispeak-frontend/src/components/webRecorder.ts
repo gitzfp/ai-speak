@@ -132,41 +132,158 @@ export default class WebRecorder {
     // #endif
 
     try {
-      recorderManager.start({
-        duration: 60000,
-        sampleRate: 44100,
-        encodeBitRate: 192000,
-        format: format,
+      // 先移除可能存在的事件监听器，避免重复绑定
+  
+      
+      // 添加帧录制事件监听，实时获取音频数据
+      recorderManager.onFrameRecorded((res: any) => {
+        console.log('微信获取实时数据', res ? '有数据' : '无数据');
+        if (res && res.frameBuffer) {
+          try {
+            // 将帧数据转换为 Int8Array
+            const frameData = new Int8Array(res.frameBuffer);
+            
+            // 直接使用原始数据
+            this.OnReceivedData(frameData);
+            
+            // 累积音频数据
+            const newData = new Int8Array(this.allAudioData.length + frameData.length);
+            newData.set(this.allAudioData);
+            newData.set(frameData, this.allAudioData.length);
+            this.allAudioData = newData;
+            
+            console.log('处理音频帧数据成功，长度:', frameData.length);
+          } catch (error) {
+            console.error('处理音频帧数据失败:', error);
+          }
+        } else {
+          console.warn('帧数据为空');
+        }
       });
 
+      // 设置录音开始事件
+      recorderManager.onStart(() => {
+        console.log('微信录音开始ii');
+        this.audioData = []; // 清空缓存的音频数据
+        this.allAudioData = new Int8Array();
+      });
+      
+      // 确保在开始录音前设置好所有事件监听
       recorderManager.onStop((res: any) => {
+        console.log('微信录音停止', res ? '有数据' : '无数据');
         if (!res || !res.tempFilePath) {
-          this.OnError("录音结果无效");
+          console.warn('录音结果无效，使用累积的数据');
+          this.OnStop(this.allAudioData);
           return;
         }
 
+        // 读取完整的录音文件
         uni.getFileSystemManager().readFile({
           filePath: res.tempFilePath,
           success: (fileRes: any) => {
+            console.log('读取录音文件成功，大小:', fileRes.data ? fileRes.data.byteLength : 0);
             const audioData = new Int8Array(fileRes.data);
             this.allAudioData = audioData;
             this.OnStop(audioData);
           },
           fail: (err: any) => {
+            console.error('读取录音文件失败:', err);
             this.OnError(`读取录音文件失败: ${JSON.stringify(err)}`);
+            // 使用已累积的数据
+            this.OnStop(this.allAudioData);
           }
         });
       });
 
       recorderManager.onError((err: any) => {
+        console.error('微信录音错误:', err);
         this.OnError(err);
       });
 
+      // 使用更明确的录音参数
+      const recorderOptions = {
+        duration: 60000,
+        sampleRate: 16000,
+        numberOfChannels: 1,
+        encodeBitRate: 48000,
+        format: format,
+        frameSize: 20,  // 增大帧大小，提高兼容性
+        audioSource: 'auto' // 使用自动音频源
+      };
+      
+      console.log('开始录音，参数:', recorderOptions);
+      recorderManager.start(recorderOptions);
+      
     } catch (err) {
+      console.error('启动录音过程中出错:', err);
       this.OnError(err);
     }
   }
   // #endif
+
+  stop() {
+    console.log('WebRecorder stop 被调用');
+    
+    // #ifndef H5
+    if (this.wxRecorderManager) {
+      try {
+        // 检查录音状态，避免在非活动状态下调用stop
+        const recorderManager = uni.getRecorderManager();
+        recorderManager.onStop((res: any) => {
+          console.log('webRecorder.ts录音停止回调', res);
+          if (res && res.tempFilePath) {
+            uni.getFileSystemManager().readFile({
+              filePath: res.tempFilePath,
+              success: (fileRes: any) => {
+                const audioData = new Int8Array(fileRes.data);
+                this.allAudioData = audioData;
+                this.OnStop(audioData);
+              },
+              fail: (err: any) => {
+                this.OnError(`读取录音文件失败: ${JSON.stringify(err)}`);
+              }
+            });
+          } else {
+            // 如果没有录音文件，使用已累积的数据
+            this.OnStop(this.allAudioData);
+          }
+        });
+        
+        // 使用try-catch包裹stop调用
+        try {
+          this.wxRecorderManager.stop();
+        } catch (stopErr) {
+          console.error('停止录音出错:', stopErr);
+          // 如果停止失败，仍然调用OnStop回调，使用已累积的数据
+          this.OnStop(this.allAudioData);
+        }
+      } catch (err) {
+        console.error('停止录音过程中出错:', err);
+        this.OnError(`停止录音失败: ${err}`);
+        // 确保即使出错也调用OnStop
+        this.OnStop(this.allAudioData);
+      }
+    }
+    // #endif
+
+    // #ifdef H5
+    if (
+      !(
+        /Safari/.test(navigator.userAgent) &&
+        !/Chrome/.test(navigator.userAgent)
+      )
+    ) {
+      this.audioContext && this.audioContext.suspend();
+    }
+    this.audioContext && this.audioContext.suspend();
+    if (this.stream) {
+      this.stream.getTracks().forEach((track: any) => track.stop());
+      this.stream = null;
+    }
+    this.OnStop(this.allAudioData);
+    // #endif
+  }
+
 
   // #ifdef H5
   startH5Recording() {
@@ -287,38 +404,9 @@ export default class WebRecorder {
   }
   // #endif
 
-  stop() {
-    // #ifndef H5
-    if (this.wxRecorderManager) {
-      try {
-        this.wxRecorderManager.stop();
-      } catch (err) {
-        this.OnError(`停止录音失败: ${err}`);
-      }
-    }
-    // #endif
-
-    // #ifdef H5
-    if (
-      !(
-        /Safari/.test(navigator.userAgent) &&
-        !/Chrome/.test(navigator.userAgent)
-      )
-    ) {
-      this.audioContext && this.audioContext.suspend();
-    }
-    this.audioContext && this.audioContext.suspend();
-    if (this.stream) {
-      this.stream.getTracks().forEach((track: any) => track.stop());
-      this.stream = null;
-    }
-    this.OnStop(this.allAudioData);
-    // #endif
-  }
-
   OnReceivedData(data: Int8Array) {
     // 获取音频数据
-    console.log('接收到音频数据:', data);
+    console.log('接收到音频数据，长度:', data.length);
   }
 
   OnError(res: any) {
@@ -330,7 +418,7 @@ export default class WebRecorder {
       console.error('无效的录音结果');
       return;
     }
-    console.log('录音停止，音频数据:', res);
+    console.log('录音停止，音频数据长度:', res.length);
   }
 }
 
