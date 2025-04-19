@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y \
 
 # 安装 Python 依赖
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir safety && safety check --full-report
+# RUN pip install --no-cache-dir safety && safety check --full-report
+RUN pip install --no-cache-dir safety==2.3.5 && safety check --full-report
 
 # 第二阶段：运行环境
 FROM python:3.11-slim
