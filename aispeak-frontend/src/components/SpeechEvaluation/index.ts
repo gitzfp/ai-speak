@@ -198,6 +198,9 @@ export function useSpeechEvaluation(params: any, isLog: boolean = false) {
     console.log("SpeechEvaluation/index.ts:停止录音和识别");
     if (recorder.value) {
       recorder.value.stop();
+      setTimeout(() => {
+        recorder.value = null;
+      },300)
     }
     if (soeRecognizer.value) {
       soeRecognizer.value.stop();
