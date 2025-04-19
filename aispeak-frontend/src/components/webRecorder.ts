@@ -130,37 +130,18 @@ export default class WebRecorder {
       format = "mp3";
     }
     // #endif
-
     try {
-      // 先移除可能存在的事件监听器，避免重复绑定
-  
-      
-      // 添加帧录制事件监听，实时获取音频数据
-      recorderManager.onFrameRecorded((res: any) => {
-        console.log('微信获取实时数据', res ? '有数据' : '无数据');
-        if (res && res.frameBuffer) {
-          try {
-            // 将帧数据转换为 Int8Array
-            const frameData = new Int8Array(res.frameBuffer);
-            
-            // 直接使用原始数据
-            this.OnReceivedData(frameData);
-            
-            // 累积音频数据
-            const newData = new Int8Array(this.allAudioData.length + frameData.length);
-            newData.set(this.allAudioData);
-            newData.set(frameData, this.allAudioData.length);
-            this.allAudioData = newData;
-            
-            console.log('处理音频帧数据成功，长度:', frameData.length);
-          } catch (error) {
-            console.error('处理音频帧数据失败:', error);
-          }
-        } else {
-          console.warn('帧数据为空');
+     recorderManager.onFrameRecorded((res: any) => {
+      console.log('webRecorder录音帧录制事件onFrameRecorded', res);
+      if (res?.frameBuffer) {
+        try {
+          // 发送分片（示例用 base64，实际可传 ArrayBuffer）
+          this.OnReceivedData(res?.frameBuffer);
+        } catch (err) {
+          console.error('帧处理失败:', err);
         }
-      });
-
+      }
+    });
       // 设置录音开始事件
       recorderManager.onStart(() => {
         console.log('微信录音开始ii');
@@ -200,17 +181,14 @@ export default class WebRecorder {
         this.OnError(err);
       });
 
-      // 使用更明确的录音参数
       const recorderOptions = {
-        duration: 60000,
+        format: 'pcm',
         sampleRate: 16000,
+        frameSize: 0.2, // 降低帧大小，更频繁地发送数据
         numberOfChannels: 1,
-        encodeBitRate: 48000,
-        format: format,
-        frameSize: 20,  // 增大帧大小，提高兼容性
-        audioSource: 'auto' // 使用自动音频源
-      };
-      
+        encodeBitRate: 48000
+      }
+            
       console.log('开始录音，参数:', recorderOptions);
       recorderManager.start(recorderOptions);
       

@@ -170,9 +170,9 @@ const getScoreClass = (score: number) => {
 const hasInvalidScores = computed(() => {
   if (!finalResult.value) return false;
   const scores = [
-    parseFloat(finalResult.value.accuracy),
-    parseFloat(finalResult.value.fluency),
-    parseFloat(finalResult.value.completeness_score)
+    parseFloat(finalResult.value.accuracy || '0'),
+    parseFloat(finalResult.value.fluency || '0'),
+    parseFloat(finalResult.value.completeness_score || '0')
   ];
   return scores.some(score => score <= 0 || score === -100);
 });
@@ -318,31 +318,10 @@ const initSpeechEvaluation = () => {
 
 // 提取音频处理逻辑为单独函数，避免代码重复
 const processAudioData = async (int8Data: Int8Array) => {
-  console.log('[DEBUG] 完整评测结果，音频数据接收完成', int8Data.byteLength)
   const userId = uni.getStorageSync("user_id")
-  
+  console.log('[DEBUG] 完整评测结果，音频数据接收完成', int8Data.byteLength, userId)
   try {
-    let data;
-    if (utils.isWechat()) {
-      // 微信小程序处理方式
-      const tempFilePath = await new Promise((resolve, reject) => {
-        const fs = uni.getFileSystemManager()
-        const tempFilePath = `${wx.env.USER_DATA_PATH}/${Date.now()}.wav`
-        
-        fs.writeFile({
-          filePath: tempFilePath,
-          data: int8Data,
-          encoding: 'binary',
-          success: () => resolve(tempFilePath),
-          fail: reject
-        })
-      })
-      data = await utils.processAudioToWAV(tempFilePath, userId, props.refObj)
-    } else {
-      // H5处理方式：直接使用二进制数据
-      const blob = new Blob([int8Data], { type: 'audio/wav' })
-      data = await utils.processAudioToWAV(int8Data, userId, props.refObj)
-    }
+    let data = await utils.processAudioToWAV(int8Data, userId || 'pronunction', props.refObj)
 
     if (finalResult.value) {
       finalResult.value.voice_file = data
@@ -354,6 +333,7 @@ const processAudioData = async (int8Data: Int8Array) => {
     isRecording.value = false
   }
 }
+
 
 // 初始化 SDK
 initSpeechEvaluation();
@@ -379,7 +359,7 @@ const startRecording = () => {
     if (isRecording.value) {
       stopRecording();
     }
-  }, delay);
+  }, delay) as unknown as number;
 };
 
 const stopRecording = (count = 0) => {

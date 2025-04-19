@@ -88,42 +88,69 @@ const uploadBinaryData = async (ossKey: string, compressedData: any) => {
     // 将 compressedData 转换为 ArrayBuffer
     const arrayBuffer = compressedData instanceof ArrayBuffer
       ? compressedData
-      : await compressedData.arrayBuffer();
+      : await compressedData.arrayBuffer(); // Assuming compressedData might be a Blob in H5
 
     // 如果是微信环境，将 ArrayBuffer 转换为 Base64
     if (isWechat()) {
+      // 获取base64数据
       const base64Data = arrayBufferToBase64(arrayBuffer);
+      
+      console.log('准备上传base64数据，长度:', base64Data.length);
+      
+      // 修改URL，确保oss_key作为查询参数传递
+      const uploadUrl = `${baseUrl}/ali-oss/upload-file/?oss_key=${encodeURIComponent(ossKey)}`;
+      console.log('上传URL:', uploadUrl);
+      
+      // 打印请求数据，用于调试
+      const requestData = { base64_data: base64Data };
+      console.log('请求数据结构:', Object.keys(requestData));
+      
       const { data } = await uni.request({
-        url: `${baseUrl}/ali-oss/upload-file/?oss_key=${ossKey}`,
+        url: uploadUrl,
         method: "POST",
         header: {
           "Content-Type": "application/json"
         },
-        data: {
-          oss_key: ossKey,
-          content: base64Data
-        }
+        data: requestData
       });
+      
+      // 打印完整的响应数据，便于调试
+      console.log("服务器响应:", JSON.stringify(data));
+      
+      // Check if the response was successful
+      if (!data || data.code !== 1000) {
+        console.error("微信环境上传失败:", data);
+        throw new Error(data?.message || "上传失败");
+      }
+      
       console.log("微信环境上传成功:", data);
       return data;
     } else {
-      // 非微信环境，直接上传 ArrayBuffer
+      // 非微信环境，直接上传 ArrayBuffer/Blob
       const formData = new FormData();
-      const blob = new Blob([arrayBuffer], { type: "application/zip" });
-      formData.append("file", blob, "book.zip");
-      formData.append("oss_key", ossKey);
+      // Determine the correct filename from ossKey if possible, otherwise use a default
+      const filename = ossKey.split('/').pop() || 'audio.wav';
+      // Use the correct MIME type for WAV
+      const blob = compressedData instanceof Blob ? compressedData : new Blob([arrayBuffer], { type: "audio/wav" });
+      formData.append("file", blob, filename);
+      formData.append("oss_key", ossKey); // Send oss_key as a separate field
 
       const response = await fetch(`${baseUrl}/ali-oss/upload-file/?oss_key=${ossKey}`, {
         method: "POST",
         body: formData
+        // No 'Content-Type' header needed, fetch sets it correctly for FormData
       });
+      // Check if the response was successful before parsing JSON
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       console.log("非微信环境上传成功:", data);
       return data;
     }
   } catch (error) {
     console.error("上传失败:", error);
-    throw error;
+    throw error; // Re-throw the error after logging
   }
 };
 
@@ -131,7 +158,7 @@ const processAudioToWAV = async (
   int8Data: Int8Array,
   userId: string,
   refObj: { id?: string; word_id?: string }
-): Promise<string> => {
+): Promise<string | null> => { // Return type potentially null if upload fails
   const WAV_HEADER_SIZE = 44;
   const buffer = new ArrayBuffer(WAV_HEADER_SIZE + int8Data.length);
   const view = new DataView(buffer);
@@ -153,16 +180,35 @@ const processAudioToWAV = async (
 
   const wavData = new Uint8Array(buffer);
   wavData.set(int8Data, WAV_HEADER_SIZE);
-  const blob = new Blob([wavData], {type: 'audio/wav'});
 
   const now = new Date();
   const timeString = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-  const ossKey = `recordings/${userId}/${timeString}_${refObj.id || refObj.word_id}.wav`;
-  
-  await uploadFileToOSS(ossKey, blob);
-  const url = await getFileFromOSS(ossKey, false);
-  
-  return url
+  // Ensure refObj properties are handled if undefined
+  const refId = refObj.id || refObj.word_id || 'unknown';
+  const ossKey = `recordings/${userId}/${timeString}_${refId}.wav`;
+  let result;
+  try {
+    // Check if running in WeChat environment
+    if (isWechat()) {
+      // WeChat: Pass ArrayBuffer, uploadBinaryData handles Base64
+      result = await uploadFileToOSS(ossKey, wavData.buffer);
+    } else {
+      // Non-WeChat: Create Blob with correct type
+      const blob = new Blob([wavData], {type: 'audio/wav'});
+      result = await uploadFileToOSS(ossKey, blob);
+    }
+    console.log('wechat返回上传结果', result.data);
+    // Check the structure of the result before accessing nested properties
+    if (result && result.code === 1000 && result.data && result.data.url) {
+      return result.data.url;
+    } else {
+      console.error('上传成功但响应格式不符或无URL:', result);
+      return null; // Indicate failure or missing URL
+    }
+  } catch (error) {
+      console.error('processAudioToWAV 上传过程中出错:', error);
+      return null; // Indicate failure
+  }
 };
 
 

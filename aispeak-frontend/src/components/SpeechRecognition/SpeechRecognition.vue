@@ -70,7 +70,6 @@ const {
   stop: stopSdk,
   OnRecognitionStart,
   OnRecognitionResultChange,
-  OnRecognitionComplete,
   OnAudioComplete,
   OnError
 } = useSpeechRecognition(sdkConfig.value, true);

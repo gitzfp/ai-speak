@@ -37,20 +37,68 @@ async def check_file(oss_key: str):
         return ApiResponse.system_error(f"检查文件失败: {str(e)}")
 
 @router.post("/ali-oss/upload-file/")
-async def upload_file(request: Request, oss_key: str, file: UploadFile = File(None)):
+async def upload_file(
+    request: Request,
+    oss_key: str,
+    file: UploadFile = File(None)
+):
     """
     上传文件到阿里云 OSS...
     """
     try:
+        # 打印所有接收到的参数
+        print(f"接收到的请求参数: oss_key={oss_key}")
+        print(f"file 是否存在: {file is not None}")
+        
+        # 尝试从请求体中获取JSON数据
+        try:
+            json_data = await request.json()
+            print(f"JSON数据键: {json_data.keys()}")
+            base64_data = json_data.get('base64_data')
+            print(f"base64_data 是否存在: {base64_data is not None}")
+            if base64_data:
+                print(f"base64_data 长度: {len(base64_data)}")
+                print(f"base64_data 前30个字符: {base64_data[:30]}...")
+        except Exception as json_error:
+            print(f"解析JSON数据失败: {str(json_error)}")
+            base64_data = None
+        
+        # 打印请求体内容长度
+        body = await request.body()
+        print(f"请求体长度: {len(body)}")
+        
+        # 打印请求头
+        print(f"请求头: {request.headers}")
+        
         if file:
             # 添加上传结果检查
             result = bucket.put_object(oss_key, await file.read())
             if result.status != 200:
                 print(f"OSS上传失败，状态码：{result.status}")
                 return ApiResponse.error("OSS服务返回错误", code=result.status)
+        elif base64_data:  # 处理Base64数据
+            try:
+                # 检查base64_data是否包含逗号
+                if "," in base64_data:
+                    print(f"base64_data 包含逗号，分割后取第二部分")
+                    file_data = base64.b64decode(base64_data.split(",")[-1])
+                else:
+                    print(f"base64_data 不包含逗号，直接解码")
+                    file_data = base64.b64decode(base64_data)
                 
-        return ApiResponse.success(data={"oss_key": oss_key,  "url": f"{public_endpoint}/{oss_key}"}, message="上传成功")
+                print(f"解码后数据长度: {len(file_data)}")
+                result = bucket.put_object(oss_key, file_data)
+                if result.status != 200:
+                    return ApiResponse.error("OSS服务返回错误", code=result.status)
+            except Exception as decode_error:
+                print(f"Base64解码失败: {str(decode_error)}")
+                return ApiResponse.error(f"Base64解码失败: {str(decode_error)}", code=400)
+        else:
+            return ApiResponse.error("请提供文件或Base64数据", code=400)
+
+        return ApiResponse.success(data={"oss_key": oss_key, "url": f"{public_endpoint}/{oss_key}"}, message="上传成功")
     except Exception as e:
+        print(f"上传过程中发生异常: {str(e)}")
         return ApiResponse.system_error(f"上传失败: {str(e)}")
 
 @router.get("/ali-oss/get-file/")

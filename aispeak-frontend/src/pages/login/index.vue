@@ -36,7 +36,7 @@
     </view>
 
     <!-- 注册表单 -->
-    <view v-if="!isWeixin && !isshowRegisterForm" class="register-form">
+    <view v-if="!isWeixin && showRegisterForm" class="register-form">
       <!-- <input
         v-model="registerUsername"
         class="input"
