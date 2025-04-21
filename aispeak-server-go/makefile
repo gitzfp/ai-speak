@@ -85,11 +85,79 @@ baseline-init:
 
 # 开发环境基线（可选）
 baseline-dev:
+	@echo "正在为开发环境设置基线..."
+	cd db && atlas migrate hash \
+		--dir $(MIGRATION_DIR)
 	cd db && atlas migrate apply \
 		--env $(ENV_DEV) \
-		--baseline "20250422003045" \
 		--dir $(MIGRATION_DIR) \
 		--url $(DEV_DB_URL)
+
+baseline-allow-dirty:
+	@echo "正在为开发环境设置基线..."
+	cd db && atlas migrate hash \
+		--dir $(MIGRATION_DIR)
+	cd db && atlas migrate apply \
+		--env $(ENV_DEV) \
+		--dir $(MIGRATION_DIR) \
+		--url $(DEV_DB_URL) \
+		--allow-dirty
+
+# 开发环境基线（可选）- 使用基线版本
+baseline-with-version:
+	@echo "正在为开发环境设置基线版本..."
+	cd db && atlas schema apply \
+		--url $(DEV_DB_URL) \
+		--to file://migrations?version=$(shell ls -1 db/migrations/*.sql | sort | tail -1 | xargs basename | cut -d_ -f1) \
+		--dev-url $(DEV_DB_URL)
+
+# 从现有数据库创建迁移
+existing-db:
+	@echo "从现有数据库创建迁移..."
+	@mkdir -p db/migrations
+	cd db && atlas schema inspect \
+		--url $(DEV_DB_URL) \
+		--format '{{ sql . }}' > migrations/$(shell date +%Y%m%d%H%M%S)_init.sql
+	cd db && atlas migrate hash \
+		--dir $(MIGRATION_DIR)
+
+# 从现有数据库创建迁移并设置基线
+setup-existing-db:
+	@echo "从现有数据库创建迁移并设置基线..."
+	@mkdir -p db/migrations
+	cd db && atlas schema inspect \
+		--url $(DEV_DB_URL) \
+		--format '{{ sql . }}' > migrations/$(shell date +%Y%m%d%H%M%S)_init.sql
+	cd db && atlas migrate hash \
+		--dir $(MIGRATION_DIR)
+	@echo "正在设置基线..."
+	@VERSION=$$(date +%Y%m%d%H%M%S); \
+	echo "-- 创建Atlas版本表" > db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "CREATE TABLE IF NOT EXISTS atlas_schema_revisions (" >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "    version varchar(255) NOT NULL," >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "    description varchar(255) NOT NULL," >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "    type bigint unsigned NOT NULL DEFAULT 2," >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "    applied bigint NOT NULL DEFAULT 0," >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "    total bigint NOT NULL DEFAULT 0," >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "    executed_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP," >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "    execution_time bigint NOT NULL DEFAULT 0," >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "    error longtext NULL," >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "    error_stmt longtext NULL," >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "    hash varchar(255) NOT NULL," >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "    partial_hashes json NULL," >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "    operator_version varchar(255) NOT NULL," >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "    PRIMARY KEY (version)" >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo ") CHARSET utf8mb4 COLLATE utf8mb4_bin;" >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "" >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	echo "-- 标记所有现有迁移为已应用" >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	for file in $$(ls -1 db/migrations/*.sql | grep -v create_atlas_version.sql); do \
+		version=$$(basename $$file | cut -d_ -f1); \
+		echo "INSERT INTO atlas_schema_revisions (version, description, type, applied, total, executed_at, execution_time, hash, operator_version) VALUES ('$$version', 'existing', 2, 1, 1, NOW(), 0, 'manual-baseline', 'atlas-cli');" >> db/migrations/$${VERSION}_create_atlas_version.sql; \
+	done; \
+	cd db && mysql -u chatgpt -pchatgpt_plus -h localhost fluent_ai < migrations/$${VERSION}_create_atlas_version.sql
+	cd db && atlas migrate hash \
+		--dir $(MIGRATION_DIR)
+	@echo "基线设置完成，所有迁移已标记为已应用"
 
 schema-export: ## 导出当前数据库Schema
 	cd db && atlas schema inspect \
