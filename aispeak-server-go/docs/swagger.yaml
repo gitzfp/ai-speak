@@ -1,0 +1,293 @@
+basePath: /
+definitions:
+  controllers.CreateTaskContentRequest:
+    properties:
+      content_id:
+        type: integer
+      content_type:
+        type: string
+      custom_content:
+        type: string
+      difficulty:
+        type: string
+      metadata:
+        $ref: '#/definitions/models.JSON'
+      order_num:
+        type: integer
+      points:
+        type: integer
+    type: object
+  controllers.CreateTaskRequest:
+    properties:
+      allow_late_submission:
+        type: boolean
+      contents:
+        items:
+          $ref: '#/definitions/controllers.CreateTaskContentRequest'
+        type: array
+      deadline:
+        type: string
+      description:
+        type: string
+      status:
+        $ref: '#/definitions/models.TaskStatus'
+      subject:
+        $ref: '#/definitions/models.SubjectType'
+      task_type:
+        $ref: '#/definitions/models.TaskType'
+      title:
+        type: string
+    type: object
+  controllers.ListTaskResponse:
+    properties:
+      tasks:
+        items:
+          $ref: '#/definitions/controllers.TaskResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  controllers.TaskContentResponse:
+    properties:
+      content_type:
+        type: string
+      id:
+        type: integer
+      order_num:
+        type: integer
+      points:
+        type: integer
+    type: object
+  controllers.TaskResponse:
+    properties:
+      contents:
+        items:
+          $ref: '#/definitions/controllers.TaskContentResponse'
+        type: array
+      created_at:
+        type: string
+      id:
+        type: integer
+      status:
+        $ref: '#/definitions/models.TaskStatus'
+      title:
+        type: string
+    type: object
+  controllers.UpdateTaskRequest:
+    properties:
+      deadline:
+        type: string
+      description:
+        type: string
+      status:
+        $ref: '#/definitions/models.TaskStatus'
+      title:
+        type: string
+    type: object
+  models.JSON:
+    additionalProperties: true
+    type: object
+  models.SubjectType:
+    enum:
+    - english
+    - chinese
+    - math
+    - science
+    - history
+    - geography
+    - art
+    - music
+    - physical_education
+    - other
+    type: string
+    x-enum-comments:
+      Art: 美术
+      Chinese: 语文
+      English: 英语
+      Geography: 地理
+      History: 历史
+      Math: 数学
+      Music: 音乐
+      Other: 其他
+      PhysicalEducation: 体育
+      Science: 科学
+    x-enum-varnames:
+    - English
+    - Chinese
+    - Math
+    - Science
+    - History
+    - Geography
+    - Art
+    - Music
+    - PhysicalEducation
+    - Other
+  models.TaskStatus:
+    enum:
+    - draft
+    - published
+    - in_progress
+    - completed
+    - archived
+    type: string
+    x-enum-comments:
+      Archived: 已归档
+      Completed: 已完成
+      Draft: 草稿
+      InProgress: 进行中
+      Published: 已发布
+    x-enum-varnames:
+    - Draft
+    - Published
+    - InProgress
+    - Completed
+    - Archived
+  models.TaskType:
+    enum:
+    - dictation
+    - reading
+    - spelling
+    - translation
+    - comprehension
+    - composition
+    - math_problem
+    - science_experiment
+    - history_question
+    - art_assignment
+    type: string
+    x-enum-comments:
+      ArtAssignment: 艺术作业
+      Composition: 作文写作
+      Comprehension: 阅读理解
+      Dictation: 单词听写
+      HistoryQuestion: 历史问题
+      MathProblem: 数学题目
+      Reading: 句子跟读
+      ScienceExperiment: 科学实验
+      Spelling: 单词拼写
+      Translation: 翻译练习
+    x-enum-varnames:
+    - Dictation
+    - Reading
+    - Spelling
+    - Translation
+    - Comprehension
+    - Composition
+    - MathProblem
+    - ScienceExperiment
+    - HistoryQuestion
+    - ArtAssignment
+host: localhost:8080
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+    url: http://www.example.com/support
+  description: AI-Speak服务端API文档
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: AI-Speak API
+  version: "1.0"
+paths:
+  /tasks:
+    get:
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.ListTaskResponse'
+      summary: 分页查询任务
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 任务数据
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.CreateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.TaskResponse'
+      summary: 创建任务
+      tags:
+      - tasks
+  /tasks/{id}:
+    delete:
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: 删除任务
+      tags:
+      - tasks
+    get:
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.TaskResponse'
+      summary: 获取任务详情
+      tags:
+      - tasks
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 任务ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新数据
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.UpdateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.TaskResponse'
+      summary: 更新任务
+      tags:
+      - tasks
+swagger: "2.0"

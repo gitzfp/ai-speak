@@ -52,39 +52,11 @@ type Task struct {
 	
     LessonID      *uint `gorm:"index;comment:关联教学单元ID"`
     
+    // 保留关联关系，但删除TaskContent的具体定义
     TaskContents []TaskContent `gorm:"foreignKey:TaskID" json:"contents"`
 }
 
-// 任务内容表
-type TaskContent struct {
-	gorm.Model
-	Timestamp
-	
-	// 关联的任务ID
-	TaskID uint `gorm:"not null;index;comment:任务ID"`
-	
-	// 内容类型（例如：text/image/audio等）
-	ContentType string `gorm:"type:varchar(50);not null;comment:内容类型"`
-	
-	// 关联的标准内容ID（可空）
-	ContentID *uint `gorm:"comment:标准内容ID"`
-	
-	// 自定义内容（当没有标准内容时使用）
-	CustomContent string `gorm:"type:text;comment:自定义内容"`
-	
-	// 本题分值（默认10分）
-	Points int `gorm:"default:10;comment:本题分值"`
-	
-	// 难度级别（easy/medium/hard）
-	Difficulty string `gorm:"type:varchar(20);comment:难度级别"`
-	
-	// 元数据（JSON格式存储）
-	// 示例：{"audio_duration": 120, "word_count": 50}
-	Metadata JSON `gorm:"type:json;comment:元数据"`
-	
-	// 排序序号（从0开始）
-	OrderNum int `gorm:"default:0;comment:排序序号"`
-}
+// 删除这里的TaskContent定义，因为它已经在task_content.go中定义了
 
 // 任务模板表
 type TaskTemplate struct {
@@ -117,3 +89,4 @@ type TaskTemplate struct {
 	// 是否公开模板（默认不公开）
 	IsPublic bool `gorm:"default:false;comment:是否公开"`
 }
+

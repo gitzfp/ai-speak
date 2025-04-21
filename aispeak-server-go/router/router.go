@@ -2,44 +2,30 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gitzfp/ai-speak/aispeak-server-go/controllers" // 修正导入路径
+	"github.com/gitzfp/ai-speak/aispeak-server-go/controllers"
 )
 
-func SetupRouter() *gin.Engine {
+// SetupRouter 配置路由
+func SetupRouter(taskController *controllers.TaskController) *gin.Engine {
 	r := gin.Default()
 
-	api := r.Group("/api/v1")
+	// 任务相关路由
+	tasks := r.Group("/tasks")
 	{
-		// 教材相关路由
-		textbooks := api.Group("/textbooks")
-		{
-			textbooks.GET("", controller.ListTextbooks)
-			textbooks.POST("", controller.CreateTextbook)
-			textbooks.GET("/:id", controller.GetTextbook)
-			textbooks.PUT("/:id", controller.UpdateTextbook)
-			textbooks.DELETE("/:id", controller.DeleteTextbook)
-		}
-
-		// 课程相关路由
-		lessons := api.Group("/lessons")
-		{
-			lessons.GET("", controller.ListLessons)
-			lessons.POST("", controller.CreateLesson)
-			lessons.GET("/:id", controller.GetLesson)
-		}
-
-		// 添加其他资源路由...
-
-		// 新增任务相关路由
-		tasks := api.Group("/tasks")
-		{
-			tasks.GET("", controllers.ListTasks)
-			tasks.POST("", controllers.CreateTask)
-			tasks.GET("/:id", controllers.GetTask)
-			tasks.PUT("/:id", controllers.UpdateTask)
-			tasks.DELETE("/:id", controllers.DeleteTask)
-		}
+		tasks.GET("", taskController.ListTasks)
+		tasks.POST("", taskController.CreateTask)
+		tasks.GET("/:id", taskController.GetTask)
+		tasks.PUT("/:id", taskController.UpdateTask)
+		tasks.DELETE("/:id", taskController.DeleteTask)
 	}
+
+	// 其他路由组...
+	// templates := r.Group("/templates")
+	// {
+	//     templates.GET("", taskController.ListTemplates)
+	//     templates.POST("", taskController.CreateTemplate)
+	//     templates.GET("/:id", taskController.GetTemplate)
+	// }
 
 	return r
 }

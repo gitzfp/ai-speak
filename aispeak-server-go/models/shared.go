@@ -11,16 +11,19 @@ import (
 type TaskType string
 
 const (
-	Dictation        TaskType = "dictation"   // 单词听写
-	Reading          TaskType = "reading"     // 句子跟读
-	Spelling         TaskType = "spelling"    // 单词拼写
-	Translation      TaskType = "translation" // 翻译练习
-	Comprehension    TaskType = "comprehension" // 阅读理解
-	Composition      TaskType = "composition" // 作文写作
-	MathProblem      TaskType = "math_problem" // 数学题目
+	Dictation        TaskType = "dictation"       // 单词听写
+	Reading          TaskType = "reading"         // 句子跟读
+	Spelling         TaskType = "spelling"        // 单词拼写
+	Translation      TaskType = "translation"     // 翻译练习
+	Comprehension    TaskType = "comprehension"   // 阅读理解
+	Composition      TaskType = "composition"     // 作文写作
+	MathProblem      TaskType = "math_problem"    // 数学题目
 	ScienceExperiment TaskType = "science_experiment" // 科学实验
 	HistoryQuestion  TaskType = "history_question" // 历史问题
 	ArtAssignment    TaskType = "art_assignment"  // 艺术作业
+	Pronunciation    TaskType = "pronunciation"   // 发音测评
+	SentenceRepeat   TaskType = "sentence_repeat" // 句子跟读
+	Quiz             TaskType = "quiz"            // 测验
 )
 
 // 学科类型枚举

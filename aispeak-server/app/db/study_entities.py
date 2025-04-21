@@ -1,5 +1,5 @@
-from sqlalchemy import JSON,Column, String, DateTime, Integer, Index, Text, Boolean, func, ForeignKey, Date
-from app.db import Base, engine
+from sqlalchemy import Column, String, DateTime, Integer, Index, Text, Boolean, func, ForeignKey, Date
+from app.db import Base
 import datetime
 
 
