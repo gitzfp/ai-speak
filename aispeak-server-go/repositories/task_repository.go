@@ -9,13 +9,14 @@ type TaskRepository struct {
     DB *gorm.DB // Unexported field -> exported
 }
 
-func (r *WordRepo) GetByIDs(ids []int32) ([]models.Word, error) {
+// Change method receivers from WordRepo/SentenceRepo to TaskRepository
+func (r *TaskRepository) GetByIDs(ids []int32) ([]models.Word, error) {
     var words []models.Word
     err := r.DB.Where("word_id IN (?)", ids).Find(&words).Error
     return words, err
 }
 
-func (r *SentenceRepo) GetByLesson(bookID string, lessonID int) ([]models.LessonSentence, error) {
+func (r *TaskRepository) GetByLesson(bookID string, lessonID int) ([]models.LessonSentence, error) {
     var sentences []models.LessonSentence
     err := r.DB.Where("book_id = ? AND lesson_id = ?", bookID, lessonID).Find(&sentences).Error
     return sentences, err

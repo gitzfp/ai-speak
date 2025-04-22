@@ -1,13 +1,14 @@
 package controllers
 
 import (
+	"encoding/json" // Add this import
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gitzfp/ai-speak/aispeak-server-go/models"
 	"github.com/gitzfp/ai-speak/aispeak-server-go/services"
-    "time"
 )
 
 type TaskController struct {
@@ -28,34 +29,101 @@ func NewTaskController(service *services.TaskService) *TaskController {
 // @Router /tasks [post]
 // In CreateTask method, convert request contents to model
 func (c *TaskController) CreateTask(ctx *gin.Context) {
-    var req CreateTaskRequest
-    if err := ctx.ShouldBindJSON(&req); err != nil {
-        ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	var req CreateTaskRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-    task := req.ToModel()
-    
-    // Convert contents to model objects
-    var modelContents []*models.TaskContent
-    for _, reqContent := range req.Contents {
-        modelContents = append(modelContents, &models.TaskContent{
-            ContentType:   reqContent.ContentType,
-            ContentID:     reqContent.ContentID,
-            CustomContent: reqContent.CustomContent,
-            Points:        reqContent.Points,
-            Difficulty:    reqContent.Difficulty,
-            Metadata:      reqContent.Metadata,
-            OrderNum:      reqContent.OrderNum,
-        })
-    }
+	task := req.ToModel()
 
-    if err := c.service.CreateTaskWithContents(task, modelContents); err != nil {
-        ctx.JSON(http.StatusInternalServerError, gin.H{"error": "创建失败"})
-        return
-    }
+	// Convert contents to model objects
+	var modelContents []*models.TaskContent
+	for _, reqContent := range req.Contents {
+		content := &models.TaskContent{
+			ContentType:  reqContent.ContentType,
+			GenerateMode: "manual", // Default to manual mode
+			RefBookID:    reqContent.RefBookID,
+			RefLessonID:  reqContent.RefLessonID,
+			Points:       reqContent.Points,
+			// Metadata:     reqContent.Metadata, // Problematic line
+			OrderNum:     reqContent.OrderNum,
+		}
 
-    ctx.JSON(http.StatusCreated, NewTaskResponse(task))
+		// Safely convert Metadata to models.JSON
+		if reqContent.Metadata != nil {
+			jsonBytes, err := json.Marshal(reqContent.Metadata)
+			if err == nil {
+				var jsonMap models.JSON
+				if err = json.Unmarshal(jsonBytes, &jsonMap); err == nil {
+					content.Metadata = jsonMap // Assign the correctly typed map
+				} else {
+					ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid format for metadata"})
+					return
+				}
+			} else {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to process metadata"})
+				return
+			}
+		}
+
+
+		// Safely convert SelectedWordIDs to models.JSON
+		if reqContent.SelectedWordIDs != nil {
+			jsonBytes, err := json.Marshal(reqContent.SelectedWordIDs)
+			if err == nil {
+				var jsonMap models.JSON
+				if err = json.Unmarshal(jsonBytes, &jsonMap); err == nil {
+					content.SelectedWordIDs = jsonMap
+				} else {
+					// Handle potential unmarshal error, maybe log it or return bad request
+					ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid format for selected_word_ids"})
+					return
+				}
+			} else {
+				// Handle potential marshal error
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to process selected_word_ids"})
+				return
+			}
+		}
+
+		// Safely convert SelectedSentenceIDs to models.JSON
+		if reqContent.SelectedSentenceIDs != nil {
+			jsonBytes, err := json.Marshal(reqContent.SelectedSentenceIDs)
+			if err == nil {
+				var jsonMap models.JSON
+				if err = json.Unmarshal(jsonBytes, &jsonMap); err == nil {
+					content.SelectedSentenceIDs = jsonMap
+				} else {
+					// Handle potential unmarshal error
+					ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid format for selected_sentence_ids"})
+					return
+				}
+			} else {
+				// Handle potential marshal error
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to process selected_sentence_ids"})
+				return
+			}
+		}
+
+		modelContents = append(modelContents, content)
+	}
+
+	if err := c.service.CreateTaskWithContents(task, modelContents); err != nil {
+		// Consider logging the actual error from the service
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "创建失败: " + err.Error()}) // Provide more context
+		return
+	}
+
+	// Fetch the created task with contents to ensure the response is complete
+	createdTask, err := c.service.GetTaskDetails(task.ID)
+	if err != nil {
+		// Handle error fetching the created task
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "获取创建的任务失败"})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, NewTaskResponse(createdTask))
 }
 
 // Add the response builder implementations
@@ -212,13 +280,17 @@ type UpdateTaskRequest struct {
 }
 
 type CreateTaskContentRequest struct {
-    ContentType    string         `json:"content_type"`
-    ContentID      *uint          `json:"content_id"`
-    CustomContent  string         `json:"custom_content"`
-    Points         int            `json:"points"`
-    Difficulty     string         `json:"difficulty"`
-    Metadata       models.JSON    `json:"metadata"`
-    OrderNum       int            `json:"order_num"`
+    ContentType         string         `json:"content_type"`
+    ContentID           *uint          `json:"content_id"`
+    CustomContent       string         `json:"custom_content"`
+    Points              int            `json:"points"`
+    Difficulty          string         `json:"difficulty"`
+    Metadata            models.JSON    `json:"metadata"`
+    OrderNum            int            `json:"order_num"`
+    RefBookID           string         `json:"ref_book_id"`
+    RefLessonID         int            `json:"ref_lesson_id"`
+    SelectedWordIDs     interface{}    `json:"selected_word_ids"`
+    SelectedSentenceIDs interface{}    `json:"selected_sentence_ids"`
 }
 
 type TaskResponse struct {

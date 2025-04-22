@@ -15,7 +15,7 @@ type TaskContent struct {
     GenerateMode string `gorm:"size:20;default:'auto';comment:生成模式(auto/manual)"`
     
     // 保留教材单元关联用于自动生成
-    RefBookID    string `gorm:"size:50;index;comment:关联教材ID"`
+    RefBookID    string `gorm:"size:51;index;comment:关联教材ID"`
     RefLessonID  int    `gorm:"index;comment:关联单元ID"`
     
     // 新增手动选择字段
@@ -62,6 +62,41 @@ func (tc *TaskContent) GetDictationMetadata() (*DictationMetadata, error) {
 
 // SetDictationMetadata 设置听写任务元数据
 func (tc *TaskContent) SetDictationMetadata(meta *DictationMetadata) error {
+	data, err := json.Marshal(meta)
+	if err != nil {
+		return err
+	}
+	
+	var jsonMap map[string]interface{}
+	if err := json.Unmarshal(data, &jsonMap); err != nil {
+		return err
+	}
+	
+	tc.Metadata = jsonMap
+	return nil
+}
+
+// GetSentenceRepeatMetadata gets sentence repeat metadata
+func (tc *TaskContent) GetSentenceRepeatMetadata() (*SentenceRepeatMetadata, error) {
+	if tc.Metadata == nil {
+		return &SentenceRepeatMetadata{}, nil
+	}
+	
+	data, err := json.Marshal(tc.Metadata)
+	if err != nil {
+		return nil, err
+	}
+	
+	var meta SentenceRepeatMetadata
+	if err := json.Unmarshal(data, &meta); err != nil {
+		return nil, err
+	}
+	
+	return &meta, nil
+}
+
+// SetSentenceRepeatMetadata sets sentence repeat metadata
+func (tc *TaskContent) SetSentenceRepeatMetadata(meta *SentenceRepeatMetadata) error {
 	data, err := json.Marshal(meta)
 	if err != nil {
 		return err

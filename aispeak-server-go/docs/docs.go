@@ -202,7 +202,15 @@ const docTemplate = `{
                 },
                 "points": {
                     "type": "integer"
-                }
+                },
+                "ref_book_id": {
+                    "type": "string"
+                },
+                "ref_lesson_id": {
+                    "type": "integer"
+                },
+                "selected_sentence_ids": {},
+                "selected_word_ids": {}
             }
         },
         "controllers.CreateTaskRequest": {
@@ -387,7 +395,10 @@ const docTemplate = `{
                 "math_problem",
                 "science_experiment",
                 "history_question",
-                "art_assignment"
+                "art_assignment",
+                "pronunciation",
+                "sentence_repeat",
+                "quiz"
             ],
             "x-enum-comments": {
                 "ArtAssignment": "艺术作业",
@@ -396,8 +407,11 @@ const docTemplate = `{
                 "Dictation": "单词听写",
                 "HistoryQuestion": "历史问题",
                 "MathProblem": "数学题目",
+                "Pronunciation": "发音测评",
+                "Quiz": "测验",
                 "Reading": "句子跟读",
                 "ScienceExperiment": "科学实验",
+                "SentenceRepeat": "句子跟读",
                 "Spelling": "单词拼写",
                 "Translation": "翻译练习"
             },
@@ -411,7 +425,10 @@ const docTemplate = `{
                 "MathProblem",
                 "ScienceExperiment",
                 "HistoryQuestion",
-                "ArtAssignment"
+                "ArtAssignment",
+                "Pronunciation",
+                "SentenceRepeat",
+                "Quiz"
             ]
         }
     }

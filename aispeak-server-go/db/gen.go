@@ -1,9 +1,9 @@
 package main
 
 import (
-    "gorm.io/driver/mysql"
-    "gorm.io/gen"
-    "gorm.io/gorm"
+	"gorm.io/driver/mysql"
+	"gorm.io/gen"
+	"gorm.io/gorm"
 )
 
 func main() {

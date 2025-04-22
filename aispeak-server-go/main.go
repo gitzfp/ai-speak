@@ -77,7 +77,9 @@ func main() {
 
 	// 初始化服务层
 	taskRepo := repositories.NewTaskRepository(db)
-	taskService := services.NewTaskService(taskRepo)
+	wordRepo := repositories.NewWordRepository(db)
+	sentenceRepo := repositories.NewSentenceRepository(db)
+	taskService := services.NewTaskService(taskRepo, wordRepo, sentenceRepo)
 	taskController := controllers.NewTaskController(taskService)
 
 	// 配置路由

@@ -1,0 +1,139 @@
+# **✅ 第一步：准备 Atlas 配置文件 (`atlas.hcl`)**
+
+以 **Standalone mode** 为例（GORM 模型集中在一个目录下，并使用了 `gorm.Model` 或包含 `gorm` 标签）：
+
+```hcl
+# atlas.hcl
+data"external_schema" "gorm" {
+  program = [
+    "go", "run", "-mod=mod",
+    "ariga.io/atlas-provider-gorm",
+    "load",
+    "--path", "../models",# GORM 模型目录
+    "--dialect", "mysql"# 或 postgres, sqlite, sqlserver
+  ]
+}
+
+env "gorm" {
+  src = data.external_schema.gorm.url
+  dev = "mysql://chatgpt:chatgpt_plus@localhost:3306/fluent_ai_dev"# Atlantis 内部使用的开发数据库环境
+migration {
+    dir = "file://migrations"# 存放生成迁移文件的目录
+  }
+format {
+migrate {
+      diff = "{{ sql . \"  \" }}"
+    }
+  }
+}
+
+```
+
+可选步骤：为防止依赖丢失，你应添加 `tools.go` 以固定 `atlas-provider-gorm` 依赖：
+
+```go
+// tools.go
+//go:build tools
+package main
+
+import _ "ariga.io/atlas-provider-gorm/gormschema"
+
+```
+
+然后运行：
+
+```bash
+go mod tidy
+
+```
+
+---
+
+# **✅ 第二步：加载已有数据库状态（推荐）**
+
+建议使用 `atlas schema inspect` 将现有数据库结构导出为 SQL 文件，从而确保 Atlas 按照当前状态进行差异计算：
+
+```bash
+atlas schema inspect \
+  -u "mysql://chatgpt:chatgpt_plus@localhost:3306/fluent_ai" \
+  --format '{{ sql . }}' > schema.sql
+
+```
+
+你也可以设置一个复合 `atlas.hcl`，将 `schema.sql` 作为基线。例如：
+
+```hcl
+data"external_schema" "gorm" {
+  program = [
+    "go", "run", "-mod=mod",
+    "ariga.io/atlas-provider-gorm",
+    "load",
+    "--path", "../models",
+    "--dialect", "mysql"
+  ]
+}
+
+data"sql_schema" "db" {
+  url = "file://schema.sql"
+}
+
+env "gorm" {
+  src = data.external_schema.gorm.url
+  dev = "docker://mysql/8/dev"
+migration {
+    dir = "file://migrations"
+  }
+diff {
+    from = data.sql_schema.db.url
+  }
+}
+
+```
+
+---
+
+# **✅ 第三步：生成迁移文件**
+
+执行以下命令，Atlas 会自动对比 `from`（数据库当前状态）与 GORM 模型定义，生成 `.sql` 迁移文件：
+
+```bash
+atlas migrate diff --env gorm
+
+```
+
+生成结果示例：
+
+```
+migrations/
+  ├── 20240701123456.sql
+  └── atlas.sum
+
+```
+
+你可以查看 `.sql` 文件，确认其中包含的结构变更（如创建表、添加字段、修改索引等）。
+
+---
+
+# **✅ 第四步：迁移执行（生产或 staging 环境）**
+
+待确认无误后，可运行：
+
+```bash
+atlas migrate apply \
+  --dir "file://migrations" \
+  --url "mysql://user:pass@host:3306/dbname"
+
+```
+
+---
+
+# **🔁 后续迁移流程**
+
+每次更新 GORM 模型后，重复以下流程：
+
+```bash
+atlas migrate diff --env gorm
+
+```
+
+Atlas 将自动检测模型变化，并生成相应的迁移脚本，实现代码与数据库版本的统一管理。
