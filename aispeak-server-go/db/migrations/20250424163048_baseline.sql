@@ -13,9 +13,7 @@ CREATE TABLE `account` (
   `update_time` datetime NULL,
   `points` int NULL COMMENT "积分",
   `user_name` varchar(100) NULL COMMENT "用户昵称",
-  PRIMARY KEY (`id`),
-  UNIQUE INDEX `openid` (`openid`),
-  UNIQUE INDEX `phone_number` (`phone_number`)
+  PRIMARY KEY (`id`)
 ) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "account_collect" table
 CREATE TABLE `account_collect` (
@@ -65,22 +63,43 @@ CREATE TABLE `alembic_version` (
   `version_num` varchar(32) NOT NULL,
   PRIMARY KEY (`version_num`)
 ) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
--- Create "atlas_schema_revisions" table
-CREATE TABLE `atlas_schema_revisions` (
-  `version` varchar(255) NOT NULL,
-  `description` varchar(255) NOT NULL,
-  `type` bigint unsigned NOT NULL DEFAULT 2,
-  `applied` bigint NOT NULL DEFAULT 0,
-  `total` bigint NOT NULL DEFAULT 0,
-  `executed_at` timestamp NOT NULL,
-  `execution_time` bigint NOT NULL,
-  `error` longtext NULL,
-  `error_stmt` longtext NULL,
-  `hash` varchar(255) NOT NULL,
-  `partial_hashes` json NULL,
-  `operator_version` varchar(255) NOT NULL,
-  PRIMARY KEY (`version`)
-) CHARSET utf8mb4 COLLATE utf8mb4_bin;
+-- Create "class_students" table
+CREATE TABLE `class_students` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(3) NULL,
+  `updated_at` datetime(3) NULL,
+  `deleted_at` datetime(3) NULL,
+  `class_id` varchar(80) NOT NULL COMMENT "班级ID",
+  `student_id` varchar(80) NOT NULL COMMENT "学生ID",
+  `join_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT "加入日期",
+  `leave_date` datetime(3) NULL COMMENT "离开日期",
+  `status` varchar(20) NULL DEFAULT "active" COMMENT "状态",
+  `role` varchar(50) NULL COMMENT "班级角色",
+  PRIMARY KEY (`id`),
+  INDEX `idx_class_students_class_id` (`class_id`),
+  INDEX `idx_class_students_deleted_at` (`deleted_at`),
+  INDEX `idx_class_students_status` (`status`),
+  INDEX `idx_class_students_student_id` (`student_id`)
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+-- Create "classes" table
+CREATE TABLE `classes` (
+  `id` varchar(80) NOT NULL COMMENT "班级ID",
+  `name` varchar(200) NOT NULL COMMENT "班级名称",
+  `grade_level` varchar(50) NOT NULL COMMENT "年级",
+  `subject` varchar(50) NULL COMMENT "主教学科",
+  `school_id` varchar(80) NULL COMMENT "学校ID",
+  `teacher_id` varchar(80) NOT NULL COMMENT "班主任ID",
+  `status` varchar(20) NULL DEFAULT "active" COMMENT "状态",
+  `description` text NULL COMMENT "班级描述",
+  `created_at` datetime(3) NULL,
+  `updated_at` datetime(3) NULL,
+  PRIMARY KEY (`id`),
+  INDEX `idx_classes_grade_level` (`grade_level`),
+  INDEX `idx_classes_school_id` (`school_id`),
+  INDEX `idx_classes_status` (`status`),
+  INDEX `idx_classes_subject` (`subject`),
+  INDEX `idx_classes_teacher_id` (`teacher_id`)
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "file_detail" table
 CREATE TABLE `file_detail` (
   `id` varchar(80) NOT NULL,
@@ -175,6 +194,27 @@ CREATE TABLE `message_translate` (
   `create_time` datetime NULL,
   PRIMARY KEY (`id`)
 ) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+-- Create "notifications" table
+CREATE TABLE `notifications` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(3) NULL,
+  `updated_at` datetime(3) NULL,
+  `deleted_at` datetime(3) NULL,
+  `task_id` bigint unsigned NOT NULL COMMENT "任务ID",
+  `recipient_id` varchar(80) NOT NULL COMMENT "接收者ID",
+  `notification_type` varchar(50) NOT NULL COMMENT "通知类型",
+  `title` varchar(200) NOT NULL COMMENT "通知标题",
+  `message` text NOT NULL COMMENT "通知内容",
+  `is_read` bool NULL DEFAULT 0 COMMENT "是否已读",
+  `read_time` datetime(3) NULL COMMENT "阅读时间",
+  PRIMARY KEY (`id`),
+  INDEX `idx_notifications_deleted_at` (`deleted_at`),
+  INDEX `idx_notifications_is_read` (`is_read`),
+  INDEX `idx_notifications_notification_type` (`notification_type`),
+  INDEX `idx_notifications_read_time` (`read_time`),
+  INDEX `idx_notifications_recipient_id` (`recipient_id`),
+  INDEX `idx_notifications_task_id` (`task_id`)
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "settings_language" table
 CREATE TABLE `settings_language` (
   `id` varchar(80) NOT NULL,
@@ -230,9 +270,7 @@ CREATE TABLE `study_completion_records` (
   `speak_count` int NULL COMMENT "开口次数",
   `points` int NULL COMMENT "积分",
   `progress_data` text NULL COMMENT "存储类似 study_progress_reports 表的数据",
-  PRIMARY KEY (`id`),
-  INDEX `idx_user_book_date` (`user_id`, `book_id`, `lesson_id`, `type`),
-  INDEX `idx_user_date` (`user_id`, `date`)
+  PRIMARY KEY (`id`)
 ) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "study_plans" table
 CREATE TABLE `study_plans` (
@@ -261,8 +299,7 @@ CREATE TABLE `study_progress_reports` (
   `voice_file` varchar(300) NULL COMMENT "语音文件路径或 URL",
   `chinese` varchar(300) NULL COMMENT "中文翻译",
   `audio_url` varchar(300) NULL COMMENT "音频文件路径或 URL",
-  PRIMARY KEY (`id`),
-  INDEX `idx_user_book_date` (`user_id`, `book_id`, `lesson_id`, `content_type`)
+  PRIMARY KEY (`id`)
 ) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "study_records" table
 CREATE TABLE `study_records` (
@@ -294,8 +331,30 @@ CREATE TABLE `study_word_progress` (
   `type` int NULL COMMENT "单词类型（0=没全部学完模式，1=全部学完三种模式）",
   `create_time` datetime NULL COMMENT "创建时间",
   `update_time` datetime NULL COMMENT "更新时间",
+  PRIMARY KEY (`id`)
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+-- Create "submissions" table
+CREATE TABLE `submissions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(3) NULL,
+  `updated_at` datetime(3) NULL,
+  `deleted_at` datetime(3) NULL,
+  `student_task_id` bigint unsigned NOT NULL COMMENT "学生任务ID",
+  `content_id` bigint unsigned NOT NULL COMMENT "内容ID",
+  `response` text NULL COMMENT "回答内容",
+  `audio_url` varchar(500) NULL COMMENT "音频URL",
+  `image_url` varchar(500) NULL COMMENT "图片URL",
+  `file_url` varchar(500) NULL COMMENT "文件URL",
+  `is_correct` bool NULL COMMENT "是否正确",
+  `auto_score` double NULL COMMENT "自动评分",
+  `teacher_score` double NULL COMMENT "教师评分",
+  `feedback` text NULL COMMENT "单项反馈",
+  `attempt_count` bigint NULL DEFAULT 1 COMMENT "尝试次数",
   PRIMARY KEY (`id`),
-  INDEX `idx_user_word` (`user_id`, `word_id`)
+  INDEX `idx_submissions_content_id` (`content_id`),
+  INDEX `idx_submissions_deleted_at` (`deleted_at`),
+  INDEX `idx_submissions_is_correct` (`is_correct`),
+  INDEX `idx_submissions_student_task_id` (`student_task_id`)
 ) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "syllables" table
 CREATE TABLE `syllables` (
@@ -304,9 +363,7 @@ CREATE TABLE `syllables` (
   `content` varchar(50) NOT NULL COMMENT "音节内容",
   `sound_path` varchar(500) NULL COMMENT "音节发音音频路径",
   `phonetic` varchar(50) NULL COMMENT "音节音标",
-  PRIMARY KEY (`id`),
-  UNIQUE INDEX `content` (`content`),
-  INDEX `ix_syllables_id` (`id`)
+  PRIMARY KEY (`id`)
 ) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "sys_cache" table
 CREATE TABLE `sys_cache` (
@@ -346,6 +403,51 @@ CREATE TABLE `sys_feedback` (
   `contact` varchar(250) NOT NULL,
   `create_time` datetime NULL,
   PRIMARY KEY (`id`)
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+-- Create "task_class_relations" table
+CREATE TABLE `task_class_relations` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(3) NULL,
+  `updated_at` datetime(3) NULL,
+  `deleted_at` datetime(3) NULL,
+  `task_id` bigint unsigned NOT NULL COMMENT "任务ID",
+  `class_id` varchar(80) NOT NULL COMMENT "班级ID",
+  PRIMARY KEY (`id`),
+  INDEX `idx_task_class_relations_class_id` (`class_id`),
+  INDEX `idx_task_class_relations_deleted_at` (`deleted_at`),
+  INDEX `idx_task_class_relations_task_id` (`task_id`)
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+-- Create "task_target" table
+CREATE TABLE `task_target` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `info_cn` varchar(200) NOT NULL,
+  `info_en` varchar(200) NULL,
+  `lesson_id` varchar(500) NOT NULL,
+  `info_en_audio` varchar(500) NULL,
+  `match_type` int NOT NULL,
+  `status` int NULL,
+  `create_time` datetime NULL,
+  `update_time` datetime NULL,
+  PRIMARY KEY (`id`)
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+-- Create "task_templates" table
+CREATE TABLE `task_templates` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(3) NULL,
+  `updated_at` datetime(3) NULL,
+  `deleted_at` datetime(3) NULL,
+  `name` varchar(200) NOT NULL COMMENT "模板名称",
+  `description` text NULL COMMENT "模板描述",
+  `task_type` varchar(50) NOT NULL COMMENT "任务类型",
+  `subject` varchar(50) NOT NULL COMMENT "所属学科",
+  `content_structure` json NOT NULL COMMENT "内容结构",
+  `default_settings` json NULL COMMENT "默认设置",
+  `created_by` varchar(80) NOT NULL COMMENT "创建者ID",
+  `is_public` bool NULL DEFAULT 0 COMMENT "是否公开",
+  PRIMARY KEY (`id`),
+  INDEX `idx_task_templates_deleted_at` (`deleted_at`),
+  INDEX `idx_task_templates_subject` (`subject`),
+  INDEX `idx_task_templates_task_type` (`task_type`)
 ) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "textbook" table
 CREATE TABLE `textbook` (
@@ -413,6 +515,11 @@ CREATE TABLE `textbook_sentences` (
   `track_bottom` float NULL,
   PRIMARY KEY (`id`)
 ) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+-- Create "timestamps" table
+CREATE TABLE `timestamps` (
+  `created_at` datetime(3) NULL COMMENT "创建时间",
+  `updated_at` datetime(3) NULL COMMENT "更新时间"
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "topic" table
 CREATE TABLE `topic` (
   `id` varchar(80) NOT NULL,
@@ -432,9 +539,7 @@ CREATE TABLE `topic` (
   `created_by` varchar(80) NOT NULL,
   `create_time` datetime NULL,
   `update_time` datetime NULL,
-  PRIMARY KEY (`id`),
-  INDEX `created_by_index` (`created_by`),
-  INDEX `group_id_index` (`group_id`)
+  PRIMARY KEY (`id`)
 ) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "topic_group" table
 CREATE TABLE `topic_group` (
@@ -470,7 +575,7 @@ CREATE TABLE `topic_history` (
   `status` varchar(80) NOT NULL,
   `create_time` datetime NULL,
   PRIMARY KEY (`id`)
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci AUTO_INCREMENT 129;
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "topic_phrase" table
 CREATE TABLE `topic_phrase` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -483,9 +588,8 @@ CREATE TABLE `topic_phrase` (
   `created_by` varchar(80) NOT NULL,
   `create_time` datetime NULL,
   `update_time` datetime NULL,
-  PRIMARY KEY (`id`),
-  INDEX `topic_id_index` (`topic_id`)
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci AUTO_INCREMENT 1775;
+  PRIMARY KEY (`id`)
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "topic_session_relation" table
 CREATE TABLE `topic_session_relation` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -494,10 +598,8 @@ CREATE TABLE `topic_session_relation` (
   `account_id` varchar(80) NOT NULL,
   `create_time` datetime NULL,
   `update_time` datetime NULL,
-  PRIMARY KEY (`id`),
-  INDEX `session_id_index` (`session_id`),
-  INDEX `topic_id_index` (`topic_id`)
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci AUTO_INCREMENT 129;
+  PRIMARY KEY (`id`)
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "topic_target" table
 CREATE TABLE `topic_target` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -510,9 +612,8 @@ CREATE TABLE `topic_target` (
   `created_by` varchar(80) NOT NULL,
   `create_time` datetime NULL,
   `update_time` datetime NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE INDEX `uq_target_topic_type_seq` (`topic_id`, `type`, `sequence`)
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci AUTO_INCREMENT 102;
+  PRIMARY KEY (`id`)
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "word_syllables" table
 CREATE TABLE `word_syllables` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT "主键ID",
@@ -520,12 +621,8 @@ CREATE TABLE `word_syllables` (
   `syllable_id` int NOT NULL COMMENT "音节ID",
   `position` int NOT NULL COMMENT "音节在单词中的位置",
   `create_time` datetime NULL,
-  PRIMARY KEY (`id`),
-  INDEX `idx_word_syllable` (`word_id`, `syllable_id`),
-  INDEX `ix_word_syllables_id` (`id`),
-  INDEX `ix_word_syllables_syllable_id` (`syllable_id`),
-  INDEX `ix_word_syllables_word_id` (`word_id`)
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci AUTO_INCREMENT 64556;
+  PRIMARY KEY (`id`)
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 -- Create "words" table
 CREATE TABLE `words` (
   `id` int NOT NULL AUTO_INCREMENT COMMENT "主键ID",
@@ -550,6 +647,5 @@ CREATE TABLE `words` (
   `synonym` text NULL COMMENT "单词的近义词",
   `create_time` datetime NULL,
   `update_time` datetime NULL,
-  PRIMARY KEY (`id`),
-  INDEX `ix_words_id` (`id`)
-) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci AUTO_INCREMENT 9244;
+  PRIMARY KEY (`id`)
+) CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci;

@@ -28,7 +28,15 @@ func NewTaskService(repo *repositories.TaskRepository,
 }
 
 func (s *TaskService) CreateTaskWithContents(task *models.Task, contents []*models.TaskContent) error {
-	return s.repo.DB.Transaction(func(tx *gorm.DB) error {  // Changed db -> DB
+	// 验证任务类型和内容类型是否一致
+	for _, content := range contents {
+		err := models.ValidateTaskTypeAndContentType(task.TaskType, models.ContentType(content.ContentType))
+		if err != nil {
+			return err
+		}
+	}
+
+	return s.repo.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(task).Error; err != nil {
 			return err
 		}
@@ -49,8 +57,88 @@ func (s *TaskService) GetTaskDetails(id uint) (*models.Task, error) {
 	}
 	
 	var contents []models.TaskContent
-	if err := s.repo.DB.Where("task_id = ?", id).Find(&contents).Error; err != nil { // Changed db -> DB
+	if err := s.repo.DB.Where("task_id = ?", id).Find(&contents).Error; err != nil {
 		return nil, err
+	}
+	
+	// 遍历每个内容项，加载单词和句子数据
+	for i := range contents {
+		content := &contents[i]
+		
+		// 根据内容类型处理不同的元数据
+		switch content.ContentType {
+		case "dictation":
+			// 获取听写元数据
+			meta, err := content.GetDictationMetadata()
+			if err != nil {
+				continue // 跳过错误内容
+			}
+			
+			// 如果元数据中没有单词ID，但有参考教材和单元信息，则根据教材单元加载单词
+			if (meta.WordIDs == nil || len(meta.WordIDs) == 0) && content.RefBookID != "" && content.RefLessonID > 0 {
+				words, err := s.wordRepo.GetByLesson(content.RefBookID, content.RefLessonID)
+				if err == nil && len(words) > 0 {
+					// 使用所有单词或者限制数量
+					maxWords := 10 // 设置一个合理的最大值，也可以从配置中读取
+					if len(words) > maxWords {
+						words = words[:maxWords]
+					}
+					// 提取单词ID
+					var wordIDs []int32
+					for _, w := range words {
+						wordIDs = append(wordIDs, w.WordID)
+					}
+					meta.WordIDs = wordIDs
+					meta.Words = words
+					// 更新元数据
+					content.SetDictationMetadata(meta)
+				}
+			} else if len(meta.WordIDs) > 0 {
+				// 原有逻辑：加载单词数据
+				words, err := s.wordRepo.GetByIDs(meta.WordIDs)
+				if err == nil {
+					meta.Words = words
+					// 更新元数据
+					content.SetDictationMetadata(meta)
+				}
+			}
+			
+		case "sentence_repeat":
+			// 获取句子重复元数据
+			meta, err := content.GetSentenceRepeatMetadata()
+			if err != nil {
+				continue // 跳过错误内容
+			}
+			
+			// 如果元数据中没有句子ID，但有参考教材和单元信息，则根据教材单元加载句子
+			if (meta.SentenceIDs == nil || len(meta.SentenceIDs) == 0) && content.RefBookID != "" && content.RefLessonID > 0 {
+				sentences, err := s.sentenceRepo.GetByLesson(content.RefBookID, content.RefLessonID)
+				if err == nil && len(sentences) > 0 {
+					// 使用所有句子或者限制数量
+					maxSentences := 5 // 设置一个合理的最大值，也可以从配置中读取
+					if len(sentences) > maxSentences {
+						sentences = sentences[:maxSentences]
+					}
+					// 提取句子ID
+					var sentenceIDs []int32
+					for _, s := range sentences {
+						sentenceIDs = append(sentenceIDs, s.ID)
+					}
+					meta.SentenceIDs = sentenceIDs
+					meta.Sentences = sentences
+					// 更新元数据
+					content.SetSentenceRepeatMetadata(meta)
+				}
+			} else if len(meta.SentenceIDs) > 0 {
+				// 原有逻辑：加载句子数据
+				sentences, err := s.sentenceRepo.GetByIDs(meta.SentenceIDs)
+				if err == nil {
+					meta.Sentences = sentences
+					// 更新元数据
+					content.SetSentenceRepeatMetadata(meta)
+				}
+			}
+		}
 	}
 	
 	task.TaskContents = contents
@@ -76,7 +164,7 @@ func (s *TaskService) DeleteTask(id uint) error {
 
 // 增强列表查询
 func (s *TaskService) ListTasks(teacherID, status string, page, pageSize int) ([]models.Task, error) {
-    query := s.repo.DB.Preload("TaskContents")  // Changed s.db to s.repo.DB
+    query := s.repo.DB.Preload("TaskContents")
     
     if teacherID != "" {
         query = query.Where("teacher_id = ?", teacherID)
@@ -87,19 +175,100 @@ func (s *TaskService) ListTasks(teacherID, status string, page, pageSize int) ([
     
     var tasks []models.Task
     err := query.Offset((page - 1) * pageSize).Limit(pageSize).Find(&tasks).Error
-    return tasks, err
+    if err != nil {
+        return nil, err
+    }
+    
+    // 为每个任务加载单词和句子数据
+    for i := range tasks {
+        task := &tasks[i]
+        for j := range task.TaskContents {
+            content := &task.TaskContents[j]
+            
+            // 根据内容类型处理不同的元数据
+            switch content.ContentType {
+            case "dictation":
+                // 获取听写元数据
+                meta, err := content.GetDictationMetadata()
+                if err != nil {
+                    continue // 跳过错误内容
+                }
+                
+                // 如果元数据中没有单词ID，但有参考教材和单元信息，则根据教材单元加载单词
+                if (meta.WordIDs == nil || len(meta.WordIDs) == 0) && content.RefBookID != "" && content.RefLessonID > 0 {
+                    words, err := s.wordRepo.GetByLesson(content.RefBookID, content.RefLessonID)
+                    if err == nil && len(words) > 0 {
+                        // 使用所有单词或者限制数量
+                        maxWords := 10 // 设置一个合理的最大值，也可以从配置中读取
+                        if len(words) > maxWords {
+                            words = words[:maxWords]
+                        }
+                        // 提取单词ID
+                        var wordIDs []int32
+                        for _, w := range words {
+                            wordIDs = append(wordIDs, w.WordID)
+                        }
+                        meta.WordIDs = wordIDs
+                        meta.Words = words
+                        // 更新元数据
+                        content.SetDictationMetadata(meta)
+                    }
+                } else if len(meta.WordIDs) > 0 {
+                    // 原有逻辑：加载单词数据
+                    words, err := s.wordRepo.GetByIDs(meta.WordIDs)
+                    if err == nil {
+                        meta.Words = words
+                        // 更新元数据
+                        content.SetDictationMetadata(meta)
+                    }
+                }
+                
+            case "sentence_repeat":
+                // 获取句子重复元数据
+                meta, err := content.GetSentenceRepeatMetadata()
+                if err != nil {
+                    continue // 跳过错误内容
+                }
+                
+                // 如果元数据中没有句子ID，但有参考教材和单元信息，则根据教材单元加载句子
+                if (meta.SentenceIDs == nil || len(meta.SentenceIDs) == 0) && content.RefBookID != "" && content.RefLessonID > 0 {
+                    sentences, err := s.sentenceRepo.GetByLesson(content.RefBookID, content.RefLessonID)
+                    if err == nil && len(sentences) > 0 {
+                        // 使用所有句子或者限制数量
+                        maxSentences := 5 // 设置一个合理的最大值，也可以从配置中读取
+                        if len(sentences) > maxSentences {
+                            sentences = sentences[:maxSentences]
+                        }
+                        // 提取句子ID
+                        var sentenceIDs []int32
+                        for _, s := range sentences {
+                            sentenceIDs = append(sentenceIDs, s.ID)
+                        }
+                        meta.SentenceIDs = sentenceIDs
+                        meta.Sentences = sentences
+                        // 更新元数据
+                        content.SetSentenceRepeatMetadata(meta)
+                    }
+                } else if len(meta.SentenceIDs) > 0 {
+                    // 原有逻辑：加载句子数据
+                    sentences, err := s.sentenceRepo.GetByIDs(meta.SentenceIDs)
+                    if err == nil {
+                        meta.Sentences = sentences
+                        // 更新元数据
+                        content.SetSentenceRepeatMetadata(meta)
+                    }
+                }
+            }
+        }
+    }
+    
+    return tasks, nil
 }
 
 func (s *TaskService) CreateTask(task models.Task) error {
     // 开启事务
     return s.repo.DB.Transaction(func(tx *gorm.DB) error {
         // 创建主任务记录
-        // 问题：应该使用仓库方法而不是直接操作DB
-        // 修改前：
-        // if err := tx.Create(&task).Error; ... 
-        
-        // 修改后：
-        // if err := s.repo.CreateInTransaction(tx, &task); ...
         if err := tx.Create(&task).Error; err != nil {
             return err
         }
@@ -108,6 +277,12 @@ func (s *TaskService) CreateTask(task models.Task) error {
         for i := range task.TaskContents {
             content := &task.TaskContents[i]
             content.TaskID = task.ID
+            
+            // 验证任务类型和内容类型是否一致
+            err := models.ValidateTaskTypeAndContentType(task.TaskType, models.ContentType(content.ContentType))
+            if err != nil {
+                return err
+            }
 
             // 处理手动选择模式
             if content.GenerateMode == "manual" {
