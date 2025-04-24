@@ -9,7 +9,9 @@ type TaskRepository struct {
     DB *gorm.DB // Unexported field -> exported
 }
 
-// Change method receivers from WordRepo/SentenceRepo to TaskRepository
+// 以下两个方法应该从TaskRepository中移除，它们属于WordRepository和SentenceRepository
+// 保留注释作为提醒
+/*
 func (r *TaskRepository) GetByIDs(ids []int32) ([]models.Word, error) {
     var words []models.Word
     err := r.DB.Where("word_id IN (?)", ids).Find(&words).Error
@@ -21,6 +23,7 @@ func (r *TaskRepository) GetByLesson(bookID string, lessonID int) ([]models.Less
     err := r.DB.Where("book_id = ? AND lesson_id = ?", bookID, lessonID).Find(&sentences).Error
     return sentences, err
 }
+*/
 
 func NewTaskRepository(db *gorm.DB) *TaskRepository {
     return &TaskRepository{DB: db} // Update field name

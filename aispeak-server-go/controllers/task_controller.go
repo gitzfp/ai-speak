@@ -37,6 +37,21 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 
 	task := req.ToModel()
 
+	// 验证请求中的内容类型是否合法
+	for _, reqContent := range req.Contents {
+		contentType := models.ContentType(reqContent.ContentType)
+		if err := models.ValidateContentTypeOnly(contentType); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "内容类型无效: " + reqContent.ContentType})
+			return
+		}
+		
+		// 验证任务类型和内容类型是否匹配
+		if err := models.ValidateTaskTypeAndContentType(task.TaskType, contentType); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
 	// Convert contents to model objects
 	var modelContents []*models.TaskContent
 	for _, reqContent := range req.Contents {
@@ -67,42 +82,30 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 			}
 		}
 
-
-		// Safely convert SelectedWordIDs to models.JSON
 		if reqContent.SelectedWordIDs != nil {
-			jsonBytes, err := json.Marshal(reqContent.SelectedWordIDs)
-			if err == nil {
-				var jsonMap models.JSON
-				if err = json.Unmarshal(jsonBytes, &jsonMap); err == nil {
-					content.SelectedWordIDs = jsonMap
-				} else {
-					// Handle potential unmarshal error, maybe log it or return bad request
-					ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid format for selected_word_ids"})
-					return
+			// Type assertion to convert interface{} to []int32
+			if ids, ok := reqContent.SelectedWordIDs.([]interface{}); ok {
+				var wordIDs []int32
+				for _, id := range ids {
+					if idFloat, ok := id.(float64); ok {
+						wordIDs = append(wordIDs, int32(idFloat))
+					}
 				}
-			} else {
-				// Handle potential marshal error
-				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to process selected_word_ids"})
-				return
+				content.SelectedWordIDs = wordIDs
 			}
 		}
 
 		// Safely convert SelectedSentenceIDs to models.JSON
 		if reqContent.SelectedSentenceIDs != nil {
-			jsonBytes, err := json.Marshal(reqContent.SelectedSentenceIDs)
-			if err == nil {
-				var jsonMap models.JSON
-				if err = json.Unmarshal(jsonBytes, &jsonMap); err == nil {
-					content.SelectedSentenceIDs = jsonMap
-				} else {
-					// Handle potential unmarshal error
-					ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid format for selected_sentence_ids"})
-					return
+			// Type assertion to convert interface{} to []int32
+			if ids, ok := reqContent.SelectedSentenceIDs.([]interface{}); ok {
+				var sentenceIDs []int32
+				for _, id := range ids {
+					if idFloat, ok := id.(float64); ok {
+						sentenceIDs = append(sentenceIDs, int32(idFloat))
+					}
 				}
-			} else {
-				// Handle potential marshal error
-				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to process selected_sentence_ids"})
-				return
+				content.SelectedSentenceIDs = sentenceIDs
 			}
 		}
 
@@ -155,12 +158,36 @@ func NewListTaskResponse(tasks []models.Task) ListTaskResponse {
 func convertContents(contents []models.TaskContent) []TaskContentResponse {
     var result []TaskContentResponse
     for _, c := range contents {
-        result = append(result, TaskContentResponse{
+        contentResp := TaskContentResponse{
             ID:          c.ID,
             ContentType: c.ContentType,
             Points:      c.Points,
             OrderNum:    c.OrderNum,
-        })
+        }
+        
+        // 根据内容类型处理元数据，确保返回单词和句子数据
+        switch c.ContentType {
+        case "dictation":
+            meta, err := c.GetDictationMetadata()
+            if err == nil && meta != nil {
+                // 将元数据转换为JSON
+                metaBytes, err := json.Marshal(meta)
+                if err == nil {
+                    contentResp.Metadata = metaBytes
+                }
+            }
+        case "sentence_repeat":
+            meta, err := c.GetSentenceRepeatMetadata()
+            if err == nil && meta != nil {
+                // 将元数据转换为JSON
+                metaBytes, err := json.Marshal(meta)
+                if err == nil {
+                    contentResp.Metadata = metaBytes
+                }
+            }
+        }
+        
+        result = append(result, contentResp)
     }
     return result
 }
@@ -302,10 +329,11 @@ type TaskResponse struct {
 }
 
 type TaskContentResponse struct {
-    ID           uint      `json:"id"`
-    ContentType  string    `json:"content_type"`
-    Points       int       `json:"points"`
-    OrderNum     int       `json:"order_num"`
+    ID           uint             `json:"id"`
+    ContentType  string           `json:"content_type"`
+    Points       int              `json:"points"`
+    OrderNum     int              `json:"order_num"`
+    Metadata     json.RawMessage  `json:"metadata,omitempty"` // 增加元数据字段，包含单词和句子
 }
 
 type ListTaskResponse struct {
