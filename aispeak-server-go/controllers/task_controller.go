@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"encoding/json" // Add this import
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
@@ -57,56 +57,14 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 	for _, reqContent := range req.Contents {
 		content := &models.TaskContent{
 			ContentType:  reqContent.ContentType,
-			GenerateMode: "manual", // Default to manual mode
+			GenerateMode: "manual",
 			RefBookID:    reqContent.RefBookID,
 			RefLessonID:  reqContent.RefLessonID,
 			Points:       reqContent.Points,
-			// Metadata:     reqContent.Metadata, // Problematic line
+			Metadata:     reqContent.Metadata,
 			OrderNum:     reqContent.OrderNum,
-		}
-
-		// Safely convert Metadata to models.JSON
-		if reqContent.Metadata != nil {
-			jsonBytes, err := json.Marshal(reqContent.Metadata)
-			if err == nil {
-				var jsonMap models.JSON
-				if err = json.Unmarshal(jsonBytes, &jsonMap); err == nil {
-					content.Metadata = jsonMap // Assign the correctly typed map
-				} else {
-					ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid format for metadata"})
-					return
-				}
-			} else {
-				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to process metadata"})
-				return
-			}
-		}
-
-		if reqContent.SelectedWordIDs != nil {
-			// Type assertion to convert interface{} to []int32
-			if ids, ok := reqContent.SelectedWordIDs.([]interface{}); ok {
-				var wordIDs []int32
-				for _, id := range ids {
-					if idFloat, ok := id.(float64); ok {
-						wordIDs = append(wordIDs, int32(idFloat))
-					}
-				}
-				content.SelectedWordIDs = wordIDs
-			}
-		}
-
-		// Safely convert SelectedSentenceIDs to models.JSON
-		if reqContent.SelectedSentenceIDs != nil {
-			// Type assertion to convert interface{} to []int32
-			if ids, ok := reqContent.SelectedSentenceIDs.([]interface{}); ok {
-				var sentenceIDs []int32
-				for _, id := range ids {
-					if idFloat, ok := id.(float64); ok {
-						sentenceIDs = append(sentenceIDs, int32(idFloat))
-					}
-				}
-				content.SelectedSentenceIDs = sentenceIDs
-			}
+			SelectedWordIDs:     reqContent.SelectedWordIDs,
+			SelectedSentenceIDs: reqContent.SelectedSentenceIDs,
 		}
 
 		modelContents = append(modelContents, content)
@@ -288,15 +246,94 @@ func (c *TaskController) DeleteTask(ctx *gin.Context) {
 
 
 // Add these structs before TaskController definition
+// CreateTaskRequest 创建任务请求体
+// swagger:model
 type CreateTaskRequest struct {
-    Title              string                     `json:"title"`
-    Description        string                     `json:"description"`
-    TaskType           models.TaskType           `json:"task_type"`
-    Subject            models.SubjectType         `json:"subject"`
-    Deadline           *time.Time                 `json:"deadline"`
-    Status             models.TaskStatus         `json:"status"`
-    AllowLateSubmission bool                      `json:"allow_late_submission"`
-    Contents           []CreateTaskContentRequest `json:"contents"`
+    // 任务标题（必填，3-100字符）
+    // Required: true
+    // MinLength: 3
+    // MaxLength: 100
+    Title       string         `json:"title" binding:"required,min=3,max=100"`
+    
+    // 任务类型（dictation: 听写，sentence_repeat: 句子跟读）
+    // Required: true
+    // Enum: dictation,sentence_repeat
+    TaskType    models.TaskType `json:"task_type" binding:"required"`
+    
+    // 学科类型（目前仅支持english）
+    // Required: true
+    // Enum: english
+    Subject     models.SubjectType `json:"subject" binding:"required"`
+    
+    // 任务内容集合（至少包含1个内容项）
+    // Required: true
+    // MinSize: 1
+    Contents    []CreateTaskContentRequest `json:"contents" binding:"required,min=1"`
+    
+    // 是否允许迟交（默认false）
+    // Example: true
+    AllowLateSubmission bool `json:"allow_late_submission"`
+    
+    // 截止时间（当status=published时必填）
+    // Format: date-time
+    Deadline    *time.Time     `json:"deadline,omitempty" binding:"required_if=Status published"`
+    
+    // 任务描述（可选，最大500字符）
+    // MaxLength: 500
+    Description string         `json:"description,omitempty" binding:"max=500"`
+    
+    // 任务状态（draft: 草稿，published: 已发布）
+    // Enum: draft,published
+    Status      models.TaskStatus `json:"status" binding:"omitempty,oneof=draft published"`
+}
+
+// CreateTaskContentRequest 任务内容项
+type CreateTaskContentRequest struct {
+    // 内容类型（dictation: 听写，sentence_repeat: 句子跟读）
+    // Required: true
+    // Enum: dictation,sentence_repeat
+    ContentType         string         `json:"content_type" binding:"required"`
+    
+    // 关联内容ID（可选）
+    ContentID           *uint          `json:"content_id"`
+    
+    // 自定义内容文本（可选，最大长度1000）
+    // MaxLength: 1000
+    CustomContent       string         `json:"custom_content" binding:"max=1000"`
+    
+    // 题目分值（1-100分）
+    // Required: true
+    // Minimum: 1
+    // Maximum: 100
+    Points              int            `json:"points" binding:"required,min=1,max=100"`
+    
+    // 难度等级（easy/medium/hard）
+    // Enum: easy,medium,hard
+    Difficulty          string         `json:"difficulty"`
+    
+    // 元数据（自动生成，无需手动填写）
+    Metadata            models.JSON    `json:"metadata" swaggerignore:"true"`
+    
+    // 排序序号（>=0）
+    // Required: true
+    // Minimum: 0
+    OrderNum            int            `json:"order_num" binding:"required,min=0"`
+    
+    // 教材ID（generate_mode=auto时必填）
+    // Example: pep_english
+    RefBookID           string         `json:"ref_book_id" binding:"required_if=GenerateMode auto"`
+    
+    // 教材单元ID（generate_mode=auto时必填）
+    // Example: 3
+    RefLessonID         int            `json:"ref_lesson_id" binding:"required_if=GenerateMode auto"`
+    
+    // 已选单词ID列表（generate_mode=manual且content_type=dictation时必填）
+    // Example: [1,2,3]
+    SelectedWordIDs     []int32        `json:"selected_word_ids" binding:"required_if=GenerateMode manual ContentType dictation"`
+    
+    // 已选句子ID列表（generate_mode=manual且content_type=sentence_repeat时必填）
+    // Example: [101,102]
+    SelectedSentenceIDs []int32        `json:"selected_sentence_ids" binding:"required_if=GenerateMode manual ContentType sentence_repeat"`
 }
 
 type UpdateTaskRequest struct {
@@ -304,20 +341,6 @@ type UpdateTaskRequest struct {
     Description string             `json:"description"`
     Status      models.TaskStatus  `json:"status"`
     Deadline    *time.Time         `json:"deadline"`
-}
-
-type CreateTaskContentRequest struct {
-    ContentType         string         `json:"content_type"`
-    ContentID           *uint          `json:"content_id"`
-    CustomContent       string         `json:"custom_content"`
-    Points              int            `json:"points"`
-    Difficulty          string         `json:"difficulty"`
-    Metadata            models.JSON    `json:"metadata"`
-    OrderNum            int            `json:"order_num"`
-    RefBookID           string         `json:"ref_book_id"`
-    RefLessonID         int            `json:"ref_lesson_id"`
-    SelectedWordIDs     interface{}    `json:"selected_word_ids"`
-    SelectedSentenceIDs interface{}    `json:"selected_sentence_ids"`
 }
 
 type TaskResponse struct {
@@ -333,7 +356,9 @@ type TaskContentResponse struct {
     ContentType  string           `json:"content_type"`
     Points       int              `json:"points"`
     OrderNum     int              `json:"order_num"`
-    Metadata     json.RawMessage  `json:"metadata,omitempty"` // 增加元数据字段，包含单词和句子
+    // Metadata contains structured content details
+    // swagger:strfmt byte
+    Metadata     json.RawMessage  `json:"metadata,omitempty" swaggertype:"object"`
 }
 
 type ListTaskResponse struct {

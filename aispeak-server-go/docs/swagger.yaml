@@ -1,48 +1,135 @@
-basePath: /
 definitions:
   controllers.CreateTaskContentRequest:
     properties:
       content_id:
+        description: 关联内容ID（可选）
         type: integer
       content_type:
+        description: |-
+          内容类型（dictation: 听写，sentence_repeat: 句子跟读）
+          Required: true
+          Enum: dictation,sentence_repeat
         type: string
       custom_content:
+        description: |-
+          自定义内容文本（可选，最大长度1000）
+          MaxLength: 1000
+        maxLength: 1000
         type: string
       difficulty:
+        description: |-
+          难度等级（easy/medium/hard）
+          Enum: easy,medium,hard
         type: string
-      metadata:
-        $ref: '#/definitions/models.JSON'
       order_num:
+        description: |-
+          排序序号（>=0）
+          Required: true
+          Minimum: 0
+        minimum: 0
         type: integer
       points:
+        description: |-
+          题目分值（1-100分）
+          Required: true
+          Minimum: 1
+          Maximum: 100
+        maximum: 100
+        minimum: 1
         type: integer
       ref_book_id:
+        description: |-
+          教材ID（generate_mode=auto时必填）
+          Example: pep_english
         type: string
       ref_lesson_id:
+        description: |-
+          教材单元ID（generate_mode=auto时必填）
+          Example: 3
         type: integer
-      selected_sentence_ids: {}
-      selected_word_ids: {}
+      selected_sentence_ids:
+        description: |-
+          已选句子ID列表（generate_mode=manual且content_type=sentence_repeat时必填）
+          Example: [101,102]
+        items:
+          type: integer
+        type: array
+      selected_word_ids:
+        description: |-
+          已选单词ID列表（generate_mode=manual且content_type=dictation时必填）
+          Example: [1,2,3]
+        items:
+          type: integer
+        type: array
+    required:
+    - content_type
+    - order_num
+    - points
     type: object
   controllers.CreateTaskRequest:
     properties:
       allow_late_submission:
+        description: |-
+          是否允许迟交（默认false）
+          Example: true
         type: boolean
       contents:
+        description: |-
+          任务内容集合（至少包含1个内容项）
+          Required: true
+          MinSize: 1
         items:
           $ref: '#/definitions/controllers.CreateTaskContentRequest'
+        minItems: 1
         type: array
       deadline:
+        description: |-
+          截止时间（当status=published时必填）
+          Format: date-time
         type: string
       description:
+        description: |-
+          任务描述（可选，最大500字符）
+          MaxLength: 500
+        maxLength: 500
         type: string
       status:
-        $ref: '#/definitions/models.TaskStatus'
+        allOf:
+        - $ref: '#/definitions/models.TaskStatus'
+        description: |-
+          任务状态（draft: 草稿，published: 已发布）
+          Enum: draft,published
+        enum:
+        - draft
+        - published
       subject:
-        $ref: '#/definitions/models.SubjectType'
+        allOf:
+        - $ref: '#/definitions/models.SubjectType'
+        description: |-
+          学科类型（目前仅支持english）
+          Required: true
+          Enum: english
       task_type:
-        $ref: '#/definitions/models.TaskType'
+        allOf:
+        - $ref: '#/definitions/models.TaskType'
+        description: |-
+          任务类型（dictation: 听写，sentence_repeat: 句子跟读）
+          Required: true
+          Enum: dictation,sentence_repeat
       title:
+        description: |-
+          任务标题（必填，3-100字符）
+          Required: true
+          MinLength: 3
+          MaxLength: 100
+        maxLength: 100
+        minLength: 3
         type: string
+    required:
+    - contents
+    - subject
+    - task_type
+    - title
     type: object
   controllers.ListTaskResponse:
     properties:
@@ -59,6 +146,11 @@ definitions:
         type: string
       id:
         type: integer
+      metadata:
+        description: |-
+          Metadata contains structured content details
+          swagger:strfmt byte
+        type: object
       order_num:
         type: integer
       points:
@@ -89,9 +181,6 @@ definitions:
         $ref: '#/definitions/models.TaskStatus'
       title:
         type: string
-    type: object
-  models.JSON:
-    additionalProperties: true
     type: object
   models.SubjectType:
     enum:
@@ -151,60 +240,25 @@ definitions:
   models.TaskType:
     enum:
     - dictation
-    - reading
     - spelling
-    - translation
-    - comprehension
-    - composition
-    - math_problem
-    - science_experiment
-    - history_question
-    - art_assignment
     - pronunciation
     - sentence_repeat
     - quiz
     type: string
     x-enum-comments:
-      ArtAssignment: 艺术作业
-      Composition: 作文写作
-      Comprehension: 阅读理解
       Dictation: 单词听写
-      HistoryQuestion: 历史问题
-      MathProblem: 数学题目
       Pronunciation: 发音测评
       Quiz: 测验
-      Reading: 句子跟读
-      ScienceExperiment: 科学实验
       SentenceRepeat: 句子跟读
       Spelling: 单词拼写
-      Translation: 翻译练习
     x-enum-varnames:
     - Dictation
-    - Reading
     - Spelling
-    - Translation
-    - Comprehension
-    - Composition
-    - MathProblem
-    - ScienceExperiment
-    - HistoryQuestion
-    - ArtAssignment
     - Pronunciation
     - SentenceRepeat
     - Quiz
-host: localhost:8080
 info:
-  contact:
-    email: support@example.com
-    name: API Support
-    url: http://www.example.com/support
-  description: AI-Speak服务端API文档
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
-  title: AI-Speak API
-  version: "1.0"
+  contact: {}
 paths:
   /tasks:
     get:
