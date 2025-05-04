@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"errors"
 	"math/rand/v2"
 
 	"github.com/gitzfp/ai-speak/aispeak-server-go/models"
@@ -9,22 +10,30 @@ import (
 	"gorm.io/gorm"
 )
 
+type ITaskService interface {
+    CreateTaskWithContents(task *models.Task, contents []*models.TaskContent) error
+    GetTaskDetails(id uint) (*models.Task, error)
+    ListTasks(teacherID, status string, page, pageSize int) ([]models.Task, error)
+    UpdateTask(task *models.Task) error
+    DeleteTask(id uint) error
+}
+
 // 问题：缺少单词和句子仓库的依赖
 type TaskService struct {
-    repo        *repositories.TaskRepository
-    wordRepo    *repositories.WordRepository     // 需要添加
-    sentenceRepo *repositories.SentenceRepository // 需要添加
+	repo         *repositories.TaskRepository
+	wordRepo     *repositories.WordRepository
+	contentRepo  *repositories.ContentRepository
 }
 
 // 需要修改构造函数
 func NewTaskService(repo *repositories.TaskRepository, 
-    wordRepo *repositories.WordRepository,
-    sentenceRepo *repositories.SentenceRepository) *TaskService {
-    return &TaskService{
-        repo: repo,
-        wordRepo: wordRepo,
-        sentenceRepo: sentenceRepo,
-    }
+	wordRepo *repositories.WordRepository,
+	contentRepo *repositories.ContentRepository) *TaskService {
+	return &TaskService{
+		repo:         repo,
+		wordRepo:     wordRepo,
+		contentRepo:  contentRepo,
+	}
 }
 
 func (s *TaskService) CreateTaskWithContents(task *models.Task, contents []*models.TaskContent) error {
@@ -112,7 +121,7 @@ func (s *TaskService) GetTaskDetails(id uint) (*models.Task, error) {
 			
 			// 如果元数据中没有句子ID，但有参考教材和单元信息，则根据教材单元加载句子
 			if (meta.SentenceIDs == nil || len(meta.SentenceIDs) == 0) && content.RefBookID != "" && content.RefLessonID > 0 {
-				sentences, err := s.sentenceRepo.GetByLesson(content.RefBookID, content.RefLessonID)
+				sentences, err := s.contentRepo.GetSentencesByLesson(content.RefBookID, content.RefLessonID)
 				if err == nil && len(sentences) > 0 {
 					// 使用所有句子或者限制数量
 					maxSentences := 5 // 设置一个合理的最大值，也可以从配置中读取
@@ -131,7 +140,7 @@ func (s *TaskService) GetTaskDetails(id uint) (*models.Task, error) {
 				}
 			} else if len(meta.SentenceIDs) > 0 {
 				// 原有逻辑：加载句子数据
-				sentences, err := s.sentenceRepo.GetByIDs(meta.SentenceIDs)
+				sentences, err := s.contentRepo.GetSentencesByIDs(meta.SentenceIDs)
 				if err == nil {
 					meta.Sentences = sentences
 					// 更新元数据
@@ -232,7 +241,7 @@ func (s *TaskService) ListTasks(teacherID, status string, page, pageSize int) ([
                 
                 // 如果元数据中没有句子ID，但有参考教材和单元信息，则根据教材单元加载句子
                 if (meta.SentenceIDs == nil || len(meta.SentenceIDs) == 0) && content.RefBookID != "" && content.RefLessonID > 0 {
-                    sentences, err := s.sentenceRepo.GetByLesson(content.RefBookID, content.RefLessonID)
+                    sentences, err := s.contentRepo.GetSentencesByLesson(content.RefBookID, content.RefLessonID)
                     if err == nil && len(sentences) > 0 {
                         // 使用所有句子或者限制数量
                         maxSentences := 5 // 设置一个合理的最大值，也可以从配置中读取
@@ -251,7 +260,7 @@ func (s *TaskService) ListTasks(teacherID, status string, page, pageSize int) ([
                     }
                 } else if len(meta.SentenceIDs) > 0 {
                     // 原有逻辑：加载句子数据
-                    sentences, err := s.sentenceRepo.GetByIDs(meta.SentenceIDs)
+                    sentences, err := s.contentRepo.GetSentencesByIDs(meta.SentenceIDs)
                     if err == nil {
                         meta.Sentences = sentences
                         // 更新元数据
@@ -465,7 +474,7 @@ func (s *TaskService) getSentencesByIDs(sentenceIDs interface{}) ([]models.Lesso
         return []models.LessonSentence{}, nil
     }
     
-    return s.sentenceRepo.GetByIDs(ids)
+    return s.contentRepo.GetSentencesByIDs(ids)
 }
 
 // getWordsByLesson retrieves words by book ID and lesson ID
@@ -475,7 +484,7 @@ func (s *TaskService) getWordsByLesson(bookID string, lessonID int) ([]models.Wo
 
 // getSentencesByLesson retrieves sentences by book ID and lesson ID
 func (s *TaskService) getSentencesByLesson(bookID string, lessonID int) ([]models.LessonSentence, error) {
-    return s.sentenceRepo.GetByLesson(bookID, lessonID)
+    return s.contentRepo.GetSentencesByLesson(bookID, lessonID)
 }
 
 // randomSelectWords selects random words from a list based on count
@@ -552,5 +561,33 @@ func generateAutoSentenceRepeat(sentences []models.LessonSentence, config map[st
         SentenceIDs: sentenceIDs,
         RepeatCount: repeatCount,
     }
+}
+
+// validateWordIDs 验证单词 ID 是否存在并检查重复
+func (s *TaskService) validateWordIDs(wordIDs []int32) error {
+    seen := make(map[int32]bool)
+    for _, id := range wordIDs {
+        if seen[id] {
+            return errors.New("单词ID重复")
+        }
+        seen[id] = true
+
+        exists, err := s.wordRepo.Exists(id)
+        if err != nil {
+            return err
+        }
+        if !exists {
+            return errors.New("单词ID不存在")
+        }
+    }
+    return nil
+}
+
+// validateContentWithLesson 验证内容与教材单元是否匹配
+func (s *TaskService) validateContentWithLesson(content *models.TaskContent) error {
+    if !s.contentRepo.IsValidForLesson(content.RefBookID, content.RefLessonID, content.SelectedWordIDs) {
+        return errors.New("单词不属于指定教材单元")
+    }
+    return nil
 }
 

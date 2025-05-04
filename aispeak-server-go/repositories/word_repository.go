@@ -24,3 +24,9 @@ func (r *WordRepository) GetByLesson(bookID string, lessonID int) ([]models.Word
 	err := r.DB.Where("book_id = ? AND lesson_id = ?", bookID, lessonID).Find(&words).Error
 	return words, err
 }
+
+func (r *WordRepository) Exists(id int32) (bool, error) {
+    var count int64
+    err := r.DB.Model(&models.Word{}).Where("id = ?", id).Count(&count).Error
+    return count > 0, err
+}

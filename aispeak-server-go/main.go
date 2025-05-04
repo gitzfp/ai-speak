@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	
+
 	// 添加swagger导入
-	_ "github.com/gitzfp/ai-speak/aispeak-server-go/docs"
 	"github.com/gitzfp/ai-speak/aispeak-server-go/controllers"
+	_ "github.com/gitzfp/ai-speak/aispeak-server-go/docs"
 	"github.com/gitzfp/ai-speak/aispeak-server-go/models"
 	"github.com/gitzfp/ai-speak/aispeak-server-go/repositories"
 	"github.com/gitzfp/ai-speak/aispeak-server-go/router"
@@ -78,7 +78,7 @@ func main() {
 	// 初始化服务层
 	taskRepo := repositories.NewTaskRepository(db)
 	wordRepo := repositories.NewWordRepository(db)
-	sentenceRepo := repositories.NewSentenceRepository(db)
+	sentenceRepo := repositories.NewContentRepository(db)
 	taskService := services.NewTaskService(taskRepo, wordRepo, sentenceRepo)
 	taskController := controllers.NewTaskController(taskService)
 

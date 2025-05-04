@@ -2,9 +2,12 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
+
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gitzfp/ai-speak/aispeak-server-go/models"
@@ -12,10 +15,10 @@ import (
 )
 
 type TaskController struct {
-	service *services.TaskService
+	service services.ITaskService
 }
 
-func NewTaskController(service *services.TaskService) *TaskController {
+func NewTaskController(service services.ITaskService) *TaskController {
 	return &TaskController{service: service}
 }
 
@@ -32,6 +35,62 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 	var req CreateTaskRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 业务参数校验
+	if len(req.Contents) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "任务内容不能为空"})
+		return
+	}
+	// 校验分值总和
+	totalPoints := 0
+	orderNumSet := make(map[int]bool)
+	for _, content := range req.Contents {
+		totalPoints += content.Points
+		if orderNumSet[content.OrderNum] {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "内容排序号重复"})
+			return
+		}
+		orderNumSet[content.OrderNum] = true
+	
+		// 校验 generate_mode
+		if content.GenerateMode != "manual" && content.GenerateMode != "auto" {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "generate_mode无效"})
+			return
+		}
+		// 校验 manual 模式下必填
+		if content.GenerateMode == "manual" {
+			if content.ContentType == "dictation" && (len(content.SelectedWordIDs) == 0) {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "selected_word_ids不能为空"})
+				return
+			}
+			// 新增：校验单词ID是否有重复
+			if content.ContentType == "dictation" && len(content.SelectedWordIDs) > 0 {
+				idSet := make(map[int32]struct{})
+				for _, id := range content.SelectedWordIDs {
+					if _, exists := idSet[id]; exists {
+						ctx.JSON(http.StatusBadRequest, gin.H{"error": "单词ID重复"})
+						return
+					}
+					idSet[id] = struct{}{}
+				}
+			}
+			if content.ContentType == "sentence_repeat" && (len(content.SelectedSentenceIDs) == 0) {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "selected_sentence_ids不能为空"})
+				return
+			}
+		}
+		// 校验 auto 模式下必填
+		if content.GenerateMode == "auto" {
+			if content.RefBookID == "" || content.RefLessonID == 0 {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "自动生成模式下教材ID和单元ID必填"})
+				return
+			}
+		}
+	}
+	if totalPoints != 100 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "内容分值总和必须为100"})
 		return
 	}
 
@@ -52,6 +111,12 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 		}
 	}
 
+	// 校验已发布任务必须设置有效的截止时间
+	if task.Status == models.Published && (task.Deadline == nil || task.Deadline.Before(time.Now())) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "已发布任务必须设置有效的截止时间"})
+		return
+	}
+
 	// Convert contents to model objects
 	var modelContents []*models.TaskContent
 	for _, reqContent := range req.Contents {
@@ -70,9 +135,26 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 		modelContents = append(modelContents, content)
 	}
 
+	// 在CreateTask方法中修改错误处理部分
 	if err := c.service.CreateTaskWithContents(task, modelContents); err != nil {
-		// Consider logging the actual error from the service
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "创建失败: " + err.Error()}) // Provide more context
+		errMsg := err.Error()
+		
+		// 处理特定错误类型
+		if strings.Contains(errMsg, "单词ID不存在") || 
+		   strings.Contains(errMsg, "单词ID重复") || 
+		   strings.Contains(errMsg, "selected_word_ids") {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+			return
+		}
+		
+		// 处理教材单元不匹配错误
+		if strings.Contains(errMsg, "单词不属于指定教材单元") {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": errMsg})
+			return
+		}
+		
+		// 其他错误统一返回500
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "创建任务失败: " + errMsg})
 		return
 	}
 
@@ -334,6 +416,8 @@ type CreateTaskContentRequest struct {
     // 已选句子ID列表（generate_mode=manual且content_type=sentence_repeat时必填）
     // Example: [101,102]
     SelectedSentenceIDs []int32        `json:"selected_sentence_ids" binding:"required_if=GenerateMode manual ContentType sentence_repeat"`
+
+    GenerateMode string `json:"generate_mode"`
 }
 
 type UpdateTaskRequest struct {
@@ -396,3 +480,17 @@ func convertTasks(tasks []models.Task) []TaskResponse {
     }
     return result
 }
+
+func validateLessonMatch(selectedIDs []int32, lessonID uint) error {
+    // 模拟教材单元校验逻辑
+    if !checkIfBelongToLesson(selectedIDs, lessonID) {
+        return errors.New("单词ID与教材单元不匹配") 
+    }
+    return nil
+}
+func checkIfBelongToLesson(selectedIDs []int32, lessonID uint) bool {
+    // Simulate checking logic
+    // For now, assume all IDs belong to the lesson
+    return true
+}
+
