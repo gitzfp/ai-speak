@@ -13,7 +13,7 @@ type ContentType string
 const (
 	ContentTypeDictation      ContentType = "dictation"        // 单词听写
 	ContentTypeSpelling       ContentType = "spelling"         // 单词拼写
-	ContentTypePronunciation             ContentType = "Pronunciation"    // 发音测评
+	ContentTypePronunciation  ContentType = "pronunciation"    // 发音测评
 	ContentTypeSentenceRepeat ContentType = "sentence_repeat"  // 句子跟读
 	ContentTypeQuiz           ContentType = "quiz"             // 小测验
 )
@@ -52,6 +52,10 @@ func ValidateTaskTypeAndContentType(taskType TaskType, contentType ContentType) 
 		// 听写任务只能包含听写内容
 		if contentType != ContentTypeDictation {
 			return errors.New("听写任务只能包含听写内容")
+		}
+	case Pronunciation:
+		if contentType != ContentTypePronunciation {
+			return errors.New("发音测评任务只能包含发音测评内容")
 		}
 	case SentenceRepeat:
 		// 句子跟读任务只能包含句子跟读内容
@@ -149,19 +153,69 @@ func (tc *TaskContent) GetDictationMetadata() (*DictationMetadata, error) {
 	if tc.Metadata == nil {
 		return &DictationMetadata{}, nil
 	}
-	
+
+	// Marshal to JSON, then Unmarshal to meta struct
 	data, err := json.Marshal(tc.Metadata)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var meta DictationMetadata
 	if err := json.Unmarshal(data, &meta); err != nil {
 		return nil, err
 	}
-	
+
+	// 修正 words 字段类型（兼容 map[string]interface{} 反序列化）
+	var m map[string]interface{}
+	metadataBytes, err := json.Marshal(tc.Metadata)
+	if err != nil {
+		return nil, errors.New("failed to marshal Metadata to JSON")
+	}
+	metadataStr := string(metadataBytes)
+	if err := json.Unmarshal([]byte(metadataStr), &m); err == nil {
+		if rawWords, ok := m["words"]; ok && rawWords != nil {
+			if arr, ok := rawWords.([]interface{}); ok {
+				// Convert interface{} slice to Word slice
+				var words []Word
+				for _, item := range arr {
+					if word, ok := item.(map[string]interface{}); ok {
+						// Convert map to Word struct with safe type assertions
+						var term, phonetic string
+						if t, ok := word["term"].(string); ok {
+							term = t
+						}
+						if p, ok := word["phonetic"].(string); ok {
+							phonetic = p
+						}
+						
+						w := Word{
+							WordID:   int32(word["id"].(float64)),
+							Word:     &term,      // Convert to string pointer
+							Phonetic: &phonetic,  // Convert to string pointer
+							// ... add other Word fields as needed ...
+						}
+						words = append(words, w)
+					}
+				}
+				meta.Words = words  // Now assigning correct type
+				// Extract word IDs
+				var wordIDs []int32
+				for _, item := range arr {
+					if wordMap, ok := item.(map[string]interface{}); ok {
+						if id, ok := wordMap["id"].(float64); ok {
+							wordIDs = append(wordIDs, int32(id))
+						}
+					}
+				}
+				meta.WordIDs = wordIDs
+			}
+		}
+	}
+
 	return &meta, nil
 }
+
+
 
 // SetDictationMetadata 设置听写任务元数据
 func (tc *TaskContent) SetDictationMetadata(meta *DictationMetadata) error {
@@ -212,6 +266,36 @@ func (tc *TaskContent) SetSentenceRepeatMetadata(meta *SentenceRepeatMetadata) e
 	
 	tc.Metadata = jsonMap
 	return nil
+}
+
+// GetPronunciationMetadata 获取发音测评任务元数据
+func (tc *TaskContent) GetPronunciationMetadata() (*PronunciationMetadata, error) {
+    if tc.Metadata == nil {
+        return &PronunciationMetadata{}, nil
+    }
+    data, err := json.Marshal(tc.Metadata)
+    if err != nil {
+        return nil, err
+    }
+    var meta PronunciationMetadata
+    if err := json.Unmarshal(data, &meta); err != nil {
+        return nil, err
+    }
+    return &meta, nil
+}
+
+// SetPronunciationMetadata 设置发音测评任务元数据
+func (tc *TaskContent) SetPronunciationMetadata(meta *PronunciationMetadata) error {
+    data, err := json.Marshal(meta)
+    if err != nil {
+        return err
+    }
+    var jsonMap map[string]interface{}
+    if err := json.Unmarshal(data, &jsonMap); err != nil {
+        return err
+    }
+    tc.Metadata = jsonMap
+    return nil
 }
 
 // ValidateContentType 验证内容类型

@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -116,22 +117,52 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "已发布任务必须设置有效的截止时间"})
 		return
 	}
-
 	// Convert contents to model objects
 	var modelContents []*models.TaskContent
 	for _, reqContent := range req.Contents {
+		fmt.Printf("创建任务task_controller....%v %v...", reqContent.SelectedWordIDs, reqContent.SelectedSentenceIDs)
 		content := &models.TaskContent{
 			ContentType:  reqContent.ContentType,
 			GenerateMode: "manual",
 			RefBookID:    reqContent.RefBookID,
 			RefLessonID:  reqContent.RefLessonID,
 			Points:       reqContent.Points,
-			Metadata:     reqContent.Metadata,
 			OrderNum:     reqContent.OrderNum,
 			SelectedWordIDs:     reqContent.SelectedWordIDs,
 			SelectedSentenceIDs: reqContent.SelectedSentenceIDs,
 		}
 
+		// 根据内容类型初始化元数据
+		switch reqContent.ContentType {
+		case "dictation":
+			meta := models.DictationMetadata{
+				WordIDs:    reqContent.SelectedWordIDs,
+				AudioType:  "default",
+				TimeLimit:  60,
+				PlayCount:  3,
+			}
+			// 使用json.Marshal替代ToJSON方法
+			metaBytes, err := json.Marshal(meta)
+			if err == nil {
+				var jsonMap map[string]interface{}
+				if err := json.Unmarshal(metaBytes, &jsonMap); err == nil {
+					content.Metadata = jsonMap
+				}
+			}
+		case "sentence_repeat":
+			meta := models.SentenceRepeatMetadata{
+				SentenceIDs: reqContent.SelectedSentenceIDs,
+				RepeatCount: 3,
+			}
+			// 使用json.Marshal替代ToJSON方法
+			metaBytes, err := json.Marshal(meta)
+			if err == nil {
+				var jsonMap map[string]interface{}
+				if err := json.Unmarshal(metaBytes, &jsonMap); err == nil {
+					content.Metadata = jsonMap
+				}
+			}
+		}
 		modelContents = append(modelContents, content)
 	}
 
@@ -205,13 +236,18 @@ func convertContents(contents []models.TaskContent) []TaskContentResponse {
             OrderNum:    c.OrderNum,
         }
         
-        // 根据内容类型处理元数据，确保返回单词和句子数据
         switch c.ContentType {
         case "dictation":
             meta, err := c.GetDictationMetadata()
             if err == nil && meta != nil {
-                // 将元数据转换为JSON
-                metaBytes, err := json.Marshal(meta)
+                // 将单词实体添加到元数据中
+                metaBytes, err := json.Marshal(map[string]interface{}{
+                    "word_ids": meta.WordIDs,
+                    "words":    meta.Words, // 添加单词实体
+                    "audio_type": meta.AudioType,
+                    "time_limit": meta.TimeLimit,
+                    "play_count": meta.PlayCount,
+                })
                 if err == nil {
                     contentResp.Metadata = metaBytes
                 }
@@ -219,7 +255,6 @@ func convertContents(contents []models.TaskContent) []TaskContentResponse {
         case "sentence_repeat":
             meta, err := c.GetSentenceRepeatMetadata()
             if err == nil && meta != nil {
-                // 将元数据转换为JSON
                 metaBytes, err := json.Marshal(meta)
                 if err == nil {
                     contentResp.Metadata = metaBytes

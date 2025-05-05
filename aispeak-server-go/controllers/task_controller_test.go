@@ -59,11 +59,18 @@ func setupRouter() *gin.Engine {
 	return router
 }
 
-// 测试组：基本验证
-func TestCreateTask_BasicValidation(t *testing.T) {
-	router := setupRouter()
+// 公共测试环境初始化
+func setupTestEnv() (*gin.Engine, *MockTaskService, *TaskController) {
+	gin.SetMode(gin.TestMode)
+	router := gin.Default()
 	mockService := new(MockTaskService)
 	controller := NewTaskController(mockService)
+	return router, mockService, controller
+}
+
+// 测试组：基本验证
+func TestCreateTask_BasicValidation(t *testing.T) {
+	router, _, controller := setupTestEnv() // Ignore mockService using _
 	router.POST("/tasks", controller.CreateTask)
 
 	// 测试用例1: 任务标题为空
@@ -120,6 +127,105 @@ func TestCreateTask_BasicValidation(t *testing.T) {
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	// 标题正好200字符
+	t.Run("TitleAtMaxLength", func(t *testing.T) {
+		maxTitle := make([]byte, 200)
+		for i := range maxTitle {
+			maxTitle[i] = 'a'
+		}
+		reqBody := CreateTaskRequest{
+			Title:    string(maxTitle),
+			TaskType: models.Dictation,
+			Subject:  models.English,
+			Contents: []CreateTaskContentRequest{{
+				ContentType: "dictation", Points: 100, OrderNum: 1, SelectedWordIDs: []int32{1}, GenerateMode: "manual",
+			}},
+		}
+		jsonData, _ := json.Marshal(reqBody)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code) // 如果允许200则改为StatusOK
+	})
+
+	// 内容数组为空
+	t.Run("EmptyContents", func(t *testing.T) {
+		reqBody := CreateTaskRequest{
+			Title:    "Test Task",
+			TaskType: models.Dictation,
+			Subject:  models.English,
+			Contents: []CreateTaskContentRequest{},
+		}
+		jsonData, _ := json.Marshal(reqBody)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "Field validation for 'Contents' failed on the 'min' tag")
+	})
+
+	// Points为0
+	t.Run("ZeroPoints", func(t *testing.T) {
+		reqBody := CreateTaskRequest{
+			Title:    "Test Task",
+			TaskType: models.Dictation,
+			Subject:  models.English,
+			Contents: []CreateTaskContentRequest{{
+				ContentType: "dictation", Points: 0, OrderNum: 1, SelectedWordIDs: []int32{1}, GenerateMode: "manual",
+			}},
+		}
+		jsonData, _ := json.Marshal(reqBody)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "内容分值总和必须为100")
+	})
+
+	// Points为负数
+	t.Run("NegativePoints", func(t *testing.T) {
+		reqBody := CreateTaskRequest{
+			Title:    "Test Task",
+			TaskType: models.Dictation,
+			Subject:  models.English,
+			Contents: []CreateTaskContentRequest{{
+				ContentType: "dictation", Points: -10, OrderNum: 1, SelectedWordIDs: []int32{1}, GenerateMode: "manual",
+			}},
+		}
+		jsonData, _ := json.Marshal(reqBody)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "内容分值总和必须为100")
+	})
+
+	// 缺失必填字段 Points
+	t.Run("MissingPoints", func(t *testing.T) {
+		reqBody := map[string]interface{}{
+			"title":    "Test Task",
+			"task_type": models.Dictation,
+			"subject":  models.English,
+			"contents": []map[string]interface{}{{
+				"content_type": "dictation",
+				"order_num":    1,
+				"selected_word_ids": []int32{1},
+				"generate_mode": "manual",
+			}},
+		}
+		jsonData, _ := json.Marshal(reqBody)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "内容分值总和必须为100")
 	})
 }
 
@@ -447,7 +553,48 @@ func TestCreateTask_ContentValidation(t *testing.T) {
 		assert.Contains(t, w.Body.String(), "单词不属于指定教材单元")
 		mockService.AssertExpectations(t)
 	})
-}
+
+	// 新增测试用例9: 重复的OrderNum (This should be inside the function)
+	t.Run("DuplicateOrderNum", func(t *testing.T) {
+		reqBody := CreateTaskRequest{
+			Title:    "Test Task",
+			TaskType: models.Dictation,
+			Subject:  models.English,
+			Contents: []CreateTaskContentRequest{
+				{ContentType: "dictation", Points: 50, OrderNum: 1, SelectedWordIDs: []int32{1}, GenerateMode: "manual"},
+				{ContentType: "dictation", Points: 50, OrderNum: 1, SelectedWordIDs: []int32{2}, GenerateMode: "manual"}, // 重复 OrderNum
+			},
+		}
+		jsonData, _ := json.Marshal(reqBody)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "内容排序号重复")
+	})
+
+	// 新增测试用例10: 无效的GenerateMode (This should also be inside the function)
+	t.Run("InvalidGenerateMode", func(t *testing.T) {
+		reqBody := CreateTaskRequest{
+			Title:    "Test Task",
+			TaskType: models.Dictation,
+			Subject:  models.English,
+			Contents: []CreateTaskContentRequest{
+				{ContentType: "dictation", Points: 100, OrderNum: 1, GenerateMode: "invalid_mode"}, // 无效 GenerateMode
+			},
+		}
+		jsonData, _ := json.Marshal(reqBody)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "generate_mode无效")
+	})
+} // <-- This is the closing brace for TestCreateTask_ContentValidation
 
 // TestCreateTask_SuccessScenarios tests successful task creation scenarios
 func TestCreateTask_SuccessScenarios(t *testing.T) {
@@ -571,41 +718,151 @@ func TestCreateTask_SuccessScenarios(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, w.Code)
 		mockService.AssertExpectations(t)
 	})
+
+	// 测试用例4: 创建单词拼写任务
+	t.Run("CreateSpellingTask", func(t *testing.T) {
+		deadline := time.Now().Add(24 * time.Hour)
+		reqBody := CreateTaskRequest{
+			Title:    "Unit 1 单词拼写",
+			TaskType: models.Spelling,
+			Subject:  models.English,
+			Deadline: &deadline,
+			Status:   models.Published,
+			Contents: []CreateTaskContentRequest{
+				{
+					ContentType:      "spelling",
+					Points:           100,
+					OrderNum:         1,
+					SelectedWordIDs:  []int32{1, 2, 3, 4, 5},
+					GenerateMode:     "manual",
+				},
+			},
+		}
+
+		mockService.On("CreateTaskWithContents", mock.Anything, mock.Anything).Return(nil)
+		mockService.On("GetTaskDetails", mock.Anything).Return(&models.Task{
+			Model: gorm.Model{ID: 1},
+			Title: reqBody.Title,
+		}, nil)
+
+		jsonData, _ := json.Marshal(reqBody)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+		mockService.AssertExpectations(t)
+	})
+
+	// 测试用例5: 创建口语测评任务
+	t.Run("CreateSpeakingAssessmentTask", func(t *testing.T) {
+		deadline := time.Now().Add(24 * time.Hour)
+		reqBody := CreateTaskRequest{
+			Title:    "Unit 1 口语测评",
+			TaskType: models.Dictation, 
+			Subject:  models.English,
+			Deadline: &deadline,
+			Status:   models.Published,
+			Contents: []CreateTaskContentRequest{
+				{
+					ContentType:         "speaking_assessment",
+					Points:              100,
+					OrderNum:            1,
+					SelectedSentenceIDs: []int32{10, 11, 12},
+					GenerateMode:        "manual",
+				},
+			},
+		}
+
+		mockService.On("CreateTaskWithContents", mock.Anything, mock.Anything).Return(nil)
+		mockService.On("GetTaskDetails", mock.Anything).Return(&models.Task{
+			Model: gorm.Model{ID: 1},
+			Title: reqBody.Title,
+		}, nil)
+
+		jsonData, _ := json.Marshal(reqBody)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+		mockService.AssertExpectations(t)
+	})
+
+	// 测试用例6: 创建草稿状态的任务
+	t.Run("CreateDraftTask", func(t *testing.T) {
+		reqBody := CreateTaskRequest{
+			Title:    "草稿状态的听写任务",
+			TaskType: models.Dictation,
+			Subject:  models.English,
+			Status:   models.Draft, // 草稿状态不需要截止时间
+			Contents: []CreateTaskContentRequest{
+				{
+					ContentType:      "dictation",
+					Points:           100,
+					OrderNum:         1,
+					SelectedWordIDs:  []int32{1, 2, 3},
+					GenerateMode:     "manual",
+				},
+			},
+		}
+
+		mockService.On("CreateTaskWithContents", mock.Anything, mock.Anything).Return(nil)
+		mockService.On("GetTaskDetails", mock.Anything).Return(&models.Task{
+			Model: gorm.Model{ID: 1},
+			Title: reqBody.Title,
+		}, nil)
+
+		jsonData, _ := json.Marshal(reqBody)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+		mockService.AssertExpectations(t)
+	})
+
+	// 测试用例7: 使用自动生成模式创建任务
+	t.Run("CreateTaskWithAutoMode", func(t *testing.T) {
+		deadline := time.Now().Add(24 * time.Hour)
+		reqBody := CreateTaskRequest{
+			Title:    "自动生成的听写任务",
+			TaskType: models.Dictation,
+			Subject:  models.English,
+			Deadline: &deadline,
+			Status:   models.Published,
+			Contents: []CreateTaskContentRequest{
+				{
+					ContentType:   "dictation",
+					Points:        100,
+					OrderNum:      1,
+					GenerateMode:  "auto",
+					RefBookID:     "bookA",
+					RefLessonID:   1,
+				},
+			},
+		}
+
+		mockService.On("CreateTaskWithContents", mock.Anything, mock.Anything).Return(nil)
+		mockService.On("GetTaskDetails", mock.Anything).Return(&models.Task{
+			Model: gorm.Model{ID: 1},
+			Title: reqBody.Title,
+		}, nil)
+
+		jsonData, _ := json.Marshal(reqBody)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+		mockService.AssertExpectations(t)
+	})
 }
 
-// 新增在 TestCreateTask_ContentValidation 测试组
-// 测试用例9: 重复的OrderNum
-func TestCreateTask_DuplicateOrderNumbers(t *testing.T) {
-	reqBody := CreateTaskRequest{
-		Contents: []CreateTaskContentRequest{
-			{OrderNum: 1},
-			{OrderNum: 1},
-		},
-	}
-
-	jsonData, _ := json.Marshal(reqBody)
-	w := httptest.NewRecorder()
-	router := setupRouter()
-	req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
-	req.Header.Set("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-
-	reqBody = CreateTaskRequest{
-		Contents: []CreateTaskContentRequest{
-			{GenerateMode: "invalid_mode"},
-		},
-	}
-
-	jsonData, _ = json.Marshal(reqBody)
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
-	req.Header.Set("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
 
 // 新增测试组 TestCreateTask_TypeValidation
 func TestCreateTask_TypeValidation(t *testing.T) {
