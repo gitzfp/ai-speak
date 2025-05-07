@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gitzfp/ai-speak/aispeak-server-go/models"
 	"github.com/gitzfp/ai-speak/aispeak-server-go/services"
+	"gorm.io/gorm"
 )
 
 type TaskController struct {
@@ -321,23 +322,32 @@ func (c *TaskController) ListTasks(ctx *gin.Context) {
 // @Success 200 {object} TaskResponse
 // @Router /tasks/{id} [put]
 func (c *TaskController) UpdateTask(ctx *gin.Context) {
-	id, _ := strconv.Atoi(ctx.Param("id"))
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "无效的ID格式"})
+		return
+	}
+	
 	var req UpdateTaskRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	
-	task := req.ToModel()
-	task.ID = uint(id)
-	if err := c.service.UpdateTask(task); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "更新失败"})
+	// 状态校验放在数据库操作前
+	if req.Status == models.Published && req.Deadline == nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "已发布任务必须设置截止时间"})
 		return
 	}
 	
-	// 新增状态校验
-	if task.Status == models.Published && task.Deadline == nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "已发布任务必须设置截止时间"})
+	task := req.ToModel()
+	task.ID = uint(id)
+	if err := c.service.UpdateTask(task); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "任务不存在"})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "更新失败"})
+		}
 		return
 	}
 	
@@ -353,9 +363,18 @@ func (c *TaskController) UpdateTask(ctx *gin.Context) {
 // @Success 204
 // @Router /tasks/{id} [delete]
 func (c *TaskController) DeleteTask(ctx *gin.Context) {
-    id, _ := strconv.Atoi(ctx.Param("id"))
+    id, err := strconv.Atoi(ctx.Param("id"))
+    if err != nil {
+        ctx.JSON(http.StatusBadRequest, gin.H{"error": "无效的ID格式"})
+        return
+    }
+    
     if err := c.service.DeleteTask(uint(id)); err != nil {
-        ctx.JSON(http.StatusInternalServerError, gin.H{"error": "删除失败"})
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            ctx.JSON(http.StatusNotFound, gin.H{"error": "任务不存在"})
+        } else {
+            ctx.JSON(http.StatusInternalServerError, gin.H{"error": "删除失败"})
+        }
         return
     }
     ctx.Status(http.StatusNoContent)
@@ -508,24 +527,275 @@ func (r *UpdateTaskRequest) ToModel() *models.Task {
 }
 
 
-func convertTasks(tasks []models.Task) []TaskResponse {
-    var result []TaskResponse
-    for _, t := range tasks {
-        result = append(result, NewTaskResponse(&t))
+
+
+// SubmitTask godoc
+// @Summary 提交任务
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param id path int true "任务ID"
+// @Param body body SubmitTaskRequest true "提交数据"
+// @Success 201 {object} SubmissionResponse
+// @Router /tasks/{id}/submissions [post]
+func (c *TaskController) SubmitTask(ctx *gin.Context) {
+    id, _ := strconv.Atoi(ctx.Param("id"))
+    var req SubmitTaskRequest
+    if err := ctx.ShouldBindJSON(&req); err != nil {
+        ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
     }
-    return result
+    
+    // 初始化 MediaFiles，合并所有旧格式的文件
+    mediaFiles := req.MediaFiles
+    
+    // 处理向后兼容: 将旧格式的URL字段转换为统一的MediaFiles格式
+    // 1. 处理单个音频URL
+    if req.AudioURL != "" {
+        mediaFiles = append(mediaFiles, models.MediaFile{
+            URL:  req.AudioURL,
+            Type: "audio",
+        })
+    }
+    
+    // 2. 处理多个音频URL
+    for _, url := range req.AudioURLs {
+        mediaFiles = append(mediaFiles, models.MediaFile{
+            URL:  url,
+            Type: "audio",
+        })
+    }
+    
+    // 3. 处理单个图片URL
+    if req.ImageURL != "" {
+        mediaFiles = append(mediaFiles, models.MediaFile{
+            URL:  req.ImageURL,
+            Type: "image",
+        })
+    }
+    
+    // 4. 处理多个图片URL
+    for _, url := range req.ImageURLs {
+        mediaFiles = append(mediaFiles, models.MediaFile{
+            URL:  url,
+            Type: "image",
+        })
+    }
+    
+    // 5. 处理单个文件URL
+    if req.FileURL != "" {
+        mediaFiles = append(mediaFiles, models.MediaFile{
+            URL:  req.FileURL,
+            Type: "file",
+        })
+    }
+    
+    // 6. 处理多个文件URL
+    for _, url := range req.FileURLs {
+        mediaFiles = append(mediaFiles, models.MediaFile{
+            URL:  url,
+            Type: "file",
+        })
+    }
+    
+    submission := &models.Submission{
+        StudentTaskID: uint(id),
+        ContentID:    req.ContentID,
+        Response:     req.Response,
+        MediaFiles:   models.MediaFiles(mediaFiles),
+    }
+    
+    if err := c.service.CreateSubmission(submission); err != nil {
+        ctx.JSON(http.StatusInternalServerError, gin.H{"error": "提交失败"})
+        return
+    }
+    
+    ctx.JSON(http.StatusCreated, SubmissionResponse{
+        ID:           submission.ID,
+        StudentTaskID: submission.StudentTaskID,
+        ContentID:    submission.ContentID,
+        Response:     submission.Response,
+        MediaFiles:   submission.MediaFiles,
+        IsCorrect:    submission.IsCorrect,
+        AutoScore:    submission.AutoScore,
+        TeacherScore: submission.TeacherScore,
+        Feedback:     submission.Feedback,
+        CreatedAt:    submission.Model.CreatedAt,
+    })
 }
 
-func validateLessonMatch(selectedIDs []int32, lessonID uint) error {
-    // 模拟教材单元校验逻辑
-    if !checkIfBelongToLesson(selectedIDs, lessonID) {
-        return errors.New("单词ID与教材单元不匹配") 
+// GetSubmission godoc
+// @Summary 获取提交详情
+// @Tags submissions
+// @Produce json
+// @Param id path int true "提交ID"
+// @Success 200 {object} SubmissionResponse
+// @Router /tasks/submissions/{id} [get]
+func (c *TaskController) GetSubmission(ctx *gin.Context) {
+    id, _ := strconv.Atoi(ctx.Param("id"))
+    submission, err := c.service.GetSubmissionDetails(uint(id))
+    
+    if err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            ctx.JSON(http.StatusNotFound, gin.H{"error": "提交记录不存在"})
+        } else {
+            ctx.JSON(http.StatusInternalServerError, gin.H{"error": "获取提交记录失败"})
+        }
+        return
     }
-    return nil
+    
+    // 转换为响应格式
+    ctx.JSON(http.StatusOK, SubmissionResponse{
+        ID:           submission.ID,
+        StudentTaskID: submission.StudentTaskID,
+        ContentID:    submission.ContentID,
+        Response:     submission.Response,
+        MediaFiles:   submission.MediaFiles,
+        IsCorrect:    submission.IsCorrect,
+        AutoScore:    submission.AutoScore,
+        TeacherScore: submission.TeacherScore,
+        Feedback:     submission.Feedback,
+        CreatedAt:    submission.Model.CreatedAt,
+    })
 }
-func checkIfBelongToLesson(selectedIDs []int32, lessonID uint) bool {
-    // Simulate checking logic
-    // For now, assume all IDs belong to the lesson
-    return true
+
+// ListSubmissions godoc
+// @Summary 分页查询提交记录
+// @Tags submissions
+// @Produce json
+// @Param id path int true "任务ID"
+// @Param page query int false "页码"
+// @Param page_size query int false "每页数量"
+// @Success 200 {object} ListSubmissionsResponse
+// @Router /tasks/{id}/submissions [get]
+func (c *TaskController) ListSubmissions(ctx *gin.Context) {
+    taskID, _ := strconv.Atoi(ctx.Param("id"))
+    page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+    pageSize, _ := strconv.Atoi(ctx.DefaultQuery("page_size", "10"))
+    
+    submissions, err := c.service.ListSubmissions(uint(taskID), page, pageSize)
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, gin.H{"error": "查询失败"})
+        return
+    }
+    
+    // 转换为响应格式
+    var respSubmissions []SubmissionResponse
+    for _, sub := range submissions {
+        respSubmissions = append(respSubmissions, SubmissionResponse{
+            ID:           sub.ID,
+            StudentTaskID: sub.StudentTaskID,
+            ContentID:    sub.ContentID,
+            Response:     sub.Response,
+            MediaFiles:   sub.MediaFiles,
+            IsCorrect:    sub.IsCorrect,
+            AutoScore:    sub.AutoScore,
+            TeacherScore: sub.TeacherScore,
+            Feedback:     sub.Feedback,
+            CreatedAt:    sub.Model.CreatedAt,
+        })
+    }
+    
+    ctx.JSON(http.StatusOK, ListSubmissionsResponse{
+        Submissions: respSubmissions,
+        Total:       len(respSubmissions),
+    })
+}
+
+// GradeSubmission godoc
+// @Summary 评分提交记录
+// @Tags submissions
+// @Accept json
+// @Produce json
+// @Param id path int true "提交ID"
+// @Param body body GradeRequest true "评分数据"
+// @Success 200 {object} SubmissionResponse
+// @Router /tasks/submissions/{id}/grade [post]
+func (c *TaskController) GradeSubmission(ctx *gin.Context) {
+    id, _ := strconv.Atoi(ctx.Param("id"))
+    var req GradeRequest
+    if err := ctx.ShouldBindJSON(&req); err != nil {
+        // 处理自定义验证错误消息
+        if strings.Contains(err.Error(), "Score") && strings.Contains(err.Error(), "max") {
+            ctx.JSON(http.StatusBadRequest, gin.H{"error": "分数必须在0-100之间"})
+            return
+        }
+        ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    
+    // 验证分数范围
+    if req.Score < 0 || req.Score > 100 {
+        ctx.JSON(http.StatusBadRequest, gin.H{"error": "分数必须在0-100之间"})
+        return
+    }
+    
+    // 获取提交记录
+    submission, err := c.service.GetSubmissionDetails(uint(id))
+    if err != nil {
+        ctx.JSON(http.StatusNotFound, gin.H{"error": "提交记录不存在"})
+        return
+    }
+    
+    // 更新评分和反馈
+    score := req.Score
+    submission.TeacherScore = &score
+    submission.Feedback = req.Feedback
+    
+    if err := c.service.UpdateSubmission(submission); err != nil {
+        ctx.JSON(http.StatusInternalServerError, gin.H{"error": "评分失败"})
+        return
+    }
+    
+    ctx.JSON(http.StatusOK, SubmissionResponse{
+        ID:           submission.ID,
+        StudentTaskID: submission.StudentTaskID,
+        ContentID:    submission.ContentID,
+        Response:     submission.Response,
+        MediaFiles:   submission.MediaFiles,
+        IsCorrect:    submission.IsCorrect,
+        AutoScore:    submission.AutoScore,
+        TeacherScore: submission.TeacherScore,
+        Feedback:     submission.Feedback,
+        CreatedAt:    submission.Model.CreatedAt,
+    })
+}
+
+type SubmitTaskRequest struct {
+    ContentID   uint                `json:"content_id" binding:"required"`
+    Response    string              `json:"response"`
+    // 统一的媒体文件字段
+    MediaFiles  []models.MediaFile  `json:"media_files"`
+    
+    // 向后兼容字段 - 这些字段在API中仍然支持，但内部会转换为MediaFiles
+    AudioURL    string              `json:"audio_url,omitempty"`
+    AudioURLs   []string            `json:"audio_urls,omitempty"`
+    ImageURL    string              `json:"image_url,omitempty"`
+    ImageURLs   []string            `json:"image_urls,omitempty"`
+    FileURL     string              `json:"file_url,omitempty"`
+    FileURLs    []string            `json:"file_urls,omitempty"`
+}
+
+type GradeRequest struct {
+    Score    float64 `json:"score" binding:"required,min=0,max=100"`
+    Feedback string  `json:"feedback"`
+}
+
+type SubmissionResponse struct {
+    ID           uint                `json:"id"`
+    StudentTaskID uint                `json:"student_task_id"`
+    ContentID    uint                `json:"content_id"`
+    Response     string              `json:"response,omitempty"`
+    MediaFiles   models.MediaFiles   `json:"media_files,omitempty"`
+    IsCorrect    *bool               `json:"is_correct,omitempty"`
+    AutoScore    *float64            `json:"auto_score,omitempty"`
+    TeacherScore *float64            `json:"teacher_score,omitempty"`
+    Feedback     string              `json:"feedback,omitempty"`
+    CreatedAt    time.Time           `json:"created_at"`
+}
+
+type ListSubmissionsResponse struct {
+    Submissions []SubmissionResponse `json:"submissions"`
+    Total       int                  `json:"total"`
 }
 

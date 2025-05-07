@@ -2,9 +2,7 @@ package services
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"math/rand/v2"
 
 	"github.com/gitzfp/ai-speak/aispeak-server-go/models"
 	"github.com/gitzfp/ai-speak/aispeak-server-go/repositories"
@@ -17,6 +15,10 @@ type ITaskService interface {
     ListTasks(teacherID, status string, page, pageSize int) ([]models.Task, error)
     UpdateTask(task *models.Task) error
     DeleteTask(id uint) error
+    CreateSubmission(submission *models.Submission) error
+    GetSubmissionDetails(id uint) (*models.Submission, error)
+    ListSubmissions(taskID uint, page, pageSize int) ([]models.Submission, error)
+    UpdateSubmission(submission *models.Submission) error
 }
 
 // 问题：缺少单词和句子仓库的依赖
@@ -332,253 +334,45 @@ func (s *TaskService) ListTasks(teacherID, status string, page, pageSize int) ([
     return tasks, nil
 }
 
-// 辅助函数示例
-// buildDictationMetadata 构建手动选择的听写元数据
-// 输入：选中的单词列表 + 配置参数
-// 输出：包含单词ID和音频配置的元数据
-func buildDictationMetadata(words []models.Word, config map[string]interface{}) *models.DictationMetadata {
-    var wordIDs []int32
-    for _, w := range words {
-        wordIDs = append(wordIDs, w.WordID)
-    }
-    return &models.DictationMetadata{
-        WordIDs:   wordIDs,
-        AudioType: config["audio_type"].(string), // 实际应添加类型断言检查
-        TimeLimit: config["time_limit"].(int),
-    }
-}
-
-// buildSentenceRepeatMetadata 构建手动选择的跟读元数据
-// 输入：选中的句子列表 + 配置参数
-// 输出：包含句子ID和重复次数的元数据
-func buildSentenceRepeatMetadata(sentences []models.LessonSentence, config map[string]interface{}) *models.SentenceRepeatMetadata {
-    var sentenceIDs []int32
-    for _, s := range sentences {
-        sentenceIDs = append(sentenceIDs, s.ID)
-    }
-    return &models.SentenceRepeatMetadata{
-        SentenceIDs: sentenceIDs,
-        RepeatCount: config["repeat_count"].(int),
-    }
-}
-
-// generateAutoDictation 自动生成听写内容
-// 输入：教材单元所有单词 + 配置参数
-// 输出：随机选取的单词元数据
-func generateAutoDictation(words []models.Word, config map[string]interface{}) *models.DictationMetadata {
-    // 实现随机选择逻辑示例
-    selected := randomSelectWords(words, config["word_count"].(int))
-    
-    return &models.DictationMetadata{
-        WordIDs:   extractWordIDs(selected),
-        AudioType: config["audio_type"].(string),
-        TimeLimit: config["time_limit"].(int),
-    }
-}
-
-
-// getWordsByIDs retrieves words by their IDs
-func (s *TaskService) getWordsByIDs(wordIDs interface{}) ([]models.Word, error) {
-    // Convert from JSON to []int32
-    var ids []int32
-    
-    // Handle different input types
-    switch v := wordIDs.(type) {
-    case []int32:
-        ids = v
-    case map[string]interface{}:
-        // Try to extract from JSON map
-        if idsArray, ok := v["word_ids"].([]interface{}); ok {
-            for _, id := range idsArray {
-                if idFloat, ok := id.(float64); ok {
-                    ids = append(ids, int32(idFloat))
-                }
-            }
-        }
-    default:
-        // Try JSON unmarshaling
-        data, err := json.Marshal(wordIDs)
-        if err != nil {
-            return nil, err
-        }
-        
-        var jsonIDs struct {
-            IDs []int32 `json:"word_ids"`
-        }
-        if err := json.Unmarshal(data, &jsonIDs); err != nil {
-            return nil, err
-        }
-        ids = jsonIDs.IDs
+func (s *TaskService) CreateSubmission(submission *models.Submission) error {
+    // 校验任务是否存在
+    task, err := s.GetTaskDetails(submission.StudentTaskID)
+    if err != nil {
+        return fmt.Errorf("任务不存在: %v", err)
     }
     
-    if len(ids) == 0 {
-        return []models.Word{}, nil
-    }
-    
-    return s.wordRepo.GetByIDs(ids)
-}
-
-// getSentencesByIDs retrieves sentences by their IDs
-func (s *TaskService) getSentencesByIDs(sentenceIDs interface{}) ([]models.LessonSentence, error) {
-    // Convert from JSON to []int32
-    var ids []int32
-    
-    // Handle different input types
-    switch v := sentenceIDs.(type) {
-    case []int32:
-        ids = v
-    case map[string]interface{}:
-        // Try to extract from JSON map
-        if idsArray, ok := v["sentence_ids"].([]interface{}); ok {
-            for _, id := range idsArray {
-                if idFloat, ok := id.(float64); ok {
-                    ids = append(ids, int32(idFloat))
-                }
-            }
-        }
-    default:
-        // Try JSON unmarshaling
-        data, err := json.Marshal(sentenceIDs)
-        if err != nil {
-            return nil, err
-        }
-        
-        var jsonIDs struct {
-            IDs []int32 `json:"sentence_ids"`
-        }
-        if err := json.Unmarshal(data, &jsonIDs); err != nil {
-            return nil, err
-        }
-        ids = jsonIDs.IDs
-    }
-    
-    if len(ids) == 0 {
-        return []models.LessonSentence{}, nil
-    }
-    
-    return s.contentRepo.GetSentencesByIDs(ids)
-}
-
-// getWordsByLesson retrieves words by book ID and lesson ID
-func (s *TaskService) getWordsByLesson(bookID string, lessonID int) ([]models.Word, error) {
-    return s.wordRepo.GetByLesson(bookID, lessonID)
-}
-
-// getSentencesByLesson retrieves sentences by book ID and lesson ID
-func (s *TaskService) getSentencesByLesson(bookID string, lessonID int) ([]models.LessonSentence, error) {
-    return s.contentRepo.GetSentencesByLesson(bookID, lessonID)
-}
-
-// randomSelectWords selects random words from a list based on count
-func randomSelectWords(words []models.Word, count int) []models.Word {
-    if len(words) <= count {
-        return words
-    }
-    
-    // Create a copy to avoid modifying the original
-    wordsCopy := make([]models.Word, len(words))
-    copy(wordsCopy, words)
-    
-    // Shuffle the words
-    rand.Shuffle(len(wordsCopy), func(i, j int) {
-        wordsCopy[i], wordsCopy[j] = wordsCopy[j], wordsCopy[i]
-    })
-    
-    // Return the first 'count' words
-    return wordsCopy[:count]
-}
-
-// extractWordIDs extracts word IDs from a list of words
-func extractWordIDs(words []models.Word) []int32 {
-    var ids []int32
-    for _, word := range words {
-        ids = append(ids, word.WordID)
-    }
-    return ids
-}
-
-// randomSelectSentences selects random sentences from a list based on count
-func randomSelectSentences(sentences []models.LessonSentence, count int) []models.LessonSentence {
-    if len(sentences) <= count {
-        return sentences
-    }
-    
-    // Create a copy to avoid modifying the original
-    sentencesCopy := make([]models.LessonSentence, len(sentences))
-    copy(sentencesCopy, sentences)
-    
-    // Shuffle the sentences
-    rand.Shuffle(len(sentencesCopy), func(i, j int) {
-        sentencesCopy[i], sentencesCopy[j] = sentencesCopy[j], sentencesCopy[i]
-    })
-    
-    // Return the first 'count' sentences
-    return sentencesCopy[:count]
-}
-
-// generateAutoSentenceRepeat generates automatic sentence repeat content
-func generateAutoSentenceRepeat(sentences []models.LessonSentence, config map[string]interface{}) *models.SentenceRepeatMetadata {
-    // Get count from config or use default
-    count := 5
-    if countVal, ok := config["count"].(float64); ok {
-        count = int(countVal)
-    }
-    
-    // Get repeat count from config or use default
-    repeatCount := 3
-    if repeatVal, ok := config["repeat_count"].(float64); ok {
-        repeatCount = int(repeatVal)
-    }
-    
-    // Select random sentences
-    selectedSentences := randomSelectSentences(sentences, count)
-    
-    // Extract sentence IDs
-    var sentenceIDs []int32
-    for _, s := range selectedSentences {
-        sentenceIDs = append(sentenceIDs, s.ID)
-    }
-    
-    return &models.SentenceRepeatMetadata{
-        SentenceIDs: sentenceIDs,
-        RepeatCount: repeatCount,
-    }
-}
-
-// extractSentenceIDs 提取句子ID列表
-func extractSentenceIDs(sentences []models.LessonSentence) []int32 {
-    var ids []int32
-    for _, sentence := range sentences {
-        ids = append(ids, sentence.ID)
-    }
-    return ids
-}
-
-// validateWordIDs 验证单词 ID 是否存在并检查重复
-func (s *TaskService) validateWordIDs(wordIDs []int32) error {
-    seen := make(map[int32]bool)
-    for _, id := range wordIDs {
-        if seen[id] {
-            return errors.New("单词ID重复")
-        }
-        seen[id] = true
-
-        exists, err := s.wordRepo.Exists(id)
-        if err != nil {
-            return err
-        }
-        if !exists {
-            return errors.New("单词ID不存在")
+    // 校验任务内容是否存在
+    var contentExists bool
+    for _, content := range task.TaskContents {
+        if content.ID == submission.ContentID {
+            contentExists = true
+            break
         }
     }
-    return nil
+    if !contentExists {
+        return fmt.Errorf("任务内容不存在")
+    }
+    
+    // 创建提交记录
+    return s.repo.DB.Create(submission).Error
 }
 
-// validateContentWithLesson 验证内容与教材单元是否匹配
-func (s *TaskService) validateContentWithLesson(content *models.TaskContent) error {
-    if !s.contentRepo.IsValidForLesson(content.RefBookID, content.RefLessonID, content.SelectedWordIDs) {
-        return errors.New("单词不属于指定教材单元")
-    }
-    return nil
+func (s *TaskService) UpdateSubmission(submission *models.Submission) error {
+    return s.repo.DB.Save(submission).Error
+}
+
+func (s *TaskService) GetSubmissionDetails(id uint) (*models.Submission, error) {
+    var submission models.Submission
+    err := s.repo.DB.Where("id = ?", id).First(&submission).Error
+    return &submission, err
+}
+
+func (s *TaskService) ListSubmissions(taskID uint, page, pageSize int) ([]models.Submission, error) {
+    var submissions []models.Submission
+    err := s.repo.DB.Where("student_task_id = ?", taskID).
+        Offset((page - 1) * pageSize).
+        Limit(pageSize).
+        Find(&submissions).Error
+    return submissions, err
 }
 

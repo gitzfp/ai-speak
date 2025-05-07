@@ -217,6 +217,47 @@ test_auto_generate_task() {
   run_test "自动生成模式" "$payload"
 }
 
+# 新增测试场景11: 更新任务
+test_update_task() {
+  echo -e "${BLUE}运行测试: 更新任务${NC}"
+  read -p "请输入要更新的任务ID: " task_id
+  read -p "请输入新标题: " new_title
+  
+  payload=$(cat <<EOF
+{
+  "title": "$new_title",
+  "description": "更新后的任务描述"
+}
+EOF
+  )
+
+  response=$(curl -s -w "\n%{http_code}" -X PUT "$API_URL/$task_id" \
+    -H "Content-Type: application/json" \
+    -d "$payload")
+  
+  process_get_response "$response"
+}
+
+# 新增测试场景12: 删除任务
+test_delete_task() {
+  echo -e "${BLUE}运行测试: 删除任务${NC}"
+  read -p "请输入要删除的任务ID: " task_id
+  
+  response=$(curl -s -w "\n%{http_code}" -X DELETE "$API_URL/$task_id")
+  
+  http_code=$(echo "$response" | tail -n1)
+  
+  if [[ $http_code -eq 204 ]]; then
+    echo -e "${GREEN}测试成功! 状态码: $http_code${NC}"
+    echo "任务删除成功"
+  else
+    echo -e "${RED}测试失败! 状态码: $http_code${NC}"
+    echo "响应数据:"
+    echo "$response" | sed '$d' | jq '.' 2>/dev/null || echo "$response" | sed '$d'
+  fi
+  echo -e "\n-----------------------------------\n"
+}
+
 # 显示菜单并获取用户选择
 show_menu() {
   echo -e "${BLUE}请选择要运行的测试场景:${NC}"
@@ -230,6 +271,8 @@ show_menu() {
   echo "8) 获取所有任务"
   echo "9) 按ID查询任务"
   echo "10) 按状态过滤任务"
+  echo "11) 更新任务"
+  echo "12) 删除任务"
   echo "0) 退出"
   
   read -p "请输入选项 (0-7): " choice
@@ -252,6 +295,8 @@ show_menu() {
     8) test_get_all_tasks ;;
     9) test_get_task_by_id ;;
     10) test_filter_tasks_by_status ;;
+    11) test_update_task ;;
+    12) test_delete_task ;;
     0) exit 0 ;;
     *) echo -e "${RED}无效选项，请重新选择${NC}" ;;
   esac
