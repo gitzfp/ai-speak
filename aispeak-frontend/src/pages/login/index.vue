@@ -8,17 +8,17 @@
     <text class="sub-title"> 智能语言学习助手 </text>
 
     <!-- 微信登录按钮（微信环境显示） -->
-    <button
+    <!-- <button
       v-if="isWeixin"
       class="mp-weixin-login-btn-box"
       open-type="getPhoneNumber"
       @getphonenumber="handleWechatLogin"
     >
       <text class="mp-weixin-login-btn">微信一键登录</text>
-    </button>
+    </button> -->
 
     <!-- 手机号登录表单 -->
-    <view v-if="!isWeixin && !showRegisterForm" class="phone-login-form">
+    <view v-if="!showRegisterForm" class="phone-login-form">
       <input
         v-model="phoneNumber"
         class="input"
@@ -36,7 +36,7 @@
     </view>
 
     <!-- 注册表单 -->
-    <view v-if="!isWeixin && showRegisterForm" class="register-form">
+    <view v-if="showRegisterForm" class="register-form">
       <!-- <input
         v-model="registerUsername"
         class="input"
@@ -201,8 +201,8 @@ const loginSucessByToken = (storageToken: string, userId: string) => {
   
   uni.setStorageSync("x-token", storageToken)
   uni.setStorageSync(USER_ID, userId) 
-  uni.switchTab({
-    url: "/pages/textbook/index3",
+  uni.navigateTo({
+    url: "/pages/character/index"
   })
 }
 

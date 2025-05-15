@@ -633,7 +633,9 @@ class TextbookService:
                     "phone_number": user.phone_number,
                     "points": user.points,
                     "create_time": str(user.create_time),
-                    "update_time": str(user.update_time)
+                    "update_time": str(user.update_time),
+                    "is_teacher": user.is_teacher,
+                    "is_student": user.is_student
                 }
             else:
                 return None

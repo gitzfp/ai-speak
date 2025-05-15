@@ -215,6 +215,18 @@
       "style": {
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/character/index",
+      "style": {
+        "navigationBarTitleText": "切换身份"
+      }
+    },
+    {
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "首页"
+      }
     }
   ],
   "globalStyle": {
@@ -229,7 +241,7 @@
     "backgroundColor": "#ffffff",
     "list": [
 	  {
-	    "pagePath": "pages/textbook/index3",
+	    "pagePath": "pages/home/index",
 	    "text": "首页",
 	    "selectedIconPath": "static/home_select.png",
 	    "iconPath": "static/home.png"

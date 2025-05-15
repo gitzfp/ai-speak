@@ -40,6 +40,24 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 		return
 	}
 
+	// 添加 teacher_id 验证
+	if req.TeacherID == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "教师ID不能为空"})
+		return
+	}
+
+	// 可以添加验证教师是否存在的逻辑
+	// 例如:
+	// exists, err := c.userService.TeacherExists(req.TeacherID)
+	// if err != nil {
+	//     ctx.JSON(http.StatusInternalServerError, gin.H{"error": "验证教师失败"})
+	//     return
+	// }
+	// if !exists {
+	//     ctx.JSON(http.StatusBadRequest, gin.H{"error": "教师不存在"})
+	//     return
+	// }
+
 	// 业务参数校验
 	if len(req.Contents) == 0 {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "任务内容不能为空"})
@@ -210,6 +228,7 @@ func NewTaskResponse(task *models.Task) TaskResponse {
         Status:    task.Status,
         Contents:  convertContents(task.TaskContents),
         CreatedAt: task.Model.CreatedAt, // Use the gorm.Model's CreatedAt field
+        
     }
 }
 
@@ -421,6 +440,8 @@ type CreateTaskRequest struct {
     // 任务状态（draft: 草稿，published: 已发布）
     // Enum: draft,published
     Status      models.TaskStatus `json:"status" binding:"omitempty,oneof=draft published"`
+
+    TeacherID   string                `json:"teacher_id"`  // 添加教师ID字段
 }
 
 // CreateTaskContentRequest 任务内容项
@@ -505,8 +526,9 @@ type ListTaskResponse struct {
 }
 
 // Add these converter methods
-func (r *CreateTaskRequest) ToModel() *models.Task {
+func (r *CreateTaskRequest) ToModel() *models.Task {    
     return &models.Task{
+        TeacherID:   r.TeacherID,      
         Title:              r.Title,
         Description:        r.Description,
         TaskType:           r.TaskType,

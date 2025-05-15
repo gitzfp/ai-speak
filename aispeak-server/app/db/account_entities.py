@@ -23,6 +23,8 @@ class AccountEntity(Base):
     points = Column(Integer, default=0, comment="积分") 
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)
     update_time = Column("update_time", DateTime, default=datetime.datetime.now)
+    is_teacher = Column("is_teacher", Integer, default=0, comment="是否是老师")
+    is_student = Column("is_student", Integer, default=0, comment="是否是学生")
 
 class AccountSettingsEntity(Base):
     """用户设置表"""

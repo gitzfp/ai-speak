@@ -9,7 +9,7 @@ from app.core.language import *
 key = Config.AZURE_KEY
 region = Config.AZURE_REGIEON
 
-speech_config = speechsdk.SpeechConfig(subscription=key, region=region)
+speech_config = speechsdk.SpeechConfig(subscription="C3ZsFIdkGAowcnbFVCrURBeBj7wFiyXpYHpf8sJITtRNkMVW5r1RJQQJ99BCACYeBjFXJ3w3AAAYACOGmvxn", region="eastus")
 
 speech_synthesizer = speechsdk.SpeechSynthesizer(
     speech_config=speech_config, audio_config=None
