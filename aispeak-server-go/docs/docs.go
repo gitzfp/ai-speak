@@ -9,12 +9,817 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.example.com/support",
+            "email": "support@example.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/auth/login": {
+            "post": {
+                "description": "用户登录并获取 JWT token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "用户登录",
+                "parameters": [
+                    {
+                        "description": "登录信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "登录成功",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "用户名或密码错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "使用当前 token 获取新的 token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "刷新 token",
+                "responses": {
+                    "200": {
+                        "description": "刷新成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "token 无效或已过期",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "description": "注册新用户，支持教师和学生角色",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "用户注册",
+                "parameters": [
+                    {
+                        "description": "注册信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "注册成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/classes": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "创建一个新的班级",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "classes"
+                ],
+                "summary": "创建班级",
+                "parameters": [
+                    {
+                        "description": "班级信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.CreateClassRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "创建成功",
+                        "schema": {
+                            "$ref": "#/definitions/models.Class"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/classes/student/{student_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定学生加入的所有班级列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "classes"
+                ],
+                "summary": "获取学生加入的所有班级",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "学生ID",
+                        "name": "student_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "班级列表",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Class"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/classes/teacher/{teacher_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定教师管理的所有班级列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "classes"
+                ],
+                "summary": "获取教师管理的所有班级",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "教师ID",
+                        "name": "teacher_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "班级列表",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Class"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/classes/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定班级的详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "classes"
+                ],
+                "summary": "获取班级信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "班级ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "班级信息",
+                        "schema": {
+                            "$ref": "#/definitions/models.Class"
+                        }
+                    },
+                    "404": {
+                        "description": "班级不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新班级信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "classes"
+                ],
+                "summary": "更新班级",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "班级ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.UpdateClassRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/models.Class"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "删除指定班级",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "classes"
+                ],
+                "summary": "删除班级",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "班级ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "删除成功"
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/classes/{id}/students": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定班级的所有学生列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "classes"
+                ],
+                "summary": "获取班级的所有学生",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "班级ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "学生列表",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ClassStudent"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "将学生添加到指定班级",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "classes"
+                ],
+                "summary": "添加学生到班级",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "班级ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "学生信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.AddStudentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "添加成功"
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/classes/{id}/students/{student_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "从指定班级移除学生",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "classes"
+                ],
+                "summary": "从班级移除学生",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "班级ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "学生ID",
+                        "name": "student_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "移除成功"
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/classes/{id}/tasks": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定班级的所有任务列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "classes"
+                ],
+                "summary": "获取班级的所有任务",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "班级ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "任务列表",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Task"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/classes/{id}/teachers": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "将教师添加到指定班级",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "classes"
+                ],
+                "summary": "添加教师到班级",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "班级ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "教师信息",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.AddTeacherRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "添加成功"
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/classes/{id}/teachers/{teacher_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "从指定班级移除教师",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "classes"
+                ],
+                "summary": "从班级移除教师",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "班级ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "教师ID",
+                        "name": "teacher_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "移除成功"
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/tasks": {
             "get": {
                 "produces": [
@@ -74,6 +879,74 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/controllers.TaskResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tasks/submissions/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "submissions"
+                ],
+                "summary": "获取提交详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "提交ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.SubmissionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tasks/submissions/{id}/grade": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "submissions"
+                ],
+                "summary": "评分提交记录",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "提交ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "评分数据",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.GradeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.SubmissionResponse"
                         }
                     }
                 }
@@ -167,6 +1040,84 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/tasks/{id}/submissions": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "submissions"
+                ],
+                "summary": "分页查询提交记录",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "任务ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "每页数量",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ListSubmissionsResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "提交任务",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "任务ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "提交数据",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.SubmitTaskRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.SubmissionResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -193,6 +1144,9 @@ const docTemplate = `{
                 },
                 "difficulty": {
                     "description": "难度等级（easy/medium/hard）\nEnum: easy,medium,hard",
+                    "type": "string"
+                },
+                "generate_mode": {
                     "type": "string"
                 },
                 "order_num": {
@@ -233,6 +1187,7 @@ const docTemplate = `{
         "controllers.CreateTaskRequest": {
             "type": "object",
             "required": [
+                "class_id",
                 "contents",
                 "subject",
                 "task_type",
@@ -242,6 +1197,9 @@ const docTemplate = `{
                 "allow_late_submission": {
                     "description": "是否允许迟交（默认false）\nExample: true",
                     "type": "boolean"
+                },
+                "class_id": {
+                    "type": "string"
                 },
                 "contents": {
                     "description": "任务内容集合（至少包含1个内容项）\nRequired: true\nMinSize: 1",
@@ -288,11 +1246,45 @@ const docTemplate = `{
                         }
                     ]
                 },
+                "teacher_id": {
+                    "description": "添加教师ID字段",
+                    "type": "string"
+                },
                 "title": {
                     "description": "任务标题（必填，3-100字符）\nRequired: true\nMinLength: 3\nMaxLength: 100",
                     "type": "string",
                     "maxLength": 100,
                     "minLength": 3
+                }
+            }
+        },
+        "controllers.GradeRequest": {
+            "type": "object",
+            "required": [
+                "score"
+            ],
+            "properties": {
+                "feedback": {
+                    "type": "string"
+                },
+                "score": {
+                    "type": "number",
+                    "maximum": 100,
+                    "minimum": 0
+                }
+            }
+        },
+        "controllers.ListSubmissionsResponse": {
+            "type": "object",
+            "properties": {
+                "submissions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controllers.SubmissionResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
@@ -307,6 +1299,180 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "controllers.LoginRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "description": "密码",
+                    "type": "string",
+                    "example": "password123"
+                },
+                "username": {
+                    "description": "用户名",
+                    "type": "string",
+                    "example": "teacher1"
+                }
+            }
+        },
+        "controllers.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "role": {
+                    "description": "用户角色",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.Role"
+                        }
+                    ],
+                    "example": "teacher"
+                },
+                "token": {
+                    "description": "JWT token",
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "user_id": {
+                    "description": "用户ID",
+                    "type": "string",
+                    "example": "1"
+                },
+                "user_name": {
+                    "description": "用户姓名",
+                    "type": "string",
+                    "example": "张老师"
+                }
+            }
+        },
+        "controllers.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "password",
+                "role",
+                "username"
+            ],
+            "properties": {
+                "name": {
+                    "description": "姓名",
+                    "type": "string",
+                    "example": "张老师"
+                },
+                "password": {
+                    "description": "密码",
+                    "type": "string",
+                    "example": "password123"
+                },
+                "role": {
+                    "description": "角色：teacher 或 student",
+                    "enum": [
+                        "teacher",
+                        "student"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.Role"
+                        }
+                    ],
+                    "example": "teacher"
+                },
+                "username": {
+                    "description": "用户名",
+                    "type": "string",
+                    "example": "teacher1"
+                }
+            }
+        },
+        "controllers.SubmissionResponse": {
+            "type": "object",
+            "properties": {
+                "auto_score": {
+                    "type": "number"
+                },
+                "content_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "feedback": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_correct": {
+                    "type": "boolean"
+                },
+                "media_files": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.MediaFile"
+                    }
+                },
+                "response": {
+                    "type": "string"
+                },
+                "student_task_id": {
+                    "type": "integer"
+                },
+                "teacher_score": {
+                    "type": "number"
+                }
+            }
+        },
+        "controllers.SubmitTaskRequest": {
+            "type": "object",
+            "required": [
+                "content_id"
+            ],
+            "properties": {
+                "audio_url": {
+                    "description": "向后兼容字段 - 这些字段在API中仍然支持，但内部会转换为MediaFiles",
+                    "type": "string"
+                },
+                "audio_urls": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "content_id": {
+                    "type": "integer"
+                },
+                "file_url": {
+                    "type": "string"
+                },
+                "file_urls": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "image_urls": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "media_files": {
+                    "description": "统一的媒体文件字段",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.MediaFile"
+                    }
+                },
+                "response": {
+                    "type": "string"
                 }
             }
         },
@@ -371,6 +1537,137 @@ const docTemplate = `{
                 }
             }
         },
+        "gorm.DeletedAt": {
+            "type": "object",
+            "properties": {
+                "time": {
+                    "type": "string"
+                },
+                "valid": {
+                    "description": "Valid is true if Time is not NULL",
+                    "type": "boolean"
+                }
+            }
+        },
+        "models.Class": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "description": {
+                    "description": "班级描述",
+                    "type": "string"
+                },
+                "gradeLevel": {
+                    "description": "所属年级",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "maxStudents": {
+                    "description": "最大学生人数",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "班级名称",
+                    "type": "string"
+                },
+                "schoolID": {
+                    "description": "学校ID（关联学校系统）",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "班级状态（active/inactive/archived）",
+                    "type": "string"
+                },
+                "subject": {
+                    "description": "主教学科（可空）",
+                    "type": "string"
+                },
+                "teacherID": {
+                    "description": "班主任ID（教师ID）",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ClassStudent": {
+            "type": "object",
+            "properties": {
+                "classID": {
+                    "description": "关联的班级ID",
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "joinDate": {
+                    "description": "加入日期（默认当前时间）",
+                    "type": "string"
+                },
+                "leaveDate": {
+                    "description": "离开日期（可空）",
+                    "type": "string"
+                },
+                "role": {
+                    "description": "班级角色（例如：班长、课代表等）",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "在班状态（active/inactive/transferred）",
+                    "type": "string"
+                },
+                "studentID": {
+                    "description": "学生账号ID",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.JSON": {
+            "type": "object",
+            "additionalProperties": true
+        },
+        "models.MediaFile": {
+            "type": "object",
+            "properties": {
+                "mime_type": {
+                    "description": "可选的MIME类型",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "可选的文件名",
+                    "type": "string"
+                },
+                "size": {
+                    "description": "可选的文件大小",
+                    "type": "integer"
+                },
+                "type": {
+                    "description": "文件类型: audio, image, file 等",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "文件URL",
+                    "type": "string"
+                }
+            }
+        },
         "models.SubjectType": {
             "type": "string",
             "enum": [
@@ -409,6 +1706,162 @@ const docTemplate = `{
                 "PhysicalEducation",
                 "Other"
             ]
+        },
+        "models.Task": {
+            "description": "学习任务主体结构",
+            "type": "object",
+            "properties": {
+                "allowLateSubmission": {
+                    "description": "是否允许迟交（默认不允许）",
+                    "type": "boolean"
+                },
+                "attachments": {
+                    "description": "附件信息（JSON格式存储）\n示例：[{\"type\":\"image\",\"url\":\"...\",\"name\":\"...\"}]",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.JSON"
+                        }
+                    ]
+                },
+                "classID": {
+                    "description": "关联班级ID（新增）",
+                    "type": "string"
+                },
+                "contents": {
+                    "description": "保留关联关系，但删除TaskContent的具体定义\n显式声明关联关系",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TaskContent"
+                    }
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deadline": {
+                    "description": "截止时间（可空）",
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "description": {
+                    "description": "任务详细描述（长文本）",
+                    "type": "string"
+                },
+                "gradingCriteria": {
+                    "description": "评分标准描述（长文本）",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lessonID": {
+                    "type": "integer"
+                },
+                "maxAttempts": {
+                    "description": "最大尝试次数（空表示不限）",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "任务状态（默认草稿）",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.TaskStatus"
+                        }
+                    ]
+                },
+                "subject": {
+                    "description": "所属学科（使用枚举）",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.SubjectType"
+                        }
+                    ]
+                },
+                "taskType": {
+                    "description": "任务类型（使用枚举）",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.TaskType"
+                        }
+                    ]
+                },
+                "teacherID": {
+                    "description": "教师账号ID（业务系统关联ID）",
+                    "type": "string"
+                },
+                "textbookID": {
+                    "type": "integer"
+                },
+                "title": {
+                    "description": "任务标题（最大长度200字符）",
+                    "type": "string"
+                },
+                "totalPoints": {
+                    "description": "任务总分（默认100分）",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.TaskContent": {
+            "type": "object",
+            "properties": {
+                "contentType": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "generateMode": {
+                    "description": "增加生成模式标识",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/models.JSON"
+                },
+                "orderNum": {
+                    "type": "integer"
+                },
+                "points": {
+                    "type": "integer"
+                },
+                "refBookID": {
+                    "description": "保留教材单元关联用于自动生成",
+                    "type": "string"
+                },
+                "refLessonID": {
+                    "type": "integer"
+                },
+                "selectedSentenceIDs": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "selectedWordIDs": {
+                    "description": "新增手动选择字段",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "taskID": {
+                    "description": "必须保留这个字段",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
         },
         "models.TaskStatus": {
             "type": "string",
@@ -457,18 +1910,142 @@ const docTemplate = `{
                 "SentenceRepeat",
                 "Quiz"
             ]
+        },
+        "services.AddStudentRequest": {
+            "type": "object",
+            "required": [
+                "student_id"
+            ],
+            "properties": {
+                "role": {
+                    "type": "string"
+                },
+                "student_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.AddTeacherRequest": {
+            "type": "object",
+            "required": [
+                "role",
+                "teacher_id"
+            ],
+            "properties": {
+                "role": {
+                    "type": "string"
+                },
+                "teacher_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.CreateClassRequest": {
+            "type": "object",
+            "required": [
+                "grade_level",
+                "max_students",
+                "name",
+                "teacher_id"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "grade_level": {
+                    "type": "string"
+                },
+                "max_students": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "name": {
+                    "type": "string"
+                },
+                "school_id": {
+                    "type": "string"
+                },
+                "subject": {
+                    "type": "string"
+                },
+                "teacher_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.UpdateClassRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "grade_level": {
+                    "type": "string"
+                },
+                "max_students": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "name": {
+                    "type": "string"
+                },
+                "school_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "subject": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.Role": {
+            "type": "string",
+            "enum": [
+                "teacher",
+                "student",
+                "admin"
+            ],
+            "x-enum-varnames": [
+                "RoleTeacher",
+                "RoleStudent",
+                "RoleAdmin"
+            ]
         }
-    }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "在请求头中添加 Bearer token，例如：Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    },
+    "tags": [
+        {
+            "description": "用户认证相关接口，包括注册、登录和token刷新",
+            "name": "auth"
+        },
+        {
+            "description": "任务管理相关接口，包括创建、更新、删除和查询任务",
+            "name": "tasks"
+        },
+        {
+            "description": "班级管理相关接口，包括创建、更新、删除班级，以及管理班级成员和任务",
+            "name": "classes"
+        }
+    ]
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
-	BasePath:         "",
+	Version:          "1.0",
+	Host:             "localhost:8080",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "AI-Speak API",
+	Description:      "AI-Speak服务端API文档，提供任务管理、班级管理和用户认证等功能",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

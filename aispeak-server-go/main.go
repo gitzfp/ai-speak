@@ -8,7 +8,6 @@ import (
 	// 添加swagger导入
 	"github.com/gitzfp/ai-speak/aispeak-server-go/controllers"
 	_ "github.com/gitzfp/ai-speak/aispeak-server-go/docs"
-	"github.com/gitzfp/ai-speak/aispeak-server-go/models"
 	"github.com/gitzfp/ai-speak/aispeak-server-go/repositories"
 	"github.com/gitzfp/ai-speak/aispeak-server-go/router"
 	"github.com/gitzfp/ai-speak/aispeak-server-go/services"
@@ -21,7 +20,7 @@ import (
 
 // @title           AI-Speak API
 // @version         1.0
-// @description     AI-Speak服务端API文档
+// @description     AI-Speak服务端API文档，提供任务管理、班级管理和用户认证等功能
 // @termsOfService  http://swagger.io/terms/
 
 // @contact.name   API Support
@@ -32,7 +31,21 @@ import (
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
 // @host      localhost:8080
-// @BasePath  /
+// @BasePath  /api/v1
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description 在请求头中添加 Bearer token，例如：Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+// @tag.name auth
+// @tag.description 用户认证相关接口，包括注册、登录和token刷新
+
+// @tag.name tasks
+// @tag.description 任务管理相关接口，包括创建、更新、删除和查询任务
+
+// @tag.name classes
+// @tag.description 班级管理相关接口，包括创建、更新、删除班级，以及管理班级成员和任务
 
 func main() {
 	// 加载环境变量
@@ -60,19 +73,10 @@ func main() {
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_NAME"),
 	)
-	
+
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
-	}
-
-	// 自动迁移模型
-	if err := db.AutoMigrate(
-		&models.Task{},
-		&models.TaskContent{},
-		&models.TaskTemplate{},
-	); err != nil {
-		log.Fatal("Auto migration failed:", err)
 	}
 
 	// 初始化服务层
@@ -80,14 +84,22 @@ func main() {
 	wordRepo := repositories.NewWordRepository(db)
 	sentenceRepo := repositories.NewContentRepository(db)
 	taskService := services.NewTaskService(taskRepo, wordRepo, sentenceRepo)
-	taskController := controllers.NewTaskController(taskService)
+	classRepo := repositories.NewClassRepository(db)
+	classService := services.NewClassService(classRepo)
+	taskController := controllers.NewTaskController(taskService, classService)
+
+	// 初始化班级管理相关组件
+	classController := controllers.NewClassController(classService)
+
+	// 初始化认证控制器
+	authController := controllers.NewAuthController(db)
 
 	// 配置路由
-	r := router.SetupRouter(taskController)
-	
+	r := router.SetupRouter(taskController, classController, authController)
+
 	// 添加swagger路由
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	
+
 	// 启动服务
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal("Failed to start server:", err)
