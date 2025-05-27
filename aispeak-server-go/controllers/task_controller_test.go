@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,6 +21,27 @@ import (
 // MockTaskService 模拟任务服务
 type MockTaskService struct {
 	mock.Mock
+}
+
+// MockClassService implements services.ClassServiceInterface for testing
+// Only stub methods needed for interface
+//go:generate mockery --name=ClassServiceInterface
+// (manual mock below)
+type MockClassService struct {
+	mock.Mock
+}
+
+func (m *MockClassService) GetClassByID(ctx context.Context, id string) (*models.Class, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Class), args.Error(1)
+}
+
+func (m *MockClassService) ClassExists(classID string) (bool, error) {
+	args := m.Called(classID)
+	return args.Bool(0), args.Error(1)
 }
 
 func (m *MockTaskService) CreateTaskWithContents(task *models.Task, contents []*models.TaskContent) error {
@@ -91,7 +113,8 @@ func setupTestEnv() (*gin.Engine, *MockTaskService, *TaskController) {
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
 	mockService := new(MockTaskService)
-	controller := NewTaskController(mockService)
+	mockClassService := new(MockClassService)
+	controller := NewTaskController(mockService, mockClassService)
 	return router, mockService, controller
 }
 
@@ -102,17 +125,23 @@ func TestCreateTask_BasicValidation(t *testing.T) {
 
 	// 测试用例1: 任务标题为空
 	t.Run("EmptyTitle", func(t *testing.T) {
+		mockClassService := new(MockClassService) // Create a new mock for each test
+		controller.classService = mockClassService
+		mockClassService.On("ClassExists", "class1").Return(true, nil) // Set expectation
+
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1", // 添加必填的教师ID
 			Title:    "",
 			TaskType: models.Dictation,
 			Subject:  models.English,
 			Contents: []CreateTaskContentRequest{
 				{
-					ContentType:         "dictation",
-					Points:             100,
-					OrderNum:           1,
-					SelectedWordIDs:    []int32{1, 2, 3},
-					GenerateMode:       "manual",
+					ContentType:   "dictation",
+					Points:        100,
+					OrderNum:      1,
+					SelectedWordIDs: []int32{1, 2, 3},
+					GenerateMode:  "manual",
 				},
 			},
 		}
@@ -124,29 +153,35 @@ func TestCreateTask_BasicValidation(t *testing.T) {
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "Field validation for 'Title' failed")
 	})
 
 	// 测试用例2: 任务标题过长
 	t.Run("TitleTooLong", func(t *testing.T) {
+		mockClassService := new(MockClassService)
+		controller.classService = mockClassService
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		longTitle := make([]byte, 201)
 		for i := range longTitle {
 			longTitle[i] = 'a'
 		}
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1", // 添加必填的教师ID
 			Title:    string(longTitle),
 			TaskType: models.Dictation,
 			Subject:  models.English,
 			Contents: []CreateTaskContentRequest{
 				{
-					ContentType:         "dictation",
-					Points:             100,
-					OrderNum:           1,
-					SelectedWordIDs:    []int32{1, 2, 3},
-					GenerateMode:       "manual",
+					ContentType:     "dictation",
+					Points:          100,
+					OrderNum:        1,
+					SelectedWordIDs: []int32{1, 2, 3},
+					GenerateMode:    "manual",
 				},
 			},
 		}
-
 		jsonData, _ := json.Marshal(reqBody)
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
@@ -154,20 +189,32 @@ func TestCreateTask_BasicValidation(t *testing.T) {
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
+		// 修改期望的错误消息
+		assert.Contains(t, w.Body.String(), "Field validation for 'Title' failed")
 	})
 
 	// 标题正好200字符
 	t.Run("TitleAtMaxLength", func(t *testing.T) {
+		mockClassService := new(MockClassService)
+		controller.classService = mockClassService
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		maxTitle := make([]byte, 200)
 		for i := range maxTitle {
 			maxTitle[i] = 'a'
 		}
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
 			Title:    string(maxTitle),
 			TaskType: models.Dictation,
 			Subject:  models.English,
+			TeacherID: "teacher1", // 添加教师ID
 			Contents: []CreateTaskContentRequest{{
-				ContentType: "dictation", Points: 100, OrderNum: 1, SelectedWordIDs: []int32{1}, GenerateMode: "manual",
+				ContentType:     "dictation",
+				Points:          100,
+				OrderNum:        1,
+				SelectedWordIDs: []int32{1},
+				GenerateMode:    "manual",
 			}},
 		}
 		jsonData, _ := json.Marshal(reqBody)
@@ -175,12 +222,22 @@ func TestCreateTask_BasicValidation(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
 		req.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(w, req)
-		assert.Equal(t, http.StatusBadRequest, w.Code) // 如果允许200则改为StatusOK
+
+		// 如果200字符是允许的，应该期望成功
+		// 如果不允许，则期望验证错误
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "Field validation for 'Title' failed")
 	})
 
 	// 内容数组为空
 	t.Run("EmptyContents", func(t *testing.T) {
+		mockClassService := new(MockClassService) // Create a new mock for each test
+		controller.classService = mockClassService
+		mockClassService.On("ClassExists", "class1").Return(true, nil) // Set expectation
+
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1", // 添加必填的教师ID
 			Title:    "Test Task",
 			TaskType: models.Dictation,
 			Subject:  models.English,
@@ -197,12 +254,22 @@ func TestCreateTask_BasicValidation(t *testing.T) {
 
 	// Points为0
 	t.Run("ZeroPoints", func(t *testing.T) {
+		mockClassService := new(MockClassService)
+		controller.classService = mockClassService
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		reqBody := CreateTaskRequest{
-			Title:    "Test Task",
-			TaskType: models.Dictation,
-			Subject:  models.English,
+			ClassID:   "class1",
+			Title:     "Test Task",
+			TaskType:  models.Dictation,
+			Subject:   models.English,
+			TeacherID: "teacher1", // 添加教师ID
 			Contents: []CreateTaskContentRequest{{
-				ContentType: "dictation", Points: 0, OrderNum: 1, SelectedWordIDs: []int32{1}, GenerateMode: "manual",
+				ContentType:     "dictation",
+				Points:          0, // 分值为0
+				OrderNum:        1,
+				SelectedWordIDs: []int32{1},
+				GenerateMode:    "manual",
 			}},
 		}
 		jsonData, _ := json.Marshal(reqBody)
@@ -210,18 +277,88 @@ func TestCreateTask_BasicValidation(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
 		req.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(w, req)
+
 		assert.Equal(t, http.StatusBadRequest, w.Code)
+		// 修改期望的错误消息，匹配实际返回的错误
 		assert.Contains(t, w.Body.String(), "内容分值总和必须为100")
 	})
 
 	// Points为负数
 	t.Run("NegativePoints", func(t *testing.T) {
+		mockClassService := new(MockClassService)
+		controller.classService = mockClassService
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		reqBody := CreateTaskRequest{
+			ClassID:   "class1",
+			Title:     "Test Task",
+			TaskType:  models.Dictation,
+			Subject:   models.English,
+			TeacherID: "teacher1", // 添加教师ID
+			Contents: []CreateTaskContentRequest{{
+				ContentType:     "dictation",
+				Points:          -10, // 负分值
+				OrderNum:        1,
+				SelectedWordIDs: []int32{1},
+				GenerateMode:    "manual",
+			}},
+		}
+		jsonData, _ := json.Marshal(reqBody)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		// 修改期望的错误消息，匹配实际返回的错误
+		assert.Contains(t, w.Body.String(), "内容分值总和必须为100")
+	})
+
+	// MissingPoints 测试
+	t.Run("MissingPoints", func(t *testing.T) {
+		mockClassService := new(MockClassService)
+		controller.classService = mockClassService
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
+		reqBody := CreateTaskRequest{
+			ClassID:   "class1",
+			Title:     "Test Task",
+			TaskType:  models.Dictation,
+			Subject:   models.English,
+			TeacherID: "teacher1", // 添加教师ID
+			Contents: []CreateTaskContentRequest{{
+				ContentType:     "dictation",
+				// Points 字段缺失
+				OrderNum:        1,
+				SelectedWordIDs: []int32{1},
+				GenerateMode:    "manual",
+			}},
+		}
+		jsonData, _ := json.Marshal(reqBody)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		// 修改期望的错误消息，匹配实际返回的错误
+		assert.Contains(t, w.Body.String(), "内容分值总和必须为100")
+	})
+
+	// 新增测试用例: 缺少TeacherID
+	t.Run("MissingTeacherID", func(t *testing.T) {
+		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			// TeacherID 字段缺失
 			Title:    "Test Task",
 			TaskType: models.Dictation,
 			Subject:  models.English,
 			Contents: []CreateTaskContentRequest{{
-				ContentType: "dictation", Points: -10, OrderNum: 1, SelectedWordIDs: []int32{1}, GenerateMode: "manual",
+				ContentType:     "dictation",
+				Points:          100,
+				OrderNum:        1,
+				SelectedWordIDs: []int32{1},
+				GenerateMode:    "manual",
 			}},
 		}
 		jsonData, _ := json.Marshal(reqBody)
@@ -229,21 +366,25 @@ func TestCreateTask_BasicValidation(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
 		req.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(w, req)
+
 		assert.Equal(t, http.StatusBadRequest, w.Code)
-		assert.Contains(t, w.Body.String(), "内容分值总和必须为100")
+		assert.Contains(t, w.Body.String(), "Field validation for 'TeacherID' failed")
 	})
 
-	// 缺失必填字段 Points
-	t.Run("MissingPoints", func(t *testing.T) {
-		reqBody := map[string]interface{}{
-			"title":    "Test Task",
-			"task_type": models.Dictation,
-			"subject":  models.English,
-			"contents": []map[string]interface{}{{
-				"content_type": "dictation",
-				"order_num":    1,
-				"selected_word_ids": []int32{1},
-				"generate_mode": "manual",
+	// 新增测试用例: 缺少ClassID
+	t.Run("MissingClassID", func(t *testing.T) {
+		reqBody := CreateTaskRequest{
+			// ClassID 字段缺失
+			TeacherID: "teacher1",
+			Title:     "Test Task",
+			TaskType:  models.Dictation,
+			Subject:   models.English,
+			Contents: []CreateTaskContentRequest{{
+				ContentType:     "dictation",
+				Points:          100,
+				OrderNum:        1,
+				SelectedWordIDs: []int32{1},
+				GenerateMode:    "manual",
 			}},
 		}
 		jsonData, _ := json.Marshal(reqBody)
@@ -251,8 +392,9 @@ func TestCreateTask_BasicValidation(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
 		req.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(w, req)
+
 		assert.Equal(t, http.StatusBadRequest, w.Code)
-		assert.Contains(t, w.Body.String(), "内容分值总和必须为100")
+		assert.Contains(t, w.Body.String(), "Field validation for 'ClassID' failed")
 	})
 }
 
@@ -260,12 +402,17 @@ func TestCreateTask_BasicValidation(t *testing.T) {
 func TestCreateTask_StatusValidation(t *testing.T) {
 	router := setupRouter()
 	mockService := new(MockTaskService)
-	controller := NewTaskController(mockService)
+	mockClassService := new(MockClassService)
+	controller := NewTaskController(mockService, mockClassService)
 	router.POST("/tasks", controller.CreateTask)
 
 	// 测试用例1: 已发布任务未设置截止时间
 	t.Run("PublishedWithoutDeadline", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1",
 			Title:    "Unit 1 单词听写",
 			TaskType: models.Dictation,
 			Subject:  models.English,
@@ -292,8 +439,12 @@ func TestCreateTask_StatusValidation(t *testing.T) {
 
 	// 测试用例2: 已发布任务截止时间已过
 	t.Run("PublishedWithExpiredDeadline", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		expiredDeadline := time.Now().Add(-24 * time.Hour)
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1",
 			Title:    "Unit 1 单词听写",
 			TaskType: models.Dictation,
 			Subject:  models.English,
@@ -325,12 +476,17 @@ func TestCreateTask_StatusValidation(t *testing.T) {
 func TestCreateTask_ContentValidation(t *testing.T) {
 	router := setupRouter()
 	mockService := new(MockTaskService)
-	controller := NewTaskController(mockService)
+	mockClassService := new(MockClassService)
+	controller := NewTaskController(mockService, mockClassService)
 	router.POST("/tasks", controller.CreateTask)
 
 	// 测试用例1: 任务类型和内容类型不匹配
 	t.Run("MismatchedTaskAndContentType", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1",
 			Title:    "Unit 1 单词听写",
 			TaskType: models.Dictation,
 			Subject:  models.English,
@@ -357,16 +513,20 @@ func TestCreateTask_ContentValidation(t *testing.T) {
 
 	// 测试用例2: 自动生成模式缺少必要参数
 	t.Run("AutoModeMissingRequiredParams", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1",
 			Title:    "Unit 1 单词听写",
 			TaskType: models.Dictation,
 			Subject:  models.English,
 			Contents: []CreateTaskContentRequest{
 				{
 					ContentType:   "dictation",
-					Points:       100,
-					OrderNum:     1,
-					GenerateMode: "auto",
+					Points:        100,
+					OrderNum:      1,
+					GenerateMode:  "auto",
 				},
 			},
 		}
@@ -384,16 +544,20 @@ func TestCreateTask_ContentValidation(t *testing.T) {
 
 	// 测试用例3: 手动选择模式缺少必要参数
 	t.Run("ManualModeMissingRequiredParams", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1",
 			Title:    "Unit 1 单词听写",
 			TaskType: models.Dictation,
 			Subject:  models.English,
 			Contents: []CreateTaskContentRequest{
 				{
 					ContentType:   "dictation",
-					Points:       100,
-					OrderNum:     1,
-					GenerateMode: "manual",
+					Points:        100,
+					OrderNum:      1,
+					GenerateMode:  "manual",
 				},
 			},
 		}
@@ -410,8 +574,12 @@ func TestCreateTask_ContentValidation(t *testing.T) {
 
 	// 测试用例4: 内容分值总和不为100
 	t.Run("InvalidTotalPoints", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		deadline := time.Now().Add(24 * time.Hour)
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1",
 			Title:    "Unit 1 综合测验",
 			TaskType: models.Quiz,
 			Subject:  models.English,
@@ -447,12 +615,15 @@ func TestCreateTask_ContentValidation(t *testing.T) {
 
 	// 测试用例5: SelectedWordIDs包含不存在的单词ID
 	t.Run("SelectedWordIDs包含不存在的单词ID", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
 		mockService.ExpectedCalls = nil // 重置 Mock 期望
 		mockService.On("CreateTaskWithContents", mock.Anything, mock.Anything).
 			Return(errors.New("单词ID不存在")).Once()
-		
+
 		deadline := time.Now().Add(24 * time.Hour)
 		var reqBody CreateTaskRequest = CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1",
 			Title:    "Unit 1 单词听写",
 			TaskType: models.Dictation,
 			Subject:  models.English,
@@ -481,8 +652,12 @@ func TestCreateTask_ContentValidation(t *testing.T) {
 
 	// 测试用例6: SelectedWordIDs为空数组
 	t.Run("SelectedWordIDs为空数组", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		deadline := time.Now().Add(24 * time.Hour)
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1",
 			Title:    "Unit 1 单词听写",
 			TaskType: models.Dictation,
 			Subject:  models.English,
@@ -511,8 +686,12 @@ func TestCreateTask_ContentValidation(t *testing.T) {
 
 	// 测试用例7: SelectedWordIDs有重复ID
 	t.Run("SelectedWordIDs有重复ID", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		deadline := time.Now().Add(24 * time.Hour)
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1",
 			Title:    "Unit 1 单词听写",
 			TaskType: models.Dictation,
 			Subject:  models.English,
@@ -546,12 +725,15 @@ func TestCreateTask_ContentValidation(t *testing.T) {
 
 	// 测试用例8: SelectedWordIDs与教材单元不匹配
 	t.Run("SelectedWordIDs与教材单元不匹配", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
 		mockService.ExpectedCalls = nil
 		mockService.On("CreateTaskWithContents", mock.Anything, mock.Anything).
 			Return(errors.New("单词不属于指定教材单元")).Once()
 
 		deadline := time.Now().Add(24 * time.Hour)
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1",
 			Title:    "Unit 1 单词听写",
 			TaskType: models.Dictation,
 			Subject:  models.English,
@@ -569,7 +751,7 @@ func TestCreateTask_ContentValidation(t *testing.T) {
 				},
 			},
 		}
-		
+
 		jsonData, _ := json.Marshal(reqBody)
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
@@ -583,7 +765,11 @@ func TestCreateTask_ContentValidation(t *testing.T) {
 
 	// 新增测试用例9: 重复的OrderNum (This should be inside the function)
 	t.Run("DuplicateOrderNum", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1",
 			Title:    "Test Task",
 			TaskType: models.Dictation,
 			Subject:  models.English,
@@ -604,7 +790,11 @@ func TestCreateTask_ContentValidation(t *testing.T) {
 
 	// 新增测试用例10: 无效的GenerateMode (This should also be inside the function)
 	t.Run("InvalidGenerateMode", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",
+			TeacherID: "teacher1",
 			Title:    "Test Task",
 			TaskType: models.Dictation,
 			Subject:  models.English,
@@ -627,13 +817,18 @@ func TestCreateTask_ContentValidation(t *testing.T) {
 func TestCreateTask_SuccessScenarios(t *testing.T) {
 	router := setupRouter()
 	mockService := new(MockTaskService)
-	controller := NewTaskController(mockService)
+	mockClassService := new(MockClassService)
+	controller := NewTaskController(mockService, mockClassService)
 	router.POST("/tasks", controller.CreateTask)
 
 	// 测试用例1: 正常创建听写任务
 	t.Run("CreateDictationTask", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		deadline := time.Now().Add(24 * time.Hour)
 		reqBody := CreateTaskRequest{
+			ClassID:     "class1",     // 添加必填的班级ID
+			TeacherID:   "teacher1",   // 添加必填的教师ID
 			Title:       "Unit 1 单词听写",
 			TaskType:    models.Dictation,
 			Subject:     models.English,
@@ -669,8 +864,12 @@ func TestCreateTask_SuccessScenarios(t *testing.T) {
 
 	// 测试用例2: 创建句子跟读任务
 	t.Run("CreateSentenceRepeatTask", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		deadline := time.Now().Add(24 * time.Hour)
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",     // 添加必填的班级ID
+			TeacherID: "teacher1",  // 添加必填的教师ID
 			Title:    "Unit 1 句子跟读",
 			TaskType: models.SentenceRepeat,
 			Subject:  models.English,
@@ -705,8 +904,12 @@ func TestCreateTask_SuccessScenarios(t *testing.T) {
 
 	// 测试用例3: 创建混合内容类型的测验任务
 	t.Run("CreateMixedContentQuizTask", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		deadline := time.Now().Add(24 * time.Hour)
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",     // 添加必填的班级ID
+			TeacherID: "teacher1",  // 添加必填的教师ID
 			Title:    "Unit 1 综合测验",
 			TaskType: models.Quiz,
 			Subject:  models.English,
@@ -748,8 +951,12 @@ func TestCreateTask_SuccessScenarios(t *testing.T) {
 
 	// 测试用例4: 创建单词拼写任务
 	t.Run("CreateSpellingTask", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		deadline := time.Now().Add(24 * time.Hour)
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",     // 添加必填的班级ID
+			TeacherID: "teacher1",  // 添加必填的教师ID
 			Title:    "Unit 1 单词拼写",
 			TaskType: models.Spelling,
 			Subject:  models.English,
@@ -784,8 +991,12 @@ func TestCreateTask_SuccessScenarios(t *testing.T) {
 
 	// 测试用例5: 创建口语测评任务
 	t.Run("CreateSpeakingAssessmentTask", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		deadline := time.Now().Add(24 * time.Hour)
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",     // 添加必填的班级ID
+			TeacherID: "teacher1",  // 添加必填的教师ID
 			Title:    "Unit 1 口语测评",
 			TaskType: models.Pronunciation,
 			Subject:  models.English,
@@ -820,7 +1031,11 @@ func TestCreateTask_SuccessScenarios(t *testing.T) {
 
 	// 测试用例6: 创建草稿状态的任务
 	t.Run("CreateDraftTask", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",     // 添加必填的班级ID
+			TeacherID: "teacher1",  // 添加必填的教师ID
 			Title:    "草稿状态的听写任务",
 			TaskType: models.Dictation,
 			Subject:  models.English,
@@ -854,8 +1069,12 @@ func TestCreateTask_SuccessScenarios(t *testing.T) {
 
 	// 测试用例7: 使用自动生成模式创建任务
 	t.Run("CreateTaskWithAutoMode", func(t *testing.T) {
+		mockClassService.On("ClassExists", "class1").Return(true, nil)
+
 		deadline := time.Now().Add(24 * time.Hour)
 		reqBody := CreateTaskRequest{
+			ClassID:  "class1",     // 添加必填的班级ID
+			TeacherID: "teacher1",  // 添加必填的教师ID
 			Title:    "自动生成的听写任务",
 			TaskType: models.Dictation,
 			Subject:  models.English,
@@ -895,7 +1114,8 @@ func TestCreateTask_SuccessScenarios(t *testing.T) {
 func TestCreateTask_TypeValidation(t *testing.T) {
 	router := setupRouter()
 	mockService := new(MockTaskService)
-	controller := NewTaskController(mockService)
+	mockClassService := new(MockClassService)
+	controller := NewTaskController(mockService, mockClassService)
 	router.POST("/tasks", controller.CreateTask)
 
 	// 测试用例1: 无效任务类型
@@ -927,7 +1147,8 @@ func TestCreateTask_TypeValidation(t *testing.T) {
 func TestUpdateTask(t *testing.T) {
 	router := setupRouter()
 	mockService := new(MockTaskService)
-	controller := NewTaskController(mockService)
+	mockClassService := new(MockClassService)
+	controller := NewTaskController(mockService, mockClassService)
 	router.PUT("/tasks/:id", controller.UpdateTask)
 
 	// 测试用例1: 成功更新任务
@@ -944,7 +1165,7 @@ func TestUpdateTask(t *testing.T) {
 		}
 
 		mockService.On("UpdateTask", mock.Anything).Return(nil).Once()
-		
+
 		jsonData, _ := json.Marshal(reqBody)
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("PUT", fmt.Sprintf("/tasks/%d", taskID), bytes.NewBuffer(jsonData))
@@ -973,7 +1194,7 @@ func TestUpdateTask(t *testing.T) {
 		}
 
 		mockService.On("UpdateTask", mock.Anything).Return(gorm.ErrRecordNotFound).Once()
-		
+
 		jsonData, _ := json.Marshal(reqBody)
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("PUT", fmt.Sprintf("/tasks/%d", taskID), bytes.NewBuffer(jsonData))
@@ -992,7 +1213,7 @@ func TestUpdateTask(t *testing.T) {
 			Status: models.Published,
 			Deadline: nil, // 故意不设置截止时间
 		}
-		
+
 		jsonData, _ := json.Marshal(reqBody)
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("PUT", fmt.Sprintf("/tasks/%d", taskID), bytes.NewBuffer(jsonData))
@@ -1004,17 +1225,18 @@ func TestUpdateTask(t *testing.T) {
 }
 
 // 新增测试组 TestDeleteTask
-func TestDeleteTask(t *testing.T) {
+func TestDeleteTask(t *testing.T) { // 修正函数签名
 	router := setupRouter()
 	mockService := new(MockTaskService)
-	controller := NewTaskController(mockService)
+	mockClassService := new(MockClassService)
+	controller := NewTaskController(mockService, mockClassService)
 	router.DELETE("/tasks/:id", controller.DeleteTask)
 
 	// 测试用例1: 成功删除任务
 	t.Run("Success", func(t *testing.T) {
 		taskID := 1
 		mockService.On("DeleteTask", uint(taskID)).Return(nil).Once()
-		
+
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("/tasks/%d", taskID), nil)
 		router.ServeHTTP(w, req)
@@ -1036,7 +1258,7 @@ func TestDeleteTask(t *testing.T) {
 	t.Run("TaskNotFound", func(t *testing.T) {
 		taskID := 999
 		mockService.On("DeleteTask", uint(taskID)).Return(gorm.ErrRecordNotFound).Once()
-		
+
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("/tasks/%d", taskID), nil)
 		router.ServeHTTP(w, req)
@@ -1047,10 +1269,11 @@ func TestDeleteTask(t *testing.T) {
 }
 
 // TestSubmitTask tests the functionality of submitting task responses
-func TestSubmitTask(t *testing.T) {
+func TestSubmitTask(t *testing.T) { // 修正函数签名
 	router := setupRouter()
 	mockService := new(MockTaskService)
-	controller := NewTaskController(mockService)
+	mockClassService := new(MockClassService)
+	controller := NewTaskController(mockService, mockClassService)
 	router.POST("/tasks/:id/submissions", controller.SubmitTask)
 
 	// 测试用例1: 成功提交任务
@@ -1064,7 +1287,7 @@ func TestSubmitTask(t *testing.T) {
 
 		// 设置模拟服务的行为
 		mockService.On("CreateSubmission", mock.AnythingOfType("*models.Submission")).Return(nil).Once()
-		
+
 		// 通过模拟往返请求
 		jsonData, _ := json.Marshal(reqBody)
 		w := httptest.NewRecorder()
@@ -1120,7 +1343,7 @@ func TestSubmitTask(t *testing.T) {
 		// 设置模拟服务的行为 - 返回错误
 		mockService.On("CreateSubmission", mock.AnythingOfType("*models.Submission")).
 			Return(errors.New("任务内容不存在")).Once()
-		
+
 		jsonData, _ := json.Marshal(reqBody)
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/tasks/1/submissions", bytes.NewBuffer(jsonData))
@@ -1135,10 +1358,11 @@ func TestSubmitTask(t *testing.T) {
 }
 
 // TestGetSubmission tests the functionality of retrieving submission details
-func TestGetSubmission(t *testing.T) {
+func TestGetSubmission(t *testing.T) { // 修正函数签名
 	router := setupRouter()
 	mockService := new(MockTaskService)
-	controller := NewTaskController(mockService)
+	mockClassService := new(MockClassService)
+	controller := NewTaskController(mockService, mockClassService)
 	router.GET("/submissions/:id", controller.GetSubmission)
 
 	// 测试用例1: 成功获取提交记录
@@ -1164,7 +1388,7 @@ func TestGetSubmission(t *testing.T) {
 
 		// 设置模拟服务的行为
 		mockService.On("GetSubmissionDetails", uint(1)).Return(submission, nil).Once()
-		
+
 		// 模拟请求
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/submissions/1", nil)
@@ -1187,7 +1411,7 @@ func TestGetSubmission(t *testing.T) {
 		// 设置模拟服务的行为 - 返回"记录不存在"错误
 		mockService.On("GetSubmissionDetails", uint(999)).
 			Return(nil, gorm.ErrRecordNotFound).Once()
-		
+
 		// 模拟请求
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/submissions/999", nil)
@@ -1204,7 +1428,7 @@ func TestGetSubmission(t *testing.T) {
 		// 设置模拟服务的行为 - 返回一般错误
 		mockService.On("GetSubmissionDetails", uint(2)).
 			Return(nil, errors.New("数据库错误")).Once()
-		
+
 		// 模拟请求
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/submissions/2", nil)
@@ -1221,7 +1445,8 @@ func TestGetSubmission(t *testing.T) {
 func TestListSubmissions(t *testing.T) {
 	router := setupRouter()
 	mockService := new(MockTaskService)
-	controller := NewTaskController(mockService)
+	mockClassService := new(MockClassService)
+	controller := NewTaskController(mockService, mockClassService)
 	router.GET("/tasks/:task_id/submissions", controller.ListSubmissions)
 
 	// 测试用例1: 成功获取提交列表
@@ -1231,7 +1456,7 @@ func TestListSubmissions(t *testing.T) {
 		score2 := 90.0
 		isCorrect1 := true
 		isCorrect2 := false
-		
+
 		submissions := []models.Submission{
 			{
 				Model: gorm.Model{ID: 1, CreatedAt: time.Now()},
@@ -1254,7 +1479,7 @@ func TestListSubmissions(t *testing.T) {
 		// 设置模拟服务的行为
 		mockService.On("ListSubmissions", uint(0), 1, 10).
 			Return(submissions, nil).Once()
-		
+
 		// 模拟请求
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/tasks/5/submissions?page=1&page_size=10", nil)
@@ -1276,7 +1501,7 @@ func TestListSubmissions(t *testing.T) {
 		// 设置模拟服务的行为 - 返回空列表
 		mockService.On("ListSubmissions", uint(0), 1, 10).
 			Return([]models.Submission{}, nil).Once()
-		
+
 		// 模拟请求
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/tasks/6/submissions?page=1&page_size=10", nil)
@@ -1296,7 +1521,7 @@ func TestListSubmissions(t *testing.T) {
 		// 设置模拟服务的行为 - 返回错误
 		mockService.On("ListSubmissions", uint(0), 1, 10).
 			Return(nil, errors.New("数据库错误")).Once()
-		
+
 		// 模拟请求
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/tasks/7/submissions?page=1&page_size=10", nil)
@@ -1313,7 +1538,8 @@ func TestListSubmissions(t *testing.T) {
 func TestGradeSubmission(t *testing.T) {
 	router := setupRouter()
 	mockService := new(MockTaskService)
-	controller := NewTaskController(mockService)
+	mockClassService := new(MockClassService)
+	controller := NewTaskController(mockService, mockClassService)
 	router.POST("/submissions/:id/grade", controller.GradeSubmission)
 
 	// 测试用例1: 成功评分
@@ -1338,7 +1564,7 @@ func TestGradeSubmission(t *testing.T) {
 			Return(submission, nil).Once()
 		mockService.On("UpdateSubmission", mock.AnythingOfType("*models.Submission")).
 			Return(nil).Once()
-		
+
 		// 模拟请求
 		jsonData, _ := json.Marshal(reqBody)
 		w := httptest.NewRecorder()
@@ -1385,7 +1611,7 @@ func TestGradeSubmission(t *testing.T) {
 		// 设置模拟服务的行为
 		mockService.On("GetSubmissionDetails", uint(999)).
 			Return(nil, errors.New("记录不存在")).Once()
-		
+
 		// 模拟请求
 		jsonData, _ := json.Marshal(reqBody)
 		w := httptest.NewRecorder()
@@ -1420,7 +1646,7 @@ func TestGradeSubmission(t *testing.T) {
 			Return(submission, nil).Once()
 		mockService.On("UpdateSubmission", mock.AnythingOfType("*models.Submission")).
 			Return(errors.New("更新失败")).Once()
-		
+
 		// 模拟请求
 		jsonData, _ := json.Marshal(reqBody)
 		w := httptest.NewRecorder()

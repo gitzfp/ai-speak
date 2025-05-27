@@ -1,6 +1,6 @@
 data"external_schema" "gorm" {
   program = [
-    "go", "run", "-mod=mod",
+    "/Users/fpz/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.23.9.darwin-arm64/bin/go", "run", "-mod=mod",
     "ariga.io/atlas-provider-gorm",
     "load",
     "--path", "../models",# GORM 模型目录

@@ -51,12 +51,6 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 		return
 	}
 
-	// 添加 teacher_id 验证
-	if req.TeacherID == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "教师ID不能为空"})
-		return
-	}
-
 	// 可以添加验证教师是否存在的逻辑
 	// 例如:
 	// exists, err := c.userService.TeacherExists(req.TeacherID)
@@ -451,7 +445,7 @@ type CreateTaskRequest struct {
 	// Enum: draft,published
 	Status models.TaskStatus `json:"status" binding:"omitempty,oneof=draft published"`
 
-	TeacherID string `json:"teacher_id"` // 添加教师ID字段
+	TeacherID string `json:"teacher_id" binding:"required"` // 添加教师ID字段，设为必填
 	ClassID   string `json:"class_id" binding:"required"`
 }
 

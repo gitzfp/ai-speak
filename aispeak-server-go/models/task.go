@@ -14,7 +14,7 @@ type Task struct {
 	TeacherID string `gorm:"type:varchar(80);not null;index;comment:教师ID"`
 
 	// 关联班级ID（新增）
-	ClassID string `gorm:"type:varchar(80);index;comment:班级ID"`
+	ClassID string `gorm:"type:varchar(80);not null;index;comment:班级ID"`
 
 	// 任务标题（最大长度200字符）
 	Title string `gorm:"type:varchar(200);not null;comment:任务标题"`
