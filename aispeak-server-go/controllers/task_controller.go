@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -42,6 +43,12 @@ func (c *TaskController) CreateTask(ctx *gin.Context) {
 	var req CreateTaskRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 验证任务类型是否有效
+	if err := models.ValidateTaskType(req.TaskType); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "无效的任务类型: " + string(req.TaskType)})
 		return
 	}
 
@@ -565,14 +572,19 @@ func (r *UpdateTaskRequest) ToModel() *models.Task {
 // @Router /tasks/{id}/submissions [post]
 func (c *TaskController) SubmitTask(ctx *gin.Context) {
 	id, _ := strconv.Atoi(ctx.Param("id"))
+	log.Printf("[DEBUG] SubmitTask: 开始处理任务提交，任务ID: %d", id)
+	
 	var req SubmitTaskRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
+		log.Printf("[ERROR] SubmitTask: JSON绑定失败: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	log.Printf("[DEBUG] SubmitTask: 请求数据解析成功，ContentID: %d, Response: %s", req.ContentID, req.Response)
 
 	// 初始化 MediaFiles，合并所有旧格式的文件
 	mediaFiles := req.MediaFiles
+	log.Printf("[DEBUG] SubmitTask: 初始MediaFiles数量: %d", len(mediaFiles))
 
 	// 处理向后兼容: 将旧格式的URL字段转换为统一的MediaFiles格式
 	// 1. 处理单个音频URL
@@ -581,6 +593,7 @@ func (c *TaskController) SubmitTask(ctx *gin.Context) {
 			URL:  req.AudioURL,
 			Type: "audio",
 		})
+		log.Printf("[DEBUG] SubmitTask: 添加AudioURL: %s", req.AudioURL)
 	}
 
 	// 2. 处理多个音频URL
@@ -589,6 +602,7 @@ func (c *TaskController) SubmitTask(ctx *gin.Context) {
 			URL:  url,
 			Type: "audio",
 		})
+		log.Printf("[DEBUG] SubmitTask: 添加AudioURLs: %s", url)
 	}
 
 	// 3. 处理单个图片URL
@@ -597,6 +611,7 @@ func (c *TaskController) SubmitTask(ctx *gin.Context) {
 			URL:  req.ImageURL,
 			Type: "image",
 		})
+		log.Printf("[DEBUG] SubmitTask: 添加ImageURL: %s", req.ImageURL)
 	}
 
 	// 4. 处理多个图片URL
@@ -605,6 +620,7 @@ func (c *TaskController) SubmitTask(ctx *gin.Context) {
 			URL:  url,
 			Type: "image",
 		})
+		log.Printf("[DEBUG] SubmitTask: 添加ImageURLs: %s", url)
 	}
 
 	// 5. 处理单个文件URL
@@ -613,6 +629,7 @@ func (c *TaskController) SubmitTask(ctx *gin.Context) {
 			URL:  req.FileURL,
 			Type: "file",
 		})
+		log.Printf("[DEBUG] SubmitTask: 添加FileURL: %s", req.FileURL)
 	}
 
 	// 6. 处理多个文件URL
@@ -621,7 +638,10 @@ func (c *TaskController) SubmitTask(ctx *gin.Context) {
 			URL:  url,
 			Type: "file",
 		})
+		log.Printf("[DEBUG] SubmitTask: 添加FileURLs: %s", url)
 	}
+
+	log.Printf("[DEBUG] SubmitTask: 最终MediaFiles数量: %d", len(mediaFiles))
 
 	submission := &models.Submission{
 		StudentTaskID: uint(id),
@@ -629,11 +649,14 @@ func (c *TaskController) SubmitTask(ctx *gin.Context) {
 		Response:      req.Response,
 		MediaFiles:    models.MediaFiles(mediaFiles),
 	}
+	log.Printf("[DEBUG] SubmitTask: 创建Submission对象成功，准备调用service.CreateSubmission")
 
 	if err := c.service.CreateSubmission(submission); err != nil {
+		log.Printf("[ERROR] SubmitTask: CreateSubmission失败: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "提交失败"})
 		return
 	}
+	log.Printf("[DEBUG] SubmitTask: CreateSubmission成功，submission.ID: %d", submission.ID)
 
 	ctx.JSON(http.StatusCreated, SubmissionResponse{
 		ID:            submission.ID,
@@ -647,6 +670,7 @@ func (c *TaskController) SubmitTask(ctx *gin.Context) {
 		Feedback:      submission.Feedback,
 		CreatedAt:     submission.Model.CreatedAt,
 	})
+	log.Printf("[DEBUG] SubmitTask: 响应发送成功")
 }
 
 // GetSubmission godoc

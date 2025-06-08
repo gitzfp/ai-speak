@@ -7,7 +7,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # 无颜色
 
 # 设置API基础URL
-API_URL="http://localhost:8080/tasks"
+API_URL="http://localhost:8080/api/v1/tasks"
+API_SUBMISSIONS_URL="http://localhost:8080/api/v1"
 
 # 通用响应处理函数
 process_response() {
@@ -149,7 +150,7 @@ test_get_submission() {
   echo -e "${BLUE}运行测试: 获取提交详情${NC}"
   read -p "请输入提交ID: " submission_id
   
-  response=$(curl -s -w "\n%{http_code}" -X GET "$API_URL/submissions/$submission_id")
+  response=$(curl -s -w "\n%{http_code}" -X GET "http://localhost:8080/api/v1/submissions/$submission_id")
   
   process_response "$response"
 }
@@ -179,7 +180,7 @@ test_grade_submission() {
   echo "请求数据:"
   echo "$payload" | jq '.'
   
-  response=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/submissions/$submission_id/grade" \
+  response=$(curl -s -w "\n%{http_code}" -X POST "$API_SUBMISSIONS_URL/submissions/$submission_id/grade" \
     -H "Content-Type: application/json" \
     -d "$payload")
     
@@ -235,4 +236,4 @@ if ! command -v jq &> /dev/null; then
 fi
 
 # 启动菜单
-show_menu 
+show_menu

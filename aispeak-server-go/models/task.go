@@ -1,10 +1,40 @@
 package models
 
 import (
+	"errors"
 	"time"
 
 	"gorm.io/gorm"
 )
+
+// ValidTaskTypes 返回所有有效的任务类型
+func ValidTaskTypes() []TaskType {
+	return []TaskType{
+		Dictation,
+		Spelling,
+		Pronunciation,
+		SentenceRepeat,
+		Quiz,
+	}
+}
+
+// IsValid 检查任务类型是否有效
+func (tt TaskType) IsValid() bool {
+	for _, validType := range ValidTaskTypes() {
+		if tt == validType {
+			return true
+		}
+	}
+	return false
+}
+
+// ValidateTaskType 验证任务类型是否有效
+func ValidateTaskType(taskType TaskType) error {
+	if !taskType.IsValid() {
+		return errors.New("无效的任务类型")
+	}
+	return nil
+}
 
 // Task 主任务模型
 // @Description 学习任务主体结构

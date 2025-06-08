@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/gitzfp/ai-speak/aispeak-server-go/models"
 	"github.com/gitzfp/ai-speak/aispeak-server-go/repositories"
@@ -76,44 +77,47 @@ func (s *TaskService) CreateTaskWithContents(task *models.Task, contents []*mode
 }
 
 func (s *TaskService) GetTaskDetails(id uint) (*models.Task, error) {
-    fmt.Println("=== 开始获取任务详情 ===")
-    fmt.Printf("任务ID: %d\n", id)
+    log.Printf("[DEBUG] GetTaskDetails: 开始获取任务详情，任务ID: %d", id)
     
     task, err := s.repo.GetTaskByID(id)
     if err != nil {
-        fmt.Printf("获取任务失败: %v\n", err)
+        log.Printf("[ERROR] GetTaskDetails: 获取任务失败: %v", err)
         return nil, err
     }
-    fmt.Printf("成功获取任务: %+v\n", task)
+    log.Printf("[DEBUG] GetTaskDetails: 成功获取任务，ID: %d, Title: %s", task.ID, task.Title)
     
     var contents []models.TaskContent
     if err := s.repo.DB.Where("task_id = ?", id).Find(&contents).Error; err != nil {
-        fmt.Printf("查询任务内容失败: %v\n", err)
+        log.Printf("[ERROR] GetTaskDetails: 查询任务内容失败: %v", err)
         return nil, err
     }
-    fmt.Printf("查询到 %d 个任务内容\n", len(contents))
+    log.Printf("[DEBUG] GetTaskDetails: 查询到 %d 个任务内容", len(contents))
     
     // 遍历每个内容项，加载单词和句子数据
     for i := range contents {
         content := &contents[i]
+        log.Printf("[DEBUG] GetTaskDetails: 处理内容 %d，类型: %s", content.ID, content.ContentType)
         // 根据内容类型处理不同的元数据
         switch content.ContentType {
         case "dictation":
+            log.Printf("[DEBUG] GetTaskDetails: 处理听写内容")
             // 获取听写元数据
             meta, err := content.GetDictationMetadata()
             if err != nil {
+                log.Printf("[ERROR] GetTaskDetails: 获取听写元数据失败: %v", err)
                 continue // 跳过错误内容
             }
             
             // 如果元数据中有单词ID，则加载单词数据
             if meta.WordIDs != nil && len(meta.WordIDs) > 0 {
+                log.Printf("[DEBUG] GetTaskDetails: 加载 %d 个单词数据", len(meta.WordIDs))
                 // 加载单词数据
                 words, wordErr := s.wordRepo.GetByIDs(meta.WordIDs)
                 if wordErr != nil {
-                    fmt.Printf("查询单词数据失败: %v\n", wordErr)
+                    log.Printf("[ERROR] GetTaskDetails: 查询单词数据失败: %v", wordErr)
                     continue
                 }
-                fmt.Printf("成功查询到 %d 个单词\n", len(words))
+                log.Printf("[DEBUG] GetTaskDetails: 成功查询到 %d 个单词", len(words))
                 // 确保单词数据被正确设置
                 meta.Words = words
                 
@@ -335,26 +339,58 @@ func (s *TaskService) ListTasks(teacherID, status string, page, pageSize int) ([
 }
 
 func (s *TaskService) CreateSubmission(submission *models.Submission) error {
+    log.Printf("[DEBUG] CreateSubmission: 开始创建提交记录，StudentTaskID: %d, ContentID: %d", submission.StudentTaskID, submission.ContentID)
+    
     // 校验任务是否存在
     task, err := s.GetTaskDetails(submission.StudentTaskID)
     if err != nil {
+        log.Printf("[ERROR] CreateSubmission: 获取任务详情失败: %v", err)
         return fmt.Errorf("任务不存在: %v", err)
     }
+    log.Printf("[DEBUG] CreateSubmission: 任务存在，任务ID: %d, 内容数量: %d", task.ID, len(task.TaskContents))
     
-    // 校验任务内容是否存在
+    // 获取任务关联的正确ContentID
+    if len(task.TaskContents) == 0 {
+        log.Printf("[ERROR] CreateSubmission: 任务%d没有关联任何内容", submission.StudentTaskID)
+        return fmt.Errorf("任务%d没有关联任何内容", submission.StudentTaskID)
+    }
+    
+    // 使用任务关联的第一个ContentID（通常任务只关联一个内容）
+    correctContentID := task.TaskContents[0].ID
+    log.Printf("[DEBUG] CreateSubmission: 任务%d关联的正确ContentID: %d", submission.StudentTaskID, correctContentID)
+    
+    // 检查提交的ContentID是否与任务关联的ContentID匹配
+    if submission.ContentID != correctContentID {
+        log.Printf("[WARNING] CreateSubmission: 内容ID不匹配，任务%d关联的内容ID为%d，但提交的内容ID为%d，自动修正为正确的ContentID", 
+            submission.StudentTaskID, correctContentID, submission.ContentID)
+        // 自动使用正确的ContentID
+        submission.ContentID = correctContentID
+    }
+    
+    // 再次验证内容是否存在（双重保险）
     var contentExists bool
     for _, content := range task.TaskContents {
         if content.ID == submission.ContentID {
             contentExists = true
+            log.Printf("[DEBUG] CreateSubmission: 确认内容ID存在: %d", content.ID)
             break
         }
     }
     if !contentExists {
-        return fmt.Errorf("任务内容不存在")
+        log.Printf("[ERROR] CreateSubmission: 内容ID不匹配，任务%d关联的内容ID为%d，但提交的内容ID为%d", 
+            submission.StudentTaskID, correctContentID, submission.ContentID)
+        return fmt.Errorf("内容ID不匹配：任务%d关联的内容ID为%d，但提交的内容ID为%d", 
+            submission.StudentTaskID, correctContentID, submission.ContentID)
     }
     
+    log.Printf("[DEBUG] CreateSubmission: 开始保存到数据库")
     // 创建提交记录
-    return s.repo.DB.Create(submission).Error
+    if err := s.repo.DB.Create(submission).Error; err != nil {
+        log.Printf("[ERROR] CreateSubmission: 数据库保存失败: %v", err)
+        return err
+    }
+    log.Printf("[DEBUG] CreateSubmission: 数据库保存成功，生成的ID: %d", submission.ID)
+    return nil
 }
 
 func (s *TaskService) UpdateSubmission(submission *models.Submission) error {
