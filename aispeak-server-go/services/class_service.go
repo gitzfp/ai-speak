@@ -69,7 +69,7 @@ type UpdateClassRequest struct {
 	Subject     string `json:"subject"`
 	SchoolID    string `json:"school_id"`
 	Description string `json:"description"`
-	MaxStudents int    `json:"max_students" binding:"min=1"`
+	MaxStudents int    `json:"max_students,omitempty" binding:"omitempty,min=1"`
 	Status      string `json:"status"`
 }
 

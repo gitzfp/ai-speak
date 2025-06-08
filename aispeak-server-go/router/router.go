@@ -58,6 +58,9 @@ func SetupRouter(taskController *controllers.TaskController, classController *co
 			classGroup.DELETE("/:id/students/:student_id", classController.RemoveStudent)
 			classGroup.GET("/:id/students", classController.GetClassStudents)
 			classGroup.GET("/student/classes/:student_id", classController.GetStudentClasses) // 修改路径匹配新分组
+
+			// 任务管理
+			classGroup.GET("/:id/tasks", classController.GetClassTasks)
 		}
 		// 学生专属路由（临时移除权限验证）
 		studentClassGroup := v1.Group("/student")

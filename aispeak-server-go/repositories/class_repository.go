@@ -74,7 +74,7 @@ func (r *ClassRepository) AddTeacherToClass(ctx context.Context, classID, teache
 
 // RemoveTeacherFromClass 从班级移除教师
 func (r *ClassRepository) RemoveTeacherFromClass(ctx context.Context, classID, teacherID string) error {
-	return r.db.WithContext(ctx).Where("class_id = ? AND teacher_id = ?", classID, teacherID).
+	return r.db.WithContext(ctx).Model(&models.ClassTeacher{}).Where("class_id = ? AND teacher_id = ?", classID, teacherID).
 		Updates(map[string]interface{}{
 			"status":     "inactive",
 			"leave_date": time.Now(),
@@ -111,7 +111,7 @@ func (r *ClassRepository) AddStudentToClass(ctx context.Context, classID, studen
 
 // RemoveStudentFromClass 从班级移除学生
 func (r *ClassRepository) RemoveStudentFromClass(ctx context.Context, classID, studentID string) error {
-	return r.db.WithContext(ctx).Where("class_id = ? AND student_id = ?", classID, studentID).
+	return r.db.WithContext(ctx).Model(&models.ClassStudent{}).Where("class_id = ? AND student_id = ?", classID, studentID).
 		Updates(map[string]interface{}{
 			"status":     "inactive",
 			"leave_date": time.Now(),
@@ -136,8 +136,8 @@ func (r *ClassRepository) GetClassStudents(ctx context.Context, classID string) 
 func (r *ClassRepository) GetTeacherClasses(ctx context.Context, teacherID string) ([]models.Class, error) {
 	var classes []models.Class
 	err := r.db.WithContext(ctx).
-		Joins("JOIN class_teacher ON class_teacher.class_id = class.id").
-		Where("class_teacher.teacher_id = ? AND class_teacher.status = ?", teacherID, "active").
+		Joins("JOIN class_teachers ON class_teachers.class_id = classes.id").
+		Where("class_teachers.teacher_id = ? AND class_teachers.status = ?", teacherID, "active").
 		Find(&classes).Error
 	return classes, err
 }
@@ -146,8 +146,8 @@ func (r *ClassRepository) GetTeacherClasses(ctx context.Context, teacherID strin
 func (r *ClassRepository) GetStudentClasses(ctx context.Context, studentID string) ([]models.Class, error) {
 	var classes []models.Class
 	err := r.db.WithContext(ctx).
-		Joins("JOIN class_student ON class_student.class_id = class.id").
-		Where("class_student.student_id = ? AND class_student.status = ?", studentID, "active").
+		Joins("JOIN class_students ON class_students.class_id = classes.id").
+		Where("class_students.student_id = ? AND class_students.status = ?", studentID, "active").
 		Find(&classes).Error
 	return classes, err
 }
@@ -156,8 +156,7 @@ func (r *ClassRepository) GetStudentClasses(ctx context.Context, studentID strin
 func (r *ClassRepository) GetClassTasks(ctx context.Context, classID string) ([]models.Task, error) {
 	var tasks []models.Task
 	err := r.db.WithContext(ctx).
-		Joins("JOIN task_class_relation ON task_class_relation.task_id = task.id").
-		Where("task_class_relation.class_id = ?", classID).
+		Where("class_id = ?", classID).
 		Find(&tasks).Error
 	return tasks, err
 }
