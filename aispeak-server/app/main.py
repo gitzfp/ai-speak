@@ -17,6 +17,7 @@ from app.api.textbook_routes import router as textbook_routes
 from app.api.alioss_routes import router as alioss_routes
 from app.api.study_routes import router as study_routes
 from app.api.test_routes import router as test_routes
+from app.api.task_routes import router as task_routes
 
 app = FastAPI()
 
@@ -38,6 +39,7 @@ app.include_router(textbook_routes, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(alioss_routes, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(study_routes, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(test_routes, prefix=f"{Config.API_PREFIX}/v1")
+app.include_router(task_routes, prefix=f"{Config.API_PREFIX}/v1")
 # Serve static files
 app.mount("/static", StaticFiles(directory="./static"), name="static")
 

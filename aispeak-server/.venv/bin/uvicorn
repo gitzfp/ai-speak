@@ -1,4 +1,4 @@
-#!/home/ubuntu/ai-speak/aispeak-server/.venv/bin/python3
+#!/Users/fpz/Documents/GitHub/ai-speak/aispeak-server/.venv/bin/python3.13
 # -*- coding: utf-8 -*-
 import re
 import sys
