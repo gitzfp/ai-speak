@@ -1,6 +1,5 @@
 /aispeak-server/.env
 /aispeak-server/files/*
-/aispeak-frontend/package-lock.json
 /aispeak-frontend/node_modules/*
 *.pyc
 /aispeak-frontend/dist/*
@@ -10,3 +9,5 @@ aispeak-server/.DS_Store
 /aispeak-server/alembic.ini
 aispeak-server/alembic.prod.ini
 aispeak-frontend/ssl/
+/aispeak-nextjs/node_modules/*
+/aispeak-nextjs/.next/*

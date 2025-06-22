@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Account {
+  id          String           @id @default(cuid())
+  fingerprint String?          @unique
+  phone       String?          @unique
+  wechatId    String?          @unique @map("wechat_id")
+  nickname    String?
+  avatar      String?
+  role        Role             @default(STUDENT)
+  status      AccountStatus    @default(ACTIVE)
+  lastLoginAt DateTime?        @map("last_login_at")
+  lastLoginIp String?          @map("last_login_ip")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  deletedAt   DateTime?        @map("deleted_at")
+  settings    AccountSettings?
+  sessions    MessageSession[]
+  messages    Message[]
+
+  @@map("accounts")
+}
+
+model AccountSettings {
+  id             String   @id @default(cuid())
+  accountId      String   @unique @map("account_id")
+  sourceLanguage String   @default("zh-CN") @map("source_language")
+  targetLanguage String   @default("en-US") @map("target_language")
+  voiceName      String?  @map("voice_name")
+  voiceSpeed     Float    @default(1.0) @map("voice_speed")
+  autoPlay       Boolean  @default(true) @map("auto_play")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  account        Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("account_settings")
+}
+
+model MessageSession {
+  id           String      @id @default(cuid())
+  accountId    String      @map("account_id")
+  title        String?
+  type         SessionType @default(CHAT)
+  isDefault    Boolean     @default(false) @map("is_default")
+  messageCount Int         @default(0) @map("message_count")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+  deletedAt    DateTime?   @map("deleted_at")
+  account      Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  messages     Message[]
+
+  @@map("message_sessions")
+}
+
+model Message {
+  id        String         @id @default(cuid())
+  sessionId String         @map("session_id")
+  accountId String         @map("account_id")
+  type      MessageType
+  content   String
+  fileName  String?        @map("file_name")
+  sequence  Int            @default(0)
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+  deletedAt DateTime?      @map("deleted_at")
+  account   Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  session   MessageSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  accountId String    @map("account_id")
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  revokedAt DateTime? @map("revoked_at")
+
+  @@map("refresh_tokens")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+  VISITOR
+}
+
+enum AccountStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum MessageType {
+  USER
+  SYSTEM
+}
+
+enum SessionType {
+  CHAT
+  TOPIC
+  LESSON
+}
