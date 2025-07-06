@@ -126,9 +126,17 @@ class AccountSettingsDTO(BaseModel):
     playing_voice_speed: Optional[str] = None
     auto_text_shadow: Optional[bool] = None
     auto_pronunciation: Optional[bool] = None
+    
+    # 身份信息字段
+    user_name: Optional[str] = None  # 用户姓名
 
     @validator('auto_playing_voice', 'auto_text_shadow', 'auto_pronunciation', pre=True)
     def convert_to_bool(cls, v):
         if isinstance(v, int):
             return bool(v)
         return v
+
+
+class UserRoleDTO(BaseModel):
+    """用户身份角色DTO"""
+    role: str  # teacher 或 student

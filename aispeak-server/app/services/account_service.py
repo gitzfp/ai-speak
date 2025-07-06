@@ -424,6 +424,13 @@ class AccountService:
                 account_settings.speech_role_name = speech_role_name
             account_settings.target_language = dto.target_language
         self.db.commit()
+        
+        # 保存身份信息到 account 表
+        account = self.db.query(AccountEntity).filter_by(id=account_id).first()
+        if account:
+            if dto.user_name is not None:
+                account.user_name = dto.user_name
+            self.db.commit()
 
     def update_role_setting(self, dto: UpdateRoleDTO, account_id: str):
         """选择角色"""
@@ -548,3 +555,27 @@ class AccountService:
             raise Exception(f"获取jsapi_ticket失败: {data['errmsg']}")
 
         return data["ticket"]
+
+    def set_user_role(self, dto, account_id: str):
+        """设置用户身份角色"""
+        account = self.db.query(AccountEntity).filter_by(id=account_id).first()
+        if not account:
+            raise Exception("用户不存在")
+        
+        account.user_role = dto.role
+        self.db.commit()
+        
+        return {
+            "account_id": account_id,
+            "role": dto.role
+        }
+
+    def get_user_role(self, account_id: str):
+        """获取用户身份角色"""
+        account = self.db.query(AccountEntity).filter_by(id=account_id).first()
+        if not account:
+            return {"role": None}
+        
+        return {
+            "role": account.user_role
+        }

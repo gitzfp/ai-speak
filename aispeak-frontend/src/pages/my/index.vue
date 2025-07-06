@@ -54,6 +54,14 @@
 					<image class="setting-card-logo" src="https://dingguagua.fun/static/setting.png" />
 					<text class="setting-card-title">设置</text>
 				</view> -->
+        <view class="setting-card" @tap="goIdentitySetting">
+          <image
+            class="setting-card-logo"
+            src="https://dingguagua.fun/static/setting.png"
+          />
+          <text class="setting-card-title">身份设置</text>
+          <text class="setting-card-value" style="margin-right: 50rpx">{{ getRoleLabel() }}</text>
+        </view>
         <view class="setting-card" @tap="goLearningLanguage">
           <image
             class="setting-card-logo"
@@ -161,6 +169,25 @@ const goLearningLanguage = () => {
   uni.navigateTo({
     url: "/pages/my/learnLanguage",
   })
+}
+
+const goIdentitySetting = () => {
+  uni.navigateTo({
+    url: "/pages/profile/identity",
+  })
+}
+
+const getRoleLabel = () => {
+  // 从本地存储获取用户角色
+  const role = uni.getStorageSync('userRole');
+  switch (role) {
+    case 'teacher':
+      return '教师';
+    case 'student':
+      return '学生';
+    default:
+      return '未设置';
+  }
 }
 </script>
 <style scoped lang="less">

@@ -1,6 +1,18 @@
-// hooks/useTextbookSelector.js
+// hooks/useTextbookSelector.ts
 import { ref, computed, watch } from "vue";
 import textbook from "@/api/textbook";
+
+// 定义教材类型
+interface TextbookItem {
+  book_id: string;
+  book_name: string;
+  version_type: string;
+  grade: string;
+  term: string;
+  publisher?: string;
+  icon_url?: string;
+  subject_id?: number;
+}
 
 export default function useTextbookSelector() {
   // 筛选选项（新增出版社）
@@ -16,7 +28,7 @@ export default function useTextbookSelector() {
   const selectedPublisher = ref("全部"); // 新增出版社选中状态
 
   // 教材数据
-  const books = ref([]);
+  const books = ref<TextbookItem[]>([]);
   
   // 过滤后的教材列表（增加出版社过滤逻辑）
   const filteredBooks = computed(() => {
@@ -43,7 +55,7 @@ const fetchBooks = async () => {
         );
         
         // 更健壮的数据处理
-        books.value = response.data?.booklist?.[0]?.versions?.flatMap(v => v.textbooks) || [];
+        books.value = response.data?.booklist?.[0]?.versions?.flatMap((v: any) => v.textbooks) || [];
         console.log(filteredBooks, '教材书籍', response.data?.booklist) 
     } catch (err) {
         console.error("获取教材失败:", err);

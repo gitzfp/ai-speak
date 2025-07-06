@@ -29,7 +29,7 @@ class TaskService:
                 name=class_data.name,
                 grade_level=class_data.grade_level,
                 subject=class_data.subject,
-                school_id=class_data.school_id,
+                school_name=class_data.school_name,
                 teacher_id=class_data.teacher_id,
                 description=class_data.description,
                 max_students=class_data.max_students
@@ -94,7 +94,7 @@ class TaskService:
             logging.error(f"删除班级失败: {e}")
             raise e
     
-    async def class_exists(self, class_id: str) -> bool:
+    async def class_exists(self, class_id: int) -> bool:
         """检查班级是否存在"""
         return self.db.query(Class).filter(
             Class.id == class_id,
@@ -193,6 +193,53 @@ class TaskService:
         except Exception as e:
             self.db.rollback()
             logging.error(f"从班级移除教师失败: {e}")
+            raise e
+    
+    async def get_teacher_classes(self, teacher_id: str) -> List[ClassResponse]:
+        """获取教师的班级列表"""
+        try:
+            # 查询教师担任班主任的班级
+            main_classes = self.db.query(Class).filter(
+                Class.teacher_id == teacher_id,
+                Class.deleted_at.is_(None)
+            ).all()
+            
+            # 查询教师担任其他角色的班级
+            additional_classes_query = self.db.query(Class).join(
+                ClassTeacher, Class.id == ClassTeacher.class_id
+            ).filter(
+                ClassTeacher.teacher_id == teacher_id,
+                ClassTeacher.status == "active",
+                Class.deleted_at.is_(None)
+            ).all()
+            
+            # 合并并去重
+            all_classes = {}
+            for cls in main_classes:
+                all_classes[cls.id] = cls
+            for cls in additional_classes_query:
+                all_classes[cls.id] = cls
+            
+            return [ClassResponse.from_orm(cls) for cls in all_classes.values()]
+        except Exception as e:
+            logging.error(f"获取教师班级失败: {e}")
+            raise e
+    
+    async def get_student_classes(self, student_id: str) -> List[ClassResponse]:
+        """获取学生的班级列表"""
+        try:
+            # 查询学生加入的班级
+            student_classes = self.db.query(Class).join(
+                ClassStudent, Class.id == ClassStudent.class_id
+            ).filter(
+                ClassStudent.student_id == student_id,
+                ClassStudent.status == "active",
+                Class.deleted_at.is_(None)
+            ).all()
+            
+            return [ClassResponse.from_orm(cls) for cls in student_classes]
+        except Exception as e:
+            logging.error(f"获取学生班级失败: {e}")
             raise e
     
     # 任务管理
@@ -314,9 +361,31 @@ class TaskService:
         
         # 添加过滤条件
         if params.teacher_id:
+            # 教师查看自己创建的任务
             query = query.filter(Task.teacher_id == params.teacher_id)
-        if params.class_id:
-            query = query.filter(Task.class_id == params.class_id)
+        elif params.student_id:
+            # 学生只能查看已加入班级的任务
+            # 先获取学生加入的班级ID列表
+            student_class_ids = self.db.query(ClassStudent.class_id).filter(
+                ClassStudent.student_id == params.student_id,
+                ClassStudent.status == "active"
+            ).subquery()
+            
+            # 只查询这些班级的任务
+            query = query.filter(Task.class_id.in_(student_class_ids))
+            
+            # 如果指定了特定班级，进一步过滤
+            if params.class_id:
+                query = query.filter(Task.class_id == params.class_id)
+        else:
+            # 如果没有指定身份，返回空结果
+            return TaskListResponse(
+                tasks=[],
+                total=0,
+                page=params.page,
+                page_size=params.page_size
+            )
+        
         if params.status:
             query = query.filter(Task.status == params.status)
         if params.task_type:

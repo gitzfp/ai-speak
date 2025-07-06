@@ -2,7 +2,7 @@ import { createSSRApp } from "vue";
 import App from "./App.vue";
 import EventBus from "@/utils/bus";
 import WxShare from '@/utils/wxShare'
-import utils from "@/utils/utils"
+import utils from "@/utils/utils";
 
 const getHeight = (global: any) => {
   uni.getSystemInfo({

@@ -20,7 +20,8 @@ class AccountEntity(Base):
         100), nullable=True, comment="用户昵称")  
     phone_number = Column("phone_number", String(20), unique=True)
     password = Column("password", String(300), nullable=True)
-    points = Column(Integer, default=0, comment="积分") 
+    points = Column(Integer, default=0, comment="积分")
+    user_role = Column("user_role", String(20), nullable=True, comment="用户身份角色：teacher/student")
     create_time = Column("create_time", DateTime, default=datetime.datetime.now)
     update_time = Column("update_time", DateTime, default=datetime.datetime.now)
 

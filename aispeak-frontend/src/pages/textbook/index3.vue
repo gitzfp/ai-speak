@@ -117,55 +117,15 @@
 					    课文点读
 					</view>
 				</view>
+				
+				<!-- 布置作业按钮 - 只有教师可见 -->
+				<view v-if="isTeacher" class="assignment-section">
+					<view class="assignment-button" @click="assignTask(chapter)">
+						<image class="assignment-icon" src="@/assets/icons/preparation_book.svg"></image>
+						<text class="assignment-text">布置作业</text>
+					</view>
+				</view>
 			</template>
-			
-			
-			<!-- <template v-if="chapter.isExpansion==1">
-				<view @tap="unitwordclick(chapter)" class="recitewords">
-					<view class="leftclass">
-						<view class="tit">背单词</view>
-						<view class="subtit">学-练-拼，掌握听说读写</view>
-					</view>
-					<image class="right-icon" :src="chapter.is_learning_word==1 ? selectIcon : unselectIcon"></image>
-				</view>
-				<view @tap="unitsentenceclick(chapter,1)" v-if="chapter.is_learning_word==1" class="readtextone">
-					<view class="leftclass">
-						<view class="tit">句子跟读</view>
-						<view class="subtit">告别死记硬背</view>
-					</view>
-					<image class="right-icon" :src="chapter.is_learning_text==1 ? selectIcon : unselectIcon"></image>
-				</view>
-				<view @tap="unitsentenceclick(chapter,0)" v-else class="readtexttwo">
-					<view class="leftclass">
-						<view class="tit">句子跟读</view>
-						<view class="subtit">告别死记硬背</view>
-					</view>
-				</view>
-				<view class="button-row">
-					<view class="function-button"
-					 :style="chapter.is_learning_text == 1 ? { 'background-color': '#E5FEF1' } : {}"
-					 @click="textbookListen(chapter)">
-					  <image class="button-icon" src="@/assets/icons/listening.svg"></image>
-					  听课文
-					</view>
-					<view class="function-button"
-					 :style="chapter.is_learning_text == 1 ? { 'background-color': '#E5FEF1' } : {}"
-					 @tap="wordListenWrite(chapter)">
-					  <image
-					    class="button-icon"
-					    src="@/assets/icons/word_dictation.svg"
-					  ></image>
-					  单词听写
-					</view>
-					<view class="function-button"
-					:style="chapter.is_learning_text == 1 ? { 'background-color': '#E5FEF1' } : {}"
-					@click="sentenceFollow(chapter)">
-					    <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
-					    课文点读
-					</view>
-				</view>
-			</template> -->
-			
 		</view>
 		
 		<view style="height: 20rpx;"></view>
@@ -189,12 +149,12 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted, Text,watch,onUnmounted,computed } from "vue";
+import { ref, nextTick, onMounted, watch,onUnmounted,computed } from "vue";
 import bookSelector from "./bookSelector.vue"
 import CatalogueSelector from "./CatalogueSelector.vue"
-import BeianFooter from '@/components/BeianFooter.vue';
 import textbook from "@/api/textbook";
 import useTextbookSelector from "@/hooks/useTextbookSelector";
+import taskRequest from "@/api/task";
 
 import selectIcon from '@/assets/icons/complete_h.svg';
 import unselectIcon from '@/assets/icons/go_h.svg';
@@ -230,6 +190,51 @@ const customBarHeight = ref(0);
 const user_info = ref({
 	points:0
 })
+
+// 检查用户是否是教师
+const isTeacher = computed(() => {
+  const userRole = uni.getStorageSync('userRole');
+  return userRole === 'teacher';
+});
+
+const selectedChapter = ref(null);
+const taskTypes = ref([
+  { 
+    value: 'spelling', 
+    label: '背单词', 
+    icon: '📚',
+    description: '练习本单元单词记忆'
+  },
+  { 
+    value: 'sentence_repeat', 
+    label: '句子跟读', 
+    icon: '🎤',
+    description: '跟读本单元句子练习'
+  },
+  { 
+    value: 'pronunciation', 
+    label: '发音练习', 
+    icon: '👂',
+    description: '练习本单元发音'
+  },
+  { 
+    value: 'dictation', 
+    label: '单词听写', 
+    icon: '✍️',
+    description: '听写本单元单词'
+  },
+  { 
+    value: 'quiz', 
+    label: '单元测验', 
+    icon: '📖',
+    description: '本单元综合测验'
+  }
+]);
+const selectedTaskType = ref(null);
+const classes = ref([]);
+const selectedClassId = ref('');
+const deadlineDate = ref('');
+const deadlineTime = ref('18:00');
 // 监听 book_id 的变化
 watch(
   () => book.value.book_id, // 监听 book.value.book_id
@@ -266,6 +271,7 @@ onMounted(() => {
   console.log(books.value, "书籍数据");
   
   fetchBooks(false);
+  loadTeacherClasses(); // 加载班级列表
   
   uni.$on('refrespoints', (params) => {
       console.log('收到全局事件，参数:', params);
@@ -355,23 +361,8 @@ const fetchBooks = async (isSwitch) => {
 				uni.getStorage({
 				  key: 'bookSelectionObject', // 存储的键名
 				  success: (res) => {
-				    // console.log('获取的数据:', res.data);
 					var bookSelectionObject = res.data
-					// var selectedVersion = bookSelectionObject.version_type
-					// var selectedGrade = bookSelectionObject.grade
-					// var selectedTerm = bookSelectionObject.term
-					// var selectedPublisher = bookSelectionObject.publisher
 					var  selectedbook_id = bookSelectionObject.book_id
-					
-					
-					
-					// book.value = books.value.find(item => 
-					//   item.version_type === selectedVersion &&
-					//   item.grade === selectedGrade &&
-					//   item.term === selectedTerm &&
-					//   item.publisher === selectedPublisher &&
-					//   item.book_id === selectedbook_id
-					// );
 					book.value = books.value.find(item =>
 					  item.book_id === selectedbook_id
 					);
@@ -464,64 +455,7 @@ const seereport = (chapter) => {
 		console.log('数据存储失败', err);
 		}
 	});
-	
- 
-  
 };
-
-const reciteTest = () => {
-  console.log("Recite Test");
-};
-
-const vocabularyReinforcement = () => {
-  console.log("Learn Words");
-  const objStr = JSON.stringify(book.value);
-  uni.setStorage("currentBook", objStr);
-
-  uni.navigateTo({
-    url: `/pages/textbook/Learnwords?objId=currentBook`,
-  });
-};
-
-const listenWrite = () => {
-  console.log("Text Point Read");
-  uni.navigateTo({
-    url: `/pages/textbook/books?book_id=${book.value.book_id}`,
-  });
-};
-
-// 背单词入口
-const wordRecitationHomeclick = () => {
-  uni.navigateTo({
-    url: `/pages/textbook/WordRecitationHome`,
-  });
-};
-
-//我的生词本
-const newWordbookclick = () => {
-  uni.navigateTo({
-    url: `/pages/textbook/newWordbook`,
-  });
-};
-
-const wordTricks = () => {
-  console.log("Word Tricks");
-};
-
-const earTraining = () => {
-  uni.navigateTo({
-    url: `/pages/textbook/Learnwords?bookId=${book.value.book_id}&wordmode=1`,
-  });
-};
-
-const pronunciationTest = () => {
-  console.log("Pronunciation Test");
-  uni.navigateTo({
-    url: `/pages/textbook/Learnwords?bookId=${book.value.book_id}&wordmode=2`,
-  });
-};
-
-
 
 const unitsentenceclick = (chapter,num) => {
 	if (num ==0) {
@@ -618,6 +552,216 @@ const wordListenWrite = (chapter) => {
 const eliminationGame = () => {
   console.log("Elimination Game");
 };
+
+// 任务布置相关方法
+const loadTeacherClasses = async () => {
+  try {
+    const userInfo = uni.getStorageSync('userInfo');
+    if (!userInfo || !userInfo.teacherId) {
+      console.log('用户不是教师或未登录');
+      return;
+    }
+    
+    const res = await taskRequest.getTeacherClasses(userInfo.teacherId);
+    classes.value = res.data || [];
+  } catch (error) {
+    console.error('加载班级列表失败:', error);
+    classes.value = [];
+  }
+};
+
+const assignTask = (chapter) => {
+  selectedChapter.value = chapter;
+  
+  // 检查是否有班级
+  if (classes.value.length === 0) {
+    uni.showModal({
+      title: '提示',
+      content: '您还没有创建任何班级，是否前往创建？',
+      success: (res) => {
+        if (res.confirm) {
+          uni.navigateTo({ url: '/pages/class/create' });
+        }
+      }
+    });
+    return;
+  }
+  
+  // 设置默认截止时间（明天18:00）
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  deadlineDate.value = tomorrow.toISOString().split('T')[0];
+  
+  // 显示任务类型选择
+  showTaskTypeSelection();
+};
+
+const showTaskTypeSelection = () => {
+  const taskTypeNames = taskTypes.value.map(type => type.label);
+  
+  uni.showActionSheet({
+    itemList: taskTypeNames,
+    success: (res) => {
+      selectedTaskType.value = taskTypes.value[res.tapIndex];
+      showClassSelection();
+    }
+  });
+};
+
+const showClassSelection = () => {
+  const classNames = classes.value.map(cls => cls.name);
+  
+  uni.showActionSheet({
+    itemList: classNames,
+    success: (res) => {
+      selectedClassId.value = classes.value[res.tapIndex].id;
+      showDeadlineSelection();
+    }
+  });
+};
+
+const showDeadlineSelection = () => {
+  uni.showModal({
+    title: '设置截止时间',
+    content: `任务类型：${selectedTaskType.value.label}
+教材：${book.value.book_name}
+单元：${selectedChapter.value.title}
+班级：${classes.value.find(c => c.id === selectedClassId.value)?.name}
+
+默认截止时间：明天18:00`,
+    confirmText: '创建任务',
+    cancelText: '修改时间',
+    success: (res) => {
+      if (res.confirm) {
+        createTaskQuick();
+      } else {
+        // 跳转到任务创建页面进行详细设置
+        navigateToTaskCreate();
+      }
+    }
+  });
+};
+
+const createTaskQuick = async () => {
+  try {
+    uni.showLoading({ title: '创建中...' });
+    
+    const userInfo = uni.getStorageSync('userInfo');
+    const deadline = `${deadlineDate.value}T${deadlineTime.value}:00`;
+    
+    // 根据任务类型准备内容
+    const taskContents = prepareTaskContents();
+    
+    const taskData = {
+      teacher_id: userInfo.teacherId,
+      class_id: parseInt(selectedClassId.value),
+      title: `${selectedTaskType.value.label} - ${selectedChapter.value.title}`,
+      description: `${book.value.book_name} ${selectedChapter.value.title} ${selectedTaskType.value.description}`,
+      task_type: selectedTaskType.value.value,
+      subject: 'english',
+      deadline: new Date(deadline).toISOString(),
+      allow_late_submission: false,
+      max_attempts: null,
+      total_points: 100,
+      textbook_id: parseInt(book.value.book_id),
+      lesson_id: selectedChapter.value.lesson_id,
+      contents: taskContents
+    };
+    
+    const res = await taskRequest.createTask(taskData);
+    
+    uni.hideLoading();
+    uni.showToast({
+      title: '任务创建成功',
+      icon: 'success'
+    });
+    
+    console.log('任务创建成功:', res);
+  } catch (error) {
+    uni.hideLoading();
+    console.error('创建任务失败:', error);
+    uni.showToast({
+      title: '创建失败',
+      icon: 'error'
+    });
+  }
+};
+
+const prepareTaskContents = () => {
+  const contents = [];
+  
+  // 根据任务类型和章节信息准备任务内容
+  if (selectedTaskType.value.value === 'spelling' || selectedTaskType.value.value === 'dictation') {
+    // 单词相关任务
+    const selectedWordIds = selectedChapter.value.words?.map(word => word.word_id) || [];
+    
+    contents.push({
+      content_type: selectedTaskType.value.value,
+      generate_mode: 'manual',
+      ref_book_id: String(book.value.book_id),
+      ref_lesson_id: selectedChapter.value.lesson_id,
+      selected_word_ids: selectedWordIds,
+      selected_sentence_ids: [],
+      points: 100,
+      meta_data: {
+        word_count: selectedWordIds.length,
+        difficulty: 'normal'
+      },
+      order_num: 1
+    });
+  } else if (selectedTaskType.value.value === 'sentence_repeat') {
+    // 句子跟读任务
+    contents.push({
+      content_type: 'sentence_repeat',
+      generate_mode: 'manual',
+      ref_book_id: String(book.value.book_id),
+      ref_lesson_id: selectedChapter.value.lesson_id,
+      selected_word_ids: [],
+      selected_sentence_ids: [], // 这里可以根据需要获取句子ID
+      points: 100,
+      meta_data: {
+        lesson_title: selectedChapter.value.title
+      },
+      order_num: 1
+    });
+  } else {
+    // 其他类型任务
+    contents.push({
+      content_type: selectedTaskType.value.value,
+      generate_mode: 'manual',
+      ref_book_id: String(book.value.book_id),
+      ref_lesson_id: selectedChapter.value.lesson_id,
+      selected_word_ids: [],
+      selected_sentence_ids: [],
+      points: 100,
+      meta_data: {
+        lesson_title: selectedChapter.value.title
+      },
+      order_num: 1
+    });
+  }
+  
+  return contents;
+};
+
+const navigateToTaskCreate = () => {
+  // 跳转到任务创建页面，带上预填信息
+  const params = {
+    textbook_id: book.value.book_id,
+    lesson_id: selectedChapter.value.lesson_id,
+    task_type: selectedTaskType.value.value,
+    class_id: selectedClassId.value,
+    title: `${selectedTaskType.value.label} - ${selectedChapter.value.title}`
+  };
+  
+  const queryString = Object.keys(params)
+    .map(key => `${key}=${encodeURIComponent(params[key])}`)
+    .join('&');
+    
+  uni.navigateTo({
+    url: `/pages/task/create?${queryString}`
+  });
+};
 </script>
 
 <style scoped lang="less">
@@ -631,10 +775,6 @@ const eliminationGame = () => {
 
 .container {
   background-color: #D5F0F1;
-  // background: linear-gradient(to bottom, #59c160 0%, #f8f9fa 100%);
-  // padding-top: 10px;
-  // height:calc(100vh - 60px);
-  // background-color: blue;
 }
 
 .header {
@@ -651,16 +791,12 @@ const eliminationGame = () => {
   .book-info {
     display: flex;
     align-items: center;
-    /* margin-bottom: 20px; */
-    // background-color: red;
     width: 100%;
     height: 100%;
     justify-content: space-between; 
   }
   .book-content {
   	height:calc(100vh - 120px);
-  	// height:calc(100% - 60px) ;
-  	// background-color: red;
   	overflow-y: auto;
   }
   
@@ -671,8 +807,6 @@ const eliminationGame = () => {
  .book-info {
    display: flex;
    align-items: center;
-   /* margin-bottom: 20px; */
-   // background-color: red;
    width: 100%;
    height: 37px;
    justify-content: center; 
@@ -680,24 +814,18 @@ const eliminationGame = () => {
  .book-bottom {
  	display: flex;
  	align-items: center;
- 	/* margin-bottom: 20px; */
- 	// background-color: red;
  	width: 100%;
  	height: 47px;
  	justify-content: space-between; 
  }
  .book-content {
  	height:calc(100vh - 160px) ;
- 	// height:calc(100% - 60px) ;
- 	// background-color: red;
  	overflow-y: auto;
  }
  /* #endif */
 
 .qiuhuan {
-  // margin-top: 30rpx;
   background-color: #FEF8E5;
-  // color: #7A631F;
   color: #05c160;
   height: 60rpx;
   line-height: 60rpx;
@@ -749,7 +877,6 @@ const eliminationGame = () => {
 .topclass {
 	font-size: 30rpx;
 	font-weight: bold;
-	// background-color: red;
 	display: flex;
 	justify-content: space-between;
 	.topleft{
@@ -882,6 +1009,35 @@ const eliminationGame = () => {
   width: 100rpx; /* 根据实际图标的大小调整 */
   height: 100rpx; /* 根据实际图标的大小调整 */
   margin-bottom: 5rpx;
+}
+
+.assignment-section {
+  margin: 20rpx;
+  margin-top: 0;
+  padding-bottom: 20rpx;
+}
+
+.assignment-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15rpx;
+  padding: 25rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 25rpx rgba(102, 126, 234, 0.3);
+}
+
+.assignment-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 15rpx;
+  filter: brightness(0) invert(1);
+}
+
+.assignment-text {
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: bold;
 }
 
 </style>

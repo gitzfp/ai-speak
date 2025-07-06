@@ -52,7 +52,7 @@ class ClassBase(BaseModel):
     name: str = Field(..., max_length=200, description="班级名称")
     grade_level: str = Field(..., max_length=50, description="年级")
     subject: Optional[str] = Field(None, max_length=50, description="主教学科")
-    school_id: Optional[str] = Field(None, max_length=80, description="学校ID")
+    school_name: Optional[str] = Field(None, max_length=200, description="学校名称(可选)")
     teacher_id: str = Field(..., max_length=80, description="班主任ID")
     description: Optional[str] = Field(None, description="班级描述")
     max_students: int = Field(50, description="最大学生人数")
@@ -64,6 +64,7 @@ class ClassUpdate(BaseModel):
     name: Optional[str] = Field(None, max_length=200, description="班级名称")
     grade_level: Optional[str] = Field(None, max_length=50, description="年级")
     subject: Optional[str] = Field(None, max_length=50, description="主教学科")
+    school_name: Optional[str] = Field(None, max_length=200, description="学校名称(可选)")
     description: Optional[str] = Field(None, description="班级描述")
     max_students: Optional[int] = Field(None, description="最大学生人数")
 
@@ -83,7 +84,7 @@ class ClassStudentAdd(BaseModel):
 
 class ClassStudentResponse(BaseModel):
     id: int
-    class_id: str
+    class_id: int
     student_id: str
     join_date: datetime
     leave_date: Optional[datetime]
@@ -100,7 +101,7 @@ class ClassTeacherAdd(BaseModel):
 
 class ClassTeacherResponse(BaseModel):
     id: int
-    class_id: str
+    class_id: int
     teacher_id: str
     role: Optional[str]
     join_date: datetime
@@ -151,7 +152,7 @@ class TaskBase(BaseModel):
 
 class TaskCreate(TaskBase):
     teacher_id: str = Field(..., max_length=80, description="教师ID")
-    class_id: str = Field(..., max_length=80, description="班级ID")  # 改为String类型
+    class_id: int = Field(..., description="班级ID")
     contents: List[TaskContentCreate] = Field(..., description="任务内容")
     
     @validator('contents')
@@ -195,7 +196,7 @@ class TaskUpdate(BaseModel):
 class TaskResponse(TaskBase):
     id: int
     teacher_id: str
-    class_id: str  # 改为String类型
+    class_id: int
     status: TaskStatus
     created_at: datetime
     updated_at: datetime
@@ -213,7 +214,8 @@ class TaskListResponse(BaseModel):
 # 查询参数模型
 class TaskQueryParams(BaseModel):
     teacher_id: Optional[str] = None
-    class_id: Optional[str] = None  # 改为String类型
+    student_id: Optional[str] = None  # 添加学生ID字段
+    class_id: Optional[int] = None
     status: Optional[TaskStatus] = None
     task_type: Optional[TaskType] = None
     page: int = Field(1, ge=1)

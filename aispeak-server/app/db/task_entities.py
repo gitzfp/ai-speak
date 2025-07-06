@@ -49,7 +49,7 @@ class Class(Base):
     name = Column(String(200), nullable=False, comment="班级名称")
     grade_level = Column(String(50), nullable=False, index=True, comment="年级")
     subject = Column(String(50), index=True, comment="主教学科")
-    school_id = Column(String(80), index=True, comment="学校ID")
+    school_name = Column(String(200), nullable=True, index=True, comment="学校名称(可选)")
     teacher_id = Column(String(80), nullable=False, index=True, comment="班主任ID")
     status = Column(String(20), default="active", index=True, comment="状态")
     description = Column(Text, comment="班级描述")
@@ -68,7 +68,7 @@ class ClassStudent(Base):
     __tablename__ = "class_students"
     
     id = Column(Integer, primary_key=True, index=True)
-    class_id = Column(String(80), nullable=False, index=True, comment="班级ID")
+    class_id = Column(Integer, nullable=False, index=True, comment="班级ID")
     student_id = Column(String(80), nullable=False, index=True, comment="学生ID")
     join_date = Column(DateTime, nullable=False, default=datetime.utcnow, comment="加入日期")
     leave_date = Column(DateTime, nullable=True, comment="离开日期")
@@ -86,7 +86,7 @@ class ClassTeacher(Base):
     __tablename__ = "class_teachers"
     
     id = Column(Integer, primary_key=True, index=True)
-    class_id = Column(String(80), nullable=False, index=True, comment="班级ID")
+    class_id = Column(Integer, nullable=False, index=True, comment="班级ID")
     teacher_id = Column(String(80), nullable=False, index=True, comment="教师ID")
     join_date = Column(DateTime, nullable=False, default=datetime.utcnow, comment="加入日期")
     leave_date = Column(DateTime, nullable=True, comment="离开日期")
@@ -105,7 +105,7 @@ class Task(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     teacher_id = Column(String(80), nullable=False, index=True, comment="教师ID")
-    class_id = Column(String(80), nullable=False, index=True, comment="班级ID")  # 改为String类型
+    class_id = Column(Integer, nullable=False, index=True, comment="班级ID")
     title = Column(String(200), nullable=False, comment="任务标题")
     description = Column(Text, comment="任务描述")
     task_type = Column(SQLEnum(TaskType), nullable=False, comment="任务类型")

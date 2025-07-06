@@ -1,0 +1,634 @@
+<template>
+  <view class="container">
+    <CommonHeader :leftIcon="true">
+      <template v-slot:content>
+        <text>任务</text>
+      </template>
+    </CommonHeader>
+    
+    <view class="content">
+      <!-- 多重身份切换 - 只有同时具备教师和学生身份才显示 -->
+      <view v-if="hasMultipleRoles" class="role-tabs">
+        <view 
+          class="role-tab" 
+          :class="{ active: currentRole === 'student' }"
+          @click="switchRole('student')"
+        >
+          学生身份
+        </view>
+        <view 
+          class="role-tab" 
+          :class="{ active: currentRole === 'teacher' }"
+          @click="switchRole('teacher')"
+        >
+          教师身份
+        </view>
+      </view>
+
+      <!-- 学生界面 -->
+      <view v-if="currentRole === 'student'" class="student-view">
+        <!-- 班级筛选 -->
+        <view class="class-filter">
+          <picker 
+            :value="selectedClassIndex" 
+            :range="studentClasses" 
+            range-key="name"
+            @change="onClassFilterChange"
+          >
+            <view class="filter-picker">
+              <text class="filter-text">{{ selectedClassIndex === 0 ? '全部班级' : studentClasses[selectedClassIndex]?.name }}</text>
+              <text class="filter-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+        
+        <!-- 任务列表 -->
+        <LoadingRound v-if="loading" />
+        <view v-else class="task-list">
+          <view 
+            v-for="task in tasks" 
+            :key="task.id"
+            class="task-item"
+            @click="viewTask(task)"
+          >
+            <view class="task-header">
+              <text class="task-title">{{ task.title }}</text>
+              <view class="task-status" :class="getTaskStatusClass(task)">
+                {{ getTaskStatusText(task) }}
+              </view>
+            </view>
+            <view class="task-info">
+              <text class="task-desc">{{ task.description }}</text>
+              <view class="task-meta">
+                <text class="task-deadline">截止: {{ formatDate(task.deadline) }}</text>
+                <text class="task-points">{{ task.total_points }}分</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 学生空状态 -->
+        <view v-if="!loading && tasks.length === 0" class="empty-state">
+          <text class="empty-icon">📝</text>
+          <text class="empty-text">暂无任务</text>
+          <text class="empty-desc" v-if="studentClasses.length <= 1">
+            您还没有加入任何班级，请先加入班级查看任务
+          </text>
+          <text class="empty-desc" v-else>
+            当前班级还没有发布任务，请稍后查看
+          </text>
+          <view v-if="studentClasses.length <= 1" class="empty-action" @click="goToJoinClass">
+            <text>加入班级</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 教师界面 -->
+      <view v-if="currentRole === 'teacher'" class="teacher-view">
+        <!-- 教师操作区 -->
+        <view class="teacher-actions">
+          <view class="create-btn" @click="createTask">
+            <text class="btn-icon">➕</text>
+            <text class="btn-text">创建新任务</text>
+          </view>
+          <view class="manage-btn" @click="manageClasses">
+            <text class="btn-icon">🏫</text>
+            <text class="btn-text">班级管理</text>
+          </view>
+        </view>
+        
+        <!-- 班级筛选 -->
+        <view class="class-filter">
+          <picker 
+            :value="selectedTeacherClassIndex" 
+            :range="teacherClasses" 
+            range-key="name"
+            @change="onTeacherClassFilterChange"
+          >
+            <view class="filter-picker">
+              <text class="filter-text">{{ selectedTeacherClassIndex === 0 ? '全部班级' : teacherClasses[selectedTeacherClassIndex]?.name }}</text>
+              <text class="filter-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+        
+        <!-- 教师任务列表 -->
+        <LoadingRound v-if="loading" />
+        <view v-else class="task-list">
+          <view 
+            v-for="task in tasks" 
+            :key="task.id"
+            class="task-item teacher-task"
+            @click="manageTask(task)"
+          >
+            <view class="task-header">
+              <text class="task-title">{{ task.title }}</text>
+              <view class="task-actions">
+                <text class="action-btn" @click.stop="editTask(task)">编辑</text>
+                <text class="action-btn delete" @click.stop="deleteTask(task)">删除</text>
+              </view>
+            </view>
+            <view class="task-info">
+              <text class="task-desc">{{ task.description }}</text>
+              <view class="task-meta">
+                <text class="task-deadline">截止: {{ formatDate(task.deadline) }}</text>
+                <text class="task-points">{{ task.total_points }}分</text>
+                <text class="submission-count">{{ task.submission_count || 0 }}份提交</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 教师空状态 -->
+        <view v-if="!loading && tasks.length === 0" class="empty-state">
+          <text class="empty-icon">📋</text>
+          <text class="empty-text">还没有创建任务</text>
+          <text class="empty-desc">点击上方按钮创建第一个任务</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup lang="ts">
+import { ref, computed } from "vue";
+import { onShow } from "@dcloudio/uni-app";
+import CommonHeader from "@/components/CommonHeader.vue";
+import LoadingRound from "@/components/LoadingRound.vue";
+import taskRequest from "@/api/task";
+import accountRequest from "@/api/account";
+
+const currentRole = ref('');
+const userRoles = ref<string[]>([]); // 用户拥有的所有角色
+const tasks = ref<any[]>([]);
+const loading = ref(false);
+const studentClasses = ref([{ id: 'all', name: '全部班级' }]);
+const teacherClasses = ref([{ id: 'all', name: '全部班级' }]);
+const selectedClassIndex = ref(0);
+const selectedTeacherClassIndex = ref(0);
+
+// 计算是否有多重身份
+const hasMultipleRoles = computed(() => {
+  return userRoles.value.includes('teacher') && userRoles.value.includes('student');
+});
+
+onShow(() => {
+  getUserRoles();
+  loadTasks();
+});
+
+const getUserRoles = () => {
+  // 优先从本地存储获取用户角色
+  const localRole = uni.getStorageSync('userRole');
+  const localRoles = uni.getStorageSync('userRoles'); // 可能包含多个角色
+  
+  if (localRoles && Array.isArray(localRoles)) {
+    userRoles.value = localRoles;
+    // 设置默认显示角色
+    currentRole.value = localRoles.includes('student') ? 'student' : localRoles[0];
+  } else if (localRole) {
+    userRoles.value = [localRole];
+    currentRole.value = localRole;
+  } else {
+    // 从API获取角色信息
+    accountRequest.getRole().then((res) => {
+      const roles = res.data.roles || [res.data.role || 'student'];
+      userRoles.value = roles;
+      currentRole.value = roles.includes('student') ? 'student' : roles[0];
+      
+      // 保存到本地存储
+      uni.setStorageSync('userRoles', roles);
+      uni.setStorageSync('userRole', currentRole.value);
+      
+      loadClassData();
+    }).catch(() => {
+      // 默认为学生角色
+      userRoles.value = ['student'];
+      currentRole.value = 'student';
+      uni.setStorageSync('userRoles', ['student']);
+      uni.setStorageSync('userRole', 'student');
+    });
+  }
+  
+  loadClassData();
+};
+
+const loadClassData = () => {
+  if (currentRole.value === 'student' || hasMultipleRoles.value) {
+    loadStudentClasses();
+  }
+  if (currentRole.value === 'teacher' || hasMultipleRoles.value) {
+    loadTeacherClasses();
+  }
+};
+
+const loadStudentClasses = () => {
+  taskRequest.getStudentClasses().then(res => {
+    const classes = res.data || [];
+    studentClasses.value = [{ id: 'all', name: '全部班级' }, ...classes];
+  }).catch(() => {
+    // 模拟数据作为备选
+    studentClasses.value = [
+      { id: 'all', name: '全部班级' },
+      { id: '1', name: '三年级1班' },
+      { id: '2', name: '四年级2班' }
+    ];
+  });
+};
+
+const loadTeacherClasses = () => {
+  const userInfo = uni.getStorageSync('userInfo');
+  const teacherId = userInfo?.teacherId;
+  
+  if (teacherId) {
+    taskRequest.getTeacherClasses(teacherId).then(res => {
+      const classes = res.data || [];
+      teacherClasses.value = [{ id: 'all', name: '全部班级' }, ...classes];
+    }).catch(() => {
+      teacherClasses.value = [{ id: 'all', name: '全部班级' }];
+    });
+  }
+};
+
+const switchRole = (role: string) => {
+  if (userRoles.value.includes(role)) {
+    currentRole.value = role;
+    uni.setStorageSync('userRole', role);
+    loadTasks();
+  } else {
+    uni.showToast({
+      title: `没有${role === 'teacher' ? '教师' : '学生'}权限`,
+      icon: 'none'
+    });
+  }
+};
+
+const onClassFilterChange = (e: any) => {
+  selectedClassIndex.value = e.detail.value;
+  loadTasks();
+};
+
+const onTeacherClassFilterChange = (e: any) => {
+  selectedTeacherClassIndex.value = e.detail.value;
+  loadTasks();
+};
+
+const loadTasks = () => {
+  loading.value = true;
+  const params: any = {
+    page: 1,
+    page_size: 20
+  };
+  
+  if (currentRole.value === 'teacher') {
+    // 获取教师创建的任务
+    const userInfo = uni.getStorageSync('userInfo');
+    if (userInfo && userInfo.teacherId) {
+      params.teacher_id = userInfo.teacherId;
+    }
+    
+    // 按班级筛选
+    if (selectedTeacherClassIndex.value > 0) {
+      params.class_id = teacherClasses.value[selectedTeacherClassIndex.value].id;
+    }
+  } else {
+    // 学生只能看到已加入班级的任务
+    const userInfo = uni.getStorageSync('userInfo');
+    if (userInfo && userInfo.studentId) {
+      params.student_id = userInfo.studentId;
+      
+      // 如果选择了特定班级，进一步过滤
+      if (selectedClassIndex.value > 0) {
+        params.class_id = studentClasses.value[selectedClassIndex.value].id;
+      }
+    } else {
+      // 如果没有学生ID，显示空列表
+      tasks.value = [];
+      loading.value = false;
+      return;
+    }
+  }
+  
+  taskRequest.listTasks(params).then((res) => {
+    tasks.value = res.data.tasks || res.data || [];
+    loading.value = false;
+  }).catch(() => {
+    // 根据角色显示不同的模拟数据
+    if (currentRole.value === 'teacher') {
+      tasks.value = [
+        {
+          id: 1,
+          title: '英语作业 - Unit 1',
+          description: '完成Unit 1的单词练习和语法题',
+          total_points: 100,
+          deadline: '2025-01-10T18:00:00Z',
+          submission_count: 15
+        }
+      ];
+    } else {
+      // 学生没有任务时显示空列表
+      tasks.value = [];
+    }
+    loading.value = false;
+  });
+};
+
+const viewTask = (task: any) => {
+  uni.navigateTo({
+    url: `/pages/task/detail?taskId=${task.id}&mode=student`
+  });
+};
+
+const createTask = () => {
+  uni.navigateTo({
+    url: '/pages/task/create'
+  });
+};
+
+const manageClasses = () => {
+  uni.navigateTo({
+    url: '/pages/class/manage'
+  });
+};
+
+const goToJoinClass = () => {
+  uni.navigateTo({
+    url: '/pages/class/join'
+  });
+};
+
+const manageTask = (task: any) => {
+  uni.navigateTo({
+    url: `/pages/task/detail?taskId=${task.id}&mode=teacher`
+  });
+};
+
+const editTask = (task: any) => {
+  uni.navigateTo({
+    url: `/pages/task/create?taskId=${task.id}&mode=edit`
+  });
+};
+
+const deleteTask = (task: any) => {
+  uni.showModal({
+    title: '确认删除',
+    content: '确定要删除这个任务吗？',
+    success: (res) => {
+      if (res.confirm) {
+        taskRequest.deleteTask(task.id).then(() => {
+          uni.showToast({ title: '删除成功' });
+          loadTasks();
+        }).catch(() => {
+          uni.showToast({ title: '删除失败', icon: 'none' });
+        });
+      }
+    }
+  });
+};
+
+const getTaskStatusClass = (task: any) => {
+  if (new Date(task.deadline) < new Date()) {
+    return 'overdue';
+  }
+  return 'active';
+};
+
+const getTaskStatusText = (task: any) => {
+  if (new Date(task.deadline) < new Date()) {
+    return '已过期';
+  }
+  return '进行中';
+};
+
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+};
+</script>
+
+<style scoped lang="less">
+.container {
+  background: #f5f7fa;
+  min-height: 100vh;
+  padding: 20rpx;
+}
+
+.role-tabs {
+  display: flex;
+  background: white;
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
+  padding: 8rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  
+  .role-tab {
+    flex: 1;
+    text-align: center;
+    padding: 20rpx;
+    border-radius: 12rpx;
+    font-size: 28rpx;
+    color: #666;
+    transition: all 0.3s;
+    
+    &.active {
+      background: #4B7EFE;
+      color: white;
+      font-weight: 600;
+    }
+  }
+}
+
+.teacher-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+  
+  .create-btn, .manage-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12rpx;
+    background: #4B7EFE;
+    color: white;
+    padding: 24rpx;
+    border-radius: 16rpx;
+    font-size: 28rpx;
+    font-weight: 600;
+    box-shadow: 0 4rpx 20rpx rgba(75, 126, 254, 0.3);
+    
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+  
+  .manage-btn {
+    background: #52C41A;
+    box-shadow: 0 4rpx 20rpx rgba(82, 196, 26, 0.3);
+  }
+  
+  .btn-icon {
+    font-size: 32rpx;
+  }
+}
+
+.class-filter {
+  margin-bottom: 24rpx;
+  
+  .filter-picker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    padding: 24rpx;
+    border-radius: 16rpx;
+    border: 1px solid #f0f0f0;
+    
+    .filter-text {
+      font-size: 28rpx;
+      color: #333;
+    }
+    
+    .filter-arrow {
+      font-size: 24rpx;
+      color: #999;
+    }
+  }
+}
+
+.task-list {
+  .task-item {
+    background: white;
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-bottom: 16rpx;
+    border: 1px solid #f0f0f0;
+    transition: all 0.3s;
+    
+    &:active {
+      transform: scale(0.98);
+      background: #fafafa;
+    }
+    
+    &.teacher-task {
+      border-left: 4rpx solid #4B7EFE;
+    }
+    
+    .task-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16rpx;
+      
+      .task-title {
+        font-size: 32rpx;
+        font-weight: 600;
+        color: #333;
+        flex: 1;
+        margin-right: 16rpx;
+      }
+      
+      .task-status {
+        padding: 8rpx 16rpx;
+        border-radius: 16rpx;
+        font-size: 22rpx;
+        
+        &.active {
+          background: #E8F5E8;
+          color: #52C41A;
+        }
+        
+        &.overdue {
+          background: #FFF2F0;
+          color: #FF4D4F;
+        }
+      }
+      
+      .task-actions {
+        display: flex;
+        gap: 16rpx;
+        
+        .action-btn {
+          padding: 8rpx 16rpx;
+          border-radius: 12rpx;
+          font-size: 24rpx;
+          background: #f0f0f0;
+          color: #666;
+          
+          &.delete {
+            background: #FFF2F0;
+            color: #FF4D4F;
+          }
+        }
+      }
+    }
+    
+    .task-info {
+      .task-desc {
+        font-size: 26rpx;
+        color: #666;
+        line-height: 1.4;
+        margin-bottom: 16rpx;
+      }
+      
+      .task-meta {
+        display: flex;
+        gap: 24rpx;
+        flex-wrap: wrap;
+        
+        .task-deadline, .task-points, .submission-count {
+          font-size: 24rpx;
+          color: #999;
+        }
+        
+        .task-points {
+          color: #4B7EFE;
+          font-weight: 600;
+        }
+        
+        .submission-count {
+          color: #52C41A;
+        }
+      }
+    }
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80rpx 40rpx;
+  background: white;
+  border-radius: 16rpx;
+  
+  .empty-icon {
+    font-size: 120rpx;
+    display: block;
+    margin-bottom: 24rpx;
+  }
+  
+  .empty-text {
+    font-size: 32rpx;
+    color: #333;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 12rpx;
+  }
+  
+  .empty-desc {
+    font-size: 26rpx;
+    color: #666;
+    line-height: 1.4;
+    margin-bottom: 32rpx;
+  }
+  
+  .empty-action {
+    display: inline-block;
+    background: #4B7EFE;
+    color: white;
+    padding: 20rpx 40rpx;
+    border-radius: 12rpx;
+    font-size: 28rpx;
+    font-weight: 600;
+  }
+}
+</style>

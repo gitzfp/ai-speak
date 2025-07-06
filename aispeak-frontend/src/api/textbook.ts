@@ -65,4 +65,10 @@ export default {
        return request(`/textbook/${bookId}/lesson/${lessonId}/sentences`, "GET");
      },
 
+    // 获取特定句子的详情
+    getSentencesDetail(bookId: string, sentenceIds: number[]) {
+      const url = `/textbook/${bookId}/sentences/details`;
+      return request(url, "POST", { sentence_ids: sentenceIds });
+    },
+
 };

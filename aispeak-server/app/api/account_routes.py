@@ -99,24 +99,25 @@ def get_account_settings_api(
     return ApiResponse(data=account_service.get_settings(account_id))
 
 
-@router.post("/account/role", name="Update User role")
-def update_role(
-    dto: UpdateRoleDTO,
+@router.post("/account/role", name="Update User Identity Role")
+def update_user_role(
+    dto: UserRoleDTO,
     db: Session = Depends(get_db),
     account_id: str = Depends(get_current_account),
 ):
-    """选择角色"""
+    """设置用户身份角色（教师/学生）"""
     account_service = AccountService(db)
-    return ApiResponse(data=account_service.update_role_setting(dto, account_id))
+    return ApiResponse(data=account_service.set_user_role(dto, account_id))
 
 
-@router.get("/account/role", name="Get User role")
-def get_account_role(
+@router.get("/account/role", name="Get User Identity Role")
+def get_user_role(
     db: Session = Depends(get_db), account_id: str = Depends(get_current_account)
 ):
-    """获取选择的角色"""
+    """获取用户身份角色（教师/学生）"""
     account_service = AccountService(db)
-    return ApiResponse(data=account_service.get_role_setting(account_id))
+    return ApiResponse(data=account_service.get_user_role(account_id))
+
 
 @router.get("/account/collect")
 def get_account_collect_api(

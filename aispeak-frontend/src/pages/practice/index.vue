@@ -6,7 +6,7 @@
       :back-fn="handleBackPage" 
     >
       <template v-slot:content>
-        <text>练习</text>
+        <text>收藏</text>
       </template>
     </CommonHeader>
     <view class="content">
@@ -124,8 +124,8 @@ const onScroll = (event: any) => {
 
 // 新增返回处理方法
 const handleBackPage = () => {
-  uni.switchTab({
-    url: "/pages/index/index"
+  uni.navigateBack({
+    delta: 1
   });
 };
 </script>

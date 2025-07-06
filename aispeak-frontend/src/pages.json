@@ -215,6 +215,60 @@
       "style": {
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/task/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/task/create",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/task/detail",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/task/submissions",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/profile/identity",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/class/manage",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/class/create",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/class/join",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/class/detail",
+      "style": {
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {
@@ -228,9 +282,15 @@
     "borderStyle": "white",
     "backgroundColor": "#ffffff",
     "list": [
+      {
+        "pagePath": "pages/task/index",
+        "text": "任务",
+        "selectedIconPath": "static/edit_select.png",
+        "iconPath": "static/edit.png"
+      },
 	  {
 	    "pagePath": "pages/textbook/index3",
-	    "text": "首页",
+	    "text": "教材",
 	    "selectedIconPath": "static/home_select.png",
 	    "iconPath": "static/home.png"
 	  },

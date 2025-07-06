@@ -14,6 +14,7 @@ from app.models.task_models import (
 )
 from app.models.response import ApiResponse
 from app.core.logging import logging
+from app.core import get_current_account
 
 router = APIRouter()
 
@@ -141,6 +142,32 @@ async def remove_teacher_from_class(
         logging.error(f"从班级移除教师失败: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.get("/teacher/{teacher_id}/classes", response_model=ApiResponse, tags=["班级管理"])
+async def get_teacher_classes(
+    teacher_id: str = Path(..., description="教师ID"),
+    service: TaskService = Depends(get_task_service)
+):
+    """获取教师的班级列表"""
+    try:
+        result = await service.get_teacher_classes(teacher_id)
+        return ApiResponse.success(result)
+    except Exception as e:
+        logging.error(f"获取教师班级失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/student/classes", response_model=ApiResponse, tags=["班级管理"])
+async def get_student_classes(
+    service: TaskService = Depends(get_task_service),
+    account_id: str = Depends(get_current_account)
+):
+    """获取学生的班级列表"""
+    try:
+        result = await service.get_student_classes(account_id)
+        return ApiResponse.success(result)
+    except Exception as e:
+        logging.error(f"获取学生班级失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # 任务管理路由
 @router.post("/tasks", response_model=ApiResponse, tags=["任务管理"])
 async def create_task(
@@ -200,6 +227,7 @@ async def delete_task(
 @router.get("/tasks", response_model=ApiResponse, tags=["任务管理"])
 async def list_tasks(
     teacher_id: Optional[str] = Query(None, description="教师ID"),
+    student_id: Optional[str] = Query(None, description="学生ID"),
     class_id: Optional[str] = Query(None, description="班级ID"),
     status: Optional[TaskStatus] = Query(None, description="任务状态"),
     task_type: Optional[TaskType] = Query(None, description="任务类型"),
@@ -210,6 +238,7 @@ async def list_tasks(
     """获取任务列表"""
     params = TaskQueryParams(
         teacher_id=teacher_id,
+        student_id=student_id,
         class_id=class_id,
         status=status,
         task_type=task_type,
