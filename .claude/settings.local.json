@@ -15,7 +15,8 @@
       "Bash(chmod:*)",
       "Bash(python scripts/update_class_codes.py:*)",
       "Bash(curl:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(poetry run alembic:*)"
     ],
     "deny": []
   }

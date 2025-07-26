@@ -685,7 +685,7 @@ const createTaskQuick = async () => {
       allow_late_submission: false,
       max_attempts: null,
       total_points: 100,
-      textbook_id: parseInt(book.value.book_id),
+      textbook_id: String(book.value.book_id),
       lesson_id: parseInt(selectedChapter.value.lesson_id),
       contents: taskContents
     };

@@ -161,7 +161,7 @@ class TaskBase(BaseModel):
     grading_criteria: Optional[str] = Field(None, description="评分标准")
     total_points: int = Field(100, description="总分")
     attachments: Optional[Dict[str, Any]] = Field(None, description="附件信息")
-    textbook_id: Optional[int] = Field(None, description="关联教材ID")
+    textbook_id: Optional[str] = Field(None, max_length=80, description="关联教材ID")
     lesson_id: Optional[int] = Field(None, description="关联教学单元ID")
 
 class TaskCreate(TaskBase):
@@ -204,7 +204,7 @@ class TaskUpdate(BaseModel):
     grading_criteria: Optional[str] = Field(None, description="评分标准")
     total_points: Optional[int] = Field(None, description="总分")
     attachments: Optional[Dict[str, Any]] = Field(None, description="附件信息")
-    textbook_id: Optional[int] = Field(None, description="关联教材ID")
+    textbook_id: Optional[str] = Field(None, max_length=80, description="关联教材ID")
     lesson_id: Optional[int] = Field(None, description="关联教学单元ID")
 
 class TaskResponse(TaskBase):

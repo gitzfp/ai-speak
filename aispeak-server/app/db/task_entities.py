@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, JSON, ForeignKey, Enum as SQLEnum
+from sqlalchemy import Column, Integer, BigInteger, String, Text, DateTime, Boolean, JSON, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from enum import Enum
@@ -118,7 +118,7 @@ class Task(Base):
     grading_criteria = Column(Text, comment="评分标准")  # 新增
     total_points = Column(Integer, nullable=False, default=100, comment="总分")
     attachments = Column(JSON, comment="附件信息")  # 新增
-    textbook_id = Column(Integer, index=True, comment="关联教材ID")  # 新增
+    textbook_id = Column(String(80), index=True, comment="关联教材ID")  # 新增
     lesson_id = Column(Integer, index=True, comment="关联教学单元ID")  # 新增
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

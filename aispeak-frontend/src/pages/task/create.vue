@@ -933,7 +933,7 @@ const submit = async () => {
     max_attempts: Number(form.value.max_attempts) || 0,
     // 修复字段类型
     attachments: form.value.attachments || null,
-    textbook_id: form.value.textbook_id ? parseInt(form.value.textbook_id) : null,
+    textbook_id: form.value.textbook_id || null,
     lesson_id: form.value.lesson_id ? parseInt(form.value.lesson_id) : null,
     // 确保contents中的数据类型正确
     contents: form.value.contents.map(content => ({
