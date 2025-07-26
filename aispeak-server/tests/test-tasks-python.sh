@@ -14,7 +14,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # 无颜色
 
 # 设置API基础URL
-BASE_URL="http://127.0.0.1:8000/api/v1"
+BASE_URL="http://127.0.0.1:8097/api/v1"
 API_URL="$BASE_URL/tasks"
 
 # 全局变量

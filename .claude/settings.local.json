@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(pip3 list:*)",
+      "Bash(mv:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

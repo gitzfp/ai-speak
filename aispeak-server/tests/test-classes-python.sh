@@ -14,7 +14,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # 无颜色
 
 # 设置API基础URL - 修改为Python FastAPI的端口
-BASE_URL="http://localhost:8000/api/v1"
+BASE_URL="http://localhost:8097/api/v1"
 API_URL="$BASE_URL/classes"
 
 # 全局变量

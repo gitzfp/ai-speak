@@ -63,7 +63,7 @@ fi
 # 启动服务器
 echo "启动 AI-Speak Python FastAPI 服务器..."
 echo "使用Python命令: $VENV_PYTHON_CMD"
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8097 --reload
 
 # 如果需要使用 gunicorn 启动 (生产环境)，可以注释掉上面的 uvicorn 命令，启用下面的命令：
 # gunicorn -w 1 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8097 --reload
