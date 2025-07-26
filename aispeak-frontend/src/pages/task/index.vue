@@ -1,6 +1,6 @@
 <template>
   <view class="container">
-    <CommonHeader :leftIcon="true">
+    <CommonHeader>
       <template v-slot:content>
         <text>任务</text>
       </template>
