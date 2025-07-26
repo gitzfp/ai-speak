@@ -70,9 +70,11 @@ class ClassUpdate(BaseModel):
 
 class ClassResponse(ClassBase):
     id: int
+    class_code: Optional[str] = None
     status: str
     created_at: datetime
     updated_at: datetime
+    student_count: Optional[int] = 0  # 学生人数
     
     class Config:
         from_attributes = True
@@ -110,6 +112,18 @@ class ClassTeacherResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+# 班级加入请求模型
+class ClassJoinRequest(BaseModel):
+    class_code: Optional[str] = Field(None, min_length=6, max_length=6, description="班级码")
+    class_id: Optional[int] = Field(None, description="班级ID")
+    student_id: str = Field(..., max_length=80, description="学生ID")
+    
+    @validator('class_code', 'class_id')
+    def validate_join_method(cls, v, values):
+        if not v and not values.get('class_id') and not values.get('class_code'):
+            raise ValueError('必须提供班级码或班级ID')
+        return v
 
 # 任务内容模型 - 更新以匹配Go模型
 class TaskContentBase(BaseModel):

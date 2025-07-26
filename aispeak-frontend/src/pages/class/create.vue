@@ -183,8 +183,12 @@ const submit = () => {
   }
   
   // 从本地存储获取用户信息
-  const userInfo = uni.getStorageSync('userInfo');
-  const teacherId = userInfo?.teacherId || 'teacher001';
+  const user_id = uni.getStorageSync('user_id');
+  if (!user_id) {
+    uni.showToast({ title: '请先登录', icon: 'none' });
+    return;
+  }
+  const teacherId = user_id;
   
   // 学科映射：中文到英文
   const subjectMap: { [key: string]: string } = {

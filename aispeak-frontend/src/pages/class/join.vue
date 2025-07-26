@@ -194,12 +194,7 @@ const loadMyClasses = () => {
   }).catch(() => {
     // 模拟数据作为备选
     myClasses.value = [
-      {
-        id: 1,
-        name: '三年级1班',
-        teacher_name: '张老师',
-        subject: '英语'
-      }
+      
     ];
   });
 };
@@ -293,10 +288,10 @@ const joinByCode = () => {
     return;
   }
   
-  const userInfo = uni.getStorageSync('userInfo');
+  const user_id = uni.getStorageSync('user_id');
   taskRequest.joinClass({
     class_code: classCode.value,
-    student_id: userInfo?.studentId || 'student1'
+    student_id: user_id
   }).then(() => {
     uni.showToast({ title: '加入班级成功' });
     loadMyClasses();
@@ -320,10 +315,10 @@ const joinClass = (classItem: any) => {
     content: `确定要加入"${classItem.name}"吗？`,
     success: (res) => {
       if (res.confirm) {
-        const userInfo = uni.getStorageSync('userInfo');
+        const user_id = uni.getStorageSync('user_id');
         taskRequest.joinClass({
           class_id: classItem.id,
-          student_id: userInfo?.studentId || 'student1'
+          student_id: user_id
         }).then(() => {
           uni.showToast({ title: '加入班级成功' });
           loadMyClasses();

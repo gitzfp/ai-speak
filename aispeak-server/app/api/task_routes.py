@@ -8,13 +8,14 @@ from app.models.task_models import (
     TaskCreate, TaskUpdate, TaskResponse, TaskListResponse,
     SubmissionCreate, SubmissionUpdate, SubmissionGrade, SubmissionResponse, SubmissionListResponse,
     ClassCreate, ClassUpdate, ClassResponse,
-    ClassStudentAdd, ClassTeacherAdd,
+    ClassStudentAdd, ClassTeacherAdd, ClassJoinRequest,
     TaskQueryParams, SubmissionQueryParams,
     TaskType, TaskStatus, SubmissionStatus
 )
 from app.models.response import ApiResponse
 from app.core.logging import logging
 from app.core import get_current_account
+from app.core.exceptions import UserAccessDeniedException
 
 router = APIRouter()
 
@@ -167,6 +168,29 @@ async def get_student_classes(
     except Exception as e:
         logging.error(f"获取学生班级失败: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/classes/join", response_model=ApiResponse, tags=["班级管理"])
+async def join_class(
+    join_data: ClassJoinRequest,
+    service: TaskService = Depends(get_task_service)
+):
+    """学生加入班级（通过班级码或班级ID）"""
+    try:
+        if join_data.class_code:
+            # 通过班级码加入
+            result = await service.join_class_by_code(join_data.class_code, join_data.student_id)
+        elif join_data.class_id:
+            # 通过班级ID加入
+            result = await service.join_class_by_id(join_data.class_id, join_data.student_id)
+        else:
+            raise HTTPException(status_code=400, detail="必须提供班级码或班级ID")
+        
+        return ApiResponse.success(result)
+    except UserAccessDeniedException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logging.error(f"加入班级失败: {e}")
+        raise HTTPException(status_code=500, detail="加入班级失败")
 
 # 任务管理路由
 @router.post("/tasks", response_model=ApiResponse, tags=["任务管理"])

@@ -2,6 +2,8 @@ from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, desc
 from datetime import datetime
+import random
+import string
 
 from app.db.task_entities import (
     Task, TaskContent, Class, ClassStudent, ClassTeacher,
@@ -21,23 +23,44 @@ class TaskService:
     def __init__(self, db: Session):
         self.db = db
     
+    def _generate_class_code(self) -> str:
+        """生成唯一的6位班级码"""
+        while True:
+            # 生成6位随机字母数字组合（大写）
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            # 检查是否已存在
+            existing = self.db.query(Class).filter(
+                Class.class_code == code,
+                Class.deleted_at.is_(None)
+            ).first()
+            if not existing:
+                return code
+    
     # 班级管理
     async def create_class(self, class_data: ClassCreate) -> ClassResponse:
         """创建班级"""
         try:
+            # 生成唯一班级码
+            class_code = self._generate_class_code()
+            
             db_class = Class(
                 name=class_data.name,
                 grade_level=class_data.grade_level,
                 subject=class_data.subject,
                 school_name=class_data.school_name,
                 teacher_id=class_data.teacher_id,
+                class_code=class_code,
                 description=class_data.description,
                 max_students=class_data.max_students
             )
             self.db.add(db_class)
             self.db.commit()
             self.db.refresh(db_class)
-            return ClassResponse.from_orm(db_class)
+            
+            # 创建响应并设置学生人数为0
+            response = ClassResponse.from_orm(db_class)
+            response.student_count = 0
+            return response
         except Exception as e:
             self.db.rollback()
             logging.error(f"创建班级失败: {e}")
@@ -49,7 +72,18 @@ class TaskService:
             Class.id == class_id,
             Class.deleted_at.is_(None)
         ).first()
-        return ClassResponse.from_orm(db_class) if db_class else None
+        
+        if not db_class:
+            return None
+            
+        # 创建响应并添加学生人数
+        response = ClassResponse.from_orm(db_class)
+        student_count = self.db.query(ClassStudent).filter(
+            ClassStudent.class_id == class_id,
+            ClassStudent.status == "active"
+        ).count()
+        response.student_count = student_count
+        return response
     
     async def update_class(self, class_id: int, class_data: ClassUpdate) -> Optional[ClassResponse]:
         """更新班级"""
@@ -69,7 +103,15 @@ class TaskService:
             db_class.updated_at = datetime.utcnow()
             self.db.commit()
             self.db.refresh(db_class)
-            return ClassResponse.from_orm(db_class)
+            
+            # 创建响应并添加学生人数
+            response = ClassResponse.from_orm(db_class)
+            student_count = self.db.query(ClassStudent).filter(
+                ClassStudent.class_id == class_id,
+                ClassStudent.status == "active"
+            ).count()
+            response.student_count = student_count
+            return response
         except Exception as e:
             self.db.rollback()
             logging.error(f"更新班级失败: {e}")
@@ -220,7 +262,19 @@ class TaskService:
             for cls in additional_classes_query:
                 all_classes[cls.id] = cls
             
-            return [ClassResponse.from_orm(cls) for cls in all_classes.values()]
+            # 转换为响应模型并添加学生人数
+            result = []
+            for cls in all_classes.values():
+                class_response = ClassResponse.from_orm(cls)
+                # 查询该班级的活跃学生人数
+                student_count = self.db.query(ClassStudent).filter(
+                    ClassStudent.class_id == cls.id,
+                    ClassStudent.status == "active"
+                ).count()
+                class_response.student_count = student_count
+                result.append(class_response)
+            
+            return result
         except Exception as e:
             logging.error(f"获取教师班级失败: {e}")
             raise e
@@ -237,10 +291,136 @@ class TaskService:
                 Class.deleted_at.is_(None)
             ).all()
             
-            return [ClassResponse.from_orm(cls) for cls in student_classes]
+            # 转换为响应模型并添加学生人数
+            result = []
+            for cls in student_classes:
+                response = ClassResponse.from_orm(cls)
+                # 查询该班级的活跃学生人数
+                student_count = self.db.query(ClassStudent).filter(
+                    ClassStudent.class_id == cls.id,
+                    ClassStudent.status == "active"
+                ).count()
+                response.student_count = student_count
+                result.append(response)
+            
+            return result
         except Exception as e:
             logging.error(f"获取学生班级失败: {e}")
             raise e
+    
+    async def join_class_by_code(self, class_code: str, student_id: str) -> ClassResponse:
+        """通过班级码加入班级"""
+        try:
+            # 查找班级
+            db_class = self.db.query(Class).filter(
+                Class.class_code == class_code,
+                Class.status == "active",
+                Class.deleted_at.is_(None)
+            ).first()
+            
+            if not db_class:
+                raise UserAccessDeniedException("班级码无效或班级不存在")
+            
+            # 检查是否已加入
+            existing = self.db.query(ClassStudent).filter(
+                ClassStudent.class_id == db_class.id,
+                ClassStudent.student_id == student_id,
+                ClassStudent.status == "active"
+            ).first()
+            
+            if existing:
+                raise UserAccessDeniedException("您已经加入了该班级")
+            
+            # 检查班级人数是否已满
+            current_count = self.db.query(ClassStudent).filter(
+                ClassStudent.class_id == db_class.id,
+                ClassStudent.status == "active"
+            ).count()
+            
+            if current_count >= db_class.max_students:
+                raise UserAccessDeniedException("班级人数已满")
+            
+            # 加入班级
+            db_student = ClassStudent(
+                class_id=db_class.id,
+                student_id=student_id,
+                status="active"
+            )
+            self.db.add(db_student)
+            self.db.commit()
+            self.db.refresh(db_class)
+            
+            # 创建响应并添加学生人数
+            response = ClassResponse.from_orm(db_class)
+            student_count = self.db.query(ClassStudent).filter(
+                ClassStudent.class_id == db_class.id,
+                ClassStudent.status == "active"
+            ).count()
+            response.student_count = student_count
+            return response
+        except UserAccessDeniedException:
+            raise
+        except Exception as e:
+            self.db.rollback()
+            logging.error(f"加入班级失败: {e}")
+            raise UserAccessDeniedException("加入班级失败")
+    
+    async def join_class_by_id(self, class_id: int, student_id: str) -> ClassResponse:
+        """通过班级ID加入班级"""
+        try:
+            # 查找班级
+            db_class = self.db.query(Class).filter(
+                Class.id == class_id,
+                Class.status == "active",
+                Class.deleted_at.is_(None)
+            ).first()
+            
+            if not db_class:
+                raise UserAccessDeniedException("班级不存在")
+            
+            # 检查是否已加入
+            existing = self.db.query(ClassStudent).filter(
+                ClassStudent.class_id == class_id,
+                ClassStudent.student_id == student_id,
+                ClassStudent.status == "active"
+            ).first()
+            
+            if existing:
+                raise UserAccessDeniedException("您已经加入了该班级")
+            
+            # 检查班级人数是否已满
+            current_count = self.db.query(ClassStudent).filter(
+                ClassStudent.class_id == class_id,
+                ClassStudent.status == "active"
+            ).count()
+            
+            if current_count >= db_class.max_students:
+                raise UserAccessDeniedException("班级人数已满")
+            
+            # 加入班级
+            db_student = ClassStudent(
+                class_id=class_id,
+                student_id=student_id,
+                status="active"
+            )
+            self.db.add(db_student)
+            self.db.commit()
+            self.db.refresh(db_class)
+            
+            # 创建响应并添加学生人数
+            response = ClassResponse.from_orm(db_class)
+            student_count = self.db.query(ClassStudent).filter(
+                ClassStudent.class_id == db_class.id,
+                ClassStudent.status == "active"
+            ).count()
+            response.student_count = student_count
+            return response
+        except UserAccessDeniedException:
+            raise
+        except Exception as e:
+            self.db.rollback()
+            logging.error(f"加入班级失败: {e}")
+            raise UserAccessDeniedException("加入班级失败")
     
     # 任务管理
     async def create_task(self, task_data: TaskCreate) -> TaskResponse:

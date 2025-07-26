@@ -85,12 +85,18 @@
           <!-- 任务标题 -->
           <view class="form-group">
             <text class="form-label">任务标题 *</text>
-            <input 
-              v-model="form.title" 
-              class="form-input"
-              placeholder="如：Unit 1 听写练习"
-              maxlength="50"
-            />
+            <view class="input-wrapper">
+              <textarea
+                v-model="form.title"
+                class="form-input"
+                placeholder="如：Unit 1 听写练习"
+                placeholder-style="color: #999"
+                :maxlength="50"
+                auto-height
+                :show-confirm-bar="false"
+                @focus="onTitleFocus"
+              />
+            </view>
           </view>
 
           <!-- 截止时间 -->
@@ -197,11 +203,17 @@
 
               <view>
                 <text class="block text-sm font-medium text-gray-700 mb-3">任务标题 *</text>
-                <input 
-                  v-model="form.title" 
-                  class="form-input"
-                  :placeholder="selectedTemplate.title"
-                />
+                <view class="input-wrapper">
+                  <textarea
+                    v-model="form.title"
+                    class="form-input"
+                    :placeholder="selectedTemplate.title"
+                    placeholder-style="color: #999"
+                    auto-height
+                    :maxlength="50"
+                    :show-confirm-bar="false"
+                  />
+                </view>
               </view>
 
               <view>
@@ -272,14 +284,7 @@
               </picker>
             </view>
 
-            <view>
-              <text class="block text-sm font-medium text-gray-700 mb-3">任务标题 *</text>
-              <input 
-                v-model="form.title" 
-                class="form-input"
-                placeholder="请输入任务标题"
-              />
-            </view>
+        
 
             <view>
               <text class="block text-sm font-medium text-gray-700 mb-3">任务描述</text>
@@ -348,7 +353,7 @@
             <view>
               <text class="block text-sm font-medium text-gray-700 mb-3">最大尝试次数</text>
               <input 
-                v-model="form.max_attempts" 
+                v-model.number="form.max_attempts" 
                 class="form-input"
                 type="number"
                 placeholder="0表示无限制"
@@ -399,19 +404,22 @@ const taskId = ref('');
 const createMode = ref('quick'); // 'quick', 'template', 'advanced'
 const selectedTemplate = ref<any>(null);
 
+// 创建一个独立的标题响应式变量
+const titleInput = ref('');
+
 const form = ref({
   title: '',
   description: '',
   task_type: '',
   subject: 'english',
-  class_id: '',
+  class_id: 0,
   deadline: '',
   allow_late_submission: false,
   max_attempts: 0,
   grading_criteria: '',
   textbook_id: '',
   lesson_id: '',
-  attachments: [] as string[],
+  attachments: null as any,
   contents: [] as any[]
 });
 
@@ -546,6 +554,23 @@ const canSubmit = computed(() => {
   return form.value.title && form.value.class_id && form.value.deadline;
 });
 
+// 添加监控来调试标题变化
+watch(() => form.value.title, (newTitle, oldTitle) => {
+  console.log('form.title changed from:', oldTitle, 'to:', newTitle);
+  // 同步到 titleInput
+  if (titleInput.value !== newTitle) {
+    titleInput.value = newTitle;
+  }
+}, { immediate: true });
+
+// 监控 titleInput 变化并同步到 form.title
+watch(titleInput, (newValue, oldValue) => {
+  console.log('titleInput changed from:', oldValue, 'to:', newValue);
+  if (form.value.title !== newValue) {
+    form.value.title = newValue;
+  }
+}, { immediate: true });
+
 onLoad((options: any) => {
   if (options.taskId) {
     taskId.value = options.taskId;
@@ -568,7 +593,7 @@ onLoad((options: any) => {
     }
   }
   if (options.class_id) {
-    form.value.class_id = options.class_id;
+    form.value.class_id = parseInt(options.class_id) || 0;
   }
   if (options.title) {
     form.value.title = decodeURIComponent(options.title);
@@ -598,14 +623,12 @@ watch(() => filteredBooks.value, (newBooks) => {
 
 const loadClasses = async () => {
   try {
-    const userInfo = uni.getStorageSync('userInfo');
-    const teacherId = userInfo?.teacherId || 'teacher001';
-    
+    const teacherId = uni.getStorageSync('user_id');
     const res = await taskRequest.getTeacherClasses(teacherId);
     classes.value = res.data || [];
     
     // 预选择班级（从教材页面跳转过来或编辑模式）
-    if (form.value.class_id) {
+    if (form.value.class_id && form.value.class_id > 0) {
       const index = classes.value.findIndex((c: any) => c.id === form.value.class_id);
       if (index !== -1) {
         classIndex.value = index;
@@ -653,19 +676,100 @@ const loadTask = async () => {
 };
 
 // 事件处理
+const onTitleInput = (e: any) => {
+  console.log('onTitleInput event:', e);
+  const value = e.detail?.value || e.target?.value || '';
+  console.log('Input value:', value);
+  form.value.title = value;
+  console.log('form.value.title updated to:', form.value.title);
+};
+
+const onTitleInputChange = (value: string) => {
+  console.log('onTitleInputChange called with value:', value);
+  form.value.title = value;
+  console.log('form.value.title updated to:', form.value.title);
+};
+
+const onTitleInputChange2 = (e: any) => {
+  console.log('onTitleInputChange2 called with event:', e);
+  const value = e.detail.value;
+  console.log('Input value from event:', value);
+  form.value.title = value;
+  console.log('form.value.title updated to:', form.value.title);
+};
+
+const onTitleFocus = (e: any) => {
+  console.log('Title input focused');
+};
+
+const onTitleBlur = (e: any) => {
+  console.log('Title input blurred, value:', e.detail.value);
+  if (e.detail.value) {
+    form.value.title = e.detail.value;
+  }
+};
+
+const onDescriptionInput = (e: any) => {
+  form.value.description = e.detail.value;
+};
+
+const onMaxAttemptsInput = (e: any) => {
+  form.value.max_attempts = parseInt(e.detail.value) || 0;
+};
+
 const selectTaskType = (index: number) => {
+  console.log('selectTaskType called with index:', index);
   taskTypeIndex.value = index;
   form.value.task_type = taskTypes.value[index].value;
   
-  // 自动生成标题
-  if (!form.value.title || form.value.title.includes(taskTypes.value.find(t => t.value !== form.value.task_type)?.label || '')) {
-    form.value.title = `${taskTypes.value[index].label}练习`;
+  // 自动生成标题（与高级设置模式保持一致）
+  const selectedType = taskTypes.value[index];
+  console.log('Selected type:', selectedType);
+  
+  // 如果标题为空或者是其他任务类型的默认标题，则生成新标题
+  const isDefaultTitle = form.value.title && form.value.title.endsWith('练习');
+  if (!form.value.title || form.value.title === '' || isDefaultTitle) {
+    const newTitle = `${selectedType.label}练习`;
+    console.log('Generating new title:', newTitle);
+
+    // 同时设置两个变量
+    form.value.title = newTitle;
+    titleInput.value = newTitle;
+
+    console.log('Generated title assigned to form.value.title:', form.value.title);
+    console.log('Generated title assigned to titleInput:', titleInput.value);
+  } else {
+    console.log('Title already exists, not generating new one:', form.value.title);
   }
 };
 
 const onTaskTypeChange = (e: any) => {
+  console.log('onTaskTypeChange called with value:', e.detail.value);
+  console.log('Current form.title before change:', form.value.title);
+  console.log('Current titleInput before change:', titleInput.value);
+
   taskTypeIndex.value = e.detail.value;
   form.value.task_type = taskTypes.value[e.detail.value].value;
+
+  // 自动生成标题（与快速创建模式保持一致）
+  const selectedType = taskTypes.value[e.detail.value];
+  console.log('Selected type:', selectedType);
+
+  // 如果标题为空或者是其他任务类型的默认标题，则生成新标题
+  const isDefaultTitle = form.value.title && form.value.title.endsWith('练习');
+  if (!form.value.title || form.value.title === '' || isDefaultTitle) {
+    const newTitle = `${selectedType.label}练习`;
+    console.log('Generating new title:', newTitle);
+
+    // 同时设置两个变量
+    form.value.title = newTitle;
+    titleInput.value = newTitle;
+
+    console.log('Generated title assigned to form.value.title:', form.value.title);
+    console.log('Generated title assigned to titleInput:', titleInput.value);
+  } else {
+    console.log('Title already exists, not generating new one:', form.value.title);
+  }
 };
 
 const onClassChange = (e: any) => {
@@ -740,7 +844,7 @@ const submit = async () => {
       content_type: form.value.task_type || 'dictation',
       generate_mode: 'auto',
       ref_book_id: String(form.value.textbook_id || ''),
-      ref_lesson_id: form.value.lesson_id,
+      ref_lesson_id: form.value.lesson_id ? parseInt(form.value.lesson_id) : null,
       selected_word_ids: [],
       selected_sentence_ids: [],
       points: 100,
@@ -749,16 +853,21 @@ const submit = async () => {
     }];
   }
   
-  const userInfo = uni.getStorageSync('userInfo');
+  const user_id = uni.getStorageSync('user_id');
   const submitData = {
     ...form.value,
-    teacher_id: userInfo?.teacherId || userInfo?.id || 'teacher001',
-    class_id: parseInt(form.value.class_id) || 0,
+    teacher_id: user_id,
+    class_id: form.value.class_id || 0,
     max_attempts: Number(form.value.max_attempts) || 0,
+    // 修复字段类型
+    attachments: form.value.attachments || null,
+    textbook_id: form.value.textbook_id ? parseInt(form.value.textbook_id) : null,
+    lesson_id: form.value.lesson_id ? parseInt(form.value.lesson_id) : null,
     // 确保contents中的数据类型正确
     contents: form.value.contents.map(content => ({
       ...content,
-      ref_book_id: String(content.ref_book_id || '')
+      ref_book_id: String(content.ref_book_id || ''),
+      ref_lesson_id: content.ref_lesson_id ? parseInt(content.ref_lesson_id) : null
     }))
   };
   
@@ -887,6 +996,18 @@ const submit = async () => {
   border-color: #3b82f6;
   background: white;
   box-shadow: 0 0 0 4rpx rgba(59, 130, 246, 0.1);
+}
+
+.input-wrapper {
+  width: 100%;
+}
+
+.single-line {
+  height: 88rpx;
+  line-height: 44rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  resize: none;
 }
 
 .picker-wrapper {

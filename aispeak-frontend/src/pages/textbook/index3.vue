@@ -556,14 +556,19 @@ const eliminationGame = () => {
 // 任务布置相关方法
 const loadTeacherClasses = async () => {
   try {
-    const userInfo = uni.getStorageSync('userInfo');
-    if (!userInfo || !userInfo.teacherId) {
-      console.log('用户不是教师或未登录');
+    const user_id = uni.getStorageSync('user_id');
+    if (!user_id) {
+      console.log('用户未登录');
       return;
     }
     
-    const res = await taskRequest.getTeacherClasses(userInfo.teacherId);
+    // 使用用户的账户ID作为教师ID
+    const teacherId = user_id;
+    console.log('使用教师ID:', teacherId);
+    
+    const res = await taskRequest.getTeacherClasses(teacherId);
     classes.value = res.data || [];
+    console.log('获取到班级列表:', classes.value);
   } catch (error) {
     console.error('加载班级列表失败:', error);
     classes.value = [];
@@ -646,14 +651,14 @@ const createTaskQuick = async () => {
   try {
     uni.showLoading({ title: '创建中...' });
     
-    const userInfo = uni.getStorageSync('userInfo');
+    const user_id = uni.getStorageSync('user_id');
     const deadline = `${deadlineDate.value}T${deadlineTime.value}:00`;
     
     // 根据任务类型准备内容
     const taskContents = prepareTaskContents();
     
     const taskData = {
-      teacher_id: userInfo.teacherId,
+      teacher_id: user_id,
       class_id: parseInt(selectedClassId.value),
       title: `${selectedTaskType.value.label} - ${selectedChapter.value.title}`,
       description: `${book.value.book_name} ${selectedChapter.value.title} ${selectedTaskType.value.description}`,

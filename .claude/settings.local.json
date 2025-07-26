@@ -6,7 +6,16 @@
       "Bash(mv:*)",
       "Bash(ls:*)",
       "Bash(find:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(python -m alembic revision:*)",
+      "Bash(source:*)",
+      "Bash(alembic revision:*)",
+      "Bash(alembic upgrade:*)",
+      "Bash(python -m pytest tests/test-classes-python.sh -v)",
+      "Bash(chmod:*)",
+      "Bash(python scripts/update_class_codes.py:*)",
+      "Bash(curl:*)",
+      "Bash(python:*)"
     ],
     "deny": []
   }

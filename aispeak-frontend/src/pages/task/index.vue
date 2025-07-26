@@ -184,20 +184,23 @@ const getUserRoles = () => {
   
   if (localRoles && Array.isArray(localRoles)) {
     userRoles.value = localRoles;
-    // 设置默认显示角色
-    currentRole.value = localRoles.includes('student') ? 'student' : localRoles[0];
+    // 使用保存的角色，如果没有则使用第一个角色
+    currentRole.value = localRole || localRoles[0];
   } else if (localRole) {
     userRoles.value = [localRole];
     currentRole.value = localRole;
   } else {
     // 从API获取角色信息
     accountRequest.getRole().then((res) => {
-      const roles = res.data.roles || [res.data.role || 'student'];
-      userRoles.value = roles;
-      currentRole.value = roles.includes('student') ? 'student' : roles[0];
+      // API 返回的是 {role: "teacher"} 或 {role: "student"}
+      const apiRole = res.data.role || 'student';
+      userRoles.value = [apiRole];
+      
+      // 如果本地已经有保存的角色，优先使用本地的；否则使用API返回的角色
+      currentRole.value = localRole || apiRole;
       
       // 保存到本地存储
-      uni.setStorageSync('userRoles', roles);
+      uni.setStorageSync('userRoles', userRoles.value);
       uni.setStorageSync('userRole', currentRole.value);
       
       loadClassData();
@@ -237,8 +240,7 @@ const loadStudentClasses = () => {
 };
 
 const loadTeacherClasses = () => {
-  const userInfo = uni.getStorageSync('userInfo');
-  const teacherId = userInfo?.teacherId;
+  const teacherId = uni.getStorageSync('user_id');
   
   if (teacherId) {
     taskRequest.getTeacherClasses(teacherId).then(res => {
@@ -282,9 +284,9 @@ const loadTasks = () => {
   
   if (currentRole.value === 'teacher') {
     // 获取教师创建的任务
-    const userInfo = uni.getStorageSync('userInfo');
-    if (userInfo && userInfo.teacherId) {
-      params.teacher_id = userInfo.teacherId;
+    const user_id = uni.getStorageSync('user_id');
+    if (user_id) {
+      params.teacher_id = user_id
     }
     
     // 按班级筛选
@@ -293,9 +295,9 @@ const loadTasks = () => {
     }
   } else {
     // 学生只能看到已加入班级的任务
-    const userInfo = uni.getStorageSync('userInfo');
-    if (userInfo && userInfo.studentId) {
-      params.student_id = userInfo.studentId;
+    const user_id = uni.getStorageSync('user_id');
+    if (user_id) {
+      params.student_id = user_id
       
       // 如果选择了特定班级，进一步过滤
       if (selectedClassIndex.value > 0) {

@@ -51,6 +51,7 @@ class Class(Base):
     subject = Column(String(50), index=True, comment="主教学科")
     school_name = Column(String(200), nullable=True, index=True, comment="学校名称(可选)")
     teacher_id = Column(String(80), nullable=False, index=True, comment="班主任ID")
+    class_code = Column(String(6), unique=True, index=True, comment="班级码(6位唯一)")
     status = Column(String(20), default="active", index=True, comment="状态")
     description = Column(Text, comment="班级描述")
     max_students = Column(Integer, nullable=False, default=50, comment="最大学生人数")
