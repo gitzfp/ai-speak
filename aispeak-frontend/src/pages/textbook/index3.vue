@@ -651,11 +651,28 @@ const createTaskQuick = async () => {
   try {
     uni.showLoading({ title: '创建中...' });
     
+    // 验证必要数据
+    if (!book.value.book_id || !selectedChapter.value?.lesson_id) {
+      uni.hideLoading();
+      uni.showToast({
+        title: '教材信息不完整',
+        icon: 'none'
+      });
+      console.error('教材信息缺失:', { book: book.value, chapter: selectedChapter.value });
+      return;
+    }
+    
     const user_id = uni.getStorageSync('user_id');
     const deadline = `${deadlineDate.value}T${deadlineTime.value}:00`;
     
     // 根据任务类型准备内容
     const taskContents = prepareTaskContents();
+    
+    console.log('创建任务数据:', {
+      book_id: book.value.book_id,
+      lesson_id: selectedChapter.value.lesson_id,
+      task_type: selectedTaskType.value.value
+    });
     
     const taskData = {
       teacher_id: user_id,
@@ -669,7 +686,7 @@ const createTaskQuick = async () => {
       max_attempts: null,
       total_points: 100,
       textbook_id: parseInt(book.value.book_id),
-      lesson_id: selectedChapter.value.lesson_id,
+      lesson_id: parseInt(selectedChapter.value.lesson_id),
       contents: taskContents
     };
     
@@ -702,7 +719,7 @@ const prepareTaskContents = () => {
     
     contents.push({
       content_type: selectedTaskType.value.value,
-      generate_mode: 'manual',
+      generate_mode: selectedWordIds.length > 0 ? 'manual' : 'auto', // 有单词时手动，否则自动
       ref_book_id: String(book.value.book_id),
       ref_lesson_id: selectedChapter.value.lesson_id,
       selected_word_ids: selectedWordIds,
@@ -714,15 +731,15 @@ const prepareTaskContents = () => {
       },
       order_num: 1
     });
-  } else if (selectedTaskType.value.value === 'sentence_repeat') {
-    // 句子跟读任务
+  } else if (selectedTaskType.value.value === 'sentence_repeat' || selectedTaskType.value.value === 'pronunciation') {
+    // 句子跟读任务 - 使用自动模式
     contents.push({
-      content_type: 'sentence_repeat',
-      generate_mode: 'manual',
+      content_type: selectedTaskType.value.value,
+      generate_mode: 'auto', // 句子任务使用自动模式
       ref_book_id: String(book.value.book_id),
       ref_lesson_id: selectedChapter.value.lesson_id,
       selected_word_ids: [],
-      selected_sentence_ids: [], // 这里可以根据需要获取句子ID
+      selected_sentence_ids: [], // 自动模式会获取该课程的所有句子
       points: 100,
       meta_data: {
         lesson_title: selectedChapter.value.title
@@ -730,10 +747,10 @@ const prepareTaskContents = () => {
       order_num: 1
     });
   } else {
-    // 其他类型任务
+    // 其他类型任务 - 默认使用自动模式
     contents.push({
       content_type: selectedTaskType.value.value,
-      generate_mode: 'manual',
+      generate_mode: 'auto', // 默认使用自动模式
       ref_book_id: String(book.value.book_id),
       ref_lesson_id: selectedChapter.value.lesson_id,
       selected_word_ids: [],

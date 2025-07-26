@@ -50,25 +50,30 @@ async def upload_file(
         print(f"接收到的请求参数: oss_key={oss_key}")
         print(f"file 是否存在: {file is not None}")
         
-        # 尝试从请求体中获取JSON数据
-        try:
-            json_data = await request.json()
-            print(f"JSON数据键: {json_data.keys()}")
-            base64_data = json_data.get('base64_data')
-            print(f"base64_data 是否存在: {base64_data is not None}")
-            if base64_data:
-                print(f"base64_data 长度: {len(base64_data)}")
-                print(f"base64_data 前30个字符: {base64_data[:30]}...")
-        except Exception as json_error:
-            print(f"解析JSON数据失败: {str(json_error)}")
-            base64_data = None
-        
-        # 打印请求体内容长度
-        body = await request.body()
-        print(f"请求体长度: {len(body)}")
-        
         # 打印请求头
         print(f"请求头: {request.headers}")
+        
+        base64_data = None
+        
+        # 如果没有文件，尝试从请求体中获取JSON数据
+        if not file:
+            try:
+                # 读取请求体一次
+                body = await request.body()
+                print(f"请求体长度: {len(body)}")
+                
+                # 尝试解析为JSON
+                import json
+                json_data = json.loads(body)
+                print(f"JSON数据键: {json_data.keys()}")
+                base64_data = json_data.get('base64_data')
+                print(f"base64_data 是否存在: {base64_data is not None}")
+                if base64_data:
+                    print(f"base64_data 长度: {len(base64_data)}")
+                    print(f"base64_data 前30个字符: {base64_data[:30]}...")
+            except Exception as json_error:
+                print(f"解析JSON数据失败: {str(json_error)}")
+                base64_data = None
         
         if file:
             # 添加上传结果检查

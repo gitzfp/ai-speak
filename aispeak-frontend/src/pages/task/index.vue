@@ -157,6 +157,7 @@ import CommonHeader from "@/components/CommonHeader.vue";
 import LoadingRound from "@/components/LoadingRound.vue";
 import taskRequest from "@/api/task";
 import accountRequest from "@/api/account";
+import textbookRequest from "@/api/textbook";
 
 const currentRole = ref('');
 const userRoles = ref<string[]>([]); // 用户拥有的所有角色
@@ -335,10 +336,161 @@ const loadTasks = () => {
   });
 };
 
-const viewTask = (task: any) => {
-  uni.navigateTo({
-    url: `/pages/task/detail?taskId=${task.id}&mode=student`
+const prepareAndNavigateToTask = (task: any, pageName: string) => {
+  // 获取任务内容详情
+  uni.showLoading({ title: '加载中...' });
+  
+  taskRequest.getTaskById(task.id).then(res => {
+    const taskDetail = res.data;
+    console.log('任务详情:', taskDetail);
+    
+    if (!taskDetail.contents || taskDetail.contents.length === 0) {
+      uni.hideLoading();
+      uni.showToast({ title: '任务内容为空', icon: 'none' });
+      return;
+    }
+    
+    const content = taskDetail.contents[0]; // 获取第一个内容
+    console.log('任务内容:', content);
+    console.log('生成模式:', content.generate_mode);
+    console.log('选中的单词ID:', content.selected_word_ids);
+    
+    // 处理自动生成模式
+    if (content.generate_mode === 'auto' && (!content.selected_word_ids || content.selected_word_ids.length === 0)) {
+      console.log('自动生成模式，需要获取教材单词');
+      
+      // 确保有 bookId 和 lessonId
+      if (!content.ref_book_id || !content.ref_lesson_id) {
+        console.log('任务缺少教材信息，跳转到任务详情页');
+        uni.hideLoading();
+        // 如果没有教材信息，跳转到任务详情页让学生自行选择内容
+        uni.navigateTo({
+          url: `/pages/task/detail?taskId=${task.id}&mode=student`
+        });
+        return;
+      }
+      
+      // 获取教材章节信息以获取单词列表
+      textbookRequest.getTextbookChapters(content.ref_book_id).then(chaptersRes => {
+        const chapters = chaptersRes.data.chapters || [];
+        const currentChapter = chapters.find(ch => ch.lesson_id === content.ref_lesson_id);
+        
+        if (!currentChapter || !currentChapter.words || currentChapter.words.length === 0) {
+          uni.hideLoading();
+          uni.showToast({ title: '该单元没有单词', icon: 'none' });
+          return;
+        }
+        
+        // 提取所有单词ID
+        const autoSelectedWords = currentChapter.words.map(word => word.word_id);
+        console.log('自动选择的单词:', autoSelectedWords);
+        
+        // 继续正常的跳转流程
+        navigateToLearningPage(autoSelectedWords, content, task, pageName);
+      }).catch(error => {
+        uni.hideLoading();
+        console.error('获取教材章节失败:', error);
+        uni.showToast({ title: '获取单词列表失败', icon: 'none' });
+      });
+      
+      return;
+    }
+    
+    const selectedWords = content.selected_word_ids || [];
+    
+    if (selectedWords.length === 0) {
+      console.log('没有选中的单词，显示提示');
+      uni.hideLoading();
+      uni.showToast({ title: '该任务没有单词', icon: 'none' });
+      return;
+    }
+    
+    // 手动模式，直接跳转
+    navigateToLearningPage(selectedWords, content, task, pageName);
+  }).catch(error => {
+    uni.hideLoading();
+    console.error('获取任务详情失败:', error);
+    uni.showToast({ title: '获取任务详情失败', icon: 'none' });
   });
+};
+
+// 统一的跳转逻辑
+const navigateToLearningPage = (selectedWords: any[], content: any, task: any, pageName: string) => {
+  // 复用教材页面的存储方式：使用 'selectedWords' 作为统一的缓存键
+  const sessionKey = 'selectedWords'; // 与教材页面保持一致
+  const bookId = content.ref_book_id || '';
+  const lessonId = content.ref_lesson_id || '';
+  
+  uni.setStorage({
+    key: sessionKey,
+    data: JSON.stringify(selectedWords),
+    success: () => {
+      uni.hideLoading();
+      // 根据页面类型设置不同的参数，与教材页面保持一致
+      let url = '';
+      if (pageName === 'WordDictation') {
+        // 单词听写 - 与 wordListenWrite 方法保持一致
+        url = `/pages/textbook/WordDictation?sessionKey=${sessionKey}&bookId=${bookId}&lessonId=${lessonId}&wordmode=4&taskId=${task.id}`;
+      } else if (pageName === 'UnitwordConsolidation') {
+        // 背单词 - 与 unitwordclick 方法保持一致
+        url = `/pages/textbook/UnitwordConsolidation?sessionKey=${sessionKey}&bookId=${bookId}&lessonId=${lessonId}&taskId=${task.id}`;
+      }
+      uni.navigateTo({ url });
+    },
+    fail: (err) => {
+      uni.hideLoading();
+      console.error('数据存储失败', err);
+      uni.showToast({ title: '跳转失败', icon: 'none' });
+    }
+  });
+};
+
+const prepareAndNavigateToSentenceTask = (task: any) => {
+  // 获取任务内容详情
+  uni.showLoading({ title: '加载中...' });
+  
+  taskRequest.getTaskById(task.id).then(res => {
+    const taskDetail = res.data;
+    if (!taskDetail.contents || taskDetail.contents.length === 0) {
+      uni.hideLoading();
+      uni.showToast({ title: '任务内容为空', icon: 'none' });
+      return;
+    }
+    
+    const content = taskDetail.contents[0];
+    uni.hideLoading();
+    
+    // 跳转到句子跟读页面
+    uni.navigateTo({
+      url: `/pages/textbook/UnitSentenceRead?bookId=${content.ref_book_id || ''}&lessonId=${content.ref_lesson_id || ''}&taskId=${task.id}`
+    });
+  }).catch(error => {
+    uni.hideLoading();
+    console.error('获取任务详情失败:', error);
+    uni.showToast({ title: '获取任务详情失败', icon: 'none' });
+  });
+};
+
+const viewTask = (task: any) => {
+  // 根据任务类型跳转到不同的页面
+  if (task.task_type === 'dictation') {
+    // 听写任务 - 跳转到单词听写页面
+    prepareAndNavigateToTask(task, 'WordDictation');
+  } else if (task.task_type === 'spelling') {
+    // 拼写任务 - 跳转到背单词页面
+    prepareAndNavigateToTask(task, 'UnitwordConsolidation');
+  } else if (task.task_type === 'sentence_repeat') {
+    // 句子跟读任务 - 跳转到句子跟读页面
+    prepareAndNavigateToSentenceTask(task);
+  } else if (task.task_type === 'pronunciation') {
+    // 发音任务 - 跳转到句子跟读页面
+    prepareAndNavigateToSentenceTask(task);
+  } else {
+    // 其他任务类型，跳转到任务详情页
+    uni.navigateTo({
+      url: `/pages/task/detail?taskId=${task.id}&mode=student`
+    });
+  }
 };
 
 const createTask = () => {

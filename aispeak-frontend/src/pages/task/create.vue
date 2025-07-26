@@ -132,7 +132,7 @@
 
           <!-- 教材快选 -->
           <view class="form-group">
-            <text class="form-label">关联教材（可选）</text>
+            <text class="form-label">关联教材 *</text>
             <picker 
               :value="textbookIndex" 
               :range="allBooks" 
@@ -140,7 +140,23 @@
               @change="onQuickTextbookChange"
             >
               <view class="picker-display">
-                <text>{{ allBooks[textbookIndex]?.display_name || '选择教材（可选）' }}</text>
+                <text>{{ allBooks[textbookIndex]?.display_name || '请选择教材' }}</text>
+                <text class="picker-icon">▼</text>
+              </view>
+            </picker>
+          </view>
+          
+          <!-- 单元选择 -->
+          <view v-if="chapters.length > 0" class="form-group">
+            <text class="form-label">选择单元 *</text>
+            <picker 
+              :value="chapterIndex" 
+              :range="chapters" 
+              range-key="title"
+              @change="onChapterChange"
+            >
+              <view class="picker-display">
+                <text>{{ chapters[chapterIndex]?.title || '请选择单元' }}</text>
                 <text class="picker-icon">▼</text>
               </view>
             </picker>
@@ -385,6 +401,7 @@ import { ref, computed, watch } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import CommonHeader from "@/components/CommonHeader.vue";
 import taskRequest from "@/api/task";
+import textbookRequest from "@/api/textbook";
 import useTextbookSelector from "@/hooks/useTextbookSelector";
 
 // 使用教材选择器
@@ -541,6 +558,8 @@ const textbookIndex = ref(-1);
 const deadlineDate = ref('');
 const deadlineTime = ref('');
 const classes = ref<any[]>([]);
+const chapters = ref<any[]>([]);
+const chapterIndex = ref(-1);
 
 // 简化的教材列表
 const allBooks = computed(() => {
@@ -551,6 +570,15 @@ const allBooks = computed(() => {
 });
 
 const canSubmit = computed(() => {
+  // 快速创建模式需要教材和单元信息
+  if (createMode.value === 'quick') {
+    return form.value.title && 
+           form.value.class_id && 
+           form.value.deadline &&
+           form.value.textbook_id &&
+           form.value.lesson_id;
+  }
+  // 其他模式的基本验证
   return form.value.title && form.value.class_id && form.value.deadline;
 });
 
@@ -581,6 +609,8 @@ onLoad((options: any) => {
   // 处理从教材页面跳转过来的预填充参数
   if (options.textbook_id) {
     form.value.textbook_id = options.textbook_id;
+    // 加载章节信息
+    loadChapters(options.textbook_id, options.lesson_id);
   }
   if (options.lesson_id) {
     form.value.lesson_id = options.lesson_id;
@@ -637,6 +667,23 @@ const loadClasses = async () => {
   } catch (error) {
     console.error('加载班级列表失败:', error);
     classes.value = [];
+  }
+};
+
+const loadChapters = async (bookId: string, lessonId?: string) => {
+  try {
+    const res = await textbookRequest.getTextbookChapters(bookId);
+    chapters.value = res.data.chapters || [];
+    
+    // 如果有预设的 lesson_id，找到对应的索引
+    if (lessonId) {
+      const index = chapters.value.findIndex(ch => ch.lesson_id === lessonId);
+      if (index !== -1) {
+        chapterIndex.value = index;
+      }
+    }
+  } catch (error) {
+    console.error('加载章节失败:', error);
   }
 };
 
@@ -777,10 +824,35 @@ const onClassChange = (e: any) => {
   form.value.class_id = classes.value[e.detail.value].id;
 };
 
-const onQuickTextbookChange = (e: any) => {
+const onQuickTextbookChange = async (e: any) => {
   textbookIndex.value = e.detail.value;
+  chapterIndex.value = -1; // 重置章节选择
+  chapters.value = []; // 清空章节列表
+  
   if (allBooks.value[e.detail.value]) {
-    form.value.textbook_id = allBooks.value[e.detail.value].book_id;
+    const bookId = allBooks.value[e.detail.value].book_id;
+    form.value.textbook_id = bookId;
+    
+    // 加载章节列表
+    try {
+      const res = await textbookRequest.getTextbookChapters(bookId);
+      chapters.value = res.data.chapters || [];
+      // 如果有章节，默认选择第一个
+      if (chapters.value.length > 0) {
+        chapterIndex.value = 0;
+        form.value.lesson_id = chapters.value[0].lesson_id;
+      }
+    } catch (error) {
+      console.error('加载章节失败:', error);
+      uni.showToast({ title: '加载章节失败', icon: 'none' });
+    }
+  }
+};
+
+const onChapterChange = (e: any) => {
+  chapterIndex.value = e.detail.value;
+  if (chapters.value[e.detail.value]) {
+    form.value.lesson_id = chapters.value[e.detail.value].lesson_id;
   }
 };
 
