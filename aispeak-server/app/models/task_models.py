@@ -215,6 +215,9 @@ class TaskResponse(TaskBase):
     created_at: datetime
     updated_at: datetime
     contents: Optional[List[TaskContentResponse]] = None
+    submission_count: Optional[int] = 0  # 提交数量
+    # 学生相关字段
+    student_submission: Optional[Dict[str, Any]] = None  # 学生的提交信息
     
     class Config:
         from_attributes = True
@@ -254,10 +257,12 @@ class SubmissionUpdate(BaseModel):
 class SubmissionGrade(BaseModel):
     score: float = Field(..., ge=0, le=100, description="评分")
     feedback: Optional[str] = Field(None, description="反馈内容")
+    is_correct: Optional[bool] = Field(None, description="是否正确")
 
 class SubmissionResponse(BaseModel):
     id: int
     student_task_id: int  # 与Go版本对应
+    student_id: Optional[str] = None  # 学生ID
     content_id: int
     response: Optional[str] = None
     media_files: Optional[List[Dict[str, Any]]] = None

@@ -197,10 +197,25 @@ const loginSuccess = (data: any) => {
 /**
  * 通过用户token加载后续逻辑
  */
-const loginSucessByToken = (storageToken: string, userId: string) => {
+const loginSucessByToken = async (storageToken: string, userId: string) => {
   
   uni.setStorageSync("x-token", storageToken)
-  uni.setStorageSync(USER_ID, userId) 
+  uni.setStorageSync(USER_ID, userId)
+  
+  // 获取用户信息
+  try {
+    const userInfo = await accountReqeust.accountInfoGet()
+    if (userInfo.code === 1000 && userInfo.data) {
+      // 存储用户昵称和用户名
+      uni.setStorageSync('nickname', userInfo.data.nickname || userInfo.data.user_name || '')
+      uni.setStorageSync('userName', userInfo.data.user_name || '')
+      uni.setStorageSync('userRole', userInfo.data.user_role || 'student')
+      console.log('用户信息已存储:', userInfo.data)
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+  }
+  
   uni.switchTab({
     url: "/pages/textbook/index3",
   })

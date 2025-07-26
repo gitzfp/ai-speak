@@ -490,7 +490,20 @@ class TaskService:
             Task.id == task_id,
             Task.deleted_at.is_(None)
         ).first()
-        return TaskResponse.from_orm(db_task) if db_task else None
+        
+        if not db_task:
+            return None
+            
+        task_response = TaskResponse.from_orm(db_task)
+        
+        # 查询该任务的提交数量
+        submission_count = self.db.query(Submission).filter(
+            Submission.student_task_id == task_id,
+            Submission.deleted_at.is_(None)
+        ).count()
+        task_response.submission_count = submission_count
+        
+        return task_response
     
     async def update_task(self, task_id: int, task_data: TaskUpdate) -> Optional[TaskResponse]:
         """更新任务"""
@@ -578,15 +591,52 @@ class TaskService:
         offset = (params.page - 1) * params.page_size
         tasks = query.order_by(desc(Task.created_at)).offset(offset).limit(params.page_size).all()
         
+        # 为每个任务添加提交统计
+        task_responses = []
+        for task in tasks:
+            task_response = TaskResponse.from_orm(task)
+            
+            # 如果是教师查询，添加提交数量
+            if params.teacher_id:
+                # 查询该任务的提交数量
+                submission_count = self.db.query(Submission).filter(
+                    Submission.student_task_id == task.id,
+                    Submission.deleted_at.is_(None)
+                ).count()
+                task_response.submission_count = submission_count
+            
+            # 如果是学生查询，添加学生的提交信息
+            elif params.student_id:
+                # 查询学生对该任务的提交
+                student_submission = self.db.query(Submission).filter(
+                    Submission.student_task_id == task.id,
+                    Submission.student_id == params.student_id,
+                    Submission.deleted_at.is_(None)
+                ).first()
+                
+                if student_submission:
+                    task_response.student_submission = {
+                        "id": student_submission.id,
+                        "submitted_at": student_submission.created_at,
+                        "is_correct": student_submission.is_correct,
+                        "auto_score": student_submission.auto_score,
+                        "teacher_score": student_submission.teacher_score,
+                        "feedback": student_submission.feedback,
+                        "attempt_count": student_submission.attempt_count,
+                        "status": "graded" if student_submission.teacher_score is not None else "submitted"
+                    }
+            
+            task_responses.append(task_response)
+        
         return TaskListResponse(
-            tasks=[TaskResponse.from_orm(task) for task in tasks],
+            tasks=task_responses,
             total=total,
             page=params.page,
             page_size=params.page_size
         )
     
     # 提交管理
-    async def create_submission(self, task_id: int, submission_data: SubmissionCreate) -> SubmissionResponse:
+    async def create_submission(self, task_id: int, submission_data: SubmissionCreate, student_id: str) -> SubmissionResponse:
         """创建提交 - 与Go版本兼容"""
         try:
             # 检查任务是否存在
@@ -605,11 +655,31 @@ class TaskService:
                 Submission.deleted_at.is_(None)
             ).first()
             
+            # 如果已存在提交
             if existing:
-                raise UserAccessDeniedException("已经提交过该任务内容")
+                # 检查任务是否允许多次尝试
+                if task.max_attempts and existing.attempt_count >= task.max_attempts:
+                    raise UserAccessDeniedException(f"已达到最大尝试次数({task.max_attempts}次)")
+                
+                # 检查是否已过截止时间
+                if task.deadline and datetime.utcnow() > task.deadline:
+                    if not task.allow_late_submission:
+                        raise UserAccessDeniedException("任务已过截止时间，不允许再次提交")
+                
+                # 更新现有提交
+                existing.student_id = student_id  # 更新学生ID
+                existing.response = submission_data.response
+                existing.media_files = submission_data.media_files
+                existing.attempt_count = existing.attempt_count + 1
+                existing.updated_at = datetime.utcnow()
+                self.db.commit()
+                self.db.refresh(existing)
+                
+                return SubmissionResponse.from_orm(existing)
             
             db_submission = Submission(
                 student_task_id=task_id,  # 直接使用task_id作为student_task_id
+                student_id=student_id,  # 保存学生ID
                 content_id=submission_data.content_id,
                 response=submission_data.response,
                 media_files=submission_data.media_files,
@@ -630,7 +700,18 @@ class TaskService:
             Submission.id == submission_id,
             Submission.deleted_at.is_(None)
         ).first()
-        return SubmissionResponse.from_orm(db_submission) if db_submission else None
+        
+        if not db_submission:
+            return None
+            
+        # 创建响应对象
+        response = SubmissionResponse.from_orm(db_submission)
+        
+        # 如果有student_id，查询学生真实姓名并更新response中的student_name
+        if db_submission.student_id:
+            self._update_submission_student_name(response, db_submission.student_id)
+        
+        return response
     
     async def grade_submission(self, submission_id: int, grade_data: SubmissionGrade) -> Optional[SubmissionResponse]:
         """评分提交 - 简化版本，与Go模型兼容"""
@@ -661,6 +742,29 @@ class TaskService:
             logging.error(f"评分提交失败: {e}")
             raise e
     
+    def _update_submission_student_name(self, submission_response: SubmissionResponse, student_id: str) -> None:
+        """更新提交响应中的学生姓名"""
+        if not student_id:
+            return
+            
+        from app.db.account_entities import AccountEntity
+        student = self.db.query(AccountEntity).filter(
+            AccountEntity.id == student_id
+        ).first()
+        
+        if student and student.user_name:
+            # 尝试解析并更新response中的student_name
+            try:
+                import json
+                if submission_response.response:
+                    response_data = json.loads(submission_response.response)
+                    if response_data.get('student_name') == '未知学生':
+                        response_data['student_name'] = student.user_name
+                        # 更新response字段
+                        submission_response.response = json.dumps(response_data, ensure_ascii=False)
+            except Exception as e:
+                logging.error(f"更新student_name失败: {e}")
+    
     async def list_submissions(self, task_id: int, params: SubmissionQueryParams) -> SubmissionListResponse:
         """获取任务提交列表 - 与Go版本兼容"""
         query = self.db.query(Submission).filter(Submission.deleted_at.is_(None))
@@ -677,8 +781,16 @@ class TaskService:
         offset = (params.page - 1) * params.page_size
         submissions = query.order_by(desc(Submission.created_at)).offset(offset).limit(params.page_size).all()
         
+        # 转换为响应对象并更新学生姓名
+        submission_responses = []
+        for submission in submissions:
+            response = SubmissionResponse.from_orm(submission)
+            if submission.student_id:
+                self._update_submission_student_name(response, submission.student_id)
+            submission_responses.append(response)
+        
         return SubmissionListResponse(
-            submissions=[SubmissionResponse.from_orm(submission) for submission in submissions],
+            submissions=submission_responses,
             total=total,
             page=params.page,
             page_size=params.page_size

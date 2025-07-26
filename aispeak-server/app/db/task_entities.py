@@ -157,6 +157,8 @@ class Submission(Base):
     id = Column(Integer, primary_key=True, index=True)
     # 关联的学生任务ID (对应Go的StudentTaskID)
     student_task_id = Column(Integer, nullable=False, index=True, comment="学生任务ID")
+    # 学生ID
+    student_id = Column(String(80), nullable=True, index=True, comment="学生ID")
     # 关联的任务内容ID (对应Go的ContentID)
     content_id = Column(Integer, nullable=False, index=True, comment="内容ID")
     # 文本回答内容 (对应Go的Response)

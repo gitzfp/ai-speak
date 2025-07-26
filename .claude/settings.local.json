@@ -16,7 +16,8 @@
       "Bash(python scripts/update_class_codes.py:*)",
       "Bash(curl:*)",
       "Bash(python:*)",
-      "Bash(poetry run alembic:*)"
+      "Bash(poetry run alembic:*)",
+      "Bash(conda:*)"
     ],
     "deny": []
   }

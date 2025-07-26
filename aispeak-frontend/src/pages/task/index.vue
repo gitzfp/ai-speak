@@ -49,7 +49,7 @@
             v-for="task in tasks" 
             :key="task.id"
             class="task-item"
-            @click="viewTask(task)"
+            @click="handleStudentTaskClick(task)"
           >
             <view class="task-header">
               <text class="task-title">{{ task.title }}</text>
@@ -62,6 +62,14 @@
               <view class="task-meta">
                 <text class="task-deadline">截止: {{ formatDate(task.deadline) }}</text>
                 <text class="task-points">{{ task.total_points }}分</text>
+                <!-- 学生提交状态和评分 -->
+                <view v-if="task.student_submission" class="student-submission-info">
+                  <text v-if="task.student_submission.status === 'graded'" class="submission-score">
+                    得分: {{ task.student_submission.teacher_score }}/{{ task.total_points }}
+                  </text>
+                  <text v-else class="submission-status submitted">已提交</text>
+                </view>
+                <text v-else class="submission-status not-submitted">未提交</text>
               </view>
             </view>
           </view>
@@ -118,12 +126,13 @@
           <view 
             v-for="task in tasks" 
             :key="task.id"
-            class="task-item teacher-task"
-            @click="manageTask(task)"
+            class="task-item"
+            :class="{ 'teacher-task': currentRole === 'teacher', 'student-task': currentRole === 'student' }"
+            @click="handleTaskClick(task)"
           >
             <view class="task-header">
               <text class="task-title">{{ task.title }}</text>
-              <view class="task-actions">
+              <view v-if="currentRole === 'teacher'" class="task-actions">
                 <text class="action-btn" @click.stop="editTask(task)">编辑</text>
                 <text class="action-btn delete" @click.stop="deleteTask(task)">删除</text>
               </view>
@@ -133,7 +142,15 @@
               <view class="task-meta">
                 <text class="task-deadline">截止: {{ formatDate(task.deadline) }}</text>
                 <text class="task-points">{{ task.total_points }}分</text>
-                <text class="submission-count">{{ task.submission_count || 0 }}份提交</text>
+                <text v-if="currentRole === 'teacher'" class="submission-count">{{ task.submission_count || 0 }}份提交</text>
+                <!-- 学生视图：显示提交状态和评分 -->
+                <view v-if="currentRole === 'student' && task.student_submission" class="student-submission-info">
+                  <text v-if="task.student_submission.status === 'graded'" class="submission-score">
+                    得分: {{ task.student_submission.teacher_score }}/{{ task.total_points }}
+                  </text>
+                  <text v-else class="submission-status submitted">已提交</text>
+                </view>
+                <text v-else-if="currentRole === 'student'" class="submission-status not-submitted">未提交</text>
               </view>
             </view>
           </view>
@@ -471,6 +488,19 @@ const prepareAndNavigateToSentenceTask = (task: any) => {
   });
 };
 
+const handleStudentTaskClick = (task: any) => {
+  // 学生点击任务，根据提交状态决定行为
+  if (task.student_submission) {
+    // 已提交，查看提交详情
+    uni.navigateTo({
+      url: `/pages/task/submission-detail?submissionId=${task.student_submission.id}`
+    });
+  } else {
+    // 未提交，跳转到做任务页面
+    viewTask(task);
+  }
+};
+
 const viewTask = (task: any) => {
   // 根据任务类型跳转到不同的页面
   if (task.task_type === 'dictation') {
@@ -511,6 +541,23 @@ const goToJoinClass = () => {
   });
 };
 
+const handleTaskClick = (task: any) => {
+  if (currentRole.value === 'teacher') {
+    manageTask(task);
+  } else {
+    // 学生点击任务，根据提交状态决定行为
+    if (task.student_submission) {
+      // 已提交，查看提交详情
+      uni.navigateTo({
+        url: `/pages/task/submission-detail?submissionId=${task.student_submission.id}`
+      });
+    } else {
+      // 未提交，跳转到做任务页面
+      viewTask(task);
+    }
+  }
+};
+
 const manageTask = (task: any) => {
   uni.navigateTo({
     url: `/pages/task/detail?taskId=${task.id}&mode=teacher`
@@ -541,16 +588,36 @@ const deleteTask = (task: any) => {
 };
 
 const getTaskStatusClass = (task: any) => {
+  // 对于学生视图，根据提交状态判断
+  if (currentRole.value === 'student' && task.student_submission) {
+    if (task.student_submission.status === 'graded') {
+      return 'completed';  // 已评分，显示为已完成
+    }
+    return 'submitted';  // 已提交但未评分
+  }
+  
+  // 检查是否过期
   if (new Date(task.deadline) < new Date()) {
     return 'overdue';
   }
+  
   return 'active';
 };
 
 const getTaskStatusText = (task: any) => {
+  // 对于学生视图，根据提交状态判断
+  if (currentRole.value === 'student' && task.student_submission) {
+    if (task.student_submission.status === 'graded') {
+      return '已完成';  // 已评分，显示为已完成
+    }
+    return '已提交';  // 已提交但未评分
+  }
+  
+  // 检查是否过期
   if (new Date(task.deadline) < new Date()) {
     return '已过期';
   }
+  
   return '进行中';
 };
 
@@ -696,6 +763,17 @@ const formatDate = (dateStr: string) => {
           background: #FFF2F0;
           color: #FF4D4F;
         }
+        
+        &.submitted {
+          background: #E6F7FF;
+          color: #1890FF;
+        }
+        
+        &.completed {
+          background: #F6FFED;
+          color: #52C41A;
+          font-weight: 600;
+        }
       }
       
       .task-actions {
@@ -742,6 +820,38 @@ const formatDate = (dateStr: string) => {
         
         .submission-count {
           color: #52C41A;
+        }
+        
+        // 学生提交信息样式
+        .student-submission-info {
+          display: flex;
+          align-items: center;
+          gap: 12rpx;
+        }
+        
+        .submission-status {
+          font-size: 24rpx;
+          padding: 4rpx 12rpx;
+          border-radius: 20rpx;
+          
+          &.submitted {
+            background: #E6F7FF;
+            color: #1890FF;
+          }
+          
+          &.not-submitted {
+            background: #FFF1F0;
+            color: #FF4D4F;
+          }
+        }
+        
+        .submission-score {
+          font-size: 24rpx;
+          color: #52C41A;
+          font-weight: 600;
+          padding: 4rpx 12rpx;
+          background: #F6FFED;
+          border-radius: 20rpx;
         }
       }
     }

@@ -241,6 +241,18 @@
       }
     },
     {
+      "path": "pages/task/result",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/task/submission-detail",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/profile/identity",
       "style": {
         "navigationStyle": "custom"

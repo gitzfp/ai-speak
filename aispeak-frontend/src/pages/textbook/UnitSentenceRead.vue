@@ -49,6 +49,7 @@
 	import { onLoad } from '@dcloudio/uni-app'
 	import textbook from '@/api/textbook'
 	import study from '@/api/study';
+	import taskRequest from '@/api/task';
 	
 	// 获取设备的安全区域高度
 	const statusBarHeight = ref(0);
@@ -63,6 +64,18 @@
 	
 	const totalpoints = ref(0)
 	
+	// 任务模式相关
+	const isTaskMode = ref(false)
+	const taskId = ref('')
+	const taskInfo = ref(null)
+	const taskProgress = ref({
+	  startTime: null,
+	  endTime: null,
+	  completedItems: 0,
+	  totalItems: 0,
+	  status: 'in_progress'
+	})
+	const taskResults = ref([])
 	
 	const isShowmark = ref(false)
 	const currentAudio = ref(null)
@@ -105,7 +118,12 @@
 	
 	const submitreslutStudyProgressReport = async(bookId, lessonId, reports,isDone = true)=> {
 		try {
-		
+			// 如果是任务模式且完成，提交任务结果
+			if (isTaskMode.value && isDone) {
+			  await submitTaskResults()
+			  return
+			}
+			
 			if (isDone) {
 				// 显示加载中状态
 				uni.showLoading({
@@ -230,6 +248,25 @@
 				 totalpoints.value += (2 - previousPoints); // 更新总积分
 			}
 		}
+		
+		// 如果是任务模式，记录结果
+		if (isTaskMode.value) {
+		  const sentenceResult = {
+		    content_id: optionSentence.value.sentence_id,
+		    response: 'sentence_reading',
+		    is_correct: pronunciationResult.pronunciation_score >= 60,
+		    auto_score: pronunciationResult.pronunciation_score,
+		    attempt_count: optionSentence.value.speak_count || 1
+		  }
+		  
+		  // 查找是否已有该句子的结果，如果有则更新
+		  const existingIndex = taskResults.value.findIndex(r => r.content_id === optionSentence.value.sentence_id)
+		  if (existingIndex >= 0) {
+		    taskResults.value[existingIndex] = sentenceResult
+		  } else {
+		    taskResults.value.push(sentenceResult)
+		  }
+		}
 	}
 	
 	const progress = computed(() => {
@@ -313,6 +350,13 @@
 
 	// 这里可以定义一些响应式数据或逻辑
 	const handleBackPage = async () => {
+		// 任务模式特殊处理
+		if (isTaskMode.value) {
+		  if (handleTaskBackPress()) {
+		    return
+		  }
+		}
+		
 		console.log("句子====>>>sss", sentencesList.value)
 		if (progressIndext.value != sentencesList.value.length) {
 			// 筛选已评分的句子的数组
@@ -331,11 +375,36 @@
 	
 
 	onLoad(async (options) => { 
-		const { bookId,lessonId} = options;
+		const { bookId,lessonId, taskId: tid} = options;
 		book_id.value = bookId
 		lesson_id.value = lessonId
+		
+		// 检查是否为任务模式
+		if (tid) {
+			isTaskMode.value = true
+			taskId.value = tid
+			await loadTaskInfo()
+		}
 		gethistorySentences()
 	})
+	
+	// 加载任务信息
+	const loadTaskInfo = async () => {
+	  try {
+	    const res = await taskRequest.getTaskById(taskId.value)
+	    taskInfo.value = res.data
+	    console.log('任务信息:', taskInfo.value)
+	    
+	    // 初始化任务进度
+	    taskProgress.value.startTime = new Date()
+	  } catch (error) {
+	    console.error('加载任务信息失败:', error)
+	    uni.showToast({
+	      title: '加载任务失败',
+	      icon: 'none'
+	    })
+	  }
+	}
 	
 	const gethistorySentences = async() => {
 		try {
@@ -389,6 +458,101 @@
 	  }
 	};
 	
+// 提交任务结果
+const submitTaskResults = async () => {
+  try {
+    uni.showLoading({ title: '提交中...' })
+    
+    // 计算总体成绩
+    const totalSentences = sentencesList.value.length
+    const completedSentences = taskResults.value.length
+    const averageScore = taskResults.value.reduce((sum, r) => sum + r.auto_score, 0) / completedSentences
+    
+    // 获取第一个content（句子跟读任务通常只有一个content）
+    const content = taskInfo.value.contents[0]
+    
+    if (content) {
+      // 构建提交数据，包含所有句子的结果
+      const submissionData = {
+        content_id: content.id,
+        response: JSON.stringify({
+          student_name: uni.getStorageSync('nickname') || uni.getStorageSync('userName') || '未知学生',
+          task_type: 'sentence_repeat',
+          task_title: taskInfo.value.title,
+          results: taskResults.value.map(r => {
+            const sentence = sentencesList.value.find(s => s.sentence_id === r.content_id)
+            return {
+              sentence_id: r.content_id,
+              sentence: sentence?.english || '',
+              chinese: sentence?.chinese || '',
+              pronunciation_score: r.auto_score,
+              is_correct: r.is_correct,
+              attempts: r.attempt_count
+            }
+          }),
+          summary: {
+            total: totalSentences,
+            completed: completedSentences,
+            averageScore: averageScore,
+            completedAt: new Date().toISOString()
+          }
+        }),
+        is_correct: averageScore >= 60, // 60分及格
+        auto_score: averageScore,
+        attempt_count: 1
+      }
+      
+      await taskRequest.createSubmission(taskId.value, submissionData)
+    }
+    
+    uni.hideLoading()
+    
+    // 跳转到任务结果页面
+    uni.redirectTo({
+      url: `/pages/task/result?taskId=${taskId.value}&score=${averageScore.toFixed(0)}&correct=${taskResults.value.filter(r => r.is_correct).length}&total=${totalSentences}`,
+      success: () => {
+        console.log('跳转成功')
+      },
+      fail: (err) => {
+        console.error('跳转失败:', err)
+        // 如果跳转失败，返回任务列表
+        uni.navigateBack({ delta: 2 })
+      }
+    })
+  } catch (error) {
+    uni.hideLoading()
+    console.error('提交任务结果失败:', error)
+    uni.showToast({
+      title: '提交失败',
+      icon: 'none'
+    })
+  }
+}
+
+// 任务模式下的返回处理
+const handleTaskBackPress = () => {
+  if (isTaskMode.value && taskProgress.value.status === 'in_progress') {
+    uni.showModal({
+      title: '确认退出',
+      content: '退出将保存当前进度，是否继续？',
+      success: (res) => {
+        if (res.confirm) {
+          // 保存进度
+          saveTaskProgress()
+          uni.navigateBack()
+        }
+      }
+    })
+    return true
+  }
+  return false
+}
+
+// 保存任务进度
+const saveTaskProgress = async () => {
+  // 这里可以实现保存进度到服务器的逻辑
+  console.log('保存任务进度:', taskProgress.value)
+}
 	
 </script>
 

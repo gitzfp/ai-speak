@@ -258,6 +258,8 @@ class AccountService:
         result = {
             "account_id": account_id,
             "user_name": account.user_name,
+            "user_role": account.user_role or "student",  # 添加用户角色
+            "nickname": account.user_name,  # nickname 与 user_name 相同
             "today_chat_count": self.get_user_current_day_system_message_count(
                 account_id
             ),

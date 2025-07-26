@@ -277,11 +277,12 @@ async def list_tasks(
 async def submit_task(
     task_id: int = Path(..., description="任务ID"),
     submission_data: SubmissionCreate = None,
-    service: TaskService = Depends(get_task_service)
+    service: TaskService = Depends(get_task_service),
+    account_id: str = Depends(get_current_account)
 ):
     """提交任务"""
     try:
-        result = await service.create_submission(task_id, submission_data)
+        result = await service.create_submission(task_id, submission_data, account_id)
         return ApiResponse.success(result)
     except Exception as e:
         logging.error(f"提交任务失败: {e}")

@@ -55,7 +55,7 @@
         >
           <view class="submission-header">
             <view class="student-info">
-              <text class="student-name">{{ getStudentName(submission.student_id) }}</text>
+              <text class="student-name">{{ getStudentName(submission) }}</text>
               <text class="submit-time">{{ formatDate(submission.created_at) }}</text>
             </view>
             <view class="submission-status" :class="getSubmissionStatusClass(submission)">
@@ -65,7 +65,7 @@
           
           <view class="submission-content">
             <view class="content-info">
-              <text class="content-type">{{ getContentTypeLabel(submission.content_type) }}</text>
+              <text class="content-type">{{ getContentTypeLabel(submission) }}</text>
             </view>
             <view class="response-preview">
               <text class="response-text">{{ getResponsePreview(submission.response) }}</text>
@@ -88,7 +88,7 @@
           <view class="submission-meta">
             <view class="score-info">
               <text v-if="submission.teacher_score !== null" class="score">
-                得分: {{ submission.teacher_score }}/{{ getContentPoints(submission.content_id) }}
+                得分: {{ submission.teacher_score }}/{{ getContentPoints(submission) }}
               </text>
               <text v-else class="no-score">未评分</text>
               
@@ -127,12 +127,12 @@
         
         <view class="modal-content">
           <view class="grade-section">
-            <text class="grade-label">分数 (满分{{ currentSubmission?.content_points || 100 }})</text>
+            <text class="grade-label">分数 (满分{{ getContentPoints(currentSubmission) || 100 }})</text>
             <input 
               v-model="gradeForm.score" 
               class="grade-input" 
               type="number"
-              :placeholder="`请输入分数 (0-${currentSubmission?.content_points || 100})`"
+              :placeholder="`请输入分数 (0-${getContentPoints(currentSubmission) || 100})`"
             />
           </view>
           
@@ -257,11 +257,11 @@ const loadTask = async () => {
     task.value = res.data;
   } catch (error) {
     console.error('加载任务失败:', error);
-    // 使用模拟数据
-    task.value = {
-      title: '英语作业 - Unit 1',
-      description: '完成Unit 1的单词练习和语法题'
-    };
+    uni.showToast({
+      title: '加载任务信息失败',
+      icon: 'none'
+    });
+    task.value = {};
   }
 };
 
@@ -280,48 +280,14 @@ const loadSubmissions = async () => {
     loading.value = false;
   } catch (error) {
     console.error('加载提交记录失败:', error);
-    // 使用模拟数据
-    submissions.value = [
-      {
-        id: 1,
-        student_id: 'student1',
-        content_id: 'content1',
-        content_type: 'dictation',
-        response: '我认为这个题目的答案是apple, banana, orange',
-        teacher_score: 85,
-        feedback: '发音很好，但是拼写有小错误',
-        is_correct: true,
-        media_files: [],
-        created_at: '2025-01-08T14:30:00Z'
-      },
-      {
-        id: 2,
-        student_id: 'student2',
-        content_id: 'content1',
-        content_type: 'dictation',
-        response: '根据我的理解，这道题应该这样做...',
-        teacher_score: null,
-        feedback: null,
-        is_correct: null,
-        media_files: [],
-        created_at: '2025-01-08T15:20:00Z'
-      },
-      {
-        id: 3,
-        student_id: 'student3',
-        content_id: 'content2',
-        content_type: 'pronunciation',
-        response: 'audio_recording_1641646200',
-        teacher_score: 92,
-        feedback: '发音标准，语调自然',
-        is_correct: true,
-        media_files: ['audio_file_1.mp3'],
-        created_at: '2025-01-08T16:10:00Z'
-      }
-    ];
-    totalSubmissions.value = submissions.value.length;
-    gradedSubmissions.value = submissions.value.filter((s: any) => s.teacher_score !== null).length;
     loading.value = false;
+    uni.showToast({
+      title: '加载提交记录失败',
+      icon: 'none'
+    });
+    submissions.value = [];
+    totalSubmissions.value = 0;
+    gradedSubmissions.value = 0;
   }
 };
 
@@ -347,7 +313,28 @@ const getSubmissionStatusText = (submission: any) => {
   return '未评分';
 };
 
-const getContentTypeLabel = (type: string) => {
+const getContentTypeLabel = (submission: any) => {
+  // 尝试从response中获取更准确的类型信息
+  try {
+    if (submission.response) {
+      const data = JSON.parse(submission.response);
+      if (data.task_type) {
+        const contentTypes: { [key: string]: string } = {
+          'dictation': '单词听写',
+          'spelling': '拼写',
+          'pronunciation': '发音',
+          'sentence_repeat': '句子跟读',
+          'word_consolidation': '单词巩固',
+          'quiz': '测验'
+        };
+        return contentTypes[data.task_type] || data.task_type;
+      }
+    }
+  } catch (e) {
+    // 解析失败，使用原始类型
+  }
+  
+  // 使用原始content_type
   const contentTypes: { [key: string]: string } = {
     'dictation': '听写',
     'spelling': '拼写',
@@ -355,25 +342,63 @@ const getContentTypeLabel = (type: string) => {
     'sentence_repeat': '跟读',
     'quiz': '测验'
   };
-  return contentTypes[type] || type;
+  return contentTypes[submission.content_type] || submission.content_type || '未知类型';
 };
 
-const getStudentName = (studentId: string) => {
-  // 这里可以从学生列表获取真实姓名
-  return `学生${studentId}`;
+const getStudentName = (submission: any) => {
+  // 尝试从response中解析学生姓名
+  try {
+    if (submission.response) {
+      const responseData = JSON.parse(submission.response);
+      if (responseData.student_name) {
+        return responseData.student_name;
+      }
+    }
+  } catch (e) {
+    // 解析失败，使用student_id
+  }
+  return submission.student_id || '未知学生';
 };
 
-const getContentPoints = (contentId: string) => {
-  // 这里可以从任务内容获取分数
-  return 100;
+const getContentPoints = (submission: any) => {
+  // 从任务内容中获取分数
+  if (task.value && task.value.contents) {
+    const content = task.value.contents.find((c: any) => c.id === submission.content_id);
+    if (content) {
+      return content.points;
+    }
+  }
+  return 100; // 默认值
 };
 
 const getResponsePreview = (response: string) => {
   if (!response) return '无内容';
+  
+  // 尝试解析JSON格式的response
+  try {
+    const data = JSON.parse(response);
+    if (data.task_type) {
+      const typeMap: { [key: string]: string } = {
+        'dictation': '单词听写',
+        'sentence_repeat': '句子跟读',
+        'word_consolidation': '单词巩固'
+      };
+      const taskType = typeMap[data.task_type] || data.task_type;
+      
+      if (data.summary) {
+        return `${taskType} - 正确率: ${data.summary.accuracy || 0}%`;
+      }
+      return taskType;
+    }
+  } catch (e) {
+    // 不是JSON格式，按原文本处理
+  }
+  
   // 如果是音频文件，显示特殊标识
   if (response.startsWith('audio_')) {
     return '🎵 音频录音';
   }
+  
   return response.length > 50 ? response.substring(0, 50) + '...' : response;
 };
 
@@ -388,27 +413,14 @@ const playMedia = (file: string) => {
 };
 
 const viewSubmissionDetail = (submission: any) => {
-  let content = `学生: ${getStudentName(submission.student_id)}\n`;
-  content += `内容类型: ${getContentTypeLabel(submission.content_type)}\n`;
-  content += `提交时间: ${formatDate(submission.created_at)}\n\n`;
-  content += `回答内容:\n${submission.response}`;
-  
-  if (submission.feedback) {
-    content += `\n\n评语:\n${submission.feedback}`;
-  }
-  
-  uni.showModal({
-    title: '提交详情',
-    content: content,
-    showCancel: false
+  // 导航到提交详情页面
+  uni.navigateTo({
+    url: `/pages/task/submission-detail?submissionId=${submission.id}`
   });
 };
 
 const gradeSubmission = (submission: any) => {
-  currentSubmission.value = {
-    ...submission,
-    content_points: getContentPoints(submission.content_id)
-  };
+  currentSubmission.value = submission;
   
   // 初始化表单
   gradeForm.value = {
@@ -438,9 +450,10 @@ const submitGrade = async () => {
   if (!currentSubmission.value) return;
   
   const score = parseFloat(gradeForm.value.score);
-  if (isNaN(score) || score < 0 || score > currentSubmission.value.content_points) {
+  const maxPoints = getContentPoints(currentSubmission.value);
+  if (isNaN(score) || score < 0 || score > maxPoints) {
     uni.showToast({ 
-      title: `请输入有效分数 (0-${currentSubmission.value.content_points})`, 
+      title: `请输入有效分数 (0-${maxPoints})`, 
       icon: 'none' 
     });
     return;

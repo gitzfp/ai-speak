@@ -106,6 +106,7 @@ import jiahao from '@/assets/icons/word_jiahao.svg';
 import dagou from '@/assets/icons/word_dagou.svg';
 import accountRequest from "@/api/account"
 import study from '@/api/study';
+import taskRequest from '@/api/task';
 // 获取设备的安全区域高度
 const statusBarHeight = ref(0);
 const customBarHeight = ref(0);
@@ -125,6 +126,13 @@ const createAnimation = () => {
 
 // 这里可以定义一些响应式数据或逻辑
 	const handleBackPage = () => {
+		// 任务模式特殊处理
+		if (isTaskMode.value) {
+		  if (handleTaskBackPress()) {
+		    return
+		  }
+		}
+		
 		if (isreport.value) {
 			uni.navigateBack({
 			    delta: 2, // 返回两层
@@ -185,6 +193,19 @@ const totalerrornum = ref(0)
 //等于4 是单元首页进来了
 const word_mode = ref(0)
 
+// 任务模式相关
+const isTaskMode = ref(false)
+const taskId = ref('')
+const taskInfo = ref(null)
+const taskProgress = ref({
+  startTime: null,
+  endTime: null,
+  completedItems: 0,
+  totalItems: 0,
+  status: 'in_progress'
+})
+const taskResults = ref([])
+
 
 	
 // 组件挂载
@@ -198,8 +219,15 @@ const word_mode = ref(0)
 	})
 
 	onLoad(async (options) => {
-        const {bookId,sessionKey,learningreportWords,wordmode,lessonId} = options
+        const {bookId,sessionKey,learningreportWords,wordmode,lessonId,taskId: tid} = options
 		book_id.value = bookId
+		
+		// 检查是否为任务模式
+		if (tid) {
+			isTaskMode.value = true
+			taskId.value = tid
+			await loadTaskInfo()
+		}
 		
 		if (wordmode) { 
 			word_mode.value = wordmode
@@ -254,6 +282,24 @@ const word_mode = ref(0)
     
    })
 
+// 加载任务信息
+const loadTaskInfo = async () => {
+  try {
+    const res = await taskRequest.getTaskById(taskId.value)
+    taskInfo.value = res.data
+    console.log('任务信息:', taskInfo.value)
+    
+    // 初始化任务进度
+    taskProgress.value.startTime = new Date()
+  } catch (error) {
+    console.error('加载任务信息失败:', error)
+    uni.showToast({
+      title: '加载任务失败',
+      icon: 'none'
+    })
+  }
+}
+
 const detailWords = async (bookId, words) => {
         try {
             const response = await textbook.getWordsDetail(bookId, words);
@@ -269,6 +315,11 @@ const detailWords = async (bookId, words) => {
 			  speak_count:0,
 			  voice_file:word.sound_path,
 			}));
+			  
+			// 如果是任务模式，设置总题目数
+			if (isTaskMode.value) {
+			  taskProgress.value.totalItems = response.data.words.length
+			}
 
 			// 使用 nextTick 确保 DOM 更新完成
 			nextTick(() => {
@@ -568,6 +619,19 @@ const inspectclick =()=> {
 		  totalerrornum.value += 1
 		}
 		
+		// 如果是任务模式，记录每个单词的结果
+		if (isTaskMode.value) {
+		  const wordResult = {
+		    content_id: allWords.value[currentPage.value].content_id,
+		    response: inputBoxes.value.join(''),
+		    is_correct: isEqual,
+		    auto_score: isEqual ? 100 : 0,
+		    attempt_count: 1
+		  }
+		  taskResults.value.push(wordResult)
+		  taskProgress.value.completedItems++
+		}
+		
 
 		if (isEqual && currentPage.value<(allWords.value.length-1)) {
 			const animation = createAnimation();
@@ -594,7 +658,13 @@ const inspectclick =()=> {
 }
 
 
-const reportclick =()=> {	
+const reportclick = async ()=> {	
+	// 如果是任务模式，提交任务结果
+	if (isTaskMode.value) {
+	  await submitTaskResults()
+	  return
+	}
+	
 	var backPage = isreport.value?3:2
 	if (word_mode.value == 4) { //单元进去	
 		//判断错误为0 积分翻倍
@@ -705,7 +775,98 @@ const wordsNotebookclick =()=> {
 	}
   }
   
-  
+// 提交任务结果
+const submitTaskResults = async () => {
+  try {
+    uni.showLoading({ title: '提交中...' })
+    
+    // 计算总体成绩
+    const correctCount = taskResults.value.filter(r => r.is_correct).length
+    const totalCount = taskResults.value.length
+    const accuracy = totalCount > 0 ? (correctCount / totalCount * 100) : 0
+    
+    // 获取第一个content（听写任务通常只有一个content）
+    const content = taskInfo.value.contents[0]
+    
+    if (content) {
+      // 构建提交数据，包含所有单词的结果
+      const submissionData = {
+        content_id: content.id,
+        response: JSON.stringify({
+          student_name: uni.getStorageSync('nickname') || uni.getStorageSync('userName') || '未知学生',
+          task_type: 'dictation',
+          task_title: taskInfo.value.title,
+          results: taskResults.value.map(r => ({
+            word_id: r.content_id,
+            word: allWords.value.find(w => w.word_id === r.content_id)?.word || '',
+            user_answer: r.response,
+            correct_answer: allWords.value.find(w => w.word_id === r.content_id)?.word || '',
+            is_correct: r.is_correct,
+            score: r.auto_score
+          })),
+          summary: {
+            total: totalCount,
+            correct: correctCount,
+            accuracy: accuracy,
+            completedAt: new Date().toISOString()
+          }
+        }),
+        is_correct: accuracy >= 60, // 60分及格
+        auto_score: accuracy,
+        attempt_count: 1
+      }
+      
+      await taskRequest.createSubmission(taskId.value, submissionData)
+    }
+    
+    uni.hideLoading()
+    
+    // 跳转到任务结果页面
+    uni.redirectTo({
+      url: `/pages/task/result?taskId=${taskId.value}&score=${accuracy.toFixed(0)}&correct=${correctCount}&total=${totalCount}`,
+      success: () => {
+        console.log('跳转成功')
+      },
+      fail: (err) => {
+        console.error('跳转失败:', err)
+        // 如果跳转失败，返回任务列表
+        uni.navigateBack({ delta: 2 })
+      }
+    })
+  } catch (error) {
+    uni.hideLoading()
+    console.error('提交任务结果失败:', error)
+    uni.showToast({
+      title: '提交失败',
+      icon: 'none'
+    })
+  }
+}
+
+// 任务模式下的返回处理
+const handleTaskBackPress = () => {
+  if (isTaskMode.value && taskProgress.value.status === 'in_progress') {
+    uni.showModal({
+      title: '确认退出',
+      content: '退出将保存当前进度，是否继续？',
+      success: (res) => {
+        if (res.confirm) {
+          // 保存进度
+          saveTaskProgress()
+          uni.navigateBack()
+        }
+      }
+    })
+    return true
+  }
+  return false
+}
+
+// 保存任务进度
+const saveTaskProgress = async () => {
+  // 这里可以实现保存进度到服务器的逻辑
+  console.log('保存任务进度:', taskProgress.value)
+}
 
 </script>
 
