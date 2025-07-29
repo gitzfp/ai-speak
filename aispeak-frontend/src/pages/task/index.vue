@@ -25,6 +25,23 @@
         </view>
       </view>
 
+      <!-- 游客界面 -->
+      <view v-if="currentRole === 'visitor'" class="visitor-view">
+        <view class="task-list">
+          <view 
+            v-for="task in tasks" 
+            :key="task.id"
+            class="task-item visitor-tip-item"
+          >
+            <view class="visitor-tip-content">
+              <text class="tip-title">{{ task.title }}</text>
+              <text class="tip-desc">{{ task.description }}</text>
+              <button class="tip-login-btn" @click="goToLogin">立即登录</button>
+            </view>
+          </view>
+        </view>
+      </view>
+
       <!-- 学生界面 -->
       <view v-if="currentRole === 'student'" class="student-view">
         <!-- 班级筛选 -->
@@ -49,16 +66,23 @@
             v-for="task in tasks" 
             :key="task.id"
             class="task-item"
+            :class="{ 'visitor-tip-item': task.type === 'tip' }"
             @click="handleStudentTaskClick(task)"
           >
-            <view class="task-header">
-              <text class="task-title">{{ task.title }}</text>
-              <view class="task-status" :class="getTaskStatusClass(task)">
-                {{ getTaskStatusText(task) }}
-              </view>
+            <view v-if="task.type === 'tip'" class="visitor-tip-content">
+              <text class="tip-title">{{ task.title }}</text>
+              <text class="tip-desc">{{ task.description }}</text>
+              <button class="tip-login-btn" @click.stop="goToLogin">立即登录</button>
             </view>
-            <view class="task-info">
-              <text class="task-desc">{{ task.description }}</text>
+            <view v-else>
+              <view class="task-header">
+                <text class="task-title">{{ task.title }}</text>
+                <view class="task-status" :class="getTaskStatusClass(task)">
+                  {{ getTaskStatusText(task) }}
+                </view>
+              </view>
+              <view class="task-info">
+                <text class="task-desc">{{ task.description }}</text>
               <view class="task-meta">
                 <text class="task-deadline">截止: {{ formatDate(task.deadline) }}</text>
                 <text class="task-points">{{ task.total_points }}分</text>
@@ -71,6 +95,7 @@
                 </view>
                 <text v-else class="submission-status not-submitted">未提交</text>
               </view>
+            </view>
             </view>
           </view>
         </view>
@@ -191,6 +216,55 @@ const hasMultipleRoles = computed(() => {
 });
 
 onShow(() => {
+  // 获取用户角色
+  const userRole = uni.getStorageSync('userRole');
+  console.log('任务页面 onShow - userRole:', userRole);
+  console.log('任务页面 onShow - token:', uni.getStorageSync('x-token'));
+  
+  // 如果是游客，显示提示信息
+  if (userRole === 'visitor') {
+    console.log('检测到游客身份，显示游客提示');
+    // 显示游客提示
+    tasks.value = [{
+      id: 'visitor-tip',
+      title: '欢迎体验AISpeak',
+      description: '登录后可查看和完成学习任务',
+      status: 'locked',
+      type: 'tip'
+    }];
+    loading.value = false;
+    currentRole.value = 'visitor';
+    console.log('游客提示设置完成，tasks:', tasks.value);
+    return;
+  }
+  
+  // 检查是否已登录
+  const token = uni.getStorageSync('x-token');
+  
+  if (!token) {
+    // 未登录且非游客，提示用户需要登录
+    uni.showModal({
+      title: '需要登录',
+      content: '查看任务需要登录，是否立即登录？',
+      confirmText: '去登录',
+      cancelText: '返回',
+      success: (res) => {
+        if (res.confirm) {
+          uni.navigateTo({
+            url: '/pages/login/index'
+          })
+        } else {
+          // 返回上一页
+          uni.navigateBack({
+            delta: 1
+          })
+        }
+      }
+    })
+    return;
+  }
+  
+  // 已登录且非游客，正常加载
   getUserRoles();
   loadTasks();
 });
@@ -489,6 +563,11 @@ const prepareAndNavigateToSentenceTask = (task: any) => {
 };
 
 const handleStudentTaskClick = (task: any) => {
+  // 如果是游客提示，不做任何操作
+  if (task.type === 'tip') {
+    return;
+  }
+  
   // 学生点击任务，根据提交状态决定行为
   if (task.student_submission) {
     // 已提交，查看提交详情
@@ -499,6 +578,13 @@ const handleStudentTaskClick = (task: any) => {
     // 未提交，跳转到做任务页面
     viewTask(task);
   }
+};
+
+// 跳转到登录页面
+const goToLogin = () => {
+  uni.navigateTo({
+    url: '/pages/login/index'
+  });
 };
 
 const viewTask = (task: any) => {
@@ -893,6 +979,51 @@ const formatDate = (dateStr: string) => {
     border-radius: 12rpx;
     font-size: 28rpx;
     font-weight: 600;
+  }
+}
+
+// 游客提示样式
+.visitor-tip-item {
+  background: linear-gradient(135deg, #f5f7ff 0%, #e8ecff 100%);
+  border: 2rpx solid #d4daff;
+  
+  .visitor-tip-content {
+    text-align: center;
+    padding: 40rpx;
+    
+    .tip-title {
+      display: block;
+      font-size: 36rpx;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 16rpx;
+    }
+    
+    .tip-desc {
+      display: block;
+      font-size: 28rpx;
+      color: #666;
+      margin-bottom: 32rpx;
+    }
+    
+    .tip-login-btn {
+      width: 240rpx;
+      height: 72rpx;
+      background: #5456eb;
+      color: #fff;
+      font-size: 30rpx;
+      font-weight: 500;
+      border-radius: 36rpx;
+      border: none;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      &:active {
+        background: #4345d9;
+      }
+    }
   }
 }
 </style>

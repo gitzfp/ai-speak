@@ -52,7 +52,7 @@ const sentenceLoading = ref<boolean>(false);
 
 onMounted(() => {
   uni.setNavigationBarTitle({
-    title: 'AI-Speak'
+    title: 'AISpeak'
   });
 });
 

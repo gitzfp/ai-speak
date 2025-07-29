@@ -27,7 +27,7 @@ import { ref, reactive, onMounted } from "vue"
 
 onMounted(() => {
   uni.setNavigationBarTitle({
-    title: "AI-Speak",
+    title: "AISpeak",
   })
 })
 /**

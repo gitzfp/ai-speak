@@ -78,7 +78,7 @@ class WxShare {
 
         wx.ready(() => {
           const shareConfig = {
-            title: options.title || 'AI-Speak',
+            title: options.title || 'AISpeak',
             desc: options.desc || '您的智能语言学习助手',
             link: currentUrl,
             imgUrl: options.imgUrl || defaultImg,  // 修改这行

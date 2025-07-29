@@ -125,6 +125,9 @@
 			  </view>
 			
 		</view>
+		
+		<!-- 添加一个占位符，避免内容被 tabBar 遮挡 -->
+		<view class="tabbar-placeholder"></view>
 		  
 	</scroll-view>
 	
@@ -817,19 +820,25 @@
 
 <style scoped lang="scss">
 .container {
-  // padding: 20rpx;
-    /* background-color: #f0f0f0; /* 设置背景颜色 */ 
   background: linear-gradient(to bottom, #8cf588 0%, #f8f9fa 50%, #f8f9fa 50%, #f8f9fa 100%);
-
-  // min-height: 90vh; /* 确保容器覆盖整个视口高度 */
-  // height: calc(100vh - 110rpx);
-  //  overflow-y: auto;
-  
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* #ifdef MP-WEIXIN */
+  /* 微信小程序不需要额外的 padding-bottom，因为 tabBar 不会遮挡内容 */
+  /* #endif */
 }
 
 .plan-content {
-	height:calc(100vh - 120px);
+	flex: 1;
 	overflow-y: auto;
+	/* #ifdef MP-WEIXIN */
+	/* 微信小程序中，scroll-view 需要明确的高度 */
+	height: 100%;
+	/* #endif */
+	/* #ifndef MP-WEIXIN */
+	height: calc(100vh - 120px);
+	/* #endif */
 }
 
 .header {
@@ -1192,6 +1201,16 @@
 			margin-top: 20rpx;
 		}
 		
+	}
+	
+	// tabBar 占位符
+	.tabbar-placeholder {
+		/* #ifdef MP-WEIXIN */
+		height: 100rpx; // 微信小程序 tabBar 高度
+		/* #endif */
+		/* #ifndef MP-WEIXIN */
+		height: 0;
+		/* #endif */
 	}
 	
 	

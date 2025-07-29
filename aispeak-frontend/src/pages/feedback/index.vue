@@ -62,7 +62,7 @@ const contact = ref("user")
 
 onMounted(() => {
   uni.setNavigationBarTitle({
-    title: "AI-Speak",
+    title: "AISpeak",
   })
 })
 

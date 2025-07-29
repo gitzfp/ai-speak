@@ -8,7 +8,31 @@ const StatusBar = ref<number>(0);
 const CustomBar = ref<number>(0);
 const Custom = ref<any>(null);
 
+// 检查隐私协议是否已同意
+const checkPrivacyAgreement = () => {
+  const privacyAgreed = uni.getStorageSync('privacy_agreed');
+  const privacyAgreedTime = uni.getStorageSync('privacy_agreed_time');
+  
+  // 检查是否需要重新同意（比如一年后）
+  if (privacyAgreed && privacyAgreedTime) {
+    const oneYear = 365 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    if (now - privacyAgreedTime < oneYear) {
+      return true;
+    }
+  }
+  return false;
+};
+
 onLaunch(async () => {
+  // 检查隐私协议
+  const hasAgreedPrivacy = checkPrivacyAgreement();
+  
+  // 如果没有同意隐私协议，存储标记，在登录页面显示弹窗
+  if (!hasAgreedPrivacy) {
+    uni.setStorageSync('need_show_privacy', true);
+  }
+  
   // 检查是否有token
   const token = uni.getStorageSync('x-token');
   if (token) {

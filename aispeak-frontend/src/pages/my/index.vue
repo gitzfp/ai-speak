@@ -1,6 +1,6 @@
 <template>
   <view class="my-container">
-    <CommonHeader class="header" title="AISPeak">
+    <CommonHeader class="header" title="AISpeak">
       <template v-slot:content>
         <text>个人中心</text>
       </template>
@@ -86,6 +86,13 @@
           />
           <text class="setting-card-title">收藏</text>
         </view>
+        <view class="setting-card" @tap="goPrivacy">
+          <image
+            class="setting-card-logo"
+            src="https://dingguagua.fun/static/setting.png"
+          />
+          <text class="setting-card-title">隐私协议</text>
+        </view>
         <!-- 如果是小程序登录 -->
         <view
           v-if="accountInfo.account_id.indexOf('visitor') < 0"
@@ -118,19 +125,49 @@ const accountInfo = ref<AccountInfo>({
 
 onMounted(() => {
   uni.setNavigationBarTitle({
-    title: "AI-Speak",
+    title: "AISpeak",
   })
 })
 
 onShow(() => {
-  accountRequest.accountInfoGet().then((data) => {
-    accountInfo.value = data.data
-  })
+  // 检查是否已登录
+  const token = uni.getStorageSync('x-token');
+  
+  if (token) {
+    // 已登录，获取账户信息
+    accountRequest.accountInfoGet().then((data) => {
+      accountInfo.value = data.data
+    }).catch(() => {
+      // 请求失败，设置游客状态
+      accountInfo.value = {
+        account_id: "visitor",
+        today_chat_count: 0,
+        total_chat_count: 0,
+        target_language_label: "英语",
+        user_name: "游客",
+      }
+    })
+  } else {
+    // 未登录，设置游客状态
+    accountInfo.value = {
+      account_id: "visitor",
+      today_chat_count: 0,
+      total_chat_count: 0,
+      target_language_label: "英语",
+      user_name: "游客",
+    }
+  }
 })
 
 const goContact = () => {
   uni.navigateTo({
     url: "/pages/practice/index",
+  })
+}
+
+const goPrivacy = () => {
+  uni.navigateTo({
+    url: "/pages/privacy/index",
   })
 }
 

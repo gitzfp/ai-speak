@@ -217,7 +217,7 @@ onLoad(async (option: any) => {
   topicOrLessonId.value = option.topicOrLessonId
   initData(option.sessionId, option.sessionName)
   uni.setNavigationBarTitle({
-    title: "AI-Speak",
+    title: "AISpeak",
   })
   console.log("Onload", option)
   $bus.on("SendMessage", sendMessageHandler)

@@ -33,15 +33,30 @@ const request = (
         if (res.statusCode == 200) {
           resolve(res.data);
         } else if (res.statusCode == 401) {
-          uni.showToast({
-            title: "登录过期，重新登录",
-            icon: "none",
-            duration: 2000,
-          });
-          uni.removeStorageSync("x-token");
-          uni.navigateTo({
-            url: "/pages/login/index",
-          });
+          // 检查是否有token，如果没有token说明是游客模式
+          const token = uni.getStorageSync("x-token");
+          if (token) {
+            // 有token但过期了，提示重新登录
+            uni.showToast({
+              title: "登录过期，重新登录",
+              icon: "none",
+              duration: 2000,
+            });
+            uni.removeStorageSync("x-token");
+            uni.removeStorageSync("user_id");
+            // 延迟跳转，让用户看到提示
+            setTimeout(() => {
+              uni.navigateTo({
+                url: "/pages/login/index",
+              });
+            }, 2000);
+          } else {
+            // 游客模式，不提示，直接返回错误
+            reject({
+              code: 401,
+              message: "需要登录"
+            });
+          }
         } else {
           reject(res.data);
         }

@@ -187,6 +187,12 @@
       }
     },
     {
+      "path": "pages/privacy/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/topic/index",
       "style": {
         "navigationStyle": "custom"
@@ -300,13 +306,13 @@
         "selectedIconPath": "static/edit_select.png",
         "iconPath": "static/edit.png"
       },
-	  {
-	    "pagePath": "pages/textbook/index3",
-	    "text": "教材",
-	    "selectedIconPath": "static/home_select.png",
-	    "iconPath": "static/home.png"
-	  },
       {
+        "pagePath": "pages/textbook/index3",
+        "text": "教材",
+        "selectedIconPath": "static/edit_select.png",
+        "iconPath": "static/edit.png"
+      },
+     {
         "pagePath": "pages/textbook/WordRecitationHome",
         "text": "计划",
         "selectedIconPath": "static/edit_select.png",

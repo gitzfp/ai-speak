@@ -1,5 +1,5 @@
 {
-    "name" : "AISPeak",
+    "name" : "AISpeak",
     "appid" : "__UNI__5A376D0",
     "description" : "",
     "versionName" : "1.0.0",
@@ -99,7 +99,19 @@
             "urlCheck" : false
         },
         "requiredBackgroundModes" : [ "audio", "location" ],
-        "usingComponents" : true
+        "usingComponents" : true,
+        "__usePrivacyCheck__" : true,
+        "permission" : {
+            "scope.userLocation": {
+                "desc": "获取您的位置信息，用于推荐附近的学习活动"
+            },
+            "scope.record": {
+                "desc": "用于语音练习功能"
+            },
+            "scope.writePhotosAlbum": {
+                "desc": "用于保存学习成果图片"
+            }
+        }
     },
     "mp-alipay" : {
         "usingComponents" : true
@@ -116,6 +128,6 @@
     "vueVersion" : "3",
     "h5" : {
         "template" : "index.html",
-        "title" : "AI-Speak"
+        "title" : "AISpeak"
     }
 }
