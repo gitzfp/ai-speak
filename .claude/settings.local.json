@@ -17,7 +17,8 @@
       "Bash(curl:*)",
       "Bash(python:*)",
       "Bash(poetry run alembic:*)",
-      "Bash(conda:*)"
+      "Bash(conda:*)",
+      "Bash(/Users/fpz/opt/anaconda3/envs/fluent-ai/bin/alembic -c alembic.prod.ini revision --autogenerate -m \"db sync\")"
     ],
     "deny": []
   }
