@@ -266,7 +266,7 @@ const taskResults = ref([])
 			success: function (res) {
 			    const words = JSON.parse(res.data);
 			    console.log('获取到的数据:', words);
-			    detailWords(bookId,words)
+			    detailWords(bookId, words)
 				
 				//获取生词本数组
 				collectsGetnotebook()
