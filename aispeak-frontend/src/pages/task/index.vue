@@ -464,7 +464,7 @@ const prepareAndNavigateToTask = (task: any, pageName: string) => {
       // 获取教材章节信息以获取单词列表
       textbookRequest.getTextbookChapters(content.ref_book_id).then(chaptersRes => {
         const chapters = chaptersRes.data.chapters || [];
-        const currentChapter = chapters.find(ch => ch.lesson_id === content.ref_lesson_id);
+        const currentChapter = chapters.find(ch => ch.lesson_id == content.ref_lesson_id);
         
         if (!currentChapter || !currentChapter.words || currentChapter.words.length === 0) {
           uni.hideLoading();

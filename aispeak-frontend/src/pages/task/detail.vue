@@ -489,8 +489,33 @@ const loadTask = async () => {
     const enrichedContents = await Promise.all(contents.map(async (content: any) => {
       const enrichedContent = { ...content };
       
-      // 获取单词详情
-      if (content.selected_word_ids && content.selected_word_ids.length > 0) {
+      // 如果是自动生成模式且没有选择具体的单词ID，获取整个单元的单词
+      if (content.generate_mode === 'auto' && 
+          (!content.selected_word_ids || content.selected_word_ids.length === 0) &&
+          (content.content_type === 'dictation' || content.content_type === 'spelling' || content.content_type === 'pronunciation')) {
+        try {
+          const bookId = content.ref_book_id || task.value.textbook_id?.toString();
+          const lessonId = content.ref_lesson_id || task.value.lesson_id;
+          
+          if (bookId && lessonId) {
+            console.log('自动模式：获取单元所有单词', bookId, lessonId);
+            const wordsRes = await textbook.getLessonWords(bookId, String(lessonId));
+            
+            if (wordsRes.code === 1000 && wordsRes.data) {
+              enrichedContent.selected_words = Array.isArray(wordsRes.data) ? wordsRes.data : wordsRes.data.words || [];
+              console.log('获取到单词数量:', enrichedContent.selected_words.length);
+            } else {
+              console.error('获取单元单词失败:', wordsRes);
+              enrichedContent.selected_words = [];
+            }
+          }
+        } catch (error) {
+          console.error('获取单元单词失败:', error);
+          enrichedContent.selected_words = [];
+        }
+      }
+      // 获取指定的单词详情
+      else if (content.selected_word_ids && content.selected_word_ids.length > 0) {
         try {
           const bookId = content.ref_book_id || task.value.textbook_id?.toString();
           if (bookId) {
@@ -513,8 +538,33 @@ const loadTask = async () => {
         }
       }
       
-      // 获取句子详情
-      if (content.selected_sentence_ids && content.selected_sentence_ids.length > 0) {
+      // 如果是自动生成模式且没有选择具体的句子ID，获取整个单元的句子
+      if (content.generate_mode === 'auto' && 
+          (!content.selected_sentence_ids || content.selected_sentence_ids.length === 0) &&
+          content.content_type === 'sentence_repeat') {
+        try {
+          const bookId = content.ref_book_id || task.value.textbook_id?.toString();
+          const lessonId = content.ref_lesson_id || task.value.lesson_id;
+          
+          if (bookId && lessonId) {
+            console.log('自动模式：获取单元所有句子', bookId, lessonId);
+            const sentencesRes = await textbook.getLessonSentences(bookId, String(lessonId));
+            
+            if (sentencesRes.code === 1000 && sentencesRes.data) {
+              enrichedContent.selected_sentences = Array.isArray(sentencesRes.data) ? sentencesRes.data : sentencesRes.data.sentences || [];
+              console.log('获取到句子数量:', enrichedContent.selected_sentences.length);
+            } else {
+              console.error('获取单元句子失败:', sentencesRes);
+              enrichedContent.selected_sentences = [];
+            }
+          }
+        } catch (error) {
+          console.error('获取单元句子失败:', error);
+          enrichedContent.selected_sentences = [];
+        }
+      }
+      // 获取指定的句子详情
+      else if (content.selected_sentence_ids && content.selected_sentence_ids.length > 0) {
         try {
           const bookId = content.ref_book_id || task.value.textbook_id?.toString();
           if (bookId) {

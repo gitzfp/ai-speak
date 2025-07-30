@@ -28,6 +28,9 @@ export default {
   },
   
   // 班级成员管理
+  getClassStudents: (classId: string) => {
+    return request(`/classes/${classId}/students`, "GET");
+  },
   addStudentToClass: (classId: string, data: any) => {
     return request(`/classes/${classId}/students`, "POST", data);
   },

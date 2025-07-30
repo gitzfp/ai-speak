@@ -68,6 +68,9 @@
               <view class="action-btn secondary" @click.stop="shareClass(classItem)">
                 <text>分享班级</text>
               </view>
+              <view class="action-btn danger" @click.stop="deleteClassConfirm(classItem)">
+                <text>删除班级</text>
+              </view>
             </view>
           </view>
           
@@ -166,6 +169,44 @@ const shareClass = (classItem: any) => {
     }
   });
 };
+
+const deleteClassConfirm = (classItem: any) => {
+  uni.showModal({
+    title: '删除班级',
+    content: `确定要删除班级"${classItem.name}"吗？\n删除后该班级的所有数据将无法恢复。`,
+    confirmText: '删除',
+    confirmColor: '#ff4444',
+    cancelText: '取消',
+    success: (res) => {
+      if (res.confirm) {
+        deleteClass(classItem);
+      }
+    }
+  });
+};
+
+const deleteClass = async (classItem: any) => {
+  uni.showLoading({ title: '删除中...' });
+  
+  try {
+    await taskRequest.deleteClass(classItem.id);
+    uni.hideLoading();
+    uni.showToast({ 
+      title: '删除成功',
+      icon: 'success'
+    });
+    
+    // 重新加载班级列表
+    loadClasses();
+  } catch (error) {
+    uni.hideLoading();
+    console.error('删除班级失败:', error);
+    uni.showToast({ 
+      title: '删除失败',
+      icon: 'none'
+    });
+  }
+};
 </script>
 
 <style scoped lang="less">
@@ -228,91 +269,128 @@ const shareClass = (classItem: any) => {
     border-radius: 20rpx;
     padding: 32rpx;
     margin-bottom: 24rpx;
-    box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    
+    &:active {
+      transform: scale(0.98);
+    }
     
     .class-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 20rpx;
+      margin-bottom: 24rpx;
       
       .class-info {
         flex: 1;
         
         .class-name {
-          font-size: 32rpx;
-          font-weight: 600;
-          color: #333;
+          font-size: 36rpx;
+          font-weight: 700;
+          color: #1a202c;
           display: block;
           margin-bottom: 8rpx;
         }
         
         .class-desc {
           font-size: 26rpx;
-          color: #666;
-          line-height: 1.4;
+          color: #718096;
+          line-height: 1.5;
         }
       }
       
       .class-stats {
         .stat-item {
-          background: #f0f8ff;
-          color: #4B7EFE;
-          padding: 8rpx 16rpx;
-          border-radius: 20rpx;
-          font-size: 24rpx;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 10rpx 20rpx;
+          border-radius: 24rpx;
+          font-size: 26rpx;
           font-weight: 600;
+          box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.4);
         }
       }
     }
     
     .class-meta {
-      display: flex;
-      gap: 24rpx;
-      margin-bottom: 24rpx;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16rpx;
+      margin-bottom: 28rpx;
+      padding: 20rpx;
+      background: #f7fafc;
+      border-radius: 16rpx;
       
       .meta-item {
         display: flex;
+        flex-direction: column;
         align-items: center;
+        text-align: center;
         
         .meta-label {
-          font-size: 24rpx;
-          color: #999;
-          margin-right: 8rpx;
+          font-size: 22rpx;
+          color: #a0aec0;
+          margin-bottom: 4rpx;
         }
         
         .meta-value {
-          font-size: 24rpx;
-          color: #333;
+          font-size: 26rpx;
+          color: #2d3748;
+          font-weight: 600;
           
           &.code {
-            background: #f5f5f5;
-            padding: 4rpx 12rpx;
+            background: white;
+            padding: 8rpx 16rpx;
             border-radius: 8rpx;
-            font-family: monospace;
-            font-weight: 600;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1rpx;
+            box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
           }
         }
       }
     }
     
     .class-actions {
-      display: flex;
-      gap: 12rpx;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16rpx;
       
       .action-btn {
-        flex: 1;
         text-align: center;
-        padding: 20rpx;
-        background: #4B7EFE;
-        color: white;
+        padding: 24rpx 16rpx;
         border-radius: 12rpx;
-        font-size: 24rpx;
+        font-size: 26rpx;
+        font-weight: 500;
+        transition: all 0.2s;
+        
+        &:not(.secondary):not(.danger) {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+          
+          &:active {
+            transform: translateY(2rpx);
+            box-shadow: 0 2rpx 8rpx rgba(102, 126, 234, 0.3);
+          }
+        }
         
         &.secondary {
-          background: #f0f2f5;
-          color: #666;
+          background: #e2e8f0;
+          color: #4a5568;
+          
+          &:active {
+            background: #cbd5e0;
+          }
+        }
+        
+        &.danger {
+          background: #fed7d7;
+          color: #c53030;
+          
+          &:active {
+            background: #feb2b2;
+          }
         }
       }
     }

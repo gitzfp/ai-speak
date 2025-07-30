@@ -18,7 +18,12 @@
       "Bash(python:*)",
       "Bash(poetry run alembic:*)",
       "Bash(conda:*)",
-      "Bash(/Users/fpz/opt/anaconda3/envs/fluent-ai/bin/alembic -c alembic.prod.ini revision --autogenerate -m \"db sync\")"
+      "Bash(/Users/fpz/opt/anaconda3/envs/fluent-ai/bin/alembic -c alembic.prod.ini revision --autogenerate -m \"db sync\")",
+      "Bash(/Users/fpz/opt/anaconda3/envs/fluent-ai/bin/python verify_migration.py)",
+      "Bash(grep:*)",
+      "Bash(npm run dev:h5:*)",
+      "Bash(pkill:*)",
+      "Bash(true)"
     ],
     "deny": []
   }

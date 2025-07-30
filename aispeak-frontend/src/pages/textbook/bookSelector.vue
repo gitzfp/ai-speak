@@ -153,6 +153,12 @@ const selectedPublisher = ref("全部"); // 新增出版社选中状态
 
 // 根据选中的版本、年级、册次和出版社过滤书籍
 const filteredBooks = computed(() => {
+  // 确保 props.books 是数组
+  if (!Array.isArray(props.books)) {
+    console.warn('props.books 不是数组:', props.books);
+    return [];
+  }
+  
   return props.books.filter((book) => {
     const matchVersion =
       selectedVersion.value === "全部" ||
@@ -170,8 +176,9 @@ const filteredBooks = computed(() => {
 // 组件挂载时获取数据
 onMounted(() => {
 	
-	console.log("props.numType")
-	console.log(props.numType)
+	console.log("BookSelector mounted");
+	console.log("props.books:", props.books);
+	console.log("props.numType:", props.numType);
 	
 	if (props.numType == 0) {
 		uni.getStorage({

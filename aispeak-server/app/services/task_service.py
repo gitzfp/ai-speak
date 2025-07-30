@@ -76,13 +76,38 @@ class TaskService:
         if not db_class:
             return None
             
-        # 创建响应并添加学生人数
+        # 创建响应并添加学生人数和学生列表
         response = ClassResponse.from_orm(db_class)
+        
+        # 获取学生数量
         student_count = self.db.query(ClassStudent).filter(
             ClassStudent.class_id == class_id,
             ClassStudent.status == "active"
         ).count()
         response.student_count = student_count
+        
+        # 获取学生列表
+        from app.db.account_entities import AccountEntity
+        students = self.db.query(AccountEntity).join(
+            ClassStudent, AccountEntity.id == ClassStudent.student_id
+        ).filter(
+            ClassStudent.class_id == class_id,
+            ClassStudent.status == "active"
+        ).all()
+        
+        # 转换学生信息为字典列表
+        student_list = []
+        for student in students:
+            student_list.append({
+                "id": student.id,
+                "user_id": student.id,
+                "name": student.user_name or student.phone_number or "未设置",
+                "username": student.user_name or student.phone_number or "未设置",
+                "phone": student.phone_number,
+                "role": student.user_role
+            })
+        
+        response.students = student_list
         return response
     
     async def update_class(self, class_id: int, class_data: ClassUpdate) -> Optional[ClassResponse]:
@@ -517,13 +542,43 @@ class TaskService:
                 return None
             
             update_data = task_data.dict(exclude_unset=True)
+            
+            # 处理 contents 更新
+            if 'contents' in update_data:
+                contents_data = update_data.pop('contents')
+                
+                # 更新现有的 contents
+                for content_data in contents_data:
+                    if 'id' in content_data:
+                        # 更新现有内容
+                        db_content = self.db.query(TaskContent).filter(
+                            TaskContent.id == content_data['id'],
+                            TaskContent.task_id == task_id
+                        ).first()
+                        
+                        if db_content:
+                            for key, value in content_data.items():
+                                if key != 'id':
+                                    setattr(db_content, key, value)
+                            db_content.updated_at = datetime.utcnow()
+                    else:
+                        # 创建新内容
+                        new_content = TaskContent(
+                            task_id=task_id,
+                            **content_data
+                        )
+                        self.db.add(new_content)
+            
+            # 更新任务主体信息
             for field, value in update_data.items():
                 setattr(db_task, field, value)
             
             db_task.updated_at = datetime.utcnow()
             self.db.commit()
             self.db.refresh(db_task)
-            return TaskResponse.from_orm(db_task)
+            
+            # 返回包含 contents 的完整响应
+            return await self.get_task_by_id(task_id)
         except Exception as e:
             self.db.rollback()
             logging.error(f"更新任务失败: {e}")

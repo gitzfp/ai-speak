@@ -75,6 +75,7 @@ class ClassResponse(ClassBase):
     created_at: datetime
     updated_at: datetime
     student_count: Optional[int] = 0  # 学生人数
+    students: Optional[List[Dict[str, Any]]] = []  # 学生列表
     
     class Config:
         from_attributes = True
