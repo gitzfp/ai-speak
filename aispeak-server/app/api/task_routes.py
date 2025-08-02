@@ -10,7 +10,8 @@ from app.models.task_models import (
     ClassCreate, ClassUpdate, ClassResponse,
     ClassStudentAdd, ClassTeacherAdd, ClassJoinRequest,
     TaskQueryParams, SubmissionQueryParams,
-    TaskType, TaskStatus, SubmissionStatus
+    TaskType, TaskStatus, SubmissionStatus,
+    ContentSearchRequest, ContentSearchType, WordSearchResult, SentenceSearchResult
 )
 from app.models.response import ApiResponse
 from app.core.logging import logging
@@ -351,3 +352,20 @@ async def list_submissions(
     )
     result = await service.list_submissions(params)
     return ApiResponse.success(result)
+
+
+# 内容搜索路由
+@router.post("/search-content", response_model=ApiResponse, tags=["内容搜索"])
+async def search_content(
+    search_request: ContentSearchRequest,
+    db: Session = Depends(get_db),
+    account_id: str = Depends(get_current_account),
+    service: TaskService = Depends(get_task_service)
+):
+    """搜索单词或句子内容"""
+    try:
+        results = await service.search_content(search_request)
+        return ApiResponse.success(results)
+    except Exception as e:
+        logging.error(f"搜索内容失败: {e}")
+        raise HTTPException(status_code=400, detail=str(e))

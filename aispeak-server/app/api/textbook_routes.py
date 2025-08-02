@@ -127,6 +127,26 @@ def get_words_details(
     except Exception as e:
         return ApiResponse.system_error(str(e))
 
+@router.post("/words/details", response_model=ApiResponse)
+def get_words_details_without_book(
+    word_list: WordListRequest,
+    db: Session = Depends(get_db)
+) -> ApiResponse:
+    """
+    获取指定单词列表的详细信息和音节信息（不需要book_id）
+    """
+    try:
+        service = TextbookService(db)
+        result = service.get_words_with_syllables_by_ids(word_list.words)
+
+        if result is None:
+            return ApiResponse.error("未找到单词信息")
+
+        return ApiResponse.success(result)
+
+    except Exception as e:
+        return ApiResponse.system_error(str(e))
+
 @router.post("/textbook/{book_id}/pages", response_model=ApiResponse)
 def create_textbook_pages(
     book_id: str,

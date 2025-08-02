@@ -171,3 +171,77 @@ class SysService:
             self.db.add(add_role)
 
         self.db.commit()
+    
+    def get_system_settings(self) -> SystemSettingsResponse:
+        """获取系统设置 - 使用字典表"""
+        # 从字典表读取系统功能设置
+        feature_settings = self.db.query(SysDictDataEntity).filter(
+            SysDictDataEntity.dict_type == 'system_features',
+            SysDictDataEntity.status == '1'
+        ).all()
+        
+        # 默认值
+        features = {
+            "showTextbookModule": False,  # 默认隐藏教材模块
+            "enableManualInput": True     # 启用手动输入（已废弃）
+        }
+        
+        # 更新从数据库读取的值
+        for setting in feature_settings:
+            # dict_label 作为功能名称，dict_value 作为值
+            feature_name = setting.dict_label
+            if feature_name in features:
+                # 处理布尔值
+                if setting.dict_value.lower() in ['true', 'false']:
+                    features[feature_name] = setting.dict_value.lower() == 'true'
+                else:
+                    features[feature_name] = setting.dict_value
+        
+        return SystemSettingsResponse(features=features)
+    
+    def update_system_settings(self, settings_update: SystemSettingsUpdate) -> SystemSettingsResponse:
+        """更新系统设置 - 使用字典表"""
+        # TODO: 实现权限检查，确保只有管理员可以更新
+        
+        # 首先确保字典类型存在
+        dict_type = self.db.query(SysDictTypeEntity).filter(
+            SysDictTypeEntity.dict_type == 'system_features'
+        ).first()
+        
+        if not dict_type:
+            # 创建字典类型
+            dict_type = SysDictTypeEntity(
+                dict_type='system_features',
+                dict_name='系统功能开关',
+                status='1'
+            )
+            self.db.add(dict_type)
+            self.db.commit()
+        
+        # 更新features设置
+        if settings_update.features:
+            for key, value in settings_update.features.items():
+                # 查找现有设置
+                setting = self.db.query(SysDictDataEntity).filter(
+                    SysDictDataEntity.dict_type == 'system_features',
+                    SysDictDataEntity.dict_label == key
+                ).first()
+                
+                if setting:
+                    # 更新现有设置
+                    setting.dict_value = str(value)
+                    setting.update_time = datetime.datetime.now()
+                else:
+                    # 创建新设置
+                    new_setting = SysDictDataEntity(
+                        dict_type='system_features',
+                        dict_label=key,
+                        dict_value=str(value),
+                        status='1'
+                    )
+                    self.db.add(new_setting)
+            
+            self.db.commit()
+        
+        # 返回更新后的设置
+        return self.get_system_settings()

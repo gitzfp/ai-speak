@@ -635,9 +635,10 @@ class StudyService:
     def submit_study_progress_report(
     self,
     user_id: str,
-    book_id: str,
-    lesson_id: int,
     reports: List[Dict],  # 使用 StudyProgressReportItem 对象
+    book_id: Optional[str] = None,
+    lesson_id: Optional[int] = None,
+    task_id: Optional[int] = None,
     statusNum: int = 1,  # 新增可选参数，默认值为 1
     ) -> bool:
         """
@@ -676,7 +677,7 @@ class StudyService:
                 type_value = 0  # 默认值，如果没有报告数据
 
             # 处理 StudyCompletionRecord 记录
-            self._process_study_completion_record(user_id, book_id, lesson_id, type_value, total_points, totalspeak_count, statusNum, reports)
+            self._process_study_completion_record(user_id, book_id, lesson_id, task_id, type_value, total_points, totalspeak_count, statusNum, reports)
 
             # 为用户加上积分
             user.points += total_points
@@ -704,8 +705,9 @@ class StudyService:
     def _process_study_completion_record(
         self,
         user_id: str,
-        book_id: str,
-        lesson_id: int,
+        book_id: Optional[str],
+        lesson_id: Optional[int],
+        task_id: Optional[int],
         type_value: int,
         total_points: int,
         totalspeak_count: int,
@@ -716,28 +718,39 @@ class StudyService:
         处理 StudyCompletionRecord 记录，包括更新 progress_data 字段
         """
         # 查询 StudyCompletionRecord 是否存在
-        completion_record = (
-            self.db.query(StudyCompletionRecord)
-            .filter(
-                StudyCompletionRecord.user_id == user_id,
-                StudyCompletionRecord.book_id == book_id,
-                StudyCompletionRecord.lesson_id == lesson_id,
-                StudyCompletionRecord.type == type_value,
-                StudyCompletionRecord.status == 0,
-            )
-            .order_by(StudyCompletionRecord.create_time.desc())
-            .first()
+        query = self.db.query(StudyCompletionRecord).filter(
+            StudyCompletionRecord.user_id == user_id,
+            StudyCompletionRecord.type == type_value,
+            StudyCompletionRecord.status == 0
         )
+        
+        # 优先使用task_id查询
+        if task_id is not None:
+            query = query.filter(StudyCompletionRecord.task_id == task_id)
+        elif book_id is not None and lesson_id is not None:
+            # 如果没有task_id，使用book_id和lesson_id
+            query = query.filter(
+                StudyCompletionRecord.book_id == book_id,
+                StudyCompletionRecord.lesson_id == lesson_id
+            )
+        else:
+            # 如果都没有，无法查询
+            raise Exception("必须提供task_id或者book_id和lesson_id")
+            
+        completion_record = query.order_by(StudyCompletionRecord.create_time.desc()).first()
 
         # 处理 progress_data 字段
-        progress_data = []
+        existing_data_map = {}
+        
         if completion_record and completion_record.progress_data:
             # 如果 progress_data 有值，则反序列化为数组
-            progress_data = json.loads(completion_record.progress_data)
+            existing_data = json.loads(completion_record.progress_data)
+            # 创建一个映射，以content_id为键，方便查找和更新
+            existing_data_map = {item["content_id"]: item for item in existing_data}
 
-        # 将新的 reports 数据插入到 progress_data 中
+        # 处理新的 reports 数据
         for report in reports:
-            progress_data.append({
+            new_item = {
                 "word": report.word.strip(),
                 "content_type": report.content_type,
                 "content_id": report.content_id,
@@ -750,8 +763,19 @@ class StudyService:
                 "audio_url": report.audio_url,
                 "audio_start": report.audio_start,
                 "audio_end": report.audio_end,
-            })
+            }
+            
+            # 如果该content_id已存在，更新它；否则添加新记录
+            if report.content_id in existing_data_map:
+                # 更新已存在的记录（保留最新的数据）
+                existing_data_map[report.content_id].update(new_item)
+            else:
+                # 添加新记录
+                existing_data_map[report.content_id] = new_item
 
+        # 将映射转换回列表
+        progress_data = list(existing_data_map.values())
+        
         # 将 progress_data 序列化为字符串
         progress_data_str = json.dumps(progress_data)
 
@@ -769,6 +793,7 @@ class StudyService:
                 user_id=user_id,
                 book_id=book_id,
                 lesson_id=lesson_id,
+                task_id=task_id,  # 添加task_id
                 date=datetime.now().date(),
                 status=statusNum,  # 使用传入的 statusNum
                 type=type_value,  # 根据 content_type 判断 type
@@ -1026,34 +1051,48 @@ class StudyService:
     def get_study_progress_reports(
     self,
     user_id: str,
-    book_id: str,
-    lesson_id: int,
+    book_id: Optional[str] = None,
+    lesson_id: Optional[int] = None,
+    task_id: Optional[int] = None,
     content_type: Optional[int] = None
 ) -> List[Dict]:
         """
-        根据用户ID、书本ID、课程ID和内容类型查询学习进度报告
+        根据用户ID、书本ID、课程ID或任务ID查询学习进度报告
         :param user_id: 用户ID
-        :param book_id: 书本ID
-        :param lesson_id: 课程ID
+        :param book_id: 书本ID（可选）
+        :param lesson_id: 课程ID（可选）
+        :param task_id: 任务ID（可选）
         :param content_type: 可选的内容类型(0:单词,1:句子,2:背词计划用,3:真正的单词拼写)
         :return: 包含学习进度报告的字典
         """
         try:
-            # 查询最新的一条记录
-            record = (
-                self.db.query(StudyCompletionRecord)
-                .filter(
-                    StudyCompletionRecord.user_id == user_id,
-                    StudyCompletionRecord.book_id == book_id,
-                    StudyCompletionRecord.lesson_id == lesson_id,
-                    StudyCompletionRecord.type == content_type
-                )
-                .order_by(StudyCompletionRecord.create_time.desc())
-                .first()
+            # 构建查询条件
+            query = self.db.query(StudyCompletionRecord).filter(
+                StudyCompletionRecord.user_id == user_id
             )
+            
+            # 优先使用task_id查询
+            if task_id is not None:
+                query = query.filter(StudyCompletionRecord.task_id == task_id)
+            elif book_id and lesson_id is not None:
+                # 如果没有task_id，使用book_id和lesson_id
+                query = query.filter(
+                    StudyCompletionRecord.book_id == book_id,
+                    StudyCompletionRecord.lesson_id == lesson_id
+                )
+            else:
+                # 如果都没有提供，返回空数组
+                return []
+                
+            # 添加content_type过滤
+            if content_type is not None:
+                query = query.filter(StudyCompletionRecord.type == content_type)
+                
+            # 查询最新的一条记录，只查询status=0的进行中记录
+            record = query.filter(StudyCompletionRecord.status == 0).order_by(StudyCompletionRecord.create_time.desc()).first()
 
-            # 如果没有记录或status=1，返回空数组
-            if not record or record.status == 1:
+            # 如果没有记录或记录已完成(status=1)，返回空数组
+            if not record:
                 return []
 
             # 解析progress_data

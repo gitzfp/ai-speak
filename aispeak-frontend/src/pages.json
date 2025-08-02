@@ -38,6 +38,13 @@
 	  }
 	},
 	{
+	  "path": "pages/textbook/UnitWordRead",
+	  "style": {
+		  // "navigationBarTitleText": "单词跟读"
+	    "navigationStyle": "custom"
+	  }
+	},
+	{
 	  "path": "pages/textbook/UnitSummaryReport",
 	  "style": {
 		  // "navigationBarTitleText": "单元总报告"

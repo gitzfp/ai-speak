@@ -24,7 +24,10 @@
             class="profile-avatar"
             src="https://dingguagua.fun/static/default-account-avatar.png"
           />
-          <text class="profile-name">{{ accountInfo.user_name || accountInfo.account_id }}</text>
+          <view class="profile-info">
+            <text class="profile-name">{{ accountInfo.user_name || accountInfo.account_id }}</text>
+            <text v-if="accountInfo.phone_number" class="profile-phone">{{ formatPhoneNumber(accountInfo.phone_number) }}</text>
+          </view>
         </view>
       </view>
       <view class="mine-message-box">
@@ -121,6 +124,7 @@ const accountInfo = ref<AccountInfo>({
   total_chat_count: 0,
   target_language_label: "",
   user_name: "",
+  phone_number: "",
 })
 
 onMounted(() => {
@@ -226,6 +230,12 @@ const getRoleLabel = () => {
       return '未设置';
   }
 }
+
+const formatPhoneNumber = (phone: string) => {
+  // 格式化手机号，例如：138****1234
+  if (!phone || phone.length < 11) return phone;
+  return phone.slice(0, 3) + '****' + phone.slice(-4);
+}
 </script>
 <style scoped lang="less">
 @import url("@/less/global.less");
@@ -262,6 +272,19 @@ const getRoleLabel = () => {
         font-weight: 500;
         color: #000000;
         line-height: 40rpx;
+      }
+
+      .profile-info {
+        margin-left: 40rpx;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .profile-phone {
+        margin-top: 8rpx;
+        font-size: 24rpx;
+        color: #666666;
+        line-height: 32rpx;
       }
     }
   }

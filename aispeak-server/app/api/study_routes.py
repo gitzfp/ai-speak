@@ -282,8 +282,9 @@ class StudyProgressReportItem(BaseModel):
     audio_start: Optional[int] = None  # 新增字段，可选
     audio_end: Optional[int] = None  # 新增字段，可选
 class StudyProgressReportRequest(BaseModel):
-    book_id: str  # 书籍ID
-    lesson_id: int  # 课程ID
+    book_id: Optional[str] = None  # 书籍ID（可选）
+    lesson_id: Optional[int] = None  # 课程ID（可选）
+    task_id: Optional[int] = None  # 任务ID（可选）
     reports: List[StudyProgressReportItem]  # 报告数据列表
     statusNum: Optional[int] = 1  # 状态值，默认值为 1
 @router.post("/progress-report", response_model=ApiResponse)
@@ -300,9 +301,10 @@ def submit_study_progress_report(
         # 调用 StudyService 中的 submit_study_progress_report 方法
         success = service.submit_study_progress_report(
             user_id=account_id,  # 使用 account_id
+            reports=request.reports,
             book_id=request.book_id,
             lesson_id=request.lesson_id,
-            reports=request.reports,
+            task_id=request.task_id,  # 传递 task_id
             statusNum=request.statusNum,  # 传递 statusNum
         )
         if success:
@@ -343,29 +345,37 @@ def get_unit_summary_report(
 
 @router.get("/progress-reports", response_model=ApiResponse)
 def get_study_progress_reports(
-    book_id: str = Query(..., description="书本ID"),  # 从查询参数中获取书本ID
-    lesson_id: int = Query(..., description="课程ID"),  # 从查询参数中获取课程ID
+    book_id: Optional[str] = Query(None, description="书本ID"),  # 修改为可选参数
+    lesson_id: Optional[int] = Query(None, description="课程ID"),  # 修改为可选参数
+    task_id: Optional[int] = Query(None, description="任务ID"),  # 新增任务ID参数
     content_type: Optional[int] = Query(None, description="内容类型(0:单词,1:句子,2:单词拼写, 3:真正的单词拼写)"),  # 新增可选参数
     db: Session = Depends(get_db),  # 数据库会话依赖
     account_id: str = Depends(get_current_account)  # 当前用户ID依赖
 ) -> ApiResponse:
     """
     根据用户ID、书本ID和课程ID获取 content_type 为 0, 1, 2 的学习进度报告
+    如果book_id和lesson_id为空，但提供了task_id，则通过task_id查询任务信息获取book_id和lesson_id
     :param book_id: 书本ID
     :param lesson_id: 课程ID
+    :param task_id: 任务ID（当book_id和lesson_id为空时使用）
+    :param content_type: 内容类型
     :param db: 数据库会话
     :param account_id: 当前用户ID
     :return: 包含学习进度报告的字典数组
     """
     try:
         service = StudyService(db)  # 初始化 StudyService
-        # 调用 StudyService 中的 get_study_progress_reports 方法
+        
+        # 调用服务层方法，支持多种查询方式
         reports = service.get_study_progress_reports(
-            user_id=account_id,  # 使用当前用户ID
+            user_id=account_id,
             book_id=book_id,
             lesson_id=lesson_id,
-            content_type=content_type  # 传递新的参数
+            task_id=task_id,
+            content_type=content_type
         )
-        return ApiResponse.success(reports)  # 返回成功消息
+        
+        return ApiResponse.success(reports)
+        
     except Exception as e:
         return ApiResponse.system_error(str(e))  # 捕获异常并返回系统错误

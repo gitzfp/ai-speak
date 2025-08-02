@@ -344,6 +344,81 @@ class TextbookService:
             print(f"获取单词详情失败: {str(e)}")
             return None
 
+    def get_words_with_syllables_by_ids(self, word_ids: List[int]) -> Dict:
+        """
+        根据单词ID列表获取详细信息和音节信息（不需要book_id）
+        """
+        try:
+            # 获取单词信息
+            words = self.db.query(Word).filter(
+                Word.id.in_(word_ids)
+            ).all()
+            
+            # 获取这些单词的音节关联信息
+            word_id_list = [word.word_id for word in words]
+            word_syllables = self.db.query(WordSyllable).filter(
+                WordSyllable.word_id.in_(word_id_list)
+            ).order_by(WordSyllable.word_id, WordSyllable.position).all()
+            
+            # 获取相关的音节信息
+            syllable_ids = [ws.syllable_id for ws in word_syllables]
+            syllables = self.db.query(Syllable).filter(
+                Syllable.id.in_(syllable_ids)
+            ).all()
+            
+            # 构建音节字典以便快速查找
+            syllable_dict = {s.id: s for s in syllables}
+            
+            # 构建单词音节映射
+            word_syllable_map = {}
+            for ws in word_syllables:
+                if ws.word_id not in word_syllable_map:
+                    word_syllable_map[ws.word_id] = []
+                syllable = syllable_dict.get(ws.syllable_id)
+                if syllable:
+                    word_syllable_map[ws.word_id].append({
+                        "position": ws.position,
+                        "letter": syllable.letter,
+                        "content": syllable.content,
+                        "sound_path": syllable.sound_path,
+                        "phonetic": syllable.phonetic
+                    })
+            
+            # 构建返回数据
+            word_list = []
+            for word in words:
+                word_data = {
+                    "word_id": word.id,
+                    "word": word.word,
+                    "lesson_id": word.lesson_id,
+                    "book_id": word.book_id,
+                    "chinese": word.chinese,
+                    "phonetic": word.phonetic,
+                    "uk_phonetic": word.uk_phonetic,
+                    "us_phonetic": word.us_phonetic,
+                    "sound_path": word.sound_path,
+                    "uk_sound_path": word.uk_sound_path,
+                    "us_sound_path": word.us_sound_path,
+                    "image_path": word.image_path,
+                    "has_base": word.has_base,
+                    "paraphrase": word.paraphrase,
+                    "phonics": word.phonics,
+                    "word_tense": word.word_tense,
+                    "example_sentence": word.example_sentence,
+                    "phrase": word.phrase,
+                    "synonym": word.synonym,
+                    "syllables": word_syllable_map.get(word.word_id, [])
+                }
+                word_list.append(word_data)
+
+            return {
+                "words": word_list
+            }
+
+        except Exception as e:
+            print(f"根据ID获取单词详情失败: {str(e)}")
+            return None
+
     def create_textbook_chapters(self, book_id: str, chapters: List[dict]) -> str:
         """
         创建或更新教材章节目录

@@ -23,7 +23,10 @@
       "Bash(grep:*)",
       "Bash(npm run dev:h5:*)",
       "Bash(pkill:*)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(./venv/bin/python -m alembic revision:*)",
+      "Bash(./venv/bin/python -m alembic:*)",
+      "Bash(npm run type-check:*)"
     ],
     "deny": []
   }

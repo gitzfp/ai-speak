@@ -68,6 +68,7 @@ def get_sentences_details(
     except Exception as e:
         return ApiResponse.system_error(str(e))
 
+
 @router.get("/task/{task_id}/sentences", response_model=ApiResponse)
 def get_task_sentences(
     task_id: int,
@@ -201,6 +202,122 @@ def get_task_sentences(
             "debug_info": {
                 "found_sentence_ids": all_sentence_ids,
                 "task_contents_count": len(task_contents)
+            }
+        })
+        
+    except Exception as e:
+        return ApiResponse.system_error(str(e))
+
+
+@router.get("/task/{task_id}/words", response_model=ApiResponse)
+def get_task_words(
+    task_id: int,
+    db: Session = Depends(get_db),
+    account_id: str = Depends(get_current_account)
+) -> ApiResponse:
+    """
+    根据任务ID获取单词信息
+    用于单词跟读等场景，直接通过task_id获取相关单词
+    """
+    try:
+        from app.db.task_entities import Task, TaskContent
+        from app.db.words_entities import Word
+        from app.db.study_entities import StudyProgressReport, StudyCompletionRecord
+        
+        # 查询任务是否存在
+        task = db.query(Task).filter(Task.id == task_id).first()
+        if not task:
+            return ApiResponse.error("任务不存在")
+            
+        # 查询任务内容，不过滤content_type，因为单词可能在不同类型的内容中
+        task_contents = db.query(TaskContent).filter(
+            TaskContent.task_id == task_id
+        ).all()
+        
+        all_word_ids = []
+        for content in task_contents:
+            # 打印调试信息
+            print(f"TaskContent ID: {content.id}, content_type: {content.content_type}, selected_word_ids: {content.selected_word_ids}")
+            if content.selected_word_ids:
+                all_word_ids.extend(content.selected_word_ids)
+        
+        if not all_word_ids:
+            return ApiResponse.success({
+                "words": [],
+                "total": 0,
+                "task_info": {
+                    "task_id": task_id,
+                    "title": task.title,
+                    "task_type": task.task_type.value if task.task_type else None
+                }
+            })
+        
+        # 查询所有单词
+        words = db.query(Word).filter(
+            Word.id.in_(all_word_ids)
+        ).all()
+        
+        # 构建返回数据，保持原始顺序
+        word_dict = {w.id: w for w in words}
+        ordered_words = []
+        
+        for wid in all_word_ids:
+            if wid in word_dict:
+                word = word_dict[wid]
+                # 查询用户的学习进度
+                # 先尝试从StudyCompletionRecord查询
+                print(f"[DEBUG] 查询进度 - 用户: {account_id}, 任务: {task_id}, 单词: {word.id}")
+                completion_record = db.query(StudyCompletionRecord).filter(
+                    StudyCompletionRecord.user_id == account_id,
+                    StudyCompletionRecord.task_id == task_id,
+                    StudyCompletionRecord.type == 3,  # type=3 对应单词发音
+                    StudyCompletionRecord.status == 0
+                ).order_by(StudyCompletionRecord.create_time.desc()).first()
+                
+                progress = None
+                if completion_record and completion_record.progress_data:
+                    # 解析progress_data找到对应单词的进度
+                    import json
+                    progress_data = json.loads(completion_record.progress_data)
+                    for item in progress_data:
+                        if item.get('content_id') == word.id:
+                            progress = type('Progress', (), {
+                                'error_count': item.get('error_count', 0),
+                                'points': item.get('points', 0),
+                                'speak_count': item.get('speak_count', 0)
+                            })()
+                            break
+                
+                # 如果没找到，再从StudyProgressReport查询（兼容旧数据）
+                if not progress:
+                    progress = db.query(StudyProgressReport).filter(
+                        StudyProgressReport.user_id == account_id,
+                        StudyProgressReport.content_id == word.id,
+                        StudyProgressReport.content_type == 3  # 单词发音类型
+                    ).order_by(StudyProgressReport.create_time.desc()).first()
+                
+                ordered_words.append({
+                    "id": word.id,
+                    "word": word.word,
+                    "chinese": word.chinese,
+                    "audio_url": word.sound_path or word.uk_sound_path or word.us_sound_path,  # 使用sound_path
+                    "phonetic": getattr(word, 'phonetic', None),
+                    "uk_phonetic": getattr(word, 'uk_phonetic', None),
+                    "us_phonetic": getattr(word, 'us_phonetic', None),
+                    "order_num": getattr(word, 'order_num', None),
+                    # 添加学习进度信息
+                    "error_count": progress.error_count if progress else 0,
+                    "points": progress.points if progress else 0,
+                    "speak_count": progress.speak_count if progress and hasattr(progress, 'speak_count') else 0
+                })
+        
+        return ApiResponse.success({
+            "words": ordered_words,
+            "total": len(ordered_words),
+            "task_info": {
+                "task_id": task_id,
+                "title": task.title,
+                "task_type": task.task_type.value if task.task_type else None
             }
         })
         

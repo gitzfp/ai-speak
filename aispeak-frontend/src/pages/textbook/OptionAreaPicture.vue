@@ -47,7 +47,7 @@
 </template>
 
 <script setup>
-import {onUnmounted,defineProps, defineEmits,onMounted,ref} from 'vue';
+import {onUnmounted,defineProps, defineEmits,onMounted,ref,watch} from 'vue';
 
 // 定义 props
 const props = defineProps({
@@ -104,13 +104,21 @@ const initseletnums =(indext,num) => {
 }
 
 onMounted(() => {
-	console.log("props.optionWords")
-    console.log(props.optionWords)
+	// Initialize with no selection
+	initseletnums(4, 0);
   })
   
  onUnmounted(() => {
  	stopCurrentAudio()
-  }) 
+  })
+
+// Watch for word changes and reset selection states
+watch(() => props.word, (newWord, oldWord) => {
+  if (newWord && oldWord && newWord.word_id !== oldWord.word_id) {
+    // Reset all selection states when word changes
+    initseletnums(4, 0);
+  }
+}, { deep: true }) 
 
 const getDynamicstyle = (num) =>{
 	if (num==1) {
@@ -137,16 +145,37 @@ const handleItemClick = (optionWord,indext) => {
 	audio.src = audioStr;
 	// audio.volume = props.volume;
 	initseletnums(indext,num)
-	audio.onEnded(() => {
 	
+	// 音频播放结束时的回调
+	audio.onEnded(() => {
 	  setTimeout(() => {
-		  initseletnums(4,num)
+		initseletnums(4,num)
 		emit('item-click', num);
 		// 在这里添加延迟执行的代码
 	  }, 300);
-	  
 	});
-	audio.play();
+	
+	// 音频播放错误时的回调
+	audio.onError((err) => {
+		console.error('音频播放失败:', err, audioStr);
+		// 即使音频播放失败，也要继续流程
+		setTimeout(() => {
+			initseletnums(4,num)
+			emit('item-click', num);
+		}, 300);
+	});
+	
+	// 尝试播放音频
+	try {
+		audio.play();
+	} catch (error) {
+		console.error('播放音频时出错:', error);
+		// 如果播放失败，直接触发后续流程
+		setTimeout(() => {
+			initseletnums(4,num)
+			emit('item-click', num);
+		}, 300);
+	}
 	
 	
   

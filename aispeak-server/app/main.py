@@ -14,6 +14,7 @@ from app.api.message_routes import router as message_routes
 from app.api.session_routes import router as session_routes
 from app.api.topics_route import router as topic_routes
 from app.api.textbook_routes import router as textbook_routes
+from app.api.textbook_routes_ext import router as textbook_routes_ext
 from app.api.alioss_routes import router as alioss_routes
 from app.api.study_routes import router as study_routes
 from app.api.test_routes import router as test_routes
@@ -36,6 +37,7 @@ app.include_router(sys_routes, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(session_routes, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(message_routes, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(textbook_routes, prefix=f"{Config.API_PREFIX}/v1")
+app.include_router(textbook_routes_ext, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(alioss_routes, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(study_routes, prefix=f"{Config.API_PREFIX}/v1")
 app.include_router(test_routes, prefix=f"{Config.API_PREFIX}/v1")

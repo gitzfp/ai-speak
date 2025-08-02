@@ -2,10 +2,10 @@
 	<view class="container">
 		<view class="headView" :style="{ paddingTop: statusBarHeight + 'px', height: '44px' }">
 			<image @tap="handleBackPage" class="head-icon" src="@/assets/icons/black_back.svg"></image>
-			<view class="head-text">句子单元跟读</view>
+			<view class="head-text">单词跟读</view>
 		</view>
 		
-		<view v-if="sentencesList.length>0" class="content_view">
+		<view v-if="wordsList.length>0" class="content_view">
 			<view class="progressview">
 				<view class="progressbar">
 					<view :style="{ width: progress + '%' }" class="contentitem"></view>
@@ -14,20 +14,20 @@
 					{{progresstext}}
 				</view>
 			</view>
-			<view  class="sentence-item">
+			<view  class="word-item">
 				<view class="points_view">积分：{{totalpoints}}</view>
-				<view class="sentence-top">
-					<view class="sentence-left">
-						<view class="english">{{ optionSentence.english }}</view>
-						<view class="chinese">{{ optionSentence.chinese }}</view>
+				<view class="word-top">
+					<view class="word-left">
+						<view class="english">{{ optionWord.word }}</view>
+						<view class="chinese">{{ optionWord.chinese }}</view>
 					</view>
 					<view class="audio-icon">
 						<image @tap="playbuttonclick" class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
 					</view>
 				</view>
-				<view class="sentence-bottom">
+				<view class="word-bottom">
 					<Speech 
-							:ref-obj="optionSentence" 
+							:ref-obj="optionWord" 
 							@success="handleEvaluationResult"
 						/>
 				</view>
@@ -64,7 +64,7 @@
 	const lesson_id = ref('')
 	const book_id = ref('')
 	
-	const sentencesList = ref([])
+	const wordsList = ref([])
 	const currentIndext = ref(0);
 	const progressIndext = ref(0)
 	
@@ -91,12 +91,6 @@
 		const systemInfo = uni.getSystemInfoSync();
 		statusBarHeight.value = systemInfo.statusBarHeight || 0;
 		customBarHeight.value = (systemInfo.statusBarHeight || 0) + 44; // 44 是导航栏的默认高度
-			
-		// setTimeout(() => {
-		//     playbuttonclick()
-		// 	console.log('当前进度:', optionSentence.value);
-		// 	isShowmark.value = (optionSentence?.value?.progress_data && optionSentence?.value?.progress_data.length > 20)
-		// }, 500);
 		
 		uni.$on('start_recording', (params) => {
 		    console.log('收到全局事件，参数:', params);
@@ -119,15 +113,32 @@
 	    // 在这里执行你的逻辑
 	    if (newValue !== oldValue) {
 	        // 例如：调用某个方法
-	        isShowmark.value = (optionSentence.value.progress_data && optionSentence.value.progress_data.length > 20)
+	        isShowmark.value = (optionWord.value.progress_data && optionWord.value.progress_data.length > 20)
 	    }
 	});
 	
 	// 封装提交进度的方法
 	const submitProgressWithMode = async (reports, statusNum) => {
 		if (isTaskMode.value && taskId.value) {
+			console.log('任务模式提交进度:', {
+				taskId: taskId.value,
+				reports: reports,
+				statusNum: statusNum
+			});
 			return await study.submitStudyProgressReport(undefined, undefined, reports, statusNum, taskId.value);
 		} else {
+			console.log('教材模式提交进度:', {
+				book_id: book_id.value,
+				lesson_id: lesson_id.value,
+				statusNum: statusNum,
+				reports_count: reports.length,
+				first_report: reports[0] ? {
+					word: reports[0].word,
+					content_id: reports[0].content_id,
+					content_type: reports[0].content_type,
+					has_content_id: 'content_id' in reports[0]
+				} : null
+			});
 			return await study.submitStudyProgressReport(book_id.value, lesson_id.value, reports, statusNum);
 		}
 	}
@@ -136,6 +147,15 @@
 		try {
 			// 始终先保存进度，无论是否为任务模式
 			let statusNum = isDone==true?1:0
+			
+			console.log('提交进度报告:', {
+				reports: reports,
+				statusNum: statusNum,
+				isTaskMode: isTaskMode.value,
+				taskId: taskId.value,
+				book_id: book_id.value,
+				lesson_id: lesson_id.value
+			});
 			
 			// 使用封装的方法提交进度
 			await submitProgressWithMode(reports, statusNum);
@@ -160,12 +180,12 @@
 				
 				uni.setStorage({
 				  key: unitreportWords,
-				  data: JSON.stringify(sentencesList.value),
+				  data: JSON.stringify(wordsList.value),
 				  success: function () {
 					console.log('数据存储成功');
 					// 跳转到学习页面
 					uni.navigateTo({
-					  url: `/pages/textbook/UnitWordreport?unitreportWords=${unitreportWords}&totalpoints=${totalpoints.value}&backPage=2&type=4`, // 将缓存键名传递给学习页面
+					  url: `/pages/textbook/UnitWordreport?unitreportWords=${unitreportWords}&totalpoints=${totalpoints.value}&backPage=2&type=6`, // type=6 单词跟读
 					});
 				  },
 				  fail: function (err) {
@@ -208,15 +228,28 @@
 		if (isShowmark.value) {
 			isShowmark.value = false
 			 stopCurrentAudio()
-			if (currentIndext.value==(sentencesList.value.length-1)) {
-				progressIndext.value = sentencesList.value.length
+			if (currentIndext.value==(wordsList.value.length-1)) {
+				progressIndext.value = wordsList.value.length
 				
-				const haveratedSentences = sentencesList.value.filter(
-				  (sentence) => sentence.isHaverated === 1
-				);
-				if (haveratedSentences.length>0) {
+				const haveratedWords = wordsList.value.filter(
+				  (word) => word.isHaverated === 1
+				).map(word => {
+					console.log('处理单词:', {
+						word: word.word,
+						id: word.id,
+						content_id: word.content_id,
+						has_content_id: 'content_id' in word,
+						has_id: 'id' in word
+					});
+					return {
+						...word,
+						word: word.word || word.english, // 确保有word字段
+						content_id: word.content_id || word.id // 确保有content_id字段
+					};
+				});
+				if (haveratedWords.length>0) {
 					//这边是全部完成的
-					submitreslutStudyProgressReport(haveratedSentences, true)
+					submitreslutStudyProgressReport(haveratedWords, true)
 				} else {
 					uni.showToast({
 					  title: '当前没有可提交的数据，是否返回上一页',
@@ -230,7 +263,7 @@
 				progressIndext.value = currentIndext.value
 				
 				
-				if (!(optionSentence.value.progress_data && optionSentence.value.progress_data.length > 20)) {
+				if (!(optionWord.value.progress_data && optionWord.value.progress_data.length > 20)) {
 					// followReadingref.value.resetRefresh()
 				}
 				
@@ -243,63 +276,74 @@
 	}
 	
 	const reevaluation = () => {
-		optionSentence.value.isHaverated = 0
-		optionSentence.value.progress_data=""
+		optionWord.value.isHaverated = 0
+		optionWord.value.progress_data=""
 		isShowmark.value = false
 	}
 	
 	const handleEvaluationResult = (pronunciationResult) => {
-		console.log(pronunciationResult, "句子测评结果", pronunciationResult)
-		optionSentence.value.json_data = pronunciationResult
-		optionSentence.value.voice_file = pronunciationResult.voice_file
-		optionSentence.value.isHaverated = 1
+		console.log(pronunciationResult, "单词测评结果", pronunciationResult)
+		optionWord.value.json_data = pronunciationResult
+		optionWord.value.voice_file = pronunciationResult.voice_file
+		optionWord.value.isHaverated = 1
 		isShowmark.value = true
-		optionSentence.value.speak_count +=1
+		optionWord.value.speak_count = (optionWord.value.speak_count || 0) + 1
+		
+		// 添加调试日志，查看当前单词的数据结构
+		console.log('handleEvaluationResult - 当前单词数据结构:', {
+			id: optionWord.value.id,
+			word: optionWord.value.word,
+			content_id: optionWord.value.content_id,
+			content_type: optionWord.value.content_type,
+			chinese: optionWord.value.chinese,
+			audio_url: optionWord.value.audio_url,
+			has_content_id: 'content_id' in optionWord.value
+		});
 		if (pronunciationResult.pronunciation_score < 60) {
-			if (optionSentence.value.points === 0) {
-				optionSentence.value.points += 1; // 积分加1
+			if (optionWord.value.points === 0) {
+				optionWord.value.points += 1; // 积分加1
 				totalpoints.value += 1; // 总积分加1
 			}
 		} else {
-			if (optionSentence.value.points !== 2) {
-				 const previousPoints = optionSentence.value.points; // 保存原有积分
-				 optionSentence.value.points = 2; // 积分更新为2
+			if (optionWord.value.points !== 2) {
+				 const previousPoints = optionWord.value.points; // 保存原有积分
+				 optionWord.value.points = 2; // 积分更新为2
 				 totalpoints.value += (2 - previousPoints); // 更新总积分
 			}
 		}
 		
 		// 如果是任务模式，记录结果
 		if (isTaskMode.value) {
-		  const sentenceResult = {
-		    content_id: optionSentence.value.content_id || optionSentence.value.id,
-		    response: 'sentence_reading',
+		  const wordResult = {
+		    content_id: optionWord.value.content_id || optionWord.value.id,
+		    response: 'word_pronunciation',
 		    is_correct: pronunciationResult.pronunciation_score >= 60,
 		    auto_score: pronunciationResult.pronunciation_score,
-		    attempt_count: optionSentence.value.speak_count || 1
+		    attempt_count: optionWord.value.speak_count || 1
 		  }
 		  
-		  // 查找是否已有该句子的结果，如果有则更新
-		  const existingIndex = taskResults.value.findIndex(r => r.content_id === (optionSentence.value.content_id || optionSentence.value.id))
+		  // 查找是否已有该单词的结果，如果有则更新
+		  const existingIndex = taskResults.value.findIndex(r => r.content_id === (optionWord.value.content_id || optionWord.value.id))
 		  if (existingIndex >= 0) {
-		    taskResults.value[existingIndex] = sentenceResult
+		    taskResults.value[existingIndex] = wordResult
 		  } else {
-		    taskResults.value.push(sentenceResult)
+		    taskResults.value.push(wordResult)
 		  }
 		}
 	}
 	
 	const progress = computed(() => {
-		   if (sentencesList.value.length>0) {
-			   let percentage =  (progressIndext.value / sentencesList.value.length) * 100;
+		   if (wordsList.value.length>0) {
+			   let percentage =  (progressIndext.value / wordsList.value.length) * 100;
 			   return percentage
 		   } else {
 			  return 0 
 		   }
 	});
 	const progresstext = computed(() => {
-		   if (sentencesList.value.length>0) {
+		   if (wordsList.value.length>0) {
 			   var jdnum = progressIndext.value
-			   var totalnum = sentencesList.value.length
+			   var totalnum = wordsList.value.length
 			   return jdnum+"/"+totalnum
 		   } else {
 			  return "" 
@@ -307,13 +351,13 @@
 	});
 	
 	
-	const optionSentence = computed(() => {
-		return sentencesList.value[currentIndext.value]
+	const optionWord = computed(() => {
+		return wordsList.value[currentIndext.value]
 	});
 	
-	// 监听 optionSentence 变化（推荐）
+	// 监听 optionWord 变化（推荐）
 	  const stopWatch = watch(
-	    () => optionSentence.value,
+	    () => optionWord.value,
 	    (newVal) => {
 	      if (newVal) {
 	        nextTick(() => {
@@ -330,27 +374,11 @@
 
 	
 	const playbuttonclick = () => {
-		if(!optionSentence?.value?.audio_url)return
+		if(!optionWord?.value?.audio_url)return
 		stopCurrentAudio();
 		const audio = uni.createInnerAudioContext();
 		currentAudio.value = audio;
-		audio.src = optionSentence?.value?.audio_url;
-		
-		// 设置时间范围
-		if (optionSentence.value.audio_start != undefined && optionSentence.value.audio_end != undefined) {
-			if (optionSentence.value.audio_start >=0 && optionSentence.value.audio_end >=0) {
-				const startTime = optionSentence.value.audio_start / 1000
-				const endTime = optionSentence.value.audio_end / 1000
-					
-				audio.startTime = startTime
-				// 监听播放进度
-				audio.onTimeUpdate(() => {
-					if (audio.currentTime >= endTime - 0.1) { // 防止浮点误差
-					stopCurrentAudio()  // 处理播放结束
-					}
-				})
-			}
-		}
+		audio.src = optionWord?.value?.audio_url;
 		
 		audio.play();
 	}
@@ -380,16 +408,29 @@
 	const gonavback = async () => {
 		uniExitreminderPopPopup.value = false
 		
-		console.log("句子====>>>sss", sentencesList.value)
-		if (progressIndext.value != sentencesList.value.length) {
-			// 筛选已评分的句子的数组
-			const haveratedSentences = sentencesList.value.filter(
-			  (sentence) => sentence.isHaverated === 1
-			);
-			console.log(haveratedSentences, "句子====>>>", sentencesList.value)
-			if (haveratedSentences.length>0) {
+		console.log("单词====>>>sss", wordsList.value)
+		if (progressIndext.value != wordsList.value.length) {
+			// 筛选已评分的单词的数组
+			const haveratedWords = wordsList.value.filter(
+			  (word) => word.isHaverated === 1
+			).map(word => {
+				console.log('处理单词(退出时):', {
+					word: word.word,
+					id: word.id,
+					content_id: word.content_id,
+					has_content_id: 'content_id' in word,
+					has_id: 'id' in word
+				});
+				return {
+					...word,
+					word: word.word || word.english, // 确保有word字段
+					content_id: word.content_id || word.id // 确保有content_id字段
+				};
+			});
+			console.log(haveratedWords, "单词====>>>", wordsList.value)
+			if (haveratedWords.length>0) {
 				// 直接调用，函数内部会处理任务模式
-				await submitreslutStudyProgressReport(haveratedSentences, false)
+				await submitreslutStudyProgressReport(haveratedWords, false)
 			} 	
 		} 
 		
@@ -405,8 +446,21 @@
 
 	onLoad(async (options) => { 
 		const { bookId,lessonId, taskId: tid} = options;
-		book_id.value = bookId
-		lesson_id.value = lessonId
+		console.log('UnitWordRead onLoad - 接收到的参数:', {
+			bookId,
+			lessonId,
+			taskId: tid,
+			lessonIdType: typeof lessonId
+		});
+		
+		book_id.value = bookId || null
+		lesson_id.value = lessonId ? parseInt(lessonId) : null
+		
+		console.log('UnitWordRead onLoad - 设置后的值:', {
+			book_id: book_id.value,
+			lesson_id: lesson_id.value,
+			lesson_idType: typeof lesson_id.value
+		});
 		
 		// 检查是否为任务模式
 		if (tid) {
@@ -414,7 +468,7 @@
 			taskId.value = tid
 			await loadTaskInfo()
 		}
-		gethistorySentences()
+		gethistoryWords()
 	})
 	
 	// 加载任务信息
@@ -435,29 +489,44 @@
 	  }
 	}
 	
-	const gethistorySentences = async() => {
+	const gethistoryWords = async() => {
 		try {
 			let response;
 			
 			// 如果是任务模式，使用taskId获取进度报告
 			if (isTaskMode.value && taskId.value) {
 				console.log("任务模式：使用taskId获取进度报告", taskId.value);
-				response = await study.getStudyProgressReports(undefined, undefined, 1, taskId.value); // type=1 对应句子
-			} else if (book_id.value && lesson_id.value) {
+				response = await study.getStudyProgressReports(undefined, undefined, 3, taskId.value); // type=3 对应单词发音
+			} else if (book_id.value && lesson_id.value !== null && lesson_id.value !== undefined) {
 				// 传统模式
-				console.log("教材模式：使用book_id和lesson_id获取进度报告");
-				response = await study.getStudyProgressReports(book_id.value, lesson_id.value, 1); // type=1 对应句子
+				console.log("教材模式：使用book_id和lesson_id获取进度报告", {
+					book_id: book_id.value,
+					lesson_id: lesson_id.value,
+					lesson_id_type: typeof lesson_id.value,
+					content_type: 3
+				});
+				response = await study.getStudyProgressReports(book_id.value, lesson_id.value, 3); // type=3 对应单词发音
 			} else {
 				// 如果都没有，返回空数据
 				console.log("缺少参数，跳过进度报告获取");
-				lessonSentences([]);
+				lessonWords([]);
 				return;
 			}
 			
 		    const completeList = response.data
 			console.log('获取到的历史进度数据:', completeList);
+			console.log('历史进度数据详情:', {
+				count: completeList.length,
+				items: completeList.map(item => ({
+					content_id: item.content_id,
+					word: item.word,
+					points: item.points,
+					error_count: item.error_count,
+					json_data: item.json_data ? 'has data' : 'no data'
+				}))
+			});
 			
-			lessonSentences(completeList)
+			lessonWords(completeList)
 			
 		} catch (error) {
 			console.error('获取列表失败:', error);
@@ -470,50 +539,61 @@
 	}
 	
 	
-	const lessonSentences = async (completeList) => {
+	const lessonWords = async (completeList) => {
 	  try {
 		  console.log("开始请求")
 		  let response;
 		  
-		  // 如果是任务模式且有taskId，使用任务API获取句子
+		  // 如果是任务模式且有taskId，使用任务API获取单词
 		  if (isTaskMode.value && taskId.value) {
-			  console.log("任务模式：使用taskId获取句子", taskId.value);
-			  response = await textbook.getTaskSentences(taskId.value);
-		  } else if (book_id.value && lesson_id.value) {
+			  console.log("任务模式：使用taskId获取单词", taskId.value);
+			  response = await textbook.getTaskWords(taskId.value);
+		  } else if (book_id.value && lesson_id.value !== null && lesson_id.value !== undefined) {
 			  // 否则使用传统方式
-			  console.log("教材模式：使用book_id和lesson_id获取句子", book_id.value, lesson_id.value);
-			  response = await textbook.getLessonSentences(book_id.value, lesson_id.value);
+			  console.log("教材模式：使用book_id和lesson_id获取单词", {
+				  book_id: book_id.value,
+				  lesson_id: lesson_id.value,
+				  lesson_id_type: typeof lesson_id.value
+			  });
+			  response = await textbook.getLessonWords(book_id.value, lesson_id.value);
 		  } else {
 			  // 如果都没有，抛出错误
 			  throw new Error("缺少必要参数：需要taskId或者book_id和lesson_id");
 		  }
 		
 		// 创建新数组，并添加 error_count 和 points 字段，默认值为 0
-		const sentences = response.data.sentences.map(sentence => {
-			// 检查是否在历史记录中有这个句子的进度
+		console.log('开始匹配单词进度，单词列表:', response.data.words.map(w => ({ 
+			id: w.id, 
+			word_id: w.word_id,
+			word: w.word 
+		})));
+		const words = response.data.words.map(word => {
+			// 检查是否在历史记录中有这个单词的进度
 			const historyItem = completeList.find(item => {
 				// 添加调试日志
-				if (item.content_id === sentence.id) {
-					console.log(`匹配成功 - content_id: ${item.content_id} === ${sentence.id}`);
+				// 优先通过content_id匹配（支持word_id和id两种情况）
+				if (item.content_id && (item.content_id === word.word_id || item.content_id === word.id)) {
+					console.log(`匹配成功 - content_id: ${item.content_id} === ${word.word_id || word.id}`);
 					return true;
 				}
 				// 后端返回的是content字段，不是word字段
-				if (item.word && item.word === sentence.english) {
-					console.log(`匹配成功 - word: ${item.word} === ${sentence.english}`);
+				if (item.content && item.content === word.word) {
+					console.log(`匹配成功 - content: ${item.content} === ${word.word}`);
 					return true;
 				}
-				if (item.content && item.content === sentence.english) {
-					console.log(`匹配成功 - content: ${item.content} === ${sentence.english}`);
+				if (item.word && item.word === word.word) {
+					console.log(`匹配成功 - word: ${item.word} === ${word.word}`);
 					return true;
 				}
 				return false;
 			});
 			
-			return {
-				...sentence,
-				word: sentence.english,
-				content_id: sentence.id,
-				content_type: 4,
+			const wordObj = {
+				...word,
+				id: word.word_id || word.id, // 确保有id字段
+				english: word.word, // 为了兼容Speech组件
+				content_id: word.word_id || word.id, // 使用word_id作为content_id
+				content_type: 3, // 3表示单词发音
 				error_count: historyItem ? historyItem.error_count : 0,
 				points: historyItem ? historyItem.points : 0,
 				speak_count: historyItem ? (historyItem.speak_count || 0) : 0,
@@ -521,19 +601,38 @@
 				// 保存历史进度数据
 				progress_data: historyItem ? historyItem.json_data : null
 			};
+			
+			console.log('构建单词对象:', {
+				original_id: word.id,
+				original_word_id: word.word_id,
+				final_id: wordObj.id,
+				final_content_id: wordObj.content_id,
+				word: word.word,
+				content_type: wordObj.content_type,
+				hasHistory: !!historyItem,
+				points: wordObj.points,
+				isHaverated: wordObj.isHaverated
+			});
+			
+			return wordObj;
 		});
 		
-		// 根据已完成的句子数量设置当前索引
-		const completedCount = sentences.filter(s => s.isHaverated === 1).length;
-		if (completedCount > 0 && completedCount < sentences.length) {
+		// 根据已完成的单词数量设置当前索引
+		const completedCount = words.filter(w => w.isHaverated === 1).length;
+		if (completedCount > 0 && completedCount < words.length) {
 			currentIndext.value = completedCount;
 			progressIndext.value = currentIndext.value;
 		}
 		
-		sentencesList.value = sentences;
+		// 计算已完成单词的总积分
+		const completedPoints = words.filter(w => w.isHaverated === 1).reduce((sum, w) => sum + (w.points || 0), 0);
+		totalpoints.value = completedPoints;
 		
-		console.log('句子列表已更新，已完成句子数:', completedCount);
+		wordsList.value = words;
+		
+		console.log('单词列表已更新，已完成单词数:', completedCount);
 		console.log('当前索引:', currentIndext.value);
+		console.log('已完成单词总积分:', completedPoints);
 		
 	  } catch (error) {
 	    console.error('获取列表失败:', error);
@@ -550,35 +649,35 @@ const submitTaskResults = async () => {
     uni.showLoading({ title: '提交中...' })
     
     // 计算总体成绩
-    const totalSentences = sentencesList.value.length
-    const completedSentences = taskResults.value.length
-    const averageScore = taskResults.value.reduce((sum, r) => sum + r.auto_score, 0) / completedSentences
+    const totalWords = wordsList.value.length
+    const completedWords = taskResults.value.length
+    const averageScore = taskResults.value.reduce((sum, r) => sum + r.auto_score, 0) / completedWords
     
-    // 获取第一个content（句子跟读任务通常只有一个content）
+    // 获取第一个content（单词跟读任务通常只有一个content）
     const content = taskInfo.value.contents[0]
     
     if (content) {
-      // 构建提交数据，包含所有句子的结果
+      // 构建提交数据，包含所有单词的结果
       const submissionData = {
         content_id: content.id,
         response: JSON.stringify({
           student_name: uni.getStorageSync('nickname') || uni.getStorageSync('userName') || '未知学生',
-          task_type: 'sentence_repeat',
+          task_type: 'word_pronunciation',
           task_title: taskInfo.value.title,
           results: taskResults.value.map(r => {
-            const sentence = sentencesList.value.find(s => (s.content_id || s.id) === r.content_id)
+            const word = wordsList.value.find(w => (w.content_id || w.id) === r.content_id)
             return {
-              sentence_id: r.content_id,
-              sentence: sentence?.english || '',
-              chinese: sentence?.chinese || '',
+              word_id: r.content_id,
+              word: word?.word || '',
+              chinese: word?.chinese || '',
               pronunciation_score: r.auto_score,
               is_correct: r.is_correct,
               attempts: r.attempt_count
             }
           }),
           summary: {
-            total: totalSentences,
-            completed: completedSentences,
+            total: totalWords,
+            completed: completedWords,
             averageScore: averageScore,
             completedAt: new Date().toISOString()
           }
@@ -595,7 +694,7 @@ const submitTaskResults = async () => {
     
     // 跳转到任务结果页面
     uni.redirectTo({
-      url: `/pages/task/result?taskId=${taskId.value}&score=${averageScore.toFixed(0)}&correct=${taskResults.value.filter(r => r.is_correct).length}&total=${totalSentences}`,
+      url: `/pages/task/result?taskId=${taskId.value}&score=${averageScore.toFixed(0)}&correct=${taskResults.value.filter(r => r.is_correct).length}&total=${totalWords}`,
       success: () => {
         console.log('跳转成功')
       },
@@ -620,14 +719,27 @@ const submitTaskResults = async () => {
 const saveTaskProgress = async () => {
   console.log('保存任务进度:', taskProgress.value)
   
-  // 筛选已评分的句子
-  const haveratedSentences = sentencesList.value.filter(
-    (sentence) => sentence.isHaverated === 1
-  );
+  // 筛选已评分的单词
+  const haveratedWords = wordsList.value.filter(
+    (word) => word.isHaverated === 1
+  ).map(word => {
+	  console.log('处理单词(任务进度):', {
+		  word: word.word,
+		  id: word.id,
+		  content_id: word.content_id,
+		  has_content_id: 'content_id' in word,
+		  has_id: 'id' in word
+	  });
+	  return {
+		  ...word,
+		  word: word.word || word.english, // 确保有word字段
+		  content_id: word.content_id || word.id // 确保有content_id字段
+	  };
+  });
   
-  if (haveratedSentences.length > 0) {
+  if (haveratedWords.length > 0) {
     // 调用进度保存方法，传入false表示未完成
-    await submitreslutStudyProgressReport(haveratedSentences, false)
+    await submitreslutStudyProgressReport(haveratedWords, false)
   }
 }
 	
@@ -696,7 +808,7 @@ const saveTaskProgress = async () => {
 			margin: 20rpx;
 			text-align: center;
 		} 
-		.sentence-item {
+		.word-item {
 			width: calc(100% - 40rpx);
 			margin-left: 20rpx;
 			margin-top: 50rpx;
@@ -707,30 +819,32 @@ const saveTaskProgress = async () => {
 			height: calc(100% - 180rpx);
 			display: flex;
 			flex-direction: column;
-			.sentence-top {
+			.word-top {
 				margin-top: 50rpx;
 				margin-bottom: 0rpx;
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				.sentence-left {
+				.word-left {
 					// width: 70%;
 					margin-left: 20rpx;
 					margin-right: 30rpx;
 					.english {
 						color: #05c160;
-						font-size: 45rpx;
+						font-size: 60rpx;
+						font-weight: bold;
 					}
 					.chinese {
 						font-size: 40rpx;
 						margin-top: 30rpx;
+						text-align: center;
 					}
 				}
 				.audio-icon {
 					margin-right: 30rpx;
 				}
 			}
-			.sentence-bottom {
+			.word-bottom {
 				margin-top: 80rpx;
 				position: relative;
 			}

@@ -15,6 +15,19 @@ const request = (
   showLoading?: boolean
 ): Promise<any> => {
   let _url = __config.basePath + url;
+  
+  // 清理空字符串参数（对于 GET 请求特别重要）
+  if (method === "GET" && data) {
+    const cleanedData: any = {};
+    for (const key in data) {
+      // 只添加非空值（排除空字符串、null、undefined）
+      if (data[key] !== '' && data[key] !== null && data[key] !== undefined) {
+        cleanedData[key] = data[key];
+      }
+    }
+    data = cleanedData;
+  }
+  
   return new Promise((resolve, reject) => {
     if (showLoading) {
       uni.showLoading();

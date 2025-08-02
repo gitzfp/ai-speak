@@ -111,6 +111,15 @@
 					  单词听写
 					</view>
 					<view class="function-button"
+					  style="background-color: #E5FEF1"
+					 @tap="wordRead(chapter)">
+					  <image
+					    class="button-icon"
+					    src="@/assets/icons/word.svg"
+					  ></image>
+					  单词跟读
+					</view>
+					<view class="function-button"
 					 style="background-color: #E5FEF1"
 					@click="sentenceFollow(chapter)">
 					    <image class="button-icon" src="@/assets/icons/repeat.svg"></image>
@@ -158,6 +167,7 @@ import taskRequest from "@/api/task";
 
 import selectIcon from '@/assets/icons/complete_h.svg';
 import unselectIcon from '@/assets/icons/go_h.svg';
+import { isFeatureEnabled, loadFeatures } from "@/config/features";
   
 
 // 引入 Icon 组件
@@ -218,6 +228,12 @@ const taskTypes = ref([
     description: '练习本单元发音'
   },
   { 
+    value: 'word_pronunciation', 
+    label: '单词跟读', 
+    icon: '🗣️',
+    description: '跟读本单元单词发音'
+  },
+  { 
     value: 'dictation', 
     label: '单词听写', 
     icon: '✍️',
@@ -263,7 +279,27 @@ const gradeTerm = computed(() => {
 });
 
 // 组件挂载时获取数据
-onMounted(() => {
+onMounted(async () => {
+	// 加载功能配置
+	await loadFeatures();
+	
+	// 检查教材模块是否启用
+	if (!isFeatureEnabled('showTextbookModule')) {
+		// 如果教材模块被禁用，跳转到任务页面
+		uni.showToast({
+			title: '教材功能暂未开放',
+			icon: 'none',
+			duration: 2000
+		});
+		
+		// 跳转到任务页面
+		setTimeout(() => {
+			uni.switchTab({
+				url: '/pages/task/index'
+			});
+		}, 1500);
+		return;
+	}
 	const systemInfo = uni.getSystemInfoSync();
 	statusBarHeight.value = systemInfo.statusBarHeight || 0;
 	customBarHeight.value = (systemInfo.statusBarHeight || 0) + 44; // 44 是导航栏的默认高度
@@ -549,6 +585,12 @@ const wordListenWrite = (chapter) => {
 
 };
 
+const wordRead = (chapter) => {
+	uni.navigateTo({
+	  url: `/pages/textbook/UnitWordRead?bookId=${book.value.book_id}&lessonId=${chapter.lesson_id}`,
+	});
+};
+
 const eliminationGame = () => {
   console.log("Elimination Game");
 };
@@ -740,6 +782,21 @@ const prepareTaskContents = () => {
       ref_lesson_id: selectedChapter.value.lesson_id,
       selected_word_ids: [],
       selected_sentence_ids: [], // 自动模式会获取该课程的所有句子
+      points: 100,
+      meta_data: {
+        lesson_title: selectedChapter.value.title
+      },
+      order_num: 1
+    });
+  } else if (selectedTaskType.value.value === 'word_pronunciation') {
+    // 单词跟读任务 - 使用自动模式获取所有单词
+    contents.push({
+      content_type: selectedTaskType.value.value,
+      generate_mode: 'auto', // 自动模式会获取该课程的所有单词
+      ref_book_id: String(book.value.book_id),
+      ref_lesson_id: selectedChapter.value.lesson_id,
+      selected_word_ids: [], // 自动模式会获取该课程的所有单词
+      selected_sentence_ids: [],
       points: 100,
       meta_data: {
         lesson_title: selectedChapter.value.title

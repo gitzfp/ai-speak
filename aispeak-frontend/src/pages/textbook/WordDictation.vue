@@ -93,7 +93,13 @@
 	<view class="bottomcontent">
 		<view @click="reportclick" v-if="isReportbtnreveal" style="background: #4CAF50" class="inspect-btn">生成报告</view>
 	    <view v-else @click="inspectclick" :style="isInspect?'background: #4CAF50;':'background: gray;'" class="inspect-btn">检查</view>
-	</view>		
+	</view>
+	
+	<UnitExitreminderPop
+		v-if="uniExitreminderPopPopup" 
+		@keepdoing="keepdoing"
+		@gonavback="gonavback"
+	/>
   </view>
 </template>
 
@@ -107,10 +113,11 @@ import dagou from '@/assets/icons/word_dagou.svg';
 import accountRequest from "@/api/account"
 import study from '@/api/study';
 import taskRequest from '@/api/task';
+import UnitExitreminderPop from './components/UnitExitreminderPop.vue'
 // 获取设备的安全区域高度
 const statusBarHeight = ref(0);
 const customBarHeight = ref(0);
-
+const uniExitreminderPopPopup = ref(false);
 
 // 动画数据
 const animationData = ref(null);
@@ -126,13 +133,38 @@ const createAnimation = () => {
 
 // 这里可以定义一些响应式数据或逻辑
 	const handleBackPage = () => {
-		// 任务模式特殊处理
-		if (isTaskMode.value) {
-		  if (handleTaskBackPress()) {
-		    return
-		  }
+		// 检查是否有进行中的练习（无论是任务模式还是教材模式）
+		if (allWords.value.length > 0 && currentPage.value < allWords.value.length) {
+			// 显示统一的退出弹窗
+			uniExitreminderPopPopup.value = true
+		} else {
+			// 如果没有进行中的练习，直接返回
+			performBackNavigation()
 		}
-		
+	}
+	
+	const keepdoing = () => {
+		uniExitreminderPopPopup.value = false
+	}
+	
+	const gonavback = async () => {
+		uniExitreminderPopPopup.value = false
+		console.log('用户确认退出，开始保存进度')
+		try {
+			// 保存进度
+			await saveProgress()
+			console.log('进度保存完成，准备返回')
+			// 执行返回
+			performBackNavigation()
+		} catch (error) {
+			console.error('保存进度失败:', error)
+			// 即使保存失败也允许返回
+			performBackNavigation()
+		}
+	}
+	
+	// 执行返回操作
+	const performBackNavigation = () => {
 		if (isreport.value) {
 			uni.navigateBack({
 			    delta: 2, // 返回两层
@@ -142,12 +174,10 @@ const createAnimation = () => {
 			    fail: (err) => {
 			      console.error('返回失败', err);
 			    },
-			  });
+			});
 		} else {
 			uni.navigateBack()
 		}
-		
-	  
 	}
 
 // 键盘字母
@@ -197,6 +227,7 @@ const word_mode = ref(0)
 const isTaskMode = ref(false)
 const taskId = ref('')
 const taskInfo = ref(null)
+const historyProgressData = ref([]) // 历史进度数据
 const taskProgress = ref({
   startTime: null,
   endTime: null,
@@ -222,6 +253,11 @@ const taskResults = ref([])
         const {bookId,sessionKey,learningreportWords,wordmode,lessonId,taskId: tid} = options
 		book_id.value = bookId
 		
+		// 无论是否有wordmode，都要设置lesson_id
+		if (lessonId) {
+			lesson_id.value = lessonId
+		}
+		
 		// 检查是否为任务模式
 		if (tid) {
 			isTaskMode.value = true
@@ -229,9 +265,30 @@ const taskResults = ref([])
 			await loadTaskInfo()
 		}
 		
+		// 获取历史进度（任务模式和教材模式都需要）
+		await gethistoryWords()
+		
+		// 如果是任务模式，从任务信息中获取单词
+		if (isTaskMode.value && taskInfo.value) {
+			const selectedWordIds = [];
+			// 从任务内容中提取所有选中的单词ID
+			if (taskInfo.value.contents && taskInfo.value.contents.length > 0) {
+				taskInfo.value.contents.forEach(content => {
+					if (content.selected_word_ids) {
+						selectedWordIds.push(...content.selected_word_ids);
+					}
+				});
+			}
+			
+			if (selectedWordIds.length > 0) {
+				// 使用单词ID获取单词详情
+				await detailWords(book_id.value || taskInfo.value.textbook_id, selectedWordIds);
+			}
+			return; // 任务模式处理完成，直接返回
+		}
+		
 		if (wordmode) { 
 			word_mode.value = wordmode
-			lesson_id.value = lessonId
 		}
 		
 		if (learningreportWords) { //说明说从 被单词那边进来 就是艾比记忆法 
@@ -263,10 +320,17 @@ const taskResults = ref([])
 			// 获取数据
 			uni.getStorage({
 			key: sessionKey,
-			success: function (res) {
+			success: async function (res) {
 			    const words = JSON.parse(res.data);
 			    console.log('获取到的数据:', words);
-			    detailWords(bookId, words)
+			    
+			    // 先获取历史进度（如果之前没有获取）
+			    if (historyProgressData.value.length === 0) {
+			        await gethistoryWords();
+			    }
+			    
+			    // 然后加载单词详情
+			    await detailWords(bookId, words)
 				
 				//获取生词本数组
 				collectsGetnotebook()
@@ -300,21 +364,68 @@ const loadTaskInfo = async () => {
   }
 }
 
+// 获取历史进度
+const gethistoryWords = async () => {
+  try {
+    let response;
+    
+    // 如果是任务模式，使用taskId获取进度报告
+    if (isTaskMode.value && taskId.value) {
+      console.log("任务模式：使用taskId获取进度报告", taskId.value);
+      response = await study.getStudyProgressReports(undefined, undefined, 3, taskId.value); // type=3 对应单词听写
+    } else if (book_id.value && lesson_id.value) {
+      // 传统模式
+      console.log("教材模式：使用book_id和lesson_id获取进度报告");
+      response = await study.getStudyProgressReports(book_id.value, lesson_id.value, 3); // type=3 对应单词听写
+    } else {
+      // 如果都没有，返回
+      console.log("缺少参数，跳过进度报告获取");
+      return;
+    }
+    
+    // 保存历史进度数据，在加载单词列表后使用
+    historyProgressData.value = response.data || [];
+    console.log('获取到的历史进度数据:', historyProgressData.value);
+    
+  } catch (error) {
+    console.error('获取历史进度失败:', error);
+    // 不显示错误提示，允许继续使用
+    historyProgressData.value = [];
+  }
+}
+
 const detailWords = async (bookId, words) => {
         try {
             const response = await textbook.getWordsDetail(bookId, words);
             console.log("Response:", response);
 			
 			//allWords 数组，添加 正确:correct_count  和 错误:incorrect_count 字段
-			allWords.value = response.data.words.map(word => ({
-			  ...word,
-			  content_id:word.word_id,
-			  content_type:3,
-			  error_count: 0,
-			  points: 0,
-			  speak_count:0,
-			  voice_file:word.sound_path,
-			}));
+			allWords.value = response.data.words.map(word => {
+			  // 查找历史进度
+			  const historyItem = historyProgressData.value.find(item => 
+			    item.content_id === word.word_id || 
+			    (item.content && item.content === word.word)
+			  );
+			  
+			  return {
+			    ...word,
+			    content_id: word.word_id,
+			    content_type: 3,
+			    error_count: historyItem ? historyItem.error_count : 0,
+			    points: historyItem ? historyItem.points : 0,
+			    speak_count: historyItem ? (historyItem.speak_count || 0) : 0,
+			    voice_file: word.sound_path,
+			    // 如果有历史记录，标记为已完成
+			    isCompleted: historyItem ? true : false
+			  };
+			});
+			
+			// 根据历史进度设置当前页码
+			const completedCount = allWords.value.filter(w => w.isCompleted).length;
+			if (completedCount > 0 && completedCount < allWords.value.length) {
+			  currentPage.value = completedCount; // 跳转到下一个未完成的单词
+			  console.log('根据历史进度设置当前页码:', currentPage.value);
+			}
 			  
 			// 如果是任务模式，设置总题目数
 			if (isTaskMode.value) {
@@ -843,30 +954,61 @@ const submitTaskResults = async () => {
   }
 }
 
-// 任务模式下的返回处理
-const handleTaskBackPress = () => {
-  if (isTaskMode.value && taskProgress.value.status === 'in_progress') {
-    uni.showModal({
-      title: '确认退出',
-      content: '退出将保存当前进度，是否继续？',
-      success: (res) => {
-        if (res.confirm) {
-          // 保存进度
-          saveTaskProgress()
-          uni.navigateBack()
-        }
+// 统一的进度保存函数
+const saveProgress = async () => {
+  console.log('开始保存进度')
+  console.log('当前模式:', isTaskMode.value ? '任务模式' : '教材模式')
+  console.log('当前页码:', currentPage.value)
+  console.log('所有单词数:', allWords.value.length)
+  
+  // 如果没有单词数据，直接返回
+  if (!allWords.value || allWords.value.length === 0) {
+    console.log('没有单词数据，跳过保存')
+    return
+  }
+  
+  // 筛选已完成的单词（当前页及之前的所有单词）
+  const completedWords = allWords.value.filter((word, index) => {
+    return index < currentPage.value
+  });
+  
+  console.log('已完成单词数:', completedWords.length);
+  
+  if (completedWords.length > 0) {
+    // 构建进度报告数据
+    const reports = completedWords.map((word, index) => {
+      const result = taskResults.value.find(r => r.content_id === word.content_id)
+      const isCorrect = result ? result.is_correct : false
+      
+      return {
+        word: word.word,
+        content_id: word.content_id,
+        content_type: 3, // 单词听写类型
+        error_count: isCorrect ? 0 : 1,
+        points: isCorrect ? 2 : 1,
+        speak_count: 1,
+        json_data: null
       }
     })
-    return true
+    
+    console.log('构建的进度报告:', reports)
+    
+    // 根据模式提交进度
+    if (isTaskMode.value && taskId.value) {
+      console.log('提交任务模式进度')
+      const result = await study.submitStudyProgressReport(undefined, undefined, reports, 0, taskId.value)
+      console.log('任务模式进度提交结果:', result)
+    } else if (book_id.value && lesson_id.value) {
+      console.log('提交教材模式进度')
+      const result = await study.submitStudyProgressReport(book_id.value, lesson_id.value, reports, 0)
+      console.log('教材模式进度提交结果:', result)
+    }
+  } else {
+    console.log('没有已完成的单词，跳过进度保存')
   }
-  return false
 }
 
-// 保存任务进度
-const saveTaskProgress = async () => {
-  // 这里可以实现保存进度到服务器的逻辑
-  console.log('保存任务进度:', taskProgress.value)
-}
+// 注：旧的 handleTaskBackPress 和 saveTaskProgress 函数已被统一的 saveProgress 函数替代
 
 </script>
 

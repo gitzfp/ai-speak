@@ -76,5 +76,10 @@ export default {
   },
   listSubmissions: (params: any) => {
     return request("/submissions", "GET", params);
+  },
+  
+  // 内容搜索
+  searchContent: (data: any) => {
+    return request("/search-content", "POST", data);
   }
 };

@@ -308,17 +308,16 @@
 	const optionitemclick = (num) => {
 		const targetWord = planWordsWithCounts.value.find(word => word.word_id === optionWord.value.word_id);
 		targetWord.isHaverated=1
-	  if (num==1) { //答对了
-		isRight.value = true
-		optionWord.value.points = 1;
-		totalpoints.value += 1; 
-	  } else {
-		  
-		  targetWord.error_count += 1;
-		totalerrornum.value += 1
-		optionWord.value.error_count += 1
-		isRight.value = false	
-	  }
+		if (num==1) { //答对了
+			isRight.value = true
+			optionWord.value.points = 1;
+			totalpoints.value += 1; 
+		} else {
+			targetWord.error_count += 1;
+			totalerrornum.value += 1
+			optionWord.value.error_count += 1
+			isRight.value = false	
+		}
 	  
 	  // 如果是任务模式，记录结果
 	  if (isTaskMode.value) {
@@ -377,6 +376,7 @@
 					wordDisplayref.value.redefineSettings()
 					if (planWordTwoindext.value==(planWordsTwoList.value.length-1)) {
 						planWordmode.value = 2
+						planWordTwoindext.value++;
 						
 						setTimeout(() => {
 						    if (unitwordspellref.value) {
@@ -384,14 +384,13 @@
 						    }	
 						}, 500);
 					} else {
+						planWordTwoindext.value++;
 						setTimeout(() => {
 						      if (wordDisplayref.value) {
 						        wordDisplayref.value.phonicsbegins();
 						      }		
 						}, 500);
-						
 					}
-					planWordTwoindext.value++;
 				} else { //模式=2  相当于模式3
 					unitwordspellref.value.stopCurrentAudio()
 					if (planWordThreeindext.value==(planWordsThreeList.value.length-1)) {
@@ -507,22 +506,16 @@
 		// }
 	});
 	
+	
 	// 这里可以定义一些响应式数据或逻辑
 	const handleBackPage = () => {
-		// 任务模式特殊处理
-		if (isTaskMode.value) {
-		  if (handleTaskBackPress()) {
-		    return
-		  }
-		}
-		
 		stopCurrentAudio()
 		uniExitreminderPopPopup.value = true
 	}
 	const keepdoing = () => {
 		uniExitreminderPopPopup.value = false
 	}
-	const gonavback = () => {
+	const gonavback = async () => {
 		uniExitreminderPopPopup.value = false
 		
 		
@@ -541,12 +534,23 @@
 				totalpoints.value = totalpoints.value*2	
 			}
 			
-			submitreslutStudyProgressReport(book_id.value,lesson_id.value,filteredWordsList,false)
+			// 根据模式调用不同的保存方法
+			if (isTaskMode.value) {
+				// 任务模式下保存进度
+				await saveTaskProgress(filteredWordsList)
+			} else {
+				// 教材模式下保存进度
+				await submitreslutStudyProgressReport(book_id.value,lesson_id.value,filteredWordsList,false)
+			}
 			
 		} else {
-			uni.switchTab({
-    			url: "/pages/textbook/index3",
-  			})
+			if (isTaskMode.value) {
+				uni.navigateBack()
+			} else {
+				uni.switchTab({
+					url: "/pages/textbook/index3",
+				})
+			}
 		}
 	
 	}
@@ -595,18 +599,23 @@
 	
 	const acquireStudyProgressReports = async(words) => {
 		try {
-			const response = await study.getStudyProgressReports(book_id.value, lesson_id.value);
+			let response;
 			
-		    const completeList = response.data
+			// 根据模式获取进度报告
+			if (isTaskMode.value && taskId.value) {
+				response = await study.getStudyProgressReports(undefined, undefined, undefined, taskId.value);
+			} else {
+				response = await study.getStudyProgressReports(book_id.value, lesson_id.value);
+			}
+			
+		    const completeList = response.data || []
 			
 			detailWords(book_id.value,words,completeList)
 			
 		} catch (error) {
 			console.error('获取列表失败:', error);
-			uni.showToast({
-			  title: '获取列表失败',
-			  icon: 'none',
-			});
+			// 如果获取失败，继续使用空列表
+			detailWords(book_id.value,words,[])
 	  }
 		
 	}
@@ -902,29 +911,23 @@ const submitTaskResults = async () => {
   }
 }
 
-// 任务模式下的返回处理
-const handleTaskBackPress = () => {
-  if (isTaskMode.value && taskProgress.value.status === 'in_progress') {
-    uni.showModal({
-      title: '确认退出',
-      content: '退出将保存当前进度，是否继续？',
-      success: (res) => {
-        if (res.confirm) {
-          // 保存进度
-          saveTaskProgress()
-          uni.navigateBack()
-        }
-      }
-    })
-    return true
-  }
-  return false
-}
 
 // 保存任务进度
-const saveTaskProgress = async () => {
-  // 这里可以实现保存进度到服务器的逻辑
+const saveTaskProgress = async (filteredWordsList) => {
   console.log('保存任务进度:', taskProgress.value)
+  
+  if (filteredWordsList && filteredWordsList.length > 0) {
+    // 任务模式下使用 taskId 保存进度
+    await study.submitStudyProgressReport(undefined, undefined, filteredWordsList, 0, taskId.value)
+    
+    // 更新首页积分
+    uni.$emit('refrespoints', { action: 'updatepoints' });
+    
+    // 返回上一页
+    uni.navigateBack()
+  } else {
+    uni.navigateBack()
+  }
 }
 	
 </script>

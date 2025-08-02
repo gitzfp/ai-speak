@@ -9,12 +9,15 @@ from app.db.task_entities import (
     Task, TaskContent, Class, ClassStudent, ClassTeacher,
     Submission, TaskType, TaskStatus, SubmissionStatus
 )
+from app.db.words_entities import Word
+from app.db.textbook_entities import LessonSentenceEntity
 from app.models.task_models import (
     TaskCreate, TaskUpdate, TaskResponse, TaskListResponse,
     SubmissionCreate, SubmissionUpdate, SubmissionGrade, SubmissionResponse, SubmissionListResponse,
     ClassCreate, ClassUpdate, ClassResponse,
     ClassStudentAdd, ClassTeacherAdd,
-    TaskQueryParams, SubmissionQueryParams
+    TaskQueryParams, SubmissionQueryParams,
+    ContentSearchRequest, ContentSearchType, WordSearchResult, SentenceSearchResult
 )
 from app.core.exceptions import UserAccessDeniedException
 from app.core.logging import logging
@@ -595,8 +598,20 @@ class TaskService:
             if not db_task:
                 return False
             
+            # 设置删除时间
             db_task.deleted_at = datetime.utcnow()
+            
+            # 同时删除相关的任务内容
+            self.db.query(TaskContent).filter(
+                TaskContent.task_id == task_id,
+                TaskContent.deleted_at.is_(None)
+            ).update({"deleted_at": datetime.utcnow()})
+            
             self.db.commit()
+            
+            # 记录日志
+            logging.info(f"任务 {task_id} 已被软删除，deleted_at: {db_task.deleted_at}")
+            
             return True
         except Exception as e:
             self.db.rollback()
@@ -605,12 +620,16 @@ class TaskService:
     
     async def list_tasks(self, params: TaskQueryParams) -> TaskListResponse:
         """获取任务列表"""
+        # 记录请求参数
+        logging.info(f"获取任务列表 - 参数: teacher_id={params.teacher_id}, student_id={params.student_id}, class_id={params.class_id}")
+        
         query = self.db.query(Task).filter(Task.deleted_at.is_(None))
         
         # 添加过滤条件
         if params.teacher_id:
             # 教师查看自己创建的任务
             query = query.filter(Task.teacher_id == params.teacher_id)
+            logging.info(f"教师 {params.teacher_id} 查询任务")
         elif params.student_id:
             # 学生只能查看已加入班级的任务
             # 先获取学生加入的班级ID列表
@@ -621,6 +640,7 @@ class TaskService:
             
             # 只查询这些班级的任务
             query = query.filter(Task.class_id.in_(student_class_ids))
+            logging.info(f"学生 {params.student_id} 查询任务")
             
             # 如果指定了特定班级，进一步过滤
             if params.class_id:
@@ -645,6 +665,11 @@ class TaskService:
         # 分页
         offset = (params.page - 1) * params.page_size
         tasks = query.order_by(desc(Task.created_at)).offset(offset).limit(params.page_size).all()
+        
+        # 调试日志 - 显示查询到的任务
+        logging.info(f"查询到 {len(tasks)} 个任务，总数: {total}")
+        for task in tasks:
+            logging.info(f"任务ID: {task.id}, 标题: {task.title}, deleted_at: {task.deleted_at}")
         
         # 为每个任务添加提交统计
         task_responses = []
@@ -850,3 +875,47 @@ class TaskService:
             page=params.page,
             page_size=params.page_size
         )
+    
+    async def search_content(self, search_request: ContentSearchRequest) -> List:
+        """搜索单词或句子内容"""
+        keyword = search_request.keyword.strip()
+        limit = search_request.limit or 50
+        
+        if search_request.type == ContentSearchType.WORD:
+            # 搜索单词
+            words = self.db.query(Word).filter(
+                or_(
+                    Word.word.ilike(f"%{keyword}%"),
+                    Word.chinese.ilike(f"%{keyword}%")
+                )
+            ).limit(limit).all()
+            
+            # 转换为响应模型
+            results = []
+            for word in words:
+                results.append(WordSearchResult(
+                    id=word.id,  # 使用word.id作为主键
+                    word=word.word,
+                    chinese_meaning=word.chinese,
+                    phonetic=word.phonetic
+                ))
+            return results
+            
+        else:
+            # 搜索句子
+            sentences = self.db.query(LessonSentenceEntity).filter(
+                or_(
+                    LessonSentenceEntity.english.ilike(f"%{keyword}%"),
+                    LessonSentenceEntity.chinese.ilike(f"%{keyword}%")
+                )
+            ).limit(limit).all()
+            
+            # 转换为响应模型
+            results = []
+            for sentence in sentences:
+                results.append(SentenceSearchResult(
+                    id=sentence.id,
+                    english=sentence.english,
+                    chinese=sentence.chinese
+                ))
+            return results

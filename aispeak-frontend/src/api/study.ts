@@ -101,8 +101,8 @@ export default {
   
 	// 提交学习进度报告
 	  submitStudyProgressReport(
-	    bookId: string,
-	    lessonId: number,
+	    bookId: string | undefined,
+	    lessonId: number | undefined,
 	    reports: Array<{
 	      word: string;
 		  content_id: number;
@@ -117,12 +117,20 @@ export default {
 		  audio_start?: number; // 改为可选的 int 字段
 		  audio_end?: number; // 改为可选的 int 字段
 	    }>,
-	    statusNum?: number // 新增 statusNum 参数，可选
+	    statusNum?: number, // 新增 statusNum 参数，可选
+	    taskId?: number // 新增 taskId 参数
 	  ) {
-	    return request("/study/progress-report", "POST", {
-	      book_id: bookId,
-	      lesson_id: lessonId,
-	      reports: reports.map(report => ({
+		const params: any = {};
+		
+		// 如果提供了bookId和lessonId，添加到参数中
+		if (bookId) params.book_id = bookId;
+		if (lessonId !== undefined) params.lesson_id = lessonId;
+		
+		// 如果提供了taskId，添加到参数中
+		if (taskId !== undefined) params.task_id = taskId;
+		
+		// 添加报告数据和状态
+		params.reports = reports.map(report => ({
 	        word: report.word,
 	        content_type: report.content_type,
 			content_id: report.content_id,
@@ -135,9 +143,11 @@ export default {
 			audio_url: report.audio_url || null, // 默认值为 null
 			audio_start: report.audio_start || null, // 默认值为 null
 			audio_end: report.audio_end || null, // 默认值为 null
-	      })),
-	      statusNum: statusNum ,
-	    });
+	    }));
+		
+		params.statusNum = statusNum;
+		
+		return request("/study/progress-report", "POST", params);
 	  },
 	  
 	  
@@ -151,12 +161,19 @@ export default {
 		
 		
 		// 获取 content_type 为 0, 1, 2 的学习进度报告
-		getStudyProgressReports(bookId: string, lessonId: number,contentType: number = 0) {
-		  return request("/study/progress-reports", "GET", {
-			book_id: bookId,
-			lesson_id: lessonId,
+		getStudyProgressReports(bookId?: string, lessonId?: number, contentType: number = 0, taskId?: number) {
+		  const params: any = {
 			content_type: contentType // 传递content_type参数
-		  });
+		  };
+		  
+		  // 如果提供了bookId和lessonId，使用它们
+		  if (bookId && bookId !== '') params.book_id = bookId;
+		  if (lessonId !== undefined && lessonId !== null && lessonId !== '') params.lesson_id = lessonId;
+		  
+		  // 如果提供了taskId，使用它
+		  if (taskId !== undefined && taskId !== null) params.task_id = taskId;
+		  
+		  return request("/study/progress-reports", "GET", params);
 		},
   
 };

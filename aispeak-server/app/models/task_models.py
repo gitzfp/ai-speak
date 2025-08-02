@@ -283,3 +283,34 @@ class SubmissionListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+# 内容搜索相关模型
+class ContentSearchType(str, Enum):
+    WORD = "word"
+    SENTENCE = "sentence"
+
+
+class ContentSearchRequest(BaseModel):
+    keyword: str = Field(..., min_length=1, description="搜索关键词")
+    type: ContentSearchType = Field(..., description="搜索类型：word或sentence")
+    limit: Optional[int] = Field(50, gt=0, le=100, description="返回结果数量限制")
+
+
+class WordSearchResult(BaseModel):
+    id: int
+    word: str
+    chinese_meaning: Optional[str] = None
+    phonetic: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class SentenceSearchResult(BaseModel):
+    id: int
+    english: str
+    chinese: Optional[str] = None
+    
+    class Config:
+        from_attributes = True

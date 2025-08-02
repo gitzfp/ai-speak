@@ -47,10 +47,11 @@ export default {
 
   // 获取课程单元的单词列表
   getWordsDetail(bookId: string, words: string[]) {
-    const url = `/textbook/${bookId}/words/details`;
+    // 如果bookId为空，使用不需要bookId的API
+    const url = bookId ? `/textbook/${bookId}/words/details` : `/words/details`;
     // 打印请求 URL 和请求体，方便调试
     // console.log("请求URL:", url);
-    // console.log("请求体:", requestBody);
+    // console.log("请求体:", { words });
 
     return request(url, "POST", { words }); // 传递 words 作为请求体
    },
@@ -69,6 +70,21 @@ export default {
     getSentencesDetail(bookId: string, sentenceIds: number[]) {
       const url = `/textbook/${bookId}/sentences/details`;
       return request(url, "POST", { sentence_ids: sentenceIds });
+    },
+
+    // 获取句子详情（不需要bookId，用于任务跟读等场景）
+    getSentencesDetailByIds(sentenceIds: number[]) {
+      return request("/sentences/details", "POST", { sentence_ids: sentenceIds });
+    },
+
+    // 根据任务ID获取句子（推荐使用）
+    getTaskSentences(taskId: number) {
+      return request(`/task/${taskId}/sentences`, "GET");
+    },
+
+    // 根据任务ID获取单词（用于单词跟读任务）
+    getTaskWords(taskId: number) {
+      return request(`/task/${taskId}/words`, "GET");
     },
 
 };

@@ -105,8 +105,90 @@
             </view>
           </view>
 
+          <!-- 内容输入方式选择（只有教材模块开启时才显示） -->
+          <view v-if="showTextbookModule" class="form-group">
+            <text class="form-label">内容来源 *</text>
+            <view class="input-mode-tabs">
+              <view 
+                class="mode-tab"
+                :class="{ active: inputMode === 'search' }"
+                @click="inputMode = 'search'"
+              >
+                <text class="mode-icon">🔍</text>
+                <text>搜索内容</text>
+              </view>
+              <view 
+                class="mode-tab"
+                :class="{ active: inputMode === 'textbook' }"
+                @click="inputMode = 'textbook'"
+              >
+                <text class="mode-icon">📚</text>
+                <text>选择教材</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 关键词搜索区域 -->
+          <view v-if="inputMode === 'search' || !showTextbookModule" class="form-group">
+            <text class="form-label">搜索{{ needsWordContent ? '单词' : '句子' }}</text>
+            <view class="search-container">
+              <view class="search-input-wrapper">
+                <input
+                  v-model="searchKeyword"
+                  class="search-input"
+                  :placeholder="`输入关键词搜索${needsWordContent ? '单词' : '句子'}`"
+                  @confirm="performSearch"
+                />
+                <view v-if="searchLoading" class="search-loading-icon">
+                  <text>⏳</text>
+                </view>
+              </view>
+              
+              <!-- 搜索提示 -->
+              <view v-if="searchKeyword && searchResults.length === 0 && !searchLoading" class="search-empty">
+                <text class="empty-icon">🔍</text>
+                <text class="empty-text">没有找到"{{ searchKeyword }}"相关的{{ needsWordContent ? '单词' : '句子' }}</text>
+                <text class="empty-hint">请尝试其他关键词</text>
+              </view>
+              
+              <!-- 搜索结果 -->
+              <view v-if="searchResults.length > 0" class="search-results">
+                <text class="results-title">搜索结果</text>
+                <scroll-view class="results-scroll" scroll-y>
+                  <view 
+                    v-for="(item, index) in searchResults" 
+                    :key="index"
+                    class="result-item"
+                    @click="toggleItemSelection(item)"
+                  >
+                    <view class="result-content">
+                      <text class="result-main">{{ needsWordContent ? item.word : item.english }}</text>
+                      <text class="result-sub">{{ needsWordContent ? item.chinese_meaning : item.chinese }}</text>
+                    </view>
+                    <view v-if="isItemSelected(item)" class="selected-mark">✓</view>
+                  </view>
+                </scroll-view>
+              </view>
+              
+              <!-- 已选择的内容 -->
+              <view v-if="selectedItems.length > 0" class="selected-section">
+                <text class="selected-title">已选择 ({{ selectedItems.length }})</text>
+                <view class="selected-list">
+                  <view 
+                    v-for="(item, index) in selectedItems" 
+                    :key="index"
+                    class="selected-item"
+                  >
+                    <text class="selected-text">{{ needsWordContent ? item.word : item.english }}</text>
+                    <view class="remove-btn" @click="removeSelectedItem(index)">×</view>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+
           <!-- 教材选择 -->
-          <view class="form-group">
+          <view v-if="inputMode === 'textbook' && showTextbookModule" class="form-group">
             <text class="form-label">关联教材 *</text>
             <view class="textbook-selector" @click="showTextbookSelector">
               <view class="selector-display">
@@ -118,7 +200,7 @@
           </view>
           
           <!-- 单元选择 -->
-          <view v-if="chapters.length > 0" class="form-group">
+          <view v-if="chapters.length > 0 && inputMode === 'textbook' && showTextbookModule" class="form-group">
             <text class="form-label">选择单元 *</text>
             <picker 
               :value="chapterIndex" 
@@ -134,7 +216,7 @@
           </view>
           
           <!-- 内容预览区域 -->
-          <view v-if="form.lesson_id && needsWordContent" class="form-group">
+          <view v-if="form.lesson_id && needsWordContent && inputMode === 'textbook' && showTextbookModule" class="form-group">
             <text class="form-label">单词预览 ({{ lessonWords.length }}个)</text>
             <view class="content-preview">
               <view v-if="loadingWords" class="preview-loading">
@@ -153,7 +235,7 @@
             </view>
           </view>
           
-          <view v-if="form.lesson_id && needsSentenceContent" class="form-group">
+          <view v-if="form.lesson_id && needsSentenceContent && inputMode === 'textbook' && showTextbookModule" class="form-group">
             <text class="form-label">句子预览 ({{ lessonSentences.length }}个)</text>
             <view class="content-preview">
               <view v-if="loadingSentences" class="preview-loading">
@@ -208,10 +290,13 @@ import CommonHeader from "@/components/CommonHeader.vue";
 import BookSelector from "@/pages/textbook/bookSelector.vue";
 import taskRequest from "@/api/task";
 import textbookRequest from "@/api/textbook";
+import { isFeatureEnabled, loadFeatures } from "@/config/features";
 
 // 移除了教材选择器hook，改用BookSelector组件
 
 const mode = ref('create');
+const inputMode = ref<'textbook' | 'search'>('search'); // 默认搜索模式
+const showTextbookModule = ref(false); // 是否显示教材模块
 const taskId = ref('');
 const showTextbookPopup = ref(false);
 const selectedTextbook = ref<any>(null);
@@ -220,6 +305,15 @@ const loadingTextbooks = ref(false);
 
 // 创建一个独立的标题响应式变量
 const titleInput = ref('');
+
+
+// 搜索相关数据
+const searchKeyword = ref('');
+const searchResults = ref<any[]>([]);
+const selectedItems = ref<any[]>([]);
+const searchLoading = ref(false);
+const searchType = ref<'word' | 'sentence'>('word');
+let searchTimer: any = null;
 
 const form = ref({
   title: '',
@@ -242,31 +336,29 @@ const taskTypes = ref([
     value: 'dictation', 
     label: '听写', 
     icon: '✍️',
-    description: '听音频写单词'
+    description: '听音频写单词',
+    contentType: 'word'  // 需要单词
   },
   { 
     value: 'spelling', 
-    label: '拼写', 
+    label: '背单词', 
     icon: '🔤',
-    description: '根据提示拼写单词'
+    description: '学、练、拼背单词',
+    contentType: 'word'  // 需要单词
   },
   { 
     value: 'pronunciation', 
     label: '发音', 
     icon: '🎤',
-    description: '朗读单词或句子'
+    description: '朗读单词或句子',
+    contentType: 'word'  // 主要是单词
   },
   { 
     value: 'sentence_repeat', 
     label: '跟读', 
     icon: '🔄',
-    description: '跟读句子练习'
-  },
-  { 
-    value: 'quiz', 
-    label: '测验', 
-    icon: '❓',
-    description: '选择题测验'
+    description: '跟读句子练习',
+    contentType: 'sentence'  // 需要句子
   }
 ]);
 
@@ -298,13 +390,25 @@ const loadingSentences = ref(false);
 
 // 根据任务类型判断需要的内容
 const needsWordContent = computed(() => {
-  const wordTaskTypes = ['dictation', 'spelling', 'pronunciation'];
-  return taskTypeIndex.value >= 0 && wordTaskTypes.includes(taskTypes.value[taskTypeIndex.value].value);
+  if (taskTypeIndex.value < 0) return false;
+  return taskTypes.value[taskTypeIndex.value].contentType === 'word';
 });
 
 const needsSentenceContent = computed(() => {
-  const sentenceTaskTypes = ['sentence_repeat'];
-  return taskTypeIndex.value >= 0 && sentenceTaskTypes.includes(taskTypes.value[taskTypeIndex.value].value);
+  if (taskTypeIndex.value < 0) return false;
+  return taskTypes.value[taskTypeIndex.value].contentType === 'sentence';
+});
+
+// 根据任务类型自动设置搜索类型
+watch(taskTypeIndex, (newIndex) => {
+  if (newIndex >= 0) {
+    const taskType = taskTypes.value[newIndex];
+    searchType.value = taskType.contentType === 'sentence' ? 'sentence' : 'word';
+    // 切换任务类型时清空已选择的项目和搜索
+    selectedItems.value = [];
+    searchKeyword.value = '';
+    searchResults.value = [];
+  }
 });
 
 // 判断内容是否有效（有单词或句子）
@@ -315,21 +419,25 @@ const hasValidContent = computed(() => {
   if (needsSentenceContent.value) {
     return lessonSentences.value.length > 0;
   }
-  // 测验类型可能同时需要单词和句子
-  if (taskTypeIndex.value >= 0 && taskTypes.value[taskTypeIndex.value].value === 'quiz') {
-    return lessonWords.value.length > 0 || lessonSentences.value.length > 0;
-  }
   return true;
 });
 
 const canSubmit = computed(() => {
-  return form.value.title && 
-         form.value.class_id && 
-         form.value.deadline &&
-         form.value.textbook_id &&
-         form.value.lesson_id &&
-         taskTypeIndex.value >= 0 &&
-         hasValidContent.value; // 添加内容有效性检查
+  const baseValid = form.value.title && 
+                    form.value.class_id && 
+                    form.value.deadline &&
+                    taskTypeIndex.value >= 0;
+  
+  if (inputMode.value === 'search' || !showTextbookModule.value) {
+    // 搜索模式
+    return baseValid && selectedItems.value.length > 0;
+  } else {
+    // 教材模式
+    return baseValid && 
+           form.value.textbook_id &&
+           form.value.lesson_id &&
+           hasValidContent.value;
+  }
 });
 
 // 添加监控来调试标题变化
@@ -350,6 +458,14 @@ watch(titleInput, (newValue, oldValue) => {
 }, { immediate: true });
 
 onLoad((options: any) => {
+  // 加载功能开关配置
+  loadFeatures();
+  showTextbookModule.value = isFeatureEnabled('showTextbookModule');
+  
+  // 如果教材模块被禁用，强制使用搜索模式
+  if (!showTextbookModule.value) {
+    inputMode.value = 'search';
+  }
   // 编辑模式
   if (options.taskId) {
     taskId.value = options.taskId;
@@ -400,7 +516,21 @@ onShow(() => {
   loadClasses();
 });
 
-// 移除了对filteredBooks的监听
+// 监听输入模式切换
+watch(inputMode, (newMode) => {
+  if (newMode === 'search') {
+    // 切换到搜索模式时清空教材相关数据
+    form.value.textbook_id = '';
+    form.value.lesson_id = '';
+    lessonWords.value = [];
+    lessonSentences.value = [];
+  } else {
+    // 切换到教材模式时清空搜索相关数据
+    searchKeyword.value = '';
+    searchResults.value = [];
+    selectedItems.value = [];
+  }
+});
 
 const loadClasses = async () => {
   try {
@@ -533,6 +663,11 @@ const loadTask = async () => {
     // 设置任务类型
     taskTypeIndex.value = taskTypes.value.findIndex(t => t.value === task.task_type);
     subjectIndex.value = subjects.value.findIndex(s => s.value === task.subject);
+    
+    // 根据任务类型设置搜索类型
+    if (taskTypeIndex.value >= 0) {
+      searchType.value = taskTypes.value[taskTypeIndex.value].contentType === 'sentence' ? 'sentence' : 'word';
+    }
     
     // 设置截止时间
     if (task.deadline) {
@@ -719,11 +854,11 @@ const loadLessonContent = async () => {
   if (!form.value.textbook_id || !form.value.lesson_id) return;
   
   // 根据任务类型加载相应内容
-  if (needsWordContent.value || taskTypes.value[taskTypeIndex.value]?.value === 'quiz') {
+  if (needsWordContent.value) {
     loadLessonWords();
   }
   
-  if (needsSentenceContent.value || taskTypes.value[taskTypeIndex.value]?.value === 'quiz') {
+  if (needsSentenceContent.value) {
     loadLessonSentences();
   }
 };
@@ -892,6 +1027,80 @@ const goToCreateClass = () => {
   uni.navigateTo({ url: '/pages/class/create' });
 };
 
+// 搜索相关方法
+const performSearch = async () => {
+  if (!searchKeyword.value.trim()) {
+    searchResults.value = [];
+    return;
+  }
+  
+  searchLoading.value = true;
+  try {
+    const res = await taskRequest.searchContent({
+      keyword: searchKeyword.value,
+      type: searchType.value
+    });
+    searchResults.value = res.data || [];
+  } catch (error) {
+    console.error('搜索失败:', error);
+    searchResults.value = [];
+  } finally {
+    searchLoading.value = false;
+  }
+};
+
+// 节流搜索函数
+const throttledSearch = () => {
+  // 清除之前的定时器
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+  }
+  
+  // 如果输入框为空，立即清空结果
+  if (!searchKeyword.value.trim()) {
+    searchResults.value = [];
+    return;
+  }
+  
+  // 设置新的定时器，延迟500ms执行搜索
+  searchTimer = setTimeout(() => {
+    performSearch();
+  }, 500);
+};
+
+// 监听搜索关键词变化，实现自动搜索
+watch(searchKeyword, () => {
+  throttledSearch();
+});
+
+// 监听搜索类型变化，重新搜索
+watch(searchType, () => {
+  if (searchKeyword.value.trim()) {
+    throttledSearch();
+  }
+});
+
+const toggleItemSelection = (item: any) => {
+  const index = selectedItems.value.findIndex(selected => selected.id === item.id);
+  
+  if (index > -1) {
+    // 取消选择时不清空搜索
+    selectedItems.value.splice(index, 1);
+  } else {
+    // 选择新项目
+    selectedItems.value.push(item);
+  }
+};
+
+const isItemSelected = (item: any) => {
+  return selectedItems.value.some(selected => selected.id === item.id);
+};
+
+const removeSelectedItem = (index: number) => {
+  selectedItems.value.splice(index, 1);
+};
+
+
 const cancel = () => {
   uni.navigateBack();
 };
@@ -911,8 +1120,29 @@ const submit = async () => {
   console.log('需要单词内容:', needsWordContent.value);
   console.log('需要句子内容:', needsSentenceContent.value);
   
-  // 如果没有内容，根据任务类型自动生成
-  if (form.value.contents.length === 0) {
+  // 准备内容数据
+  if (inputMode.value === 'search') {
+    // 搜索模式：使用选择的内容
+    const searchWords = searchType.value === 'word' ? selectedItems.value : [];
+    const searchSentences = searchType.value === 'sentence' ? selectedItems.value : [];
+    
+    form.value.contents = [{
+      content_type: form.value.task_type || 'dictation',
+      generate_mode: 'search',
+      ref_book_id: null,
+      ref_lesson_id: null,
+      selected_word_ids: searchWords.map(w => w.id),
+      selected_sentence_ids: searchSentences.map(s => s.id),
+      manual_content: {
+        words: searchWords,
+        sentences: searchSentences
+      },
+      points: 100,
+      meta_data: {},
+      order_num: 1
+    }];
+  } else if (form.value.contents.length === 0) {
+    // 教材模式：从选择的教材中生成内容
     // 如果需要单词或句子但还没加载，先加载
     if ((needsWordContent.value && lessonWords.value.length === 0) || 
         (needsSentenceContent.value && lessonSentences.value.length === 0)) {
@@ -1504,6 +1734,225 @@ const submit = async () => {
   font-size: 26rpx;
   color: #64748b;
   line-height: 1.4;
+}
+
+/* 内容输入方式切换 */
+.input-mode-tabs {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.mode-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24rpx 16rpx;
+  background: #f8fafc;
+  border: 3rpx solid #e2e8f0;
+  border-radius: 16rpx;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.mode-tab:active {
+  transform: scale(0.98);
+}
+
+.mode-tab.active {
+  background: linear-gradient(135deg, #dbeafe, #eff6ff);
+  border-color: #3b82f6;
+  box-shadow: 0 4rpx 20rpx rgba(59, 130, 246, 0.2);
+}
+
+.mode-icon {
+  font-size: 36rpx;
+  margin-bottom: 8rpx;
+}
+
+/* 搜索相关样式 */
+.search-container {
+  background: #f8fafc;
+  border-radius: 16rpx;
+  padding: 24rpx;
+}
+
+
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin-bottom: 24rpx;
+}
+
+.search-input {
+  flex: 1;
+  padding: 16rpx 24rpx;
+  padding-right: 60rpx;
+  background: white;
+  border: 2rpx solid #e2e8f0;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+}
+
+.search-loading-icon {
+  position: absolute;
+  right: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.search-results {
+  margin-bottom: 24rpx;
+}
+
+.results-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.results-scroll {
+  max-height: 300rpx;
+  background: white;
+  border-radius: 12rpx;
+  border: 2rpx solid #e2e8f0;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 24rpx;
+  border-bottom: 1rpx solid #f1f5f9;
+  transition: background 0.2s;
+}
+
+.result-item:active {
+  background: #f8fafc;
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.result-content {
+  flex: 1;
+}
+
+.result-main {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1e293b;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.result-sub {
+  font-size: 24rpx;
+  color: #64748b;
+  display: block;
+}
+
+.selected-mark {
+  width: 40rpx;
+  height: 40rpx;
+  background: #10b981;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: bold;
+}
+
+.selected-section {
+  margin-top: 24rpx;
+}
+
+.selected-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.selected-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.selected-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 20rpx;
+  background: white;
+  border: 2rpx solid #e2e8f0;
+  border-radius: 24rpx;
+}
+
+.selected-text {
+  font-size: 26rpx;
+  color: #1e293b;
+}
+
+.remove-btn {
+  width: 32rpx;
+  height: 32rpx;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20rpx;
+  font-weight: bold;
+}
+
+.search-empty {
+  text-align: center;
+  padding: 60rpx 40rpx;
+  background: white;
+  border-radius: 16rpx;
+  margin-top: 24rpx;
+}
+
+.search-empty .empty-icon {
+  font-size: 48rpx;
+  display: block;
+  margin-bottom: 16rpx;
+  opacity: 0.5;
+}
+
+.search-empty .empty-text {
+  font-size: 28rpx;
+  color: #374151;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.search-empty .empty-hint {
+  font-size: 24rpx;
+  color: #9ca3af;
+  display: block;
 }
 
 /* 响应式设计 */

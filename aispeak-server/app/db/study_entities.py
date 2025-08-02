@@ -61,8 +61,9 @@ class StudyCompletionRecord(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True, comment="完成记录唯一标识")
     user_id = Column(String(50), nullable=False, comment="用户ID")  # 指定长度
-    book_id = Column(String(50), nullable=False, comment="书籍ID")  # 指定长度
+    book_id = Column(String(50), nullable=True, comment="书籍ID")  # 改为可选，支持手动创建的任务
     lesson_id = Column(Integer, nullable=True, comment="课程ID")  # 新增 lesson_id 字段
+    task_id = Column(Integer, nullable=True, comment="任务ID")  # 新增 task_id 字段，用于关联任务
     date = Column(Date, nullable=False, comment="完成日期")
     status = Column(Integer, default=0, comment="完成状态（0: 未完成, 1: 已完成）")  # 改为 Integer 类型
     type = Column(Integer, default=0, comment="类型（0: 单词, 1: 句子,2.背词计划用了, 3:真正的单词拼写）")  # 新增 type 字段
@@ -80,6 +81,7 @@ class StudyCompletionRecord(Base):
     __table_args__ = (
         Index('idx_user_date', 'user_id', 'date'),
         Index('idx_user_book_date', 'user_id', 'book_id', 'lesson_id', 'type'),  # 新增联合索引
+        Index('idx_user_task', 'user_id', 'task_id', 'type'),  # 新增任务索引
     )
 
 

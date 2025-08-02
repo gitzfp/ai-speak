@@ -566,13 +566,24 @@ const loadTask = async () => {
       // 获取指定的句子详情
       else if (content.selected_sentence_ids && content.selected_sentence_ids.length > 0) {
         try {
-          const bookId = content.ref_book_id || task.value.textbook_id?.toString();
-          if (bookId) {
-            const sentencesRes = await textbook.getSentencesDetail(bookId, content.selected_sentence_ids);
+          // 优先使用 task_id 获取句子（推荐方式）
+          if (task.value.id) {
+            console.log('使用任务ID获取句子详情，task_id:', task.value.id);
+            const sentencesRes = await textbook.getTaskSentences(task.value.id);
             enrichedContent.selected_sentences = sentencesRes.data.sentences || [];
           } else {
-            console.error('缺少bookId，无法获取句子详情');
-            enrichedContent.selected_sentences = [];
+            // 降级方案：使用句子ID列表
+            const bookId = content.ref_book_id || task.value.textbook_id?.toString();
+            if (bookId) {
+              // 有bookId时使用原API
+              const sentencesRes = await textbook.getSentencesDetail(bookId, content.selected_sentence_ids);
+              enrichedContent.selected_sentences = sentencesRes.data.sentences || [];
+            } else {
+              // 没有bookId时使用新API
+              console.log('使用句子IDs获取句子详情，句子IDs:', content.selected_sentence_ids);
+              const sentencesRes = await textbook.getSentencesDetailByIds(content.selected_sentence_ids);
+              enrichedContent.selected_sentences = sentencesRes.data.sentences || [];
+            }
           }
         } catch (error: any) {
           console.error('获取句子详情失败:', error);

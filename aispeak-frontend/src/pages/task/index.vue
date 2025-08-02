@@ -48,12 +48,12 @@
         <view class="class-filter">
           <picker 
             :value="selectedClassIndex" 
-            :range="studentClasses" 
+            :range="classPickerRange" 
             range-key="name"
             @change="onClassFilterChange"
           >
             <view class="filter-picker">
-              <text class="filter-text">{{ selectedClassIndex === 0 ? '全部班级' : studentClasses[selectedClassIndex]?.name }}</text>
+              <text class="filter-text">{{ getClassFilterText() }}</text>
               <text class="filter-arrow">▼</text>
             </view>
           </picker>
@@ -215,6 +215,25 @@ const hasMultipleRoles = computed(() => {
   return userRoles.value.includes('teacher') && userRoles.value.includes('student');
 });
 
+// 班级选择器的显示数据
+const classPickerRange = computed(() => {
+  const classes = [...studentClasses.value];
+  // 在末尾添加"加入班级"选项
+  classes.push({ id: 'join', name: '+ 加入班级' });
+  return classes;
+});
+
+// 获取班级筛选文本
+const getClassFilterText = () => {
+  if (selectedClassIndex.value === 0) {
+    return '全部班级';
+  } else if (selectedClassIndex.value < studentClasses.value.length) {
+    return studentClasses.value[selectedClassIndex.value]?.name || '全部班级';
+  } else {
+    return '+ 加入班级';
+  }
+};
+
 onShow(() => {
   // 获取用户角色
   const userRole = uni.getStorageSync('userRole');
@@ -266,6 +285,10 @@ onShow(() => {
   
   // 已登录且非游客，正常加载
   getUserRoles();
+  // 如果是学生角色，重新加载班级列表（可能刚加入了新班级）
+  if (currentRole.value === 'student') {
+    loadStudentClasses();
+  }
   loadTasks();
 });
 
@@ -358,7 +381,19 @@ const switchRole = (role: string) => {
 };
 
 const onClassFilterChange = (e: any) => {
-  selectedClassIndex.value = e.detail.value;
+  const index = parseInt(e.detail.value);
+  
+  // 检查是否点击了"加入班级"选项
+  if (index >= studentClasses.value.length) {
+    // 跳转到加入班级页面
+    uni.navigateTo({
+      url: '/pages/class/join'
+    });
+    // 不更新selectedClassIndex，保持之前的选择
+    return;
+  }
+  
+  selectedClassIndex.value = index;
   loadTasks();
 };
 
@@ -562,6 +597,32 @@ const prepareAndNavigateToSentenceTask = (task: any) => {
   });
 };
 
+const prepareAndNavigateToWordReadTask = (task: any) => {
+  // 获取任务内容详情
+  uni.showLoading({ title: '加载中...' });
+  
+  taskRequest.getTaskById(task.id).then(res => {
+    const taskDetail = res.data;
+    if (!taskDetail.contents || taskDetail.contents.length === 0) {
+      uni.hideLoading();
+      uni.showToast({ title: '任务内容为空', icon: 'none' });
+      return;
+    }
+    
+    const content = taskDetail.contents[0];
+    uni.hideLoading();
+    
+    // 跳转到单词跟读页面
+    uni.navigateTo({
+      url: `/pages/textbook/UnitWordRead?bookId=${content.ref_book_id || ''}&lessonId=${content.ref_lesson_id || ''}&taskId=${task.id}`
+    });
+  }).catch(error => {
+    uni.hideLoading();
+    console.error('获取任务详情失败:', error);
+    uni.showToast({ title: '获取任务详情失败', icon: 'none' });
+  });
+};
+
 const handleStudentTaskClick = (task: any) => {
   // 如果是游客提示，不做任何操作
   if (task.type === 'tip') {
@@ -599,8 +660,11 @@ const viewTask = (task: any) => {
     // 句子跟读任务 - 跳转到句子跟读页面
     prepareAndNavigateToSentenceTask(task);
   } else if (task.task_type === 'pronunciation') {
-    // 发音任务 - 跳转到句子跟读页面
-    prepareAndNavigateToSentenceTask(task);
+    // 发音任务 - 跳转到单词跟读页面
+    prepareAndNavigateToWordReadTask(task);
+  } else if (task.task_type === 'word_pronunciation') {
+    // 单词跟读任务 - 跳转到单词跟读页面
+    prepareAndNavigateToWordReadTask(task);
   } else {
     // 其他任务类型，跳转到任务详情页
     uni.navigateTo({
@@ -662,10 +726,22 @@ const deleteTask = (task: any) => {
     content: '确定要删除这个任务吗？',
     success: (res) => {
       if (res.confirm) {
+        uni.showLoading({ title: '删除中...' });
         taskRequest.deleteTask(task.id).then(() => {
+          uni.hideLoading();
           uni.showToast({ title: '删除成功' });
-          loadTasks();
-        }).catch(() => {
+          // 立即从列表中移除该任务
+          const index = tasks.value.findIndex(t => t.id === task.id);
+          if (index > -1) {
+            tasks.value.splice(index, 1);
+          }
+          // 延迟后重新加载，确保后端数据同步
+          setTimeout(() => {
+            loadTasks();
+          }, 500);
+        }).catch((error) => {
+          uni.hideLoading();
+          console.error('删除任务失败:', error);
           uni.showToast({ title: '删除失败', icon: 'none' });
         });
       }

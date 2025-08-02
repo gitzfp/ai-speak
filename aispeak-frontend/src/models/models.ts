@@ -4,6 +4,7 @@ export interface AccountInfo {
   total_chat_count: number;
   target_language_label: string;
   user_name?: string;
+  phone_number?: string;
 }
 
 export interface AccountSettings {

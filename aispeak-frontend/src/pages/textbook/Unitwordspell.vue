@@ -105,7 +105,7 @@ const inspectclick =()=> {
 	if (isInspect.value) {
 		isInspect.value = false
 		// 检查 inputBoxes 和 originalwordletters 是否完全相等
-		 const isEqual = inputBoxes.value.every((value, index) => value === originalwordletters.value[index]);
+		const isEqual = inputBoxes.value.every((value, index) => value === originalwordletters.value[index]);
 		
 		var answernum = isEqual?1:2
 		phonicsbegins(answernum)

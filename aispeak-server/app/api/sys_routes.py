@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core import get_current_account
 from app.db import get_db
 from app.models.sys_models import *
+from app.models.sys_models import SystemSettingsResponse, SystemSettingsUpdate
 from app.models.response import ApiResponse
 from app.services.sys_service import SysService
 from app.config import Config
@@ -100,3 +101,27 @@ def add_feedback(
     sys_service = SysService(db)
     sys_service.add_feedback(dto, account_id)
     return ApiResponse(data="SUCCESS")
+
+
+@router.get("/sys/settings")
+def get_system_settings(
+    db: Session = Depends(get_db),
+    account_id: str = Depends(get_current_account),
+):
+    """获取系统设置"""
+    sys_service = SysService(db)
+    settings = sys_service.get_system_settings()
+    return ApiResponse(data=settings)
+
+
+@router.post("/sys/settings")
+def update_system_settings(
+    settings: SystemSettingsUpdate,
+    db: Session = Depends(get_db),
+    account_id: str = Depends(get_current_account),
+):
+    """更新系统设置（需要管理员权限）"""
+    # TODO: 检查是否是管理员权限
+    sys_service = SysService(db)
+    updated_settings = sys_service.update_system_settings(settings)
+    return ApiResponse(data=updated_settings)

@@ -117,15 +117,49 @@
       
       <!-- 教师评分 -->
       <view v-if="isTeacher" class="grade-section">
-        <view class="section-title">教师评分</view>
-        <view class="grade-input">
-          <input v-model="teacherScore" type="number" placeholder="请输入分数（0-100）" />
+        <view class="section-title">评分</view>
+        
+        <view class="score-input-wrapper">
+          <view class="score-label">分数（满分100）</view>
+          <view class="score-input-box">
+            <input 
+              v-model="teacherScore" 
+              type="number" 
+              placeholder="请输入分数（0-100）"
+              class="score-input"
+              maxlength="3"
+            />
+          </view>
         </view>
-        <view class="feedback-input">
-          <textarea v-model="feedback" placeholder="请输入评语" />
+        
+        <view class="feedback-input-wrapper">
+          <view class="feedback-label">评语</view>
+          <view class="feedback-input-box">
+            <textarea 
+              v-model="feedback" 
+              placeholder="请输入评语..."
+              class="feedback-textarea"
+              maxlength="500"
+            />
+          </view>
         </view>
-        <view class="grade-button" @click="submitGrade">
-          <text>提交评分</text>
+        
+        <view class="checkbox-wrapper">
+          <checkbox-group @change="handleCheckboxChange">
+            <label class="checkbox-label">
+              <checkbox value="correct" class="checkbox" :checked="isCorrect" />
+              <text>标记为正确</text>
+            </label>
+          </checkbox-group>
+        </view>
+        
+        <view class="button-group">
+          <view class="cancel-button" @click="handleCancel">
+            <text>取消</text>
+          </view>
+          <view class="submit-button" :class="{ disabled: submitting }" @click="submitGrade">
+            <text>确定</text>
+          </view>
         </view>
       </view>
     </view>
@@ -144,6 +178,8 @@ const submissionId = ref('')
 const isTeacher = ref(false)
 const teacherScore = ref('')
 const feedback = ref('')
+const submitting = ref(false)
+const isCorrect = ref(false)
 
 onLoad((options) => {
   submissionId.value = options.submissionId || ''
@@ -219,6 +255,9 @@ const formatTime = (dateStr: string) => {
 }
 
 const submitGrade = async () => {
+  // 防止重复提交
+  if (submitting.value) return
+  
   if (!teacherScore.value || isNaN(Number(teacherScore.value))) {
     uni.showToast({
       title: '请输入有效分数',
@@ -236,6 +275,8 @@ const submitGrade = async () => {
     return
   }
   
+  submitting.value = true
+  
   try {
     await taskRequest.gradeSubmission(submissionId.value, {
       score: score,
@@ -247,9 +288,9 @@ const submitGrade = async () => {
       icon: 'success'
     })
     
-    // 刷新页面
+    // 延迟后返回上一页
     setTimeout(() => {
-      loadSubmissionDetail()
+      uni.navigateBack()
     }, 1000)
   } catch (error) {
     console.error('评分失败:', error)
@@ -257,7 +298,16 @@ const submitGrade = async () => {
       title: '评分失败',
       icon: 'none'
     })
+    submitting.value = false
   }
+}
+
+const handleCancel = () => {
+  uni.navigateBack()
+}
+
+const handleCheckboxChange = (e: any) => {
+  isCorrect.value = e.detail.value.includes('correct')
 }
 </script>
 
@@ -480,33 +530,113 @@ const submitGrade = async () => {
 }
 
 // 教师评分样式
-.grade-input, .feedback-input {
-  margin-bottom: 20rpx;
+.score-input-wrapper {
+  margin-bottom: 30rpx;
   
-  input, textarea {
-    width: 100%;
-    padding: 20rpx;
-    background: #f8f9fa;
-    border-radius: 12rpx;
+  .score-label {
     font-size: 28rpx;
+    color: #333;
+    margin-bottom: 16rpx;
+    font-weight: 500;
   }
   
-  textarea {
-    min-height: 200rpx;
+  .score-input-box {
+    .score-input {
+      width: 100%;
+      padding: 24rpx;
+      background: #f8f9fa;
+      border: 2rpx solid #e8e8e8;
+      border-radius: 12rpx;
+      font-size: 30rpx;
+      color: #333;
+      
+      &:focus {
+        border-color: #4B7EFE;
+        background: #fff;
+      }
+    }
   }
 }
 
-.grade-button {
-  background: #4B7EFE;
-  color: white;
-  padding: 24rpx;
-  border-radius: 12rpx;
-  text-align: center;
-  font-size: 30rpx;
-  font-weight: bold;
+.feedback-input-wrapper {
+  margin-bottom: 30rpx;
   
-  &:active {
-    opacity: 0.8;
+  .feedback-label {
+    font-size: 28rpx;
+    color: #333;
+    margin-bottom: 16rpx;
+    font-weight: 500;
+  }
+  
+  .feedback-input-box {
+    .feedback-textarea {
+      width: 100%;
+      padding: 24rpx;
+      background: #f8f9fa;
+      border: 2rpx solid #e8e8e8;
+      border-radius: 12rpx;
+      font-size: 28rpx;
+      color: #333;
+      min-height: 240rpx;
+      
+      &:focus {
+        border-color: #4B7EFE;
+        background: #fff;
+      }
+    }
+  }
+}
+
+.checkbox-wrapper {
+  margin-bottom: 40rpx;
+  
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    font-size: 28rpx;
+    color: #333;
+    
+    .checkbox {
+      margin-right: 12rpx;
+    }
+  }
+}
+
+.button-group {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 40rpx;
+  
+  .cancel-button, .submit-button {
+    flex: 1;
+    padding: 24rpx;
+    border-radius: 12rpx;
+    text-align: center;
+    font-size: 30rpx;
+    font-weight: 500;
+  }
+  
+  .cancel-button {
+    background: #f0f0f0;
+    color: #666;
+    
+    &:active {
+      opacity: 0.8;
+    }
+  }
+  
+  .submit-button {
+    background: #4B7EFE;
+    color: white;
+    
+    &:active:not(.disabled) {
+      opacity: 0.8;
+    }
+    
+    &.disabled {
+      background: #cccccc;
+      opacity: 0.6;
+    }
   }
 }
 </style>
