@@ -740,6 +740,7 @@ const submitGrade = async () => {
   border-radius: 16rpx;
   width: 600rpx;
   max-width: 90vw;
+  overflow: hidden;
   
   .modal-header {
     display: flex;
@@ -782,6 +783,7 @@ const submitGrade = async () => {
         font-size: 28rpx;
         color: #333;
         border: 2rpx solid #e8e8e8;
+        box-sizing: border-box;
         
         &:focus {
           border-color: #4B7EFE;
@@ -808,6 +810,8 @@ const submitGrade = async () => {
         font-size: 28rpx;
         color: #333;
         border: 2rpx solid #e8e8e8;
+        box-sizing: border-box;
+        resize: none;
         
         &:focus {
           border-color: #4B7EFE;
