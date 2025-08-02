@@ -500,7 +500,29 @@ onLoad((options: any) => {
   
   // 初始化数据
   loadClasses();
-  loadTextbooks();
+  loadTextbooks().then(() => {
+    // 如果教材模块启用且没有预设教材，尝试恢复上次选择的教材
+    if (showTextbookModule.value && !options.textbook_id && allTextbooks.value.length > 0) {
+      try {
+        // 尝试读取上次选择的教材（使用planSelectionObject）
+        const planSelection = uni.getStorageSync('planSelectionObject');
+        if (planSelection && planSelection.book_id) {
+          const savedBook = allTextbooks.value.find(book => book.book_id === planSelection.book_id);
+          if (savedBook) {
+            console.log('恢复上次选择的教材:', savedBook);
+            selectedTextbook.value = savedBook;
+            form.value.textbook_id = savedBook.book_id;
+            // 设置为教材模式
+            inputMode.value = 'textbook';
+            // 加载章节
+            loadChapters(savedBook.book_id);
+          }
+        }
+      } catch (e) {
+        console.log('读取保存的教材选择失败:', e);
+      }
+    }
+  });
   
   // 设置默认截止时间（明天18:00）
   const tomorrow = new Date();
@@ -559,6 +581,32 @@ const loadTextbooks = async () => {
   if (loadingTextbooks.value) return;
   
   loadingTextbooks.value = true;
+  
+  // 先尝试从缓存读取
+  try {
+    const cachedTextbooks = uni.getStorageSync('textbookList');
+    const cacheTime = uni.getStorageSync('textbookListTime');
+    
+    // 检查缓存是否存在且未过期（24小时）
+    if (cachedTextbooks && Array.isArray(cachedTextbooks) && cachedTextbooks.length > 0) {
+      const now = Date.now();
+      const cacheAge = now - (cacheTime || 0);
+      const maxAge = 365 * 30 * 24 * 60 * 60 * 1000; // 24小时
+      
+      if (cacheAge < maxAge) {
+        console.log('从缓存加载教材列表，数量:', cachedTextbooks.length);
+        allTextbooks.value = cachedTextbooks;
+        loadingTextbooks.value = false;
+        return;
+      } else {
+        console.log('缓存已过期，重新从API加载');
+      }
+    }
+  } catch (e) {
+    console.log('读取缓存失败，从API加载:', e);
+  }
+  
+  // 缓存不存在或为空，从API加载
   try {
     // 调用API时传入"全部"参数获取所有教材
     const res = await textbookRequest.getTextbooks("全部", "全部", "全部", "全部");
@@ -585,6 +633,17 @@ const loadTextbooks = async () => {
       allTextbooks.value = textbooks;
       console.log('处理后的教材列表:', allTextbooks.value);
       console.log('教材数量:', allTextbooks.value.length);
+      
+      // 缓存教材列表，设置过期时间为1天
+      if (textbooks.length > 0) {
+        try {
+          uni.setStorageSync('textbookList', textbooks);
+          uni.setStorageSync('textbookListTime', Date.now());
+          console.log('教材列表已缓存');
+        } catch (e) {
+          console.error('缓存教材列表失败:', e);
+        }
+      }
     } else {
       console.error('教材数据格式不正确:', res);
       allTextbooks.value = [];
