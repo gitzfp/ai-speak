@@ -544,6 +544,10 @@ const loadClasses = async () => {
       if (index !== -1) {
         classIndex.value = index;
       }
+    } else if (classes.value.length > 0 && mode.value === 'create') {
+      // 创建模式下，如果没有预设班级，默认选中第一个班级
+      classIndex.value = 0;
+      form.value.class_id = classes.value[0].id;
     }
   } catch (error) {
     console.error('加载班级列表失败:', error);
