@@ -522,15 +522,33 @@ const loadTask = async () => {
             const wordsRes = await textbook.getWordsDetail(bookId, content.selected_word_ids.map(String));
             
             // 检查API响应格式
-            if (wordsRes.code === 1000 && wordsRes.data && wordsRes.data.words) {
-              enrichedContent.selected_words = wordsRes.data.words;
+            if (wordsRes.code === 1000 && wordsRes.data) {
+              enrichedContent.selected_words = wordsRes.data.words || wordsRes.data || [];
+              console.log('获取到单词数据:', enrichedContent.selected_words);
             } else {
               console.error('API响应格式不正确:', wordsRes);
               enrichedContent.selected_words = [];
             }
           } else {
-            console.error('缺少bookId，无法获取单词详情');
-            enrichedContent.selected_words = [];
+            // 尝试使用任务ID获取单词
+            if (task.value.id) {
+              console.log('使用任务ID获取单词详情，task_id:', task.value.id);
+              try {
+                const wordsRes = await textbook.getTaskWords(task.value.id);
+                if (wordsRes.code === 1000 && wordsRes.data) {
+                  enrichedContent.selected_words = wordsRes.data.words || wordsRes.data || [];
+                  console.log('获取到单词数据（通过任务ID）:', enrichedContent.selected_words);
+                } else {
+                  enrichedContent.selected_words = [];
+                }
+              } catch (taskError) {
+                console.error('通过任务ID获取单词失败:', taskError);
+                enrichedContent.selected_words = [];
+              }
+            } else {
+              console.error('缺少bookId和taskId，无法获取单词详情');
+              enrichedContent.selected_words = [];
+            }
           }
         } catch (error: any) {
           console.error('获取单词详情失败:', error);
@@ -570,19 +588,34 @@ const loadTask = async () => {
           if (task.value.id) {
             console.log('使用任务ID获取句子详情，task_id:', task.value.id);
             const sentencesRes = await textbook.getTaskSentences(task.value.id);
-            enrichedContent.selected_sentences = sentencesRes.data.sentences || [];
+            if (sentencesRes.code === 1000 && sentencesRes.data) {
+              enrichedContent.selected_sentences = sentencesRes.data.sentences || sentencesRes.data || [];
+              console.log('获取到句子数据（通过任务ID）:', enrichedContent.selected_sentences);
+            } else {
+              enrichedContent.selected_sentences = [];
+            }
           } else {
             // 降级方案：使用句子ID列表
             const bookId = content.ref_book_id || task.value.textbook_id?.toString();
             if (bookId) {
               // 有bookId时使用原API
               const sentencesRes = await textbook.getSentencesDetail(bookId, content.selected_sentence_ids);
-              enrichedContent.selected_sentences = sentencesRes.data.sentences || [];
+              if (sentencesRes.code === 1000 && sentencesRes.data) {
+                enrichedContent.selected_sentences = sentencesRes.data.sentences || sentencesRes.data || [];
+                console.log('获取到句子数据（通过bookId）:', enrichedContent.selected_sentences);
+              } else {
+                enrichedContent.selected_sentences = [];
+              }
             } else {
               // 没有bookId时使用新API
               console.log('使用句子IDs获取句子详情，句子IDs:', content.selected_sentence_ids);
               const sentencesRes = await textbook.getSentencesDetailByIds(content.selected_sentence_ids);
-              enrichedContent.selected_sentences = sentencesRes.data.sentences || [];
+              if (sentencesRes.code === 1000 && sentencesRes.data) {
+                enrichedContent.selected_sentences = sentencesRes.data.sentences || sentencesRes.data || [];
+                console.log('获取到句子数据（通过IDs）:', enrichedContent.selected_sentences);
+              } else {
+                enrichedContent.selected_sentences = [];
+              }
             }
           }
         } catch (error: any) {
