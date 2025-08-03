@@ -27,8 +27,15 @@
           <text class="value">{{ formatDate(submission.created_at) }}</text>
         </view>
         <view class="info-item">
-          <text class="label">得分</text>
-          <text class="value score">{{ submission.auto_score?.toFixed(0) || 0 }}分</text>
+          <text class="label">老师评分</text>
+          <text class="value score" v-if="submission.teacher_score !== null && submission.teacher_score !== undefined">
+            {{ submission.teacher_score.toFixed(0) }}分
+          </text>
+          <text class="value" v-else style="color: #999;">暂未评分</text>
+        </view>
+        <view class="info-item" v-if="submission.auto_score !== null && submission.auto_score !== undefined">
+          <text class="label">系统评分</text>
+          <text class="value" style="color: #666;">{{ submission.auto_score.toFixed(0) }}分</text>
         </view>
       </view>
       
