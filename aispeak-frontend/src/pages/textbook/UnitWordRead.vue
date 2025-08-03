@@ -22,7 +22,13 @@
 						<view class="chinese">{{ optionWord.chinese }}</view>
 					</view>
 					<view class="audio-icon">
-						<image @tap="playbuttonclick" class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
+						<SimpleAudioButton
+							v-if="optionWord.audio_url"
+							:audio-url="optionWord.audio_url"
+							:auto-play="true"
+							size="large"
+							@play-start="onAudioPlayStart"
+						/>
 					</view>
 				</view>
 				<view class="word-bottom">
@@ -52,6 +58,7 @@
 	import { ref,computed,watch,onMounted, onUnmounted,nextTick} from 'vue';
 	import Speech from "./components/PronuciationSpeech.vue"
 	import UnitExitreminderPop from './components/UnitExitreminderPop.vue'
+	import SimpleAudioButton from '@/components/SimpleAudioButton.vue'
 	import { onLoad } from '@dcloudio/uni-app'
 	import textbook from '@/api/textbook'
 	import study from '@/api/study';
@@ -84,8 +91,10 @@
 	const taskResults = ref([])
 	
 	const isShowmark = ref(false)
-	const currentAudio = ref(null)
 	const uniExitreminderPopPopup = ref(false)
+	
+	// 通用的开始时间（用于非任务模式）
+	const pageStartTime = ref(null)
 	
 	onMounted(() => {
 		const systemInfo = uni.getSystemInfoSync();
@@ -95,7 +104,7 @@
 		uni.$on('start_recording', (params) => {
 		    console.log('收到全局事件，参数:', params);
 		    if (params.action === 'recording') {
-				stopCurrentAudio()
+				uni.$emit('stopAllAudio')
 		    }
 		  });
 		
@@ -103,7 +112,7 @@
 	
 	onUnmounted(() => {
 		stopWatch(); // 确保无论如何都会清理
-		stopCurrentAudio()
+		uni.$emit('stopAllAudio')
 		uni.$off('start_recording'); // 组件卸载时移除监听
 		
 	})
@@ -227,7 +236,7 @@
 	const clicknext = () => {
 		if (isShowmark.value) {
 			isShowmark.value = false
-			 stopCurrentAudio()
+			 uni.$emit('stopAllAudio')
 			if (currentIndext.value==(wordsList.value.length-1)) {
 				progressIndext.value = wordsList.value.length
 				
@@ -268,7 +277,7 @@
 				}
 				
 				setTimeout(() => {
-				    playbuttonclick()
+				    // 音频会自动播放（如果设置了 autoPlay）
 				}, 500);
 			}
 		}
@@ -360,8 +369,14 @@
 	    () => optionWord.value,
 	    (newVal) => {
 	      if (newVal) {
+	        console.log('当前单词变化:', {
+	          word: newVal.word,
+	          audio_url: newVal.audio_url,
+	          has_audio_url: !!newVal.audio_url,
+	          currentIndext: currentIndext.value
+	        });
 	        nextTick(() => {
-	          playbuttonclick();
+	          // 音频会自动播放（如果设置了 autoPlay）
 	          isShowmark.value = Boolean(
 	            newVal.progress_data?.length > 20
 	          );
@@ -373,31 +388,14 @@
 	  );
 
 	
-	const playbuttonclick = () => {
-		if(!optionWord?.value?.audio_url)return
-		stopCurrentAudio();
-		const audio = uni.createInnerAudioContext();
-		currentAudio.value = audio;
-		audio.src = optionWord?.value?.audio_url;
-		
-		audio.play();
-	}
-	const stopCurrentAudio = () => {
-		if (currentAudio.value) {
-		  currentAudio.value.pause();
-		  try {
-		    currentAudio.value.stop();
-			  currentAudio.value = null;
-		  } catch (error) {
-		    console.error("Error stopping audio:", error);
-		  }
-		  currentAudio.value = null;
-		}
+	const onAudioPlayStart = () => {
+		// 音频开始播放时的处理
+		console.log('音频开始播放');
 	}
 
 	// 这里可以定义一些响应式数据或逻辑
 	const handleBackPage = () => {
-		stopCurrentAudio()
+		uni.$emit('stopAllAudio')
 		uniExitreminderPopPopup.value = true
 	}
 	
@@ -435,7 +433,8 @@
 		} 
 		
 		if (isTaskMode.value) {
-			uni.navigateBack()
+			// 任务模式下返回到任务列表（需要返回两层）
+			uni.navigateBack({ delta: 2 })
 		} else {
 			uni.switchTab({
 				url: `/pages/textbook/index3`,
@@ -467,6 +466,27 @@
 			isTaskMode.value = true
 			taskId.value = tid
 			await loadTaskInfo()
+			// 任务模式：检查是否已有保存的开始时间
+			const savedStartTime = uni.getStorageSync(`task_start_time_${tid}`)
+			if (!savedStartTime) {
+				// 首次进入，保存开始时间
+				uni.setStorageSync(`task_start_time_${tid}`, taskProgress.value.startTime.toISOString())
+			} else {
+				// 恢复之前的开始时间
+				taskProgress.value.startTime = new Date(savedStartTime)
+			}
+		} else {
+			// 非任务模式：使用课程ID作为key
+			const storageKey = `lesson_start_time_${book_id.value}_${lesson_id.value}`
+			const savedStartTime = uni.getStorageSync(storageKey)
+			if (!savedStartTime) {
+				// 首次进入，保存开始时间
+				pageStartTime.value = new Date()
+				uni.setStorageSync(storageKey, pageStartTime.value.toISOString())
+			} else {
+				// 恢复之前的开始时间
+				pageStartTime.value = new Date(savedStartTime)
+			}
 		}
 		gethistoryWords()
 	})
@@ -548,6 +568,7 @@
 		  if (isTaskMode.value && taskId.value) {
 			  console.log("任务模式：使用taskId获取单词", taskId.value);
 			  response = await textbook.getTaskWords(taskId.value);
+			  console.log("任务模式返回的单词数据:", response.data);
 		  } else if (book_id.value && lesson_id.value !== null && lesson_id.value !== undefined) {
 			  // 否则使用传统方式
 			  console.log("教材模式：使用book_id和lesson_id获取单词", {
@@ -567,7 +588,11 @@
 			word_id: w.word_id,
 			word: w.word 
 		})));
-		const words = response.data.words.map(word => {
+		const words = response.data.words.map((word, index) => {
+			// 如果是第一个单词，打印详细信息
+			if (index === 0) {
+				console.log('第一个单词的原始数据:', word);
+			}
 			// 检查是否在历史记录中有这个单词的进度
 			const historyItem = completeList.find(item => {
 				// 添加调试日志
@@ -592,6 +617,8 @@
 				...word,
 				id: word.word_id || word.id, // 确保有id字段
 				english: word.word, // 为了兼容Speech组件
+				// 兼容不同的音频字段名称
+				audio_url: word.sound_path || word.audio_url || word.audio_path || word.sound_url, // 添加音频URL
 				content_id: word.word_id || word.id, // 使用word_id作为content_id
 				content_type: 3, // 3表示单词发音
 				error_count: historyItem ? historyItem.error_count : 0,
@@ -608,6 +635,7 @@
 				final_id: wordObj.id,
 				final_content_id: wordObj.content_id,
 				word: word.word,
+				audio_url: wordObj.audio_url,
 				content_type: wordObj.content_type,
 				hasHistory: !!historyItem,
 				points: wordObj.points,
@@ -645,13 +673,20 @@
 	
 // 提交任务结果
 const submitTaskResults = async () => {
+  // 将这些变量声明在try块外，以便catch块也能访问
+  let totalWords = 0
+  let completedWords = 0
+  let averageScore = 0
+  
   try {
     uni.showLoading({ title: '提交中...' })
     
     // 计算总体成绩
-    const totalWords = wordsList.value.length
-    const completedWords = taskResults.value.length
-    const averageScore = taskResults.value.reduce((sum, r) => sum + r.auto_score, 0) / completedWords
+    totalWords = wordsList.value.length
+    completedWords = taskResults.value.length
+    averageScore = completedWords > 0 
+      ? taskResults.value.reduce((sum, r) => sum + r.auto_score, 0) / completedWords
+      : 0
     
     // 获取第一个content（单词跟读任务通常只有一个content）
     const content = taskInfo.value.contents[0]
@@ -692,11 +727,21 @@ const submitTaskResults = async () => {
     
     uni.hideLoading()
     
+    // 计算用时（任务模式使用taskProgress，否则使用pageStartTime）
+    const startTime = isTaskMode.value ? taskProgress.value.startTime : pageStartTime.value
+    const startTimeStr = startTime ? startTime.toISOString() : new Date().toISOString()
+    
     // 跳转到任务结果页面
     uni.redirectTo({
-      url: `/pages/task/result?taskId=${taskId.value}&score=${averageScore.toFixed(0)}&correct=${taskResults.value.filter(r => r.is_correct).length}&total=${totalWords}`,
+      url: `/pages/task/result?taskId=${taskId.value}&score=${averageScore.toFixed(0)}&correct=${taskResults.value.filter(r => r.is_correct).length}&total=${totalWords}&startTime=${encodeURIComponent(startTimeStr)}`,
       success: () => {
         console.log('跳转成功')
+        // 清除保存的开始时间
+        if (isTaskMode.value) {
+          uni.removeStorageSync(`task_start_time_${taskId.value}`)
+        } else {
+          uni.removeStorageSync(`lesson_start_time_${book_id.value}_${lesson_id.value}`)
+        }
       },
       fail: (err) => {
         console.error('跳转失败:', err)
@@ -707,10 +752,42 @@ const submitTaskResults = async () => {
   } catch (error) {
     uni.hideLoading()
     console.error('提交任务结果失败:', error)
-    uni.showToast({
-      title: '提交失败',
-      icon: 'none'
-    })
+    
+    // 计算用时（用于过期任务的本地展示）
+    const startTime = isTaskMode.value ? taskProgress.value.startTime : pageStartTime.value
+    const startTimeStr = startTime ? startTime.toISOString() : new Date().toISOString()
+    
+    // 检查是否是任务过期错误
+    if (error.detail && error.detail.includes('截止时间')) {
+      uni.showModal({
+        title: '任务已过期',
+        content: '该任务已过截止时间，无法提交。练习记录已保存，但不计入成绩。',
+        showCancel: true,
+        confirmText: '查看练习',
+        cancelText: '返回列表',
+        success: (res) => {
+          if (res.confirm) {
+            // 查看练习结果（本地展示）
+            uni.redirectTo({
+              url: `/pages/task/result?taskId=${taskId.value}&score=${averageScore.toFixed(0)}&correct=${taskResults.value.filter(r => r.is_correct).length}&total=${totalWords}&startTime=${encodeURIComponent(startTimeStr)}&expired=true`,
+              fail: () => {
+                uni.navigateBack({ delta: 2 })
+              }
+            })
+          } else {
+            // 返回任务列表
+            uni.navigateBack({ delta: 2 })
+          }
+        }
+      })
+    } else {
+      // 其他错误
+      uni.showToast({
+        title: error.message || '提交失败',
+        icon: 'none',
+        duration: 2000
+      })
+    }
   }
 }
 

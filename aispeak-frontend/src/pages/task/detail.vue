@@ -81,9 +81,18 @@
                     :key="wordIndex"
                     class="word-item"
                   >
-                    <text class="word-text">{{ word.word || word }}</text>
-                    <text v-if="word.phonetic || word.uk_phonetic" class="word-phonetic">{{ word.phonetic || word.uk_phonetic }}</text>
-                    <text v-if="word.translation || word.chinese" class="word-translation">{{ word.translation || word.chinese }}</text>
+                    <view class="word-item-content">
+                      <view class="word-info">
+                        <text class="word-text">{{ word.word || word }}</text>
+                        <text v-if="word.phonetic || word.uk_phonetic" class="word-phonetic">{{ word.phonetic || word.uk_phonetic }}</text>
+                        <text v-if="word.translation || word.chinese" class="word-translation">{{ word.translation || word.chinese }}</text>
+                      </view>
+                      <SimpleAudioButton 
+                        v-if="word.audio_url" 
+                        :audio-url="word.audio_url"
+                        size="medium"
+                      />
+                    </view>
                   </view>
                 </view>
               </view>
@@ -110,8 +119,19 @@
                     :key="sentenceIndex"
                     class="sentence-item"
                   >
-                    <text class="sentence-text">{{ sentence.content || sentence.english || sentence }}</text>
-                    <text v-if="sentence.translation || sentence.chinese" class="sentence-translation">{{ sentence.translation || sentence.chinese }}</text>
+                    <view class="sentence-item-content">
+                      <view class="sentence-info">
+                        <text class="sentence-text">{{ sentence.content || sentence.english || sentence }}</text>
+                        <text v-if="sentence.translation || sentence.chinese" class="sentence-translation">{{ sentence.translation || sentence.chinese }}</text>
+                      </view>
+                      <SimpleAudioButton 
+                        v-if="sentence.audio_url" 
+                        :audio-url="sentence.audio_url"
+                        :start-time="sentence.audio_start ? sentence.audio_start / 1000 : undefined"
+                        :end-time="sentence.audio_end ? sentence.audio_end / 1000 : undefined"
+                        size="medium"
+                      />
+                    </view>
                   </view>
                 </view>
               </view>
@@ -308,9 +328,18 @@
                     :key="wordIndex"
                     class="word-item"
                   >
-                    <text class="word-text">{{ word.word || word }}</text>
-                    <text v-if="word.phonetic || word.uk_phonetic" class="word-phonetic">{{ word.phonetic || word.uk_phonetic }}</text>
-                    <text v-if="word.translation || word.chinese" class="word-translation">{{ word.translation || word.chinese }}</text>
+                    <view class="word-item-content">
+                      <view class="word-info">
+                        <text class="word-text">{{ word.word || word }}</text>
+                        <text v-if="word.phonetic || word.uk_phonetic" class="word-phonetic">{{ word.phonetic || word.uk_phonetic }}</text>
+                        <text v-if="word.translation || word.chinese" class="word-translation">{{ word.translation || word.chinese }}</text>
+                      </view>
+                      <SimpleAudioButton 
+                        v-if="word.audio_url" 
+                        :audio-url="word.audio_url"
+                        size="medium"
+                      />
+                    </view>
                   </view>
                 </view>
               </view>
@@ -337,8 +366,19 @@
                     :key="sentenceIndex"
                     class="sentence-item"
                   >
-                    <text class="sentence-text">{{ sentence.content || sentence.english || sentence }}</text>
-                    <text v-if="sentence.translation || sentence.chinese" class="sentence-translation">{{ sentence.translation || sentence.chinese }}</text>
+                    <view class="sentence-item-content">
+                      <view class="sentence-info">
+                        <text class="sentence-text">{{ sentence.content || sentence.english || sentence }}</text>
+                        <text v-if="sentence.translation || sentence.chinese" class="sentence-translation">{{ sentence.translation || sentence.chinese }}</text>
+                      </view>
+                      <SimpleAudioButton 
+                        v-if="sentence.audio_url" 
+                        :audio-url="sentence.audio_url"
+                        :start-time="sentence.audio_start ? sentence.audio_start / 1000 : undefined"
+                        :end-time="sentence.audio_end ? sentence.audio_end / 1000 : undefined"
+                        size="medium"
+                      />
+                    </view>
                   </view>
                 </view>
               </view>
@@ -426,6 +466,7 @@ import { ref, onMounted } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import CommonHeader from "@/components/CommonHeader.vue";
 import LoadingRound from "@/components/LoadingRound.vue";
+import SimpleAudioButton from "@/components/SimpleAudioButton.vue";
 import taskRequest from "@/api/task";
 import textbook from "@/api/textbook";
 
@@ -871,6 +912,7 @@ const deleteTask = () => {
     }
   });
 };
+
 </script>
 
 <style scoped lang="less">
@@ -1407,6 +1449,29 @@ const deleteTask = () => {
         padding: 4rpx 8rpx;
       }
     }
+  }
+}
+
+// 音频按钮样式
+.word-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  
+  .word-info {
+    flex: 1;
+  }
+}
+
+.sentence-item-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+  
+  .sentence-info {
+    flex: 1;
   }
 }
 

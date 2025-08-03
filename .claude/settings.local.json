@@ -26,7 +26,9 @@
       "Bash(true)",
       "Bash(./venv/bin/python -m alembic revision:*)",
       "Bash(./venv/bin/python -m alembic:*)",
-      "Bash(npm run type-check:*)"
+      "Bash(npm run type-check:*)",
+      "Bash(alias python=python3)",
+      "Bash(.venv/bin/python:*)"
     ],
     "deny": []
   }

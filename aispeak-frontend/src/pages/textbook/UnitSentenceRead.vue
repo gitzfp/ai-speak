@@ -22,7 +22,15 @@
 						<view class="chinese">{{ optionSentence.chinese }}</view>
 					</view>
 					<view class="audio-icon">
-						<image @tap="playbuttonclick" class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
+						<SimpleAudioButton
+							v-if="optionSentence.audio_url"
+							:audio-url="optionSentence.audio_url"
+							:start-time="optionSentence.audio_start ? optionSentence.audio_start / 1000 : undefined"
+							:end-time="optionSentence.audio_end ? optionSentence.audio_end / 1000 : undefined"
+							:auto-play="true"
+							size="large"
+							@play-start="onAudioPlayStart"
+						/>
 					</view>
 				</view>
 				<view class="sentence-bottom">
@@ -52,6 +60,7 @@
 	import { ref,computed,watch,onMounted, onUnmounted,nextTick} from 'vue';
 	import Speech from "./components/PronuciationSpeech.vue"
 	import UnitExitreminderPop from './components/UnitExitreminderPop.vue'
+	import SimpleAudioButton from '@/components/SimpleAudioButton.vue'
 	import { onLoad } from '@dcloudio/uni-app'
 	import textbook from '@/api/textbook'
 	import study from '@/api/study';
@@ -84,8 +93,10 @@
 	const taskResults = ref([])
 	
 	const isShowmark = ref(false)
-	const currentAudio = ref(null)
 	const uniExitreminderPopPopup = ref(false)
+	
+	// 通用的开始时间（用于非任务模式）
+	const pageStartTime = ref(null)
 	
 	onMounted(() => {
 		const systemInfo = uni.getSystemInfoSync();
@@ -101,7 +112,7 @@
 		uni.$on('start_recording', (params) => {
 		    console.log('收到全局事件，参数:', params);
 		    if (params.action === 'recording') {
-				stopCurrentAudio()
+				uni.$emit('stopAllAudio')
 		    }
 		  });
 		
@@ -109,7 +120,7 @@
 	
 	onUnmounted(() => {
 		stopWatch(); // 确保无论如何都会清理
-		stopCurrentAudio()
+		uni.$emit('stopAllAudio')
 		uni.$off('start_recording'); // 组件卸载时移除监听
 		
 	})
@@ -207,7 +218,7 @@
 	const clicknext = () => {
 		if (isShowmark.value) {
 			isShowmark.value = false
-			 stopCurrentAudio()
+			 uni.$emit('stopAllAudio')
 			if (currentIndext.value==(sentencesList.value.length-1)) {
 				progressIndext.value = sentencesList.value.length
 				
@@ -235,7 +246,7 @@
 				}
 				
 				setTimeout(() => {
-				    playbuttonclick()
+				    // 音频会自动播放（如果设置了 autoPlay）
 				}, 500);
 			}
 		}
@@ -317,7 +328,7 @@
 	    (newVal) => {
 	      if (newVal) {
 	        nextTick(() => {
-	          playbuttonclick();
+	          // 音频会自动播放（如果设置了 autoPlay）
 	          isShowmark.value = Boolean(
 	            newVal.progress_data?.length > 20
 	          );
@@ -329,47 +340,14 @@
 	  );
 
 	
-	const playbuttonclick = () => {
-		if(!optionSentence?.value?.audio_url)return
-		stopCurrentAudio();
-		const audio = uni.createInnerAudioContext();
-		currentAudio.value = audio;
-		audio.src = optionSentence?.value?.audio_url;
-		
-		// 设置时间范围
-		if (optionSentence.value.audio_start != undefined && optionSentence.value.audio_end != undefined) {
-			if (optionSentence.value.audio_start >=0 && optionSentence.value.audio_end >=0) {
-				const startTime = optionSentence.value.audio_start / 1000
-				const endTime = optionSentence.value.audio_end / 1000
-					
-				audio.startTime = startTime
-				// 监听播放进度
-				audio.onTimeUpdate(() => {
-					if (audio.currentTime >= endTime - 0.1) { // 防止浮点误差
-					stopCurrentAudio()  // 处理播放结束
-					}
-				})
-			}
-		}
-		
-		audio.play();
-	}
-	const stopCurrentAudio = () => {
-		if (currentAudio.value) {
-		  currentAudio.value.pause();
-		  try {
-		    currentAudio.value.stop();
-			  currentAudio.value = null;
-		  } catch (error) {
-		    console.error("Error stopping audio:", error);
-		  }
-		  currentAudio.value = null;
-		}
+	const onAudioPlayStart = () => {
+		// 音频开始播放时的处理
+		console.log('音频开始播放');
 	}
 
 	// 这里可以定义一些响应式数据或逻辑
 	const handleBackPage = () => {
-		stopCurrentAudio()
+		uni.$emit('stopAllAudio')
 		uniExitreminderPopPopup.value = true
 	}
 	
@@ -394,7 +372,8 @@
 		} 
 		
 		if (isTaskMode.value) {
-			uni.navigateBack()
+			// 任务模式下返回到任务列表（需要返回两层）
+			uni.navigateBack({ delta: 2 })
 		} else {
 			uni.switchTab({
 				url: `/pages/textbook/index3`,
@@ -413,6 +392,27 @@
 			isTaskMode.value = true
 			taskId.value = tid
 			await loadTaskInfo()
+			// 任务模式：检查是否已有保存的开始时间
+			const savedStartTime = uni.getStorageSync(`task_start_time_${tid}`)
+			if (!savedStartTime) {
+				// 首次进入，保存开始时间
+				uni.setStorageSync(`task_start_time_${tid}`, taskProgress.value.startTime.toISOString())
+			} else {
+				// 恢复之前的开始时间
+				taskProgress.value.startTime = new Date(savedStartTime)
+			}
+		} else {
+			// 非任务模式：使用课程ID作为key
+			const storageKey = `lesson_start_time_${book_id.value}_${lesson_id.value}`
+			const savedStartTime = uni.getStorageSync(storageKey)
+			if (!savedStartTime) {
+				// 首次进入，保存开始时间
+				pageStartTime.value = new Date()
+				uni.setStorageSync(storageKey, pageStartTime.value.toISOString())
+			} else {
+				// 恢复之前的开始时间
+				pageStartTime.value = new Date(savedStartTime)
+			}
 		}
 		gethistorySentences()
 	})
@@ -546,13 +546,20 @@
 	
 // 提交任务结果
 const submitTaskResults = async () => {
+  // 将这些变量声明在try块外，以便catch块也能访问
+  let totalSentences = 0
+  let completedSentences = 0
+  let averageScore = 0
+  
   try {
     uni.showLoading({ title: '提交中...' })
     
     // 计算总体成绩
-    const totalSentences = sentencesList.value.length
-    const completedSentences = taskResults.value.length
-    const averageScore = taskResults.value.reduce((sum, r) => sum + r.auto_score, 0) / completedSentences
+    totalSentences = sentencesList.value.length
+    completedSentences = taskResults.value.length
+    averageScore = completedSentences > 0 
+      ? taskResults.value.reduce((sum, r) => sum + r.auto_score, 0) / completedSentences
+      : 0
     
     // 获取第一个content（句子跟读任务通常只有一个content）
     const content = taskInfo.value.contents[0]
@@ -593,11 +600,21 @@ const submitTaskResults = async () => {
     
     uni.hideLoading()
     
+    // 计算用时（任务模式使用taskProgress，否则使用pageStartTime）
+    const startTime = isTaskMode.value ? taskProgress.value.startTime : pageStartTime.value
+    const startTimeStr = startTime ? startTime.toISOString() : new Date().toISOString()
+    
     // 跳转到任务结果页面
     uni.redirectTo({
-      url: `/pages/task/result?taskId=${taskId.value}&score=${averageScore.toFixed(0)}&correct=${taskResults.value.filter(r => r.is_correct).length}&total=${totalSentences}`,
+      url: `/pages/task/result?taskId=${taskId.value}&score=${averageScore.toFixed(0)}&correct=${taskResults.value.filter(r => r.is_correct).length}&total=${totalSentences}&startTime=${encodeURIComponent(startTimeStr)}`,
       success: () => {
         console.log('跳转成功')
+        // 清除保存的开始时间
+        if (isTaskMode.value) {
+          uni.removeStorageSync(`task_start_time_${taskId.value}`)
+        } else {
+          uni.removeStorageSync(`lesson_start_time_${book_id.value}_${lesson_id.value}`)
+        }
       },
       fail: (err) => {
         console.error('跳转失败:', err)
@@ -608,10 +625,42 @@ const submitTaskResults = async () => {
   } catch (error) {
     uni.hideLoading()
     console.error('提交任务结果失败:', error)
-    uni.showToast({
-      title: '提交失败',
-      icon: 'none'
-    })
+    
+    // 计算用时（用于过期任务的本地展示）
+    const startTime = isTaskMode.value ? taskProgress.value.startTime : pageStartTime.value
+    const startTimeStr = startTime ? startTime.toISOString() : new Date().toISOString()
+    
+    // 检查是否是任务过期错误
+    if (error.detail && error.detail.includes('截止时间')) {
+      uni.showModal({
+        title: '任务已过期',
+        content: '该任务已过截止时间，无法提交。练习记录已保存，但不计入成绩。',
+        showCancel: true,
+        confirmText: '查看练习',
+        cancelText: '返回列表',
+        success: (res) => {
+          if (res.confirm) {
+            // 查看练习结果（本地展示）
+            uni.redirectTo({
+              url: `/pages/task/result?taskId=${taskId.value}&score=${averageScore.toFixed(0)}&correct=${taskResults.value.filter(r => r.is_correct).length}&total=${totalSentences}&startTime=${encodeURIComponent(startTimeStr)}&expired=true`,
+              fail: () => {
+                uni.navigateBack({ delta: 2 })
+              }
+            })
+          } else {
+            // 返回任务列表
+            uni.navigateBack({ delta: 2 })
+          }
+        }
+      })
+    } else {
+      // 其他错误
+      uni.showToast({
+        title: error.message || '提交失败',
+        icon: 'none',
+        duration: 2000
+      })
+    }
   }
 }
 

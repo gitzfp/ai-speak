@@ -348,14 +348,14 @@ const taskTypes = ref([
   },
   { 
     value: 'pronunciation', 
-    label: '发音', 
+    label: '单词跟读', 
     icon: '🎤',
-    description: '朗读单词或句子',
+    description: '跟读单词练习',
     contentType: 'word'  // 主要是单词
   },
   { 
     value: 'sentence_repeat', 
-    label: '跟读', 
+    label: '句子跟读', 
     icon: '🔄',
     description: '跟读句子练习',
     contentType: 'sentence'  // 需要句子

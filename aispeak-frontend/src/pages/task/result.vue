@@ -7,6 +7,15 @@
     </CommonHeader>
     
     <view class="content">
+      <!-- 过期提示 -->
+      <view v-if="isExpired" class="expired-notice">
+        <view class="notice-icon">⚠️</view>
+        <view class="notice-content">
+          <text class="notice-title">任务已过期</text>
+          <text class="notice-desc">练习记录仅供参考，不计入成绩</text>
+        </view>
+      </view>
+      
       <!-- 成绩展示 -->
       <view class="score-section">
         <view class="score-circle">
@@ -61,9 +70,6 @@
         <view class="primary-btn" @click="backToTaskList">
           <text class="btn-text">返回任务列表</text>
         </view>
-        <view v-if="canRetry" class="secondary-btn" @click="retryTask">
-          <text class="btn-text">重新练习</text>
-        </view>
       </view>
     </view>
   </view>
@@ -83,6 +89,7 @@ const totalCount = ref(0)
 const timeSpent = ref(0)
 const taskInfo = ref(null)
 const startTime = ref(null)
+const isExpired = ref(false)
 
 const accuracy = computed(() => {
   if (totalCount.value === 0) return 0
@@ -114,15 +121,29 @@ const canRetry = computed(() => {
 
 onLoad((options) => {
   taskId.value = options.taskId || ''
-  score.value = parseInt(options.score || '0')
-  correctCount.value = parseInt(options.correct || '0')
-  totalCount.value = parseInt(options.total || '0')
+  
+  // 检查是否是过期任务
+  isExpired.value = options.expired === 'true'
+  
+  // 安全地解析分数，避免 NaN
+  const parsedScore = parseInt(options.score || '0')
+  score.value = isNaN(parsedScore) ? 0 : parsedScore
+  
+  const parsedCorrect = parseInt(options.correct || '0')
+  correctCount.value = isNaN(parsedCorrect) ? 0 : parsedCorrect
+  
+  const parsedTotal = parseInt(options.total || '0')
+  totalCount.value = isNaN(parsedTotal) ? 0 : parsedTotal
+  
   incorrectCount.value = totalCount.value - correctCount.value
   
   // 计算用时（从开始到现在）
   if (options.startTime) {
     startTime.value = new Date(options.startTime)
     timeSpent.value = Date.now() - startTime.value.getTime()
+  } else {
+    // 如果没有开始时间，显示默认值
+    timeSpent.value = 0
   }
   
   loadTaskInfo()
@@ -355,6 +376,39 @@ const retryTask = () => {
     background: white;
     color: #4B7EFE;
     border: 2rpx solid #4B7EFE;
+  }
+}
+
+.expired-notice {
+  margin: 20rpx;
+  padding: 30rpx;
+  background: #FFF5E6;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  border: 2rpx solid #FFB84D;
+  
+  .notice-icon {
+    font-size: 48rpx;
+    margin-right: 20rpx;
+  }
+  
+  .notice-content {
+    flex: 1;
+    
+    .notice-title {
+      display: block;
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #FF8C00;
+      margin-bottom: 8rpx;
+    }
+    
+    .notice-desc {
+      display: block;
+      font-size: 28rpx;
+      color: #666;
+    }
   }
 }
 </style>

@@ -64,7 +64,11 @@
 					  <text v-if="iswordReveal" class="correctContent">{{currentWord.word}}</text>
 				  </view>
 				  <view class="audio-icon"> 
-					  <image @tap="playbuttonclick" class="left-icon" src="@/assets/icons/played_broadcast.svg"></image>
+					  <SimpleAudioButton
+						  v-if="currentWord.audio_url"
+						  :audio-url="currentWord.audio_url"
+						  size="large"
+					  />
 				  </view>
 				  <!-- 释义区域 -->
 				  <view class="definition">
@@ -114,6 +118,7 @@ import accountRequest from "@/api/account"
 import study from '@/api/study';
 import taskRequest from '@/api/task';
 import UnitExitreminderPop from './components/UnitExitreminderPop.vue'
+import SimpleAudioButton from '@/components/SimpleAudioButton.vue'
 // 获取设备的安全区域高度
 const statusBarHeight = ref(0);
 const customBarHeight = ref(0);
@@ -175,6 +180,9 @@ const createAnimation = () => {
 			      console.error('返回失败', err);
 			    },
 			});
+		} else if (isTaskMode.value) {
+			// 任务模式下返回到任务列表（需要返回两层）
+			uni.navigateBack({ delta: 2 })
 		} else {
 			uni.navigateBack()
 		}
@@ -192,13 +200,12 @@ const lettercheckList = ref([])
 const activeIndex = ref(0);
 
 const allWords = ref([])
+const ispagePlaying = ref(false)
+const currentTrackIndex = ref(0)
+const currentAudio = ref(null)
 
 const currentPage = ref(0)
 
-const currentAudio = ref(null)
-
-const ispagePlaying = ref(false)
-const currentTrackIndex = ref(-1)
 
 const isInspect = ref(false)
 
@@ -237,6 +244,8 @@ const taskProgress = ref({
 })
 const taskResults = ref([])
 
+// 通用的开始时间（用于非任务模式）
+const pageStartTime = ref(null)
 
 	
 // 组件挂载
@@ -263,6 +272,27 @@ const taskResults = ref([])
 			isTaskMode.value = true
 			taskId.value = tid
 			await loadTaskInfo()
+			// 任务模式：检查是否已有保存的开始时间
+			const savedStartTime = uni.getStorageSync(`task_start_time_${tid}`)
+			if (!savedStartTime) {
+				// 首次进入，保存开始时间
+				uni.setStorageSync(`task_start_time_${tid}`, taskProgress.value.startTime.toISOString())
+			} else {
+				// 恢复之前的开始时间
+				taskProgress.value.startTime = new Date(savedStartTime)
+			}
+		} else {
+			// 非任务模式：使用课程ID作为key
+			const storageKey = `lesson_start_time_${book_id.value}_${lesson_id.value}`
+			const savedStartTime = uni.getStorageSync(storageKey)
+			if (!savedStartTime) {
+				// 首次进入，保存开始时间
+				pageStartTime.value = new Date()
+				uni.setStorageSync(storageKey, pageStartTime.value.toISOString())
+			} else {
+				// 恢复之前的开始时间
+				pageStartTime.value = new Date(savedStartTime)
+			}
 		}
 		
 		// 获取历史进度（任务模式和教材模式都需要）
@@ -932,11 +962,21 @@ const submitTaskResults = async () => {
     
     uni.hideLoading()
     
+    // 计算用时（任务模式使用taskProgress，否则使用pageStartTime）
+    const startTime = isTaskMode.value ? taskProgress.value.startTime : pageStartTime.value
+    const startTimeStr = startTime ? startTime.toISOString() : new Date().toISOString()
+    
     // 跳转到任务结果页面
     uni.redirectTo({
-      url: `/pages/task/result?taskId=${taskId.value}&score=${accuracy.toFixed(0)}&correct=${correctCount}&total=${totalCount}`,
+      url: `/pages/task/result?taskId=${taskId.value}&score=${accuracy.toFixed(0)}&correct=${correctCount}&total=${totalCount}&startTime=${encodeURIComponent(startTimeStr)}`,
       success: () => {
         console.log('跳转成功')
+        // 清除保存的开始时间
+        if (isTaskMode.value) {
+          uni.removeStorageSync(`task_start_time_${taskId.value}`)
+        } else {
+          uni.removeStorageSync(`lesson_start_time_${book_id.value}_${lesson_id.value}`)
+        }
       },
       fail: (err) => {
         console.error('跳转失败:', err)
@@ -947,10 +987,47 @@ const submitTaskResults = async () => {
   } catch (error) {
     uni.hideLoading()
     console.error('提交任务结果失败:', error)
-    uni.showToast({
-      title: '提交失败',
-      icon: 'none'
-    })
+    
+    // 计算用时（用于错误处理时的展示）
+    const startTime = isTaskMode.value ? taskProgress.value.startTime : pageStartTime.value
+    const startTimeStr = startTime ? startTime.toISOString() : new Date().toISOString()
+    
+    // 检查是否是任务过期错误
+    if (error.detail && error.detail.includes('截止时间')) {
+      uni.showModal({
+        title: '任务已过期',
+        content: '该任务已过截止时间，无法提交。练习记录已保存，但不计入成绩。',
+        showCancel: true,
+        confirmText: '查看练习',
+        cancelText: '返回列表',
+        success: (res) => {
+          if (res.confirm) {
+            // 重新计算成绩（因为这些变量在catch块中不可访问）
+            const correctCount = taskResults.value.filter(r => r.is_correct).length
+            const totalCount = taskResults.value.length
+            const accuracy = totalCount > 0 ? (correctCount / totalCount * 100) : 0
+            
+            // 查看练习结果（本地展示）
+            uni.redirectTo({
+              url: `/pages/task/result?taskId=${taskId.value}&score=${accuracy.toFixed(0)}&correct=${correctCount}&total=${totalCount}&startTime=${encodeURIComponent(startTimeStr)}&expired=true`,
+              fail: () => {
+                uni.navigateBack({ delta: 2 })
+              }
+            })
+          } else {
+            // 返回任务列表
+            uni.navigateBack({ delta: 2 })
+          }
+        }
+      })
+    } else {
+      // 其他错误
+      uni.showToast({
+        title: error.message || '提交失败',
+        icon: 'none',
+        duration: 2000
+      })
+    }
   }
 }
 

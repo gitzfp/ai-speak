@@ -9,23 +9,6 @@
     <view class="content">
       <!-- 加入方式选择 -->
       <view class="join-methods">
-        <view class="method-tabs">
-          <view 
-            class="method-tab" 
-            :class="{ active: joinMethod === 'code' }"
-            @click="switchMethod('code')"
-          >
-            班级码
-          </view>
-          <view 
-            class="method-tab" 
-            :class="{ active: joinMethod === 'search' }"
-            @click="switchMethod('search')"
-          >
-            搜索班级
-          </view>
-        </view>
-        
         <!-- 班级码加入 -->
         <view v-if="joinMethod === 'code'" class="join-by-code">
           <view class="code-input-section">

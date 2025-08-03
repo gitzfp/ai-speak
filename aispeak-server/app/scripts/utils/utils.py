@@ -31,7 +31,7 @@ async def download_and_upload_to_oss(url: str, oss_key: str) -> str:
 
         # 检查文件是否已存在
         if OSS_BUCKET.object_exists(oss_key):
-            print(f"Object {oss_key} already exists in OSS, skipping upload.")
+            print(f"Object {oss_key} already exists in OSS, skipping upload. url: {url}")
         else:
             response = requests.get(url)
             response.raise_for_status()
