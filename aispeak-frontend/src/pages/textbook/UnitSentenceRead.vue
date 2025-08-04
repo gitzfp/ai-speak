@@ -24,6 +24,7 @@
 					<view class="audio-icon">
 						<SimpleAudioButton
 							v-if="optionSentence.audio_url"
+							:key="`audio-${currentIndext}`"
 							:audio-url="optionSentence.audio_url"
 							:start-time="optionSentence.audio_start ? optionSentence.audio_start / 1000 : undefined"
 							:end-time="optionSentence.audio_end ? optionSentence.audio_end / 1000 : undefined"
@@ -244,10 +245,6 @@
 				if (!(optionSentence.value.progress_data && optionSentence.value.progress_data.length > 20)) {
 					// followReadingref.value.resetRefresh()
 				}
-				
-				setTimeout(() => {
-				    // 音频会自动播放（如果设置了 autoPlay）
-				}, 500);
 			}
 		}
 		

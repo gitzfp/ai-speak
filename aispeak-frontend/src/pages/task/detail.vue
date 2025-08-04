@@ -331,9 +331,7 @@
                     <view class="word-item-content">
                       <view class="word-info">
                         <text class="word-text">{{ word.word || word }}</text>
-                        <text v-if="word.phonetic || word.uk_phonetic" class="word-phonetic">{{ word.phonetic || word.uk_phonetic }}</text>
-                        <text v-if="word.translation || word.chinese" class="word-translation">{{ word.translation || word.chinese }}</text>
-                      </view>
+                    </view>
                       <SimpleAudioButton 
                         v-if="word.audio_url" 
                         :audio-url="word.audio_url"
