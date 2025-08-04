@@ -50,7 +50,7 @@
               </view>
               <view class="student-details">
                 <text class="student-name">{{ student.name || student.username || '未知' }}</text>
-                <text class="student-id">学号: {{ student.student_id || student.user_id || '未设置' }}</text>
+                <text class="student-id">{{ student.phone || student.phone_number || '暂无手机号' }}</text>
               </view>
             </view>
             <view class="student-actions">
