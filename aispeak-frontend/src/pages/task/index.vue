@@ -85,15 +85,19 @@
                 <text class="task-desc">{{ task.description }}</text>
               <view class="task-meta">
                 <text class="task-deadline">截止: {{ formatDate(task.deadline) }}</text>
-                <text class="task-points">{{ task.total_points }}分</text>
                 <!-- 学生提交状态和评分 -->
                 <view v-if="task.student_submission" class="student-submission-info">
                   <text v-if="task.student_submission.status === 'graded'" class="submission-score">
-                    得分: {{ task.student_submission.teacher_score }}/{{ task.total_points }}
+                    得分: {{ task.student_submission.teacher_score }}分
                   </text>
                   <text v-else class="submission-status submitted">已提交</text>
                 </view>
                 <text v-else class="submission-status not-submitted">未提交</text>
+              </view>
+              <!-- 教师评语 -->
+              <view v-if="task.student_submission && task.student_submission.feedback" class="task-feedback">
+                <text class="feedback-label">教师评语：</text>
+                <text class="feedback-content" @click.stop="showFullFeedback(task.student_submission.feedback)">{{ truncateFeedback(task.student_submission.feedback) }}</text>
               </view>
             </view>
             </view>
@@ -166,16 +170,20 @@
               <text class="task-desc">{{ task.description }}</text>
               <view class="task-meta">
                 <text class="task-deadline">截止: {{ formatDate(task.deadline) }}</text>
-                <text class="task-points">{{ task.total_points }}分</text>
                 <text v-if="currentRole === 'teacher'" class="submission-count">{{ task.submission_count || 0 }}份提交</text>
                 <!-- 学生视图：显示提交状态和评分 -->
                 <view v-if="currentRole === 'student' && task.student_submission" class="student-submission-info">
                   <text v-if="task.student_submission.status === 'graded'" class="submission-score">
-                    得分: {{ task.student_submission.teacher_score }}/{{ task.total_points }}
+                    得分: {{ task.student_submission.teacher_score }}分
                   </text>
                   <text v-else class="submission-status submitted">已提交</text>
                 </view>
                 <text v-else-if="currentRole === 'student'" class="submission-status not-submitted">未提交</text>
+              </view>
+              <!-- 教师评语 -->
+              <view v-if="currentRole === 'student' && task.student_submission && task.student_submission.feedback" class="task-feedback">
+                <text class="feedback-label">教师评语：</text>
+                <text class="feedback-content" @click.stop="showFullFeedback(task.student_submission.feedback)">{{ truncateFeedback(task.student_submission.feedback) }}</text>
               </view>
             </view>
           </view>
@@ -412,7 +420,8 @@ const loadTasks = () => {
   loading.value = true;
   const params: any = {
     page: 1,
-    page_size: 20
+    page_size: 20,
+    include_feedback: true  // 请求包含反馈信息
   };
   
   if (currentRole.value === 'teacher') {
@@ -446,6 +455,11 @@ const loadTasks = () => {
   
   taskRequest.listTasks(params).then((res) => {
     tasks.value = res.data.tasks || res.data || [];
+    // 调试：打印任务数据查看是否包含feedback
+    console.log('任务列表数据:', tasks.value);
+    if (tasks.value.length > 0 && tasks.value[0].student_submission) {
+      console.log('学生提交数据示例:', tasks.value[0].student_submission);
+    }
     loading.value = false;
   }).catch(() => {
     // 根据角色显示不同的模拟数据
@@ -793,6 +807,23 @@ const formatDate = (dateStr: string) => {
   const date = new Date(dateStr);
   return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
 };
+
+// 截断评语文本
+const truncateFeedback = (feedback: string) => {
+  if (!feedback) return '';
+  const maxLength = 20;
+  return feedback.length > maxLength ? feedback.substring(0, maxLength) + '...' : feedback;
+};
+
+// 显示完整评语
+const showFullFeedback = (feedback: string) => {
+  uni.showModal({
+    title: '教师评语',
+    content: feedback,
+    showCancel: false,
+    confirmText: '关闭'
+  });
+};
 </script>
 
 <style scoped lang="less">
@@ -1020,6 +1051,33 @@ const formatDate = (dateStr: string) => {
           padding: 4rpx 12rpx;
           background: #F6FFED;
           border-radius: 20rpx;
+        }
+      }
+      
+      // 教师评语样式
+      .task-feedback {
+        margin-top: 12rpx;
+        padding: 12rpx 16rpx;
+        background: #f8f9fa;
+        border-radius: 8rpx;
+        display: flex;
+        align-items: flex-start;
+        gap: 8rpx;
+        
+        .feedback-label {
+          font-size: 24rpx;
+          color: #666;
+          flex-shrink: 0;
+        }
+        
+        .feedback-content {
+          font-size: 24rpx;
+          color: #333;
+          line-height: 1.5;
+          flex: 1;
+          text-decoration: underline;
+          text-decoration-style: dotted;
+          text-underline-offset: 4rpx;
         }
       }
     }

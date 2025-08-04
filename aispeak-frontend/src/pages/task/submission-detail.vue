@@ -37,6 +37,10 @@
           <text class="label">系统评分</text>
           <text class="value" style="color: #666;">{{ submission.auto_score.toFixed(0) }}分</text>
         </view>
+        <view class="info-item" v-if="submission.feedback">
+          <text class="label">老师评语</text>
+          <text class="value feedback-text">{{ submission.feedback }}</text>
+        </view>
       </view>
       
       <!-- 答题详情 -->
@@ -355,15 +359,25 @@ const handleCheckboxChange = (e: any) => {
   .label {
     font-size: 28rpx;
     color: #666;
+    flex-shrink: 0;
+    margin-right: 20rpx;
   }
   
   .value {
     font-size: 28rpx;
     color: #333;
+    text-align: right;
+    flex: 1;
     
     &.score {
       color: #4B7EFE;
       font-weight: bold;
+    }
+    
+    &.feedback-text {
+      text-align: left;
+      line-height: 1.6;
+      word-break: break-all;
     }
   }
 }
