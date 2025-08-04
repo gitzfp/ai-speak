@@ -94,7 +94,6 @@
     "quickapp" : {},
     "mp-weixin" : {
         "appid" : "wx553ddbc4589aaaa9",
-        "uploadKey" : "3a64d34ebbf6e3c12de02e7450bf58ab", // 你的上传密钥
         "setting" : {
             "urlCheck" : false
         },
@@ -104,12 +103,6 @@
         "permission" : {
             "scope.userLocation": {
                 "desc": "获取您的位置信息，用于推荐附近的学习活动"
-            },
-            "scope.record": {
-                "desc": "用于语音练习功能"
-            },
-            "scope.writePhotosAlbum": {
-                "desc": "用于保存学习成果图片"
             }
         }
     },

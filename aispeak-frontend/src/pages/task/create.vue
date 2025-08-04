@@ -1730,18 +1730,18 @@ const submit = async () => {
 .preview-empty {
   text-align: center;
   padding: 40rpx;
-  
-  .empty-icon {
-    font-size: 48rpx;
-    display: block;
-    margin-bottom: 16rpx;
-    opacity: 0.5;
-  }
-  
-  text {
-    color: #ef4444;
-    font-size: 26rpx;
-  }
+}
+
+.preview-empty .empty-icon {
+  font-size: 48rpx;
+  display: block;
+  margin-bottom: 16rpx;
+  opacity: 0.5;
+}
+
+.preview-empty text {
+  color: #ef4444;
+  font-size: 26rpx;
 }
 
 .word-list {
