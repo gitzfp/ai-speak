@@ -97,7 +97,7 @@
         "setting" : {
             "urlCheck" : false
         },
-        "requiredBackgroundModes" : [ "audio", "location" ],
+        "requiredBackgroundModes" : [ "audio" ],
         "usingComponents" : true,
         "__usePrivacyCheck__" : true,
         "permission" : {
