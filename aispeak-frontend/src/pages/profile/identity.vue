@@ -62,7 +62,7 @@
       </view>
       
       <!-- 身份信息表单 -->
-      <view v-if="selectedRole" class="identity-form">
+      <view class="identity-form">
         <text class="section-title">完善信息</text>
         
         <view class="form-item">
@@ -71,45 +71,32 @@
             v-model="userInfo.name" 
             class="input" 
             placeholder="请输入真实姓名"
+            @blur="saveUserName"
           />
         </view>
         
-        <view class="info-tip">
+        <view v-if="selectedRole" class="info-tip">
           <text class="tip-icon">💡</text>
-          <text class="tip-text">
-            {{ selectedRole === 'teacher' ? '创建班级时可以设置学校信息' : '加入班级后会自动获取学校和年级信息' }}
-          </text>
+          <text class="tip-text">加入班级后会自动获取学校和年级信息</text>
         </view>
       </view>
       
-      <!-- 操作按钮 -->
-      <view class="actions">
-        <view class="btn-group">
-          <view 
-            class="btn primary" 
-            @click="saveIdentity"
-            :class="{ disabled: !canSave }"
-          >
-            保存设置
-          </view>
+      <!-- 快捷操作 -->
+      <view v-if="selectedRole === 'student'" class="quick-actions">
+        <view class="quick-btn" @click="joinClass">
+          <text class="quick-icon">🏫</text>
+          <text class="quick-text">加入班级</text>
         </view>
-        
-        <view v-if="selectedRole === 'student'" class="quick-actions">
-          <view class="quick-btn" @click="joinClass">
-            <text class="quick-icon">🏫</text>
-            <text class="quick-text">加入班级</text>
-          </view>
+      </view>
+      
+      <view v-if="selectedRole === 'teacher'" class="quick-actions">
+        <view class="quick-btn" @click="createClass">
+          <text class="quick-icon">➕</text>
+          <text class="quick-text">创建班级</text>
         </view>
-        
-        <view v-if="selectedRole === 'teacher'" class="quick-actions">
-          <view class="quick-btn" @click="createClass">
-            <text class="quick-icon">➕</text>
-            <text class="quick-text">创建班级</text>
-          </view>
-          <view class="quick-btn" @click="manageClasses">
-            <text class="quick-icon">📚</text>
-            <text class="quick-text">管理班级</text>
-          </view>
+        <view class="quick-btn" @click="manageClasses">
+          <text class="quick-icon">📚</text>
+          <text class="quick-text">管理班级</text>
         </view>
       </view>
     </view>
@@ -121,23 +108,74 @@ import { ref, computed } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
 import CommonHeader from "@/components/CommonHeader.vue";
 import accountRequest from "@/api/account";
+import { useUserStore } from '@/stores/user';
 
+const userStore = useUserStore();
 const currentRole = ref('');
 const selectedRole = ref('');
 const userInfo = ref({
   name: ''
 });
 
-const canSave = computed(() => {
-  return selectedRole.value && userInfo.value.name;
-});
+// 添加防抖定时器引用
+let saveNameTimer: any = null;
 
-onLoad(() => {
-  loadCurrentRole();
-});
+// 保存角色
+const saveRole = () => {
+  if (!selectedRole.value) return;
+  
+  accountRequest.setRole({ role: selectedRole.value }).then(() => {
+    currentRole.value = selectedRole.value;
+    // 更新 store 中的角色
+    userStore.updateUserRole(selectedRole.value);
+    // 保留 localStorage 作为备份
+    uni.setStorageSync('userRole', selectedRole.value)
+    uni.showToast({ title: '身份已更新', icon: 'success', duration: 1500 });
+  }).catch((error) => {
+    console.log('保存角色失败', error);
+    uni.showToast({ title: '保存失败，请重试', icon: 'none' });
+    // 恢复到之前的角色
+    selectedRole.value = currentRole.value;
+    uni.setStorageSync('userRole', selectedRole.value)
+  });
+};
 
-onShow(() => {
-  loadCurrentRole();
+// 保存用户姓名
+const saveUserName = () => {
+  if (!userInfo.value.name || userInfo.value.name.trim() === '') return;
+  
+  // 清除之前的定时器
+  if (saveNameTimer) {
+    clearTimeout(saveNameTimer);
+  }
+  
+  // 延迟保存，避免频繁调用
+  saveNameTimer = setTimeout(() => {
+    const updateData = {
+      user_name: userInfo.value.name.trim()
+    };
+    
+    accountRequest.setSettings(updateData).then(() => {
+      // 更新 store 中的用户名
+      userStore.updateUserName(userInfo.value.name.trim());
+      uni.showToast({ title: '姓名已保存', icon: 'success', duration: 1500 });
+    }).catch((error) => {
+      console.log('保存姓名失败', error);
+      uni.showToast({ title: '保存失败', icon: 'none' });
+    });
+  }, 500);
+};
+
+onLoad((options: any) => {
+  // 优先从 store 获取数据
+  if (userStore.userInfo) {
+    currentRole.value = userStore.userRole;
+    selectedRole.value = userStore.userRole;
+    userInfo.value.name = userStore.userInfo.user_name || '';
+  } else {
+    // 如果 store 中没有数据，调用 API
+    loadCurrentRole();
+  }
 });
 
 const handleBack = () => {
@@ -147,51 +185,25 @@ const handleBack = () => {
 };
 
 const loadCurrentRole = () => {
-  // 优先从本地存储获取角色信息
-  const localRole = uni.getStorageSync('userRole');
-  const localUserInfo = uni.getStorageSync('userInfo');
-  
-  if (localRole) {
-    currentRole.value = localRole;
-    selectedRole.value = localRole;
-    
-    // 如果有本地用户信息，加载它
-    if (localUserInfo) {
-      userInfo.value = {
-        name: localUserInfo.name || ''
-      };
-    }
-  }
-  
-  // 尝试从API获取角色信息（如果后端支持）
-  accountRequest.getRole().then((res) => {
-    if (res.data && res.data.role) {
-      currentRole.value = res.data.role;
-      selectedRole.value = res.data.role;
-      // 更新本地存储
-      uni.setStorageSync('userRole', res.data.role);
-    }
-  }).catch((error) => {
-    console.log('获取角色信息失败:', error);
-    // 如果API失败但本地没有角色，保持空状态
-    if (!localRole) {
-      currentRole.value = '';
-      selectedRole.value = '';
-    }
-  });
-  
-  // 加载其他用户信息
-  loadUserInfo();
-};
-
-const loadUserInfo = () => {
+  // 调用 API 获取用户信息
   accountRequest.accountInfoGet().then((res) => {
     const info = res.data;
+    
+    // 更新 store
+    userStore.setUserInfo(info);
+    
+    // 设置角色信息
+    if (info.user_role) {
+      currentRole.value = info.user_role;
+      selectedRole.value = info.user_role;
+    }
+    
+    // 设置用户信息
     userInfo.value = {
       name: info.user_name || ''
     };
-  }).catch(() => {
-    console.log('用户信息加载失败');
+  }).catch((error) => {
+    console.log('获取用户信息失败:', error);
   });
 };
 
@@ -207,56 +219,14 @@ const getRoleLabel = (role: string) => {
 };
 
 const selectRole = (role: string) => {
+  if (selectedRole.value === role) return; // 如果选择相同的角色，不做处理
+  
   selectedRole.value = role;
+  
+  // 立即保存角色
+  saveRole();
 };
 
-const saveIdentity = () => {
-  if (!canSave.value) {
-    uni.showToast({ title: '请完善必填信息', icon: 'none' });
-    return;
-  }
-  
-  // 保存角色
-  accountRequest.setRole({ role: selectedRole.value }).then(() => {
-    // 保存用户姓名
-    const updateData = {
-      user_name: userInfo.value.name
-    };
-    
-    return accountRequest.setSettings(updateData);
-  }).then(() => {
-    // 保存到本地存储
-    uni.setStorageSync('userRole', selectedRole.value);
-    uni.setStorageSync('userInfo', userInfo.value);
-    
-    currentRole.value = selectedRole.value;
-    uni.showToast({ title: '设置保存成功' });
-    
-    // 根据角色跳转
-    setTimeout(() => {
-      if (selectedRole.value === 'teacher') {
-        uni.navigateBack();
-      } else {
-        uni.navigateTo({ url: '/pages/class/join' });
-      }
-    }, 1500);
-  }).catch(() => {
-    // 模拟保存成功
-    uni.setStorageSync('userRole', selectedRole.value);
-    uni.setStorageSync('userInfo', userInfo.value);
-    
-    currentRole.value = selectedRole.value;
-    uni.showToast({ title: '设置保存成功' });
-    
-    setTimeout(() => {
-      if (selectedRole.value === 'teacher') {
-        uni.navigateTo({ url: '/pages/class/create' });
-      } else {
-        uni.navigateTo({ url: '/pages/class/join' });
-      }
-    }, 1500);
-  });
-};
 
 const joinClass = () => {
   uni.navigateTo({ url: '/pages/class/join' });
@@ -424,50 +394,28 @@ const manageClasses = () => {
   }
 }
 
-.actions {
-  .btn-group {
-    .btn {
-      width: 100%;
-      text-align: center;
-      padding: 32rpx;
-      border-radius: 16rpx;
-      font-size: 32rpx;
-      font-weight: 600;
-      margin-bottom: 24rpx;
-      
-      &.primary {
-        background: linear-gradient(135deg, #4B7EFE, #6A93FF);
-        color: white;
-      }
-      
-      &.disabled {
-        opacity: 0.5;
-      }
-    }
-  }
+.quick-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 32rpx;
   
-  .quick-actions {
-    display: flex;
-    gap: 16rpx;
+  .quick-btn {
+    flex: 1;
+    background: white;
+    border-radius: 16rpx;
+    padding: 32rpx;
+    text-align: center;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
     
-    .quick-btn {
-      flex: 1;
-      background: white;
-      border-radius: 16rpx;
-      padding: 32rpx;
-      text-align: center;
-      box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
-      
-      .quick-icon {
-        font-size: 32rpx;
-        display: block;
-        margin-bottom: 8rpx;
-      }
-      
-      .quick-text {
-        font-size: 26rpx;
-        color: #333;
-      }
+    .quick-icon {
+      font-size: 32rpx;
+      display: block;
+      margin-bottom: 8rpx;
+    }
+    
+    .quick-text {
+      font-size: 26rpx;
+      color: #333;
     }
   }
 }

@@ -28,7 +28,12 @@
       "Bash(./venv/bin/python -m alembic:*)",
       "Bash(npm run type-check:*)",
       "Bash(alias python=python3)",
-      "Bash(.venv/bin/python:*)"
+      "Bash(.venv/bin/python:*)",
+      "Bash(/Users/fpz/opt/anaconda3/envs/fluent-ai/bin/python -c \"\nfrom app.db import get_db\nfrom app.services.task_service import TaskService\nfrom sqlalchemy.orm import Session\nimport asyncio\n\nasync def test_get_class():\n    db = next(get_db())\n    service = TaskService(db)\n    try:\n        result = await service.get_class_by_id(''4'')\n        if result:\n            print(f''Class Info:'')\n            print(f''  ID: {result.id}'')\n            print(f''  Name: {result.name}'')\n            print(f''  Teacher ID: {result.teacher_id}'')\n            print(f''  Teacher Name: {getattr(result, \"\"teacher_name\"\", \"\"NOT FOUND\"\")}'')\n            print(f''  Student Count: {getattr(result, \"\"student_count\"\", 0)}'')\n        else:\n            print(''Class not found'')\n    except Exception as e:\n        print(f''Error: {e}'')\n    finally:\n        db.close()\n\nasyncio.run(test_get_class())\n\")",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(npm ls:*)"
     ],
     "deny": []
   }

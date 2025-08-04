@@ -128,11 +128,14 @@
         <view class="modal-content">
           <view class="grade-section">
             <text class="grade-label">分数 (满分{{ getContentPoints(currentSubmission) || 100 }})</text>
-            <input 
+            <textarea 
               v-model="gradeForm.score" 
               class="grade-input" 
-              type="number"
               :placeholder="`请输入分数 (0-${getContentPoints(currentSubmission) || 100})`"
+              @input="onScoreInput"
+              :maxlength="3"
+              :auto-height="false"
+              :show-confirm-bar="false"
             />
           </view>
           
@@ -142,17 +145,8 @@
               v-model="gradeForm.feedback" 
               class="feedback-textarea"
               placeholder="请输入评语..."
+              :maxlength="200"
             />
-          </view>
-          
-          <view class="correct-section">
-            <view class="checkbox-item">
-              <checkbox 
-                :checked="gradeForm.is_correct" 
-                @change="onCorrectChange"
-              />
-              <text class="checkbox-label">标记为正确</text>
-            </view>
           </view>
         </view>
         
@@ -171,7 +165,9 @@ import { onLoad } from "@dcloudio/uni-app";
 import CommonHeader from "@/components/CommonHeader.vue";
 import LoadingRound from "@/components/LoadingRound.vue";
 import taskRequest from "@/api/task";
+import { useUserStore } from '@/stores/user';
 
+const userStore = useUserStore();
 const taskId = ref('');
 const task = ref<any>({});
 const submissions = ref<any[]>([]);
@@ -203,8 +199,7 @@ const contentFilters = ref([
 
 const gradeForm = ref({
   score: '',
-  feedback: '',
-  is_correct: false
+  feedback: ''
 });
 
 // 计算属性：过滤后的提交
@@ -425,8 +420,7 @@ const gradeSubmission = (submission: any) => {
   // 初始化表单
   gradeForm.value = {
     score: submission.teacher_score?.toString() || '',
-    feedback: submission.feedback || '',
-    is_correct: submission.is_correct || false
+    feedback: submission.feedback || ''
   };
   
   gradeModalVisible.value = true;
@@ -437,20 +431,30 @@ const closeGradeModal = () => {
   currentSubmission.value = null;
   gradeForm.value = {
     score: '',
-    feedback: '',
-    is_correct: false
+    feedback: ''
   };
 };
 
-const onCorrectChange = (e: any) => {
-  gradeForm.value.is_correct = e.detail.value.length > 0;
+const onScoreInput = (e: any) => {
+  // 确保输入的是有效数字
+  const value = e.detail.value;
+  const maxPoints = getContentPoints(currentSubmission.value) || 100;
+  
+  // 限制输入范围
+  if (value > maxPoints) {
+    gradeForm.value.score = maxPoints.toString();
+    uni.showToast({ 
+      title: `最高分为 ${maxPoints} 分`, 
+      icon: 'none' 
+    });
+  }
 };
 
 const submitGrade = async () => {
   if (!currentSubmission.value) return;
   
   const score = parseFloat(gradeForm.value.score);
-  const maxPoints = getContentPoints(currentSubmission.value);
+  const maxPoints = getContentPoints(currentSubmission.value) || 100;
   if (isNaN(score) || score < 0 || score > maxPoints) {
     uni.showToast({ 
       title: `请输入有效分数 (0-${maxPoints})`, 
@@ -464,8 +468,7 @@ const submitGrade = async () => {
     
     await taskRequest.gradeSubmission(currentSubmission.value.id, {
       score: score,
-      feedback: gradeForm.value.feedback,
-      is_correct: gradeForm.value.is_correct
+      feedback: gradeForm.value.feedback || ''
     });
     
     uni.hideLoading();
@@ -480,8 +483,9 @@ const submitGrade = async () => {
     const submissionIndex = submissions.value.findIndex(s => s.id === currentSubmission.value.id);
     if (submissionIndex !== -1) {
       submissions.value[submissionIndex].teacher_score = score;
-      submissions.value[submissionIndex].feedback = gradeForm.value.feedback;
-      submissions.value[submissionIndex].is_correct = gradeForm.value.is_correct;
+      submissions.value[submissionIndex].feedback = gradeForm.value.feedback || '';
+      // 根据分数自动判断是否正确（满分为正确）
+      submissions.value[submissionIndex].is_correct = score === maxPoints;
       gradedSubmissions.value = submissions.value.filter((s: any) => s.teacher_score !== null).length;
     }
     
@@ -777,6 +781,8 @@ const submitGrade = async () => {
       
       .grade-input {
         width: 100%;
+        height: 88rpx;
+        line-height: 40rpx;
         padding: 24rpx;
         background: #f8f9fa;
         border-radius: 12rpx;
@@ -784,6 +790,8 @@ const submitGrade = async () => {
         color: #333;
         border: 2rpx solid #e8e8e8;
         box-sizing: border-box;
+        resize: none;
+        overflow: hidden;
         
         &:focus {
           border-color: #4B7EFE;
@@ -819,18 +827,6 @@ const submitGrade = async () => {
       }
     }
     
-    .correct-section {
-      .checkbox-item {
-        display: flex;
-        align-items: center;
-        
-        .checkbox-label {
-          margin-left: 16rpx;
-          font-size: 28rpx;
-          color: #333;
-        }
-      }
-    }
   }
   
   .modal-actions {

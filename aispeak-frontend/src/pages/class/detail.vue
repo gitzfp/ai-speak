@@ -23,7 +23,7 @@
         <view class="class-meta">
           <view class="meta-item">
             <text class="meta-icon">👨‍🏫</text>
-            <text class="meta-text">{{ classInfo.teacher_name || '张老师' }}</text>
+            <text class="meta-text">{{ classInfo.teacher_name }}</text>
           </view>
           <view class="meta-item">
             <text class="meta-icon">📚</text>
@@ -52,10 +52,10 @@
             <text class="menu-icon">👥</text>
             <text class="menu-text">班级成员</text>
           </view>
-          <view class="menu-item" @click="viewAnnouncements">
+          <!-- <view class="menu-item" @click="viewAnnouncements">
             <text class="menu-icon">📢</text>
             <text class="menu-text">班级公告</text>
-          </view>
+          </view> -->
         </view>
         
         <view class="menu-row" v-if="isTeacher">
@@ -63,22 +63,21 @@
             <text class="menu-icon">➕</text>
             <text class="menu-text">发布任务</text>
           </view>
-          <view class="menu-item" @click="manageClass">
+          <!-- <view class="menu-item" @click="manageClass">
             <text class="menu-icon">⚙️</text>
             <text class="menu-text">班级设置</text>
           </view>
           <view class="menu-item" @click="viewStatistics">
             <text class="menu-icon">📊</text>
             <text class="menu-text">数据统计</text>
-          </view>
+          </view> -->
         </view>
       </view>
       
-      <!-- 最近任务 -->
+      <!-- 班级任务 -->
       <view class="recent-tasks">
         <view class="section-header">
-          <text class="section-title">最近任务</text>
-          <text class="view-all" @click="viewTasks">查看全部</text>
+          <text class="section-title">班级任务</text>
         </view>
         
         <LoadingRound v-if="loading" />
@@ -113,7 +112,7 @@
       </view>
       
       <!-- 班级动态 -->
-      <view class="class-activities">
+      <!-- <view class="class-activities">
         <text class="section-title">班级动态</text>
         
         <view class="activities-list">
@@ -131,7 +130,7 @@
             </view>
           </view>
         </view>
-      </view>
+      </view> -->
     </view>
   </view>
 </template>
@@ -143,6 +142,7 @@ import CommonHeader from "@/components/CommonHeader.vue";
 import LoadingRound from "@/components/LoadingRound.vue";
 import taskRequest from "@/api/task";
 import accountRequest from "@/api/account";
+import { useUserStore } from '@/stores/user';
 
 // 定义类型
 interface ClassInfo {
@@ -172,6 +172,7 @@ interface Activity {
   created_at: string;
 }
 
+const userStore = useUserStore();
 const classId = ref('');
 const classInfo = ref<ClassInfo>({});
 const recentTasks = ref<Task[]>([]);
@@ -191,11 +192,17 @@ onLoad((options: any) => {
 });
 
 const getUserRole = () => {
-  accountRequest.getRole().then((res) => {
-    userRole.value = res.data.role || 'student';
-  }).catch(() => {
-    userRole.value = 'student';
-  });
+  // 优先从 store 获取角色
+  if (userStore.userRole) {
+    userRole.value = userStore.userRole;
+  } else {
+    accountRequest.getRole().then((res) => {
+      userRole.value = res.data.role || 'student';
+      userStore.updateUserRole(userRole.value);
+    }).catch(() => {
+      userRole.value = 'student';
+    });
+  }
 };
 
 const loadClassInfo = () => {
@@ -222,7 +229,7 @@ const loadRecentTasks = () => {
   taskRequest.listTasks({
     class_id: classId.value,
     page: 1,
-    page_size: 5
+    page_size: 20  // 增加显示数量
   }).then(res => {
     recentTasks.value = res.data.tasks || [];
     loading.value = false;

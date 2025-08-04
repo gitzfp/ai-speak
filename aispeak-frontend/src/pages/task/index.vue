@@ -200,7 +200,9 @@ import LoadingRound from "@/components/LoadingRound.vue";
 import taskRequest from "@/api/task";
 import accountRequest from "@/api/account";
 import textbookRequest from "@/api/textbook";
+import { useUserStore } from '@/stores/user';
 
+const userStore = useUserStore();
 const currentRole = ref('');
 const userRoles = ref<string[]>([]); // 用户拥有的所有角色
 const tasks = ref<any[]>([]);
@@ -235,8 +237,8 @@ const getClassFilterText = () => {
 };
 
 onShow(() => {
-  // 获取用户角色
-  const userRole = uni.getStorageSync('userRole');
+  // 从 store 获取用户角色
+  const userRole = userStore.userRole || uni.getStorageSync('userRole');
   console.log('任务页面 onShow - userRole:', userRole);
   console.log('任务页面 onShow - token:', uni.getStorageSync('x-token'));
   
@@ -293,8 +295,9 @@ onShow(() => {
 });
 
 const getUserRoles = () => {
-  // 优先从本地存储获取用户角色
-  const localRole = uni.getStorageSync('userRole');
+  // 优先从 store 获取用户角色
+  const storeRole = userStore.userRole;
+  const localRole = storeRole || uni.getStorageSync('userRole');
   const localRoles = uni.getStorageSync('userRoles'); // 可能包含多个角色
   
   if (localRoles && Array.isArray(localRoles)) {
@@ -314,9 +317,10 @@ const getUserRoles = () => {
       // 如果本地已经有保存的角色，优先使用本地的；否则使用API返回的角色
       currentRole.value = localRole || apiRole;
       
-      // 保存到本地存储
+      // 保存到本地存储和 store
       uni.setStorageSync('userRoles', userRoles.value);
       uni.setStorageSync('userRole', currentRole.value);
+      userStore.updateUserRole(currentRole.value);
       
       loadClassData();
     }).catch(() => {
@@ -325,6 +329,7 @@ const getUserRoles = () => {
       currentRole.value = 'student';
       uni.setStorageSync('userRoles', ['student']);
       uni.setStorageSync('userRole', 'student');
+      userStore.updateUserRole('student');
     });
   }
   
@@ -370,6 +375,7 @@ const loadTeacherClasses = () => {
 const switchRole = (role: string) => {
   if (userRoles.value.includes(role)) {
     currentRole.value = role;
+    userStore.updateUserRole(role);
     uni.setStorageSync('userRole', role);
     loadTasks();
   } else {

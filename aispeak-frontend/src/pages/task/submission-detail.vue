@@ -178,7 +178,9 @@ import { ref, computed, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import CommonHeader from '@/components/CommonHeader.vue'
 import taskRequest from '@/api/task'
+import { useUserStore } from '@/stores/user'
 
+const userStore = useUserStore()
 const submission = ref<any>({})
 const studentInfo = ref<any>({})
 const submissionId = ref('')
@@ -190,7 +192,8 @@ const isCorrect = ref(false)
 
 onLoad((options) => {
   submissionId.value = options.submissionId || ''
-  isTeacher.value = uni.getStorageSync('userRole') === 'teacher'
+  // 从 store 获取用户角色
+  isTeacher.value = (userStore.userRole || uni.getStorageSync('userRole')) === 'teacher'
   loadSubmissionDetail()
 })
 

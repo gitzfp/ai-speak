@@ -93,6 +93,7 @@ import { ref, onMounted } from "vue"
 import accountReqeust from "@/api/account"
 import utils from "@/utils/utils"
 import PrivacyPopup from "@/components/PrivacyPopup.vue"
+import { useUserStore } from '@/stores/user'
 const X_TOKEN = "x-token"
 const USER_ID = 'user_id'
 const loginLoading = ref(false)
@@ -108,6 +109,7 @@ const registerUsername = ref("") // 注册用户名
 const gradeOptions = [{grade: '一年级', book_id: '1l1_V2' }, {grade: '二年级', book_id: '1l3_V2' }, {grade: '三年级', book_id: '1l5_V2' }, {grade: '四年级', book_id: '1l7_V2' }, {grade: '五年级', book_id: '1l9_V2' }, {grade: '六年级', book_id: '1l11_V2' }]
 const privacyPopupRef = ref() // 隐私协议弹窗引用
 const hasAgreedPrivacy = ref(false) // 是否已同意隐私协议
+const userStore = useUserStore()
 
 const emit = defineEmits<{
   (e: 'switchbookSuccess', book: any): void  // 根据实际类型替换 any
@@ -258,7 +260,9 @@ const loginSucessByToken = async (storageToken: string, userId: string) => {
   try {
     const userInfo = await accountReqeust.accountInfoGet()
     if (userInfo.code === 1000 && userInfo.data) {
-      // 存储用户昵称和用户名
+      // 存储用户信息到 Pinia store
+      userStore.setUserInfo(userInfo.data)
+      // 保留 localStorage 作为备份
       uni.setStorageSync('nickname', userInfo.data.nickname || userInfo.data.user_name || '')
       uni.setStorageSync('userName', userInfo.data.user_name || '')
       uni.setStorageSync('userRole', userInfo.data.user_role || 'student')
@@ -308,6 +312,8 @@ const handleGuestVisit = () => {
         uni.setStorageSync("x-token", visitorToken)
         uni.setStorageSync(USER_ID, visitorUserId)
         uni.setStorageSync("userRole", "visitor") // 标记为游客角色
+        // 设置游客状态到 store
+        userStore.updateUserRole('visitor')
         
         console.log("游客登录成功，token:", visitorToken)
         
@@ -341,6 +347,8 @@ const handleGuestVisit = () => {
       uni.removeStorageSync('x-token')
       uni.removeStorageSync('user_id')
       uni.setStorageSync('userRole', 'visitor')
+      // 设置游客状态到 store
+      userStore.updateUserRole('visitor')
       
       // 延迟跳转
       setTimeout(() => {

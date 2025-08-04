@@ -76,6 +76,7 @@ class ClassResponse(ClassBase):
     updated_at: datetime
     student_count: Optional[int] = 0  # 学生人数
     students: Optional[List[Dict[str, Any]]] = []  # 学生列表
+    teacher_name: Optional[str] = None  # 教师姓名
     
     class Config:
         from_attributes = True

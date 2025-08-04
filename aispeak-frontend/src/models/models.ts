@@ -5,6 +5,7 @@ export interface AccountInfo {
   target_language_label: string;
   user_name?: string;
   phone_number?: string;
+  user_role?: string;
 }
 
 export interface AccountSettings {

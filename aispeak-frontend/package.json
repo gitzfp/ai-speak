@@ -61,6 +61,8 @@
     "less": "^4.1.3",
     "less-loader": "^11.1.2",
     "md5": "^2.3.0",
+    "pinia": "2.0.35",
+    "vue-demi": "^0.14.0",
     "query-string": "^8.1.0",
     "recorder-core": "1.2.23070100",
     "sass": "^1.62.1",

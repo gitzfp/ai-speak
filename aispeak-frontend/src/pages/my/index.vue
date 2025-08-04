@@ -53,10 +53,6 @@
         </view>
       </view>
       <view class="setting">
-        <!-- <view class="setting-card" @tap="goSetting">
-					<image class="setting-card-logo" src="https://dingguagua.fun/static/setting.png" />
-					<text class="setting-card-title">设置</text>
-				</view> -->
         <view class="setting-card" @tap="goIdentitySetting">
           <image
             class="setting-card-logo"
@@ -117,6 +113,9 @@ import { ref, onMounted } from "vue"
 import accountRequest from "@/api/account"
 import type { AccountInfo } from "@/models/models"
 import { onShow } from "@dcloudio/uni-app"
+import { useUserStore } from '@/stores/user';
+
+const userStore = useUserStore();
 
 const accountInfo = ref<AccountInfo>({
   account_id: "",
@@ -140,7 +139,8 @@ onShow(() => {
   if (token) {
     // 已登录，获取账户信息
     accountRequest.accountInfoGet().then((data) => {
-      accountInfo.value = data.data
+      accountInfo.value = data.data;
+      userStore.updateUserRole(data.data.user_role);
     }).catch(() => {
       // 请求失败，设置游客状态
       accountInfo.value = {
@@ -213,14 +213,19 @@ const goLearningLanguage = () => {
 }
 
 const goIdentitySetting = () => {
+  // 传递当前的账户信息到身份设置页面
+  const params = {
+    userRole: accountInfo.value.user_role || '',
+    userName: accountInfo.value.user_name || ''
+  };
   uni.navigateTo({
-    url: "/pages/profile/identity",
+    url: `/pages/profile/identity?data=${encodeURIComponent(JSON.stringify(params))}`,
   })
 }
 
 const getRoleLabel = () => {
-  // 从本地存储获取用户角色
-  const role = uni.getStorageSync('userRole');
+  // 从 accountInfo 获取角色
+  const role = accountInfo.value.user_role;
   switch (role) {
     case 'teacher':
       return '教师';

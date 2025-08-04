@@ -63,6 +63,16 @@ class TaskService:
             # 创建响应并设置学生人数为0
             response = ClassResponse.from_orm(db_class)
             response.student_count = 0
+            
+            # 获取教师信息
+            from app.db.account_entities import AccountEntity
+            if db_class.teacher_id:
+                teacher = self.db.query(AccountEntity).filter(
+                    AccountEntity.id == db_class.teacher_id
+                ).first()
+                if teacher:
+                    response.teacher_name = teacher.user_name or teacher.phone_number or "未设置"
+            
             return response
         except Exception as e:
             self.db.rollback()
@@ -89,8 +99,16 @@ class TaskService:
         ).count()
         response.student_count = student_count
         
-        # 获取学生列表
+        # 获取教师信息
         from app.db.account_entities import AccountEntity
+        if db_class.teacher_id:
+            teacher = self.db.query(AccountEntity).filter(
+                AccountEntity.id == db_class.teacher_id
+            ).first()
+            if teacher:
+                response.teacher_name = teacher.user_name or teacher.phone_number or "未设置"
+        
+        # 获取学生列表
         students = self.db.query(AccountEntity).join(
             ClassStudent, AccountEntity.id == ClassStudent.student_id
         ).filter(
@@ -139,6 +157,16 @@ class TaskService:
                 ClassStudent.status == "active"
             ).count()
             response.student_count = student_count
+            
+            # 获取教师信息
+            from app.db.account_entities import AccountEntity
+            if db_class.teacher_id:
+                teacher = self.db.query(AccountEntity).filter(
+                    AccountEntity.id == db_class.teacher_id
+                ).first()
+                if teacher:
+                    response.teacher_name = teacher.user_name or teacher.phone_number or "未设置"
+            
             return response
         except Exception as e:
             self.db.rollback()
@@ -290,7 +318,8 @@ class TaskService:
             for cls in additional_classes_query:
                 all_classes[cls.id] = cls
             
-            # 转换为响应模型并添加学生人数
+            # 转换为响应模型并添加学生人数和教师姓名
+            from app.db.account_entities import AccountEntity
             result = []
             for cls in all_classes.values():
                 class_response = ClassResponse.from_orm(cls)
@@ -300,6 +329,15 @@ class TaskService:
                     ClassStudent.status == "active"
                 ).count()
                 class_response.student_count = student_count
+                
+                # 获取教师信息
+                if cls.teacher_id:
+                    teacher = self.db.query(AccountEntity).filter(
+                        AccountEntity.id == cls.teacher_id
+                    ).first()
+                    if teacher:
+                        class_response.teacher_name = teacher.user_name or teacher.phone_number or "未设置"
+                
                 result.append(class_response)
             
             return result
@@ -319,7 +357,8 @@ class TaskService:
                 Class.deleted_at.is_(None)
             ).all()
             
-            # 转换为响应模型并添加学生人数
+            # 转换为响应模型并添加学生人数和教师姓名
+            from app.db.account_entities import AccountEntity
             result = []
             for cls in student_classes:
                 response = ClassResponse.from_orm(cls)
@@ -329,6 +368,15 @@ class TaskService:
                     ClassStudent.status == "active"
                 ).count()
                 response.student_count = student_count
+                
+                # 获取教师信息
+                if cls.teacher_id:
+                    teacher = self.db.query(AccountEntity).filter(
+                        AccountEntity.id == cls.teacher_id
+                    ).first()
+                    if teacher:
+                        response.teacher_name = teacher.user_name or teacher.phone_number or "未设置"
+                
                 result.append(response)
             
             return result
@@ -378,13 +426,23 @@ class TaskService:
             self.db.commit()
             self.db.refresh(db_class)
             
-            # 创建响应并添加学生人数
+            # 创建响应并添加学生人数和教师姓名
             response = ClassResponse.from_orm(db_class)
             student_count = self.db.query(ClassStudent).filter(
                 ClassStudent.class_id == db_class.id,
                 ClassStudent.status == "active"
             ).count()
             response.student_count = student_count
+            
+            # 获取教师信息
+            from app.db.account_entities import AccountEntity
+            if db_class.teacher_id:
+                teacher = self.db.query(AccountEntity).filter(
+                    AccountEntity.id == db_class.teacher_id
+                ).first()
+                if teacher:
+                    response.teacher_name = teacher.user_name or teacher.phone_number or "未设置"
+            
             return response
         except UserAccessDeniedException:
             raise
@@ -435,13 +493,23 @@ class TaskService:
             self.db.commit()
             self.db.refresh(db_class)
             
-            # 创建响应并添加学生人数
+            # 创建响应并添加学生人数和教师姓名
             response = ClassResponse.from_orm(db_class)
             student_count = self.db.query(ClassStudent).filter(
                 ClassStudent.class_id == db_class.id,
                 ClassStudent.status == "active"
             ).count()
             response.student_count = student_count
+            
+            # 获取教师信息
+            from app.db.account_entities import AccountEntity
+            if db_class.teacher_id:
+                teacher = self.db.query(AccountEntity).filter(
+                    AccountEntity.id == db_class.teacher_id
+                ).first()
+                if teacher:
+                    response.teacher_name = teacher.user_name or teacher.phone_number or "未设置"
+            
             return response
         except UserAccessDeniedException:
             raise
@@ -630,6 +698,9 @@ class TaskService:
             # 教师查看自己创建的任务
             query = query.filter(Task.teacher_id == params.teacher_id)
             logging.info(f"教师 {params.teacher_id} 查询任务")
+            # 如果指定了班级，进一步过滤
+            if params.class_id:
+                query = query.filter(Task.class_id == params.class_id)
         elif params.student_id:
             # 学生只能查看已加入班级的任务
             # 先获取学生加入的班级ID列表
@@ -645,8 +716,12 @@ class TaskService:
             # 如果指定了特定班级，进一步过滤
             if params.class_id:
                 query = query.filter(Task.class_id == params.class_id)
+        elif params.class_id:
+            # 如果只指定了班级ID，查询该班级的所有任务
+            query = query.filter(Task.class_id == params.class_id)
+            logging.info(f"查询班级 {params.class_id} 的所有任务")
         else:
-            # 如果没有指定身份，返回空结果
+            # 如果没有任何过滤条件，返回空结果
             return TaskListResponse(
                 tasks=[],
                 total=0,
@@ -807,10 +882,22 @@ class TaskService:
             # 使用新的字段名
             if hasattr(grade_data, 'score'):
                 db_submission.teacher_score = grade_data.score
+                
+                # 根据分数自动判断是否正确
+                # 获取该内容的满分
+                content = self.db.query(TaskContent).filter(
+                    TaskContent.id == db_submission.content_id
+                ).first()
+                
+                if content:
+                    # 如果得分等于满分，则为正确
+                    db_submission.is_correct = (grade_data.score == content.points)
+                else:
+                    # 默认100分为满分
+                    db_submission.is_correct = (grade_data.score == 100)
+            
             if hasattr(grade_data, 'feedback'):
                 db_submission.feedback = grade_data.feedback
-            if hasattr(grade_data, 'is_correct'):
-                db_submission.is_correct = grade_data.is_correct
             
             db_submission.updated_at = datetime.utcnow()
             

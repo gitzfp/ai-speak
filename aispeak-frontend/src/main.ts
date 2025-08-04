@@ -3,6 +3,7 @@ import App from "./App.vue";
 import EventBus from "@/utils/bus";
 import WxShare from '@/utils/wxShare'
 import utils from "@/utils/utils";
+import pinia from '@/stores';
 
 const getHeight = (global: any) => {
   uni.getSystemInfo({
@@ -33,6 +34,7 @@ const getHeight = (global: any) => {
 export function createApp() {
   const $bus = new EventBus();
   const app = createSSRApp(App);
+  app.use(pinia);
   app.provide("$bus", $bus);
   app.config.globalProperties.$bus = $bus;
   getHeight(app.config.globalProperties);
