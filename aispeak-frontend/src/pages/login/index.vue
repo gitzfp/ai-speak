@@ -243,7 +243,7 @@ const loginSuccess = (data: any) => {
     return
   }
   let storageToken = data.data.token
-  const userId = data.data.user_id
+  const userId = data.data.user_id || data.data.openid
   console.log("登录成功，token:", data.data)
   loginSucessByToken(storageToken, userId)
 }
