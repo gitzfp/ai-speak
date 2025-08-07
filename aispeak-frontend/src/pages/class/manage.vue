@@ -11,6 +11,7 @@
       </template>
     </CommonHeader>
     
+    
     <view class="content">
       <!-- 创建班级按钮 -->
       <view class="create-section">
@@ -96,6 +97,7 @@ import { ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import CommonHeader from "@/components/CommonHeader.vue";
 import LoadingRound from "@/components/LoadingRound.vue";
+// ClassShareCanvas 组件通过 easycom 自动导入，无需手动import
 import taskRequest from "@/api/task";
 
 const classes = ref<any[]>([]);
@@ -154,6 +156,23 @@ const createTask = (classItem: any) => {
 };
 
 const shareClass = (classItem: any) => {
+  console.log('分享班级被点击，班级信息:', classItem);
+  
+  if (!classItem.class_code) {
+    uni.showToast({
+      title: '班级码不存在',
+      icon: 'none'
+    });
+    return;
+  }
+  
+  // 微信小程序中直接尝试复制
+  // #ifdef MP-WEIXIN
+  tryToCopyCode(classItem.class_code);
+  // #endif
+  
+  // #ifndef MP-WEIXIN
+  // 非微信小程序环境使用原来的方式
   uni.showModal({
     title: '分享班级',
     content: `班级码: ${classItem.class_code}\n学生可使用此班级码加入班级`,
@@ -168,7 +187,38 @@ const shareClass = (classItem: any) => {
       });
     }
   });
+  // #endif
 };
+
+// 尝试复制邀请码
+const tryToCopyCode = (code: string) => {
+  // #ifdef MP-WEIXIN
+  // 先尝试使用 wx.setClipboardData
+  wx.setClipboardData({
+    data: code,
+    success: () => {
+      wx.showToast({
+        title: '邀请码已复制',
+        icon: 'success'
+      });
+    },
+    fail: (err) => {
+      console.log('复制失败:', err);
+      // 如果失败（包括隐私权限问题），显示邀请码让用户手动复制
+      wx.showModal({
+        title: '班级邀请码',
+        content: code,
+        confirmText: '确定',
+        showCancel: false,
+        success: () => {
+          console.log('用户已查看邀请码');
+        }
+      });
+    }
+  });
+  // #endif
+};
+
 
 const deleteClassConfirm = (classItem: any) => {
   uni.showModal({
