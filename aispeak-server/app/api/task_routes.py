@@ -27,11 +27,12 @@ def get_task_service(db: Session = Depends(get_db)) -> TaskService:
 @router.post("/classes", response_model=ApiResponse, tags=["班级管理"])
 async def create_class(
     class_data: ClassCreate,
-    service: TaskService = Depends(get_task_service)
+    service: TaskService = Depends(get_task_service),
+    account_id: str = Depends(get_current_account)
 ):
     """创建班级"""
     try:
-        result = await service.create_class(class_data)
+        result = await service.create_class(class_data, account_id)
         return ApiResponse.success(result)
     except Exception as e:
         logging.error(f"创建班级失败: {e}")

@@ -53,7 +53,6 @@ class ClassBase(BaseModel):
     grade_level: str = Field(..., max_length=50, description="年级")
     subject: Optional[str] = Field(None, max_length=50, description="主教学科")
     school_name: Optional[str] = Field(None, max_length=200, description="学校名称(可选)")
-    teacher_id: str = Field(..., max_length=80, description="班主任ID")
     description: Optional[str] = Field(None, description="班级描述")
     max_students: int = Field(50, description="最大学生人数")
 
@@ -72,6 +71,7 @@ class ClassResponse(ClassBase):
     id: int
     class_code: Optional[str] = None
     status: str
+    teacher_id: str = Field(..., max_length=80, description="班主任ID")
     created_at: datetime
     updated_at: datetime
     student_count: Optional[int] = 0  # 学生人数

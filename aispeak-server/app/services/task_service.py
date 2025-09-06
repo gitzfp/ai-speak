@@ -40,7 +40,7 @@ class TaskService:
                 return code
     
     # 班级管理
-    async def create_class(self, class_data: ClassCreate) -> ClassResponse:
+    async def create_class(self, class_data: ClassCreate, teacher_id: str) -> ClassResponse:
         """创建班级"""
         try:
             # 生成唯一班级码
@@ -51,7 +51,7 @@ class TaskService:
                 grade_level=class_data.grade_level,
                 subject=class_data.subject,
                 school_name=class_data.school_name,
-                teacher_id=class_data.teacher_id,
+                teacher_id=teacher_id,
                 class_code=class_code,
                 description=class_data.description,
                 max_students=class_data.max_students

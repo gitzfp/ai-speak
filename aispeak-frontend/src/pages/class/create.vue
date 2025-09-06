@@ -181,15 +181,7 @@ const submit = () => {
     uni.showToast({ title: '请完善必填信息', icon: 'none' });
     return;
   }
-  
-  // 从本地存储获取用户信息
-  const user_id = uni.getStorageSync('user_id');
-  if (!user_id) {
-    uni.showToast({ title: '请先登录', icon: 'none' });
-    return;
-  }
-  const teacherId = user_id;
-  
+
   // 学科映射：中文到英文
   const subjectMap: { [key: string]: string } = {
     '语文': 'chinese',
@@ -213,7 +205,6 @@ const submit = () => {
     name: form.value.name,
     grade_level: form.value.grade_level,
     subject: subjectMap[form.value.subject] || 'other',
-    teacher_id: teacherId,
     description: form.value.description || null,
     school_name: form.value.school || null,
     max_students: Number(form.value.max_students) || 50
@@ -226,7 +217,6 @@ const submit = () => {
   taskRequest.createClass(submitData).then((res) => {
     uni.hideLoading();
     console.log('班级创建成功:', res);
-    
     // 优化成功提示
     uni.showModal({
       title: '创建成功',
