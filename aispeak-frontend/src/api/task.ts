@@ -20,8 +20,8 @@ export default {
   getStudentClasses: () => {
     return request("/student/classes", "GET");
   },
-  getTeacherClasses: (teacherId: string) => {
-    return request(`/teacher/${teacherId}/classes`, "GET");
+  getTeacherClasses: () => {
+    return request("/teacher/classes", "GET");
   },
   joinClass: (data: any) => {
     return request("/classes/join", "POST", data);

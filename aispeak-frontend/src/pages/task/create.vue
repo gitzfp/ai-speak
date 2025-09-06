@@ -152,18 +152,18 @@
               </view>
               
               <!-- 搜索结果 -->
-              <view v-if="searchResults.length > 0" class="search-results">
-                <text class="results-title">搜索结果</text>
+              <view v-show="searchResults.length > 0" class="search-results">
+                <text class="results-title">搜索结果 ({{ searchResults.length }})</text>
                 <scroll-view class="results-scroll" scroll-y>
                   <view 
                     v-for="(item, index) in searchResults" 
-                    :key="index"
+                    :key="item.id || index"
                     class="result-item"
                     @click="toggleItemSelection(item)"
                   >
                     <view class="result-content">
-                      <text class="result-main">{{ needsWordContent ? item.word : item.english }}</text>
-                      <text class="result-sub">{{ needsWordContent ? item.chinese_meaning : item.chinese }}</text>
+                      <text class="result-main">{{ item.word || item.english || '未知' }}</text>
+                      <text class="result-sub">{{ item.chinese_meaning || item.chinese || '无释义' }}</text>
                     </view>
                     <view v-if="isItemSelected(item)" class="selected-mark">✓</view>
                   </view>

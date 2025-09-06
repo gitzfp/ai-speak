@@ -114,20 +114,20 @@ const goBack = () => {
 const loadClasses = () => {
   loading.value = true;
   
-  // 从本地存储获取用户信息
-  const teacherId = uni.getStorageSync('user_id');
+  // 检查登录状态（通过token）
+  const token = uni.getStorageSync('x-token');
   
-  if (!teacherId) {
-    console.error('用户未登录或缺少ID');
+  if (!token) {
+    console.error('用户未登录');
     classes.value = [];
     loading.value = false;
     return;
   }
   
-  console.log('正在获取教师班级列表, teacherId:', teacherId);
+  console.log('正在获取教师班级列表');
   
   // 调用获取教师班级的API
-  taskRequest.getTeacherClasses(teacherId).then(res => {
+  taskRequest.getTeacherClasses().then(res => {
     console.log('获取班级列表成功:', res);
     classes.value = res.data || [];
     loading.value = false;

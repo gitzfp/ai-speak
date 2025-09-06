@@ -145,14 +145,14 @@ async def remove_teacher_from_class(
         logging.error(f"从班级移除教师失败: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/teacher/{teacher_id}/classes", response_model=ApiResponse, tags=["班级管理"])
+@router.get("/teacher/classes", response_model=ApiResponse, tags=["班级管理"])
 async def get_teacher_classes(
-    teacher_id: str = Path(..., description="教师ID"),
-    service: TaskService = Depends(get_task_service)
+    service: TaskService = Depends(get_task_service),
+    account_id: str = Depends(get_current_account)
 ):
-    """获取教师的班级列表"""
+    """获取当前教师的班级列表"""
     try:
-        result = await service.get_teacher_classes(teacher_id)
+        result = await service.get_teacher_classes(account_id)
         return ApiResponse.success(result)
     except Exception as e:
         logging.error(f"获取教师班级失败: {e}")
