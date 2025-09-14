@@ -109,6 +109,7 @@ class TaskService:
                 response.teacher_name = teacher.user_name or teacher.phone_number or "未设置"
         
         # 获取学生列表
+        # 兼容两种情况：student_id可能是account.id或account.openid
         students = self.db.query(AccountEntity).join(
             ClassStudent, AccountEntity.id == ClassStudent.student_id
         ).filter(

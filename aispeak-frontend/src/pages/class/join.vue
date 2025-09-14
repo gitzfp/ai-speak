@@ -174,11 +174,10 @@ const loadMyClasses = () => {
   // 调用获取学生班级的API
   taskRequest.getStudentClasses().then(res => {
     myClasses.value = res.data || [];
-  }).catch(() => {
-    // 模拟数据作为备选
-    myClasses.value = [
-      
-    ];
+  }).catch((error) => {
+    console.error('获取学生班级列表失败:', error);
+    // 保持空列表，避免显示错误的数据
+    myClasses.value = [];
   });
 };
 

@@ -48,7 +48,7 @@ class AccountService:
             self.db.commit()
 
         self.__check_and_init_default_settings(visitor.id)
-        return {"token": auth.init_token(visitor.id, visitor.id)}
+        return {"token": auth.init_token(visitor.id, visitor.id), "user_id": visitor.id}
     
     def wechat_login(self, dto: WechatLoginDTO, client_host: str):
         """微信登录，调用 code2Session 接口"""
@@ -89,7 +89,7 @@ class AccountService:
         self.__check_and_init_default_settings(account.id)
         # 生成自定义登录态（如 JWT）
         token = auth.init_token(account.id, account.id)
-        return {"token": token, "openid": openid}
+        return {"token": token, "openid": openid, "user_id": account.id}
     
     def phone_login(self, dto: PhoneLoginDTO, client_host: str, is_register: bool = False):
         """手机登录，支持验证码和密码登录"""

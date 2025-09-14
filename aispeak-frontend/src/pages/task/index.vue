@@ -357,27 +357,21 @@ const loadStudentClasses = () => {
   taskRequest.getStudentClasses().then(res => {
     const classes = res.data || [];
     studentClasses.value = [{ id: 'all', name: '全部班级' }, ...classes];
-  }).catch(() => {
-    // 模拟数据作为备选
-    studentClasses.value = [
-      { id: 'all', name: '全部班级' },
-      { id: '1', name: '三年级1班' },
-      { id: '2', name: '四年级2班' }
-    ];
+  }).catch((error) => {
+    console.error('获取学生班级列表失败:', error);
+    // 保持空列表，避免显示错误的数据
+    studentClasses.value = [{ id: 'all', name: '全部班级' }];
   });
 };
 
 const loadTeacherClasses = () => {
-  const teacherId = uni.getStorageSync('user_id');
-  
-  if (teacherId) {
-    taskRequest.getTeacherClasses(teacherId).then(res => {
-      const classes = res.data || [];
-      teacherClasses.value = [{ id: 'all', name: '全部班级' }, ...classes];
-    }).catch(() => {
-      teacherClasses.value = [{ id: 'all', name: '全部班级' }];
-    });
-  }
+  taskRequest.getTeacherClasses().then(res => {
+    const classes = res.data || [];
+    teacherClasses.value = [{ id: 'all', name: '全部班级' }, ...classes];
+  }).catch((error) => {
+    console.error('获取教师班级列表失败:', error);
+    teacherClasses.value = [{ id: 'all', name: '全部班级' }];
+  });
 };
 
 const switchRole = (role: string) => {
